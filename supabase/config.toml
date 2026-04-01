@@ -1,0 +1,23 @@
+# https://supabase.com/docs/guides/cli/config
+project_id = "containerly-app"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[functions.create-tracking-request]
+verify_jwt = true
+
+[functions.get-container-details]
+verify_jwt = true
+
+[functions.search-containers]
+verify_jwt = true
+
+[functions.sync-container]
+verify_jwt = true
+
+[functions.sync-stale-requests]
+verify_jwt = false
