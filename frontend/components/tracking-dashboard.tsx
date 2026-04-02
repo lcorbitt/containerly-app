@@ -71,7 +71,7 @@ export function TrackingDashboard({ initialOrgs }: { initialOrgs: OrgRow[] }) {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Containerly
+          Dashboard
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Logistics tracking backed by Supabase: RLS-isolated tenants, edge sync, and alerts.

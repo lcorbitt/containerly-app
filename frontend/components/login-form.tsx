@@ -23,8 +23,14 @@ export function LoginForm() {
     try {
       const supabase = createClient();
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        // Local Supabase defaults to enable_confirmations = false: no email is sent, session is often returned immediately.
+        if (data.session) {
+          router.push(next);
+          router.refresh();
+          return;
+        }
         setMessage("Check your email to confirm, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

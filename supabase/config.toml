@@ -1,6 +1,12 @@
 # https://supabase.com/docs/guides/cli/config
 project_id = "containerly-app"
 
+# Local Auth: the CLI default is enable_confirmations = false, so sign-up does NOT send an email
+# (Mailpit at http://127.0.0.1:54324 stays empty). Uncomment to test confirmation emails locally:
+# [auth.email]
+# enable_confirmations = true
+# Then: supabase stop && supabase start
+
 [api]
 enabled = true
 
