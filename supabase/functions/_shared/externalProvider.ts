@@ -3,6 +3,8 @@
  * Replace `fetchLiveFromProvider` with real HTTP calls + auth headers.
  */
 
+import { buildJsonCargoLocation } from "./jsoncargoLocation.ts";
+
 export type NormalizedContainer = {
   container_number: string;
   carrier: string | null;
@@ -103,16 +105,7 @@ function mapJsonCargoData(
       inner.last_movement_timestamp ??
       new Date().toISOString(),
   );
-  const location: Record<string, unknown> = {
-    last_location: inner.last_location,
-    last_location_terminal: inner.last_location_terminal,
-    next_location: inner.next_location,
-    next_location_terminal: inner.next_location_terminal,
-    loading_port: inner.loading_port,
-    discharging_port: inner.discharging_port,
-    shipped_from: inner.shipped_from,
-    shipped_to: inner.shipped_to,
-  };
+  const location = buildJsonCargoLocation(inner);
   const carrier = inner.shipping_line_name != null ? String(inner.shipping_line_name) : null;
   return {
     container_number,

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Box, Building2, LayoutDashboard, Settings, Shield } from "lucide-react";
+import { Box, Building2, ClipboardList, LayoutDashboard, Settings, Shield } from "lucide-react";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/requests", label: "Requests", icon: ClipboardList },
   { href: "/container-details", label: "Container Details", icon: Box },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;

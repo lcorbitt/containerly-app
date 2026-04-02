@@ -5,8 +5,8 @@ import {
 } from "@/contexts/organization-workspace";
 import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/server";
+import { AuthenticatedTopNav } from "@/components/top-nav";
 import { SideNav } from "./components/side-nav";
-import { TopNav } from "./components/top-nav";
 
 export default async function AuthenticatedLayout({
   children,
@@ -49,18 +49,20 @@ export default async function AuthenticatedLayout({
   }
 
   return (
-    <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-      <TopNav email={user.email ?? ""} />
-      <div className="flex min-h-0 overflow-hidden">
-        <SideNav isSuperAdmin={isSuperAdmin} />
-        <OrganizationWorkspaceProvider
-          initialOrgs={initialOrgs}
-          isSuperAdmin={isSuperAdmin}
-          userId={user.id}
-        >
-          <div className="min-h-0 min-w-0 flex-1 overflow-auto">{children}</div>
-        </OrganizationWorkspaceProvider>
+    <OrganizationWorkspaceProvider
+      initialOrgs={initialOrgs}
+      isSuperAdmin={isSuperAdmin}
+      userId={user.id}
+    >
+      <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
+        <AuthenticatedTopNav email={user.email ?? ""} />
+        <div className="flex min-h-0 overflow-hidden">
+          <SideNav isSuperAdmin={isSuperAdmin} />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
+            {children}
+          </div>
+        </div>
       </div>
-    </div>
+    </OrganizationWorkspaceProvider>
   );
 }

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { syncContainerAction } from "@/app/actions/edge-functions";
 import type { TrackingRequest } from "@/types/database";
 
-/** Must match stage count in `scripts/mock-jsoncargo-server.mjs`. */
-const MOCK_TRIP_STAGES = 6;
+/** Used only if the mock control server does not return `total_stages` (see `run()`). */
+const MOCK_TRIP_STAGES_FALLBACK = 25;
 
 /**
  * Base URL for browser → mock server control routes (`/__dev/reset`).
@@ -127,14 +127,32 @@ export function MockJourneySimulator({
         setLog([...lines]);
       }
 
-      for (let i = 0; i < MOCK_TRIP_STAGES; i++) {
+      let totalStages = MOCK_TRIP_STAGES_FALLBACK;
+      if (mockControlBase && selected) {
+        try {
+          const qs = new URLSearchParams({
+            tracking_number: selected.container_number,
+          });
+          const stRes = await fetch(`${mockControlBase}/__dev/state?${qs.toString()}`);
+          if (stRes.ok) {
+            const stJson = (await stRes.json()) as { total_stages?: number };
+            if (typeof stJson.total_stages === "number" && stJson.total_stages > 0) {
+              totalStages = stJson.total_stages;
+            }
+          }
+        } catch {
+          /* keep fallback */
+        }
+      }
+
+      for (let i = 0; i < totalStages; i++) {
         if (stopRequestedRef.current) {
           lines.push(`Stopped after ${i} stage(s).`);
           setLog([...lines]);
           return;
         }
 
-        lines.push(`Stage ${i + 1}/${MOCK_TRIP_STAGES}: sync-container (force)…`);
+        lines.push(`Stage ${i + 1}/${totalStages}: sync-container (force)…`);
         setLog([...lines]);
 
         await syncContainerAction({
@@ -147,7 +165,7 @@ export function MockJourneySimulator({
         lines.push(`Stage ${i + 1} applied.`);
         setLog([...lines]);
 
-        if (i < MOCK_TRIP_STAGES - 1) {
+        if (i < totalStages - 1) {
           await waitOrAbort(delaySec * 1000, stopRequestedRef);
           if (stopRequestedRef.current) {
             lines.push(`Stopped after stage ${i + 1}.`);
@@ -221,7 +239,7 @@ export function MockJourneySimulator({
           type="button"
           disabled={running || requests.length === 0 || !selectedId}
           onClick={() => void run()}
-          className="rounded-lg bg-amber-900 px-4 py-2 text-sm font-medium text-amber-50 disabled:opacity-50 dark:bg-amber-700"
+          className="rounded-lg cursor-pointer bg-amber-900 px-4 py-2 text-sm font-medium text-amber-50 disabled:opacity-50 dark:bg-amber-700"
         >
           {running ? "Simulating…" : "Simulate journey"}
         </button>
@@ -229,7 +247,7 @@ export function MockJourneySimulator({
           type="button"
           disabled={!running}
           onClick={stopSimulation}
-          className="rounded-lg border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
+          className="rounded-lg cursor-pointer border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
         >
           Stop
         </button>
@@ -237,7 +255,7 @@ export function MockJourneySimulator({
           type="button"
           disabled={running || resetting || requests.length === 0 || !selectedId}
           onClick={() => void resetMockTrip()}
-          className="rounded-lg border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
+          className="rounded-lg cursor-pointer border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
         >
           {resetting ? "Resetting…" : "Reset mock"}
         </button>

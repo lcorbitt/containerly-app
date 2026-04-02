@@ -24,97 +24,234 @@ function normTracking(s) {
   return String(s).toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+/**
+ * One JSON Cargo `data` row per stage. Includes the full documented field set where it
+ * makes sense for the journey (Shanghai → LA); timestamps advance per GET.
+ * @see https://jsoncargo.com style Container Details API
+ */
 function buildStages(containerId) {
   const id = containerId.toUpperCase();
-  const base = {
-    container_type: "40' HIGH CUBE REEFER",
-    shipping_line_name: "Mediterranean Shipping Company",
-    shipping_line_id: "0015",
-    tare: 3900,
-    shipped_from: "GUAYAQUIL, EC",
-    shipped_from_terminal: "NAPORTEC TERMINAL - BANANAPUERTO ",
-    shipped_to: "TRIPOLI, LY",
-    shipped_to_terminal: "SPCO ( SOCIALIST PORTS CO UNDER MINISTRY OF TRANSPORT ) ",
-    loading_port: "GUAYAQUIL, EC",
-    discharging_port: "TRIPOLI, LY",
-    bill_of_lading: "MEDUGY914103",
-    last_vessel_name: "MSC LENA F",
-    last_voyage_number: "YF432A",
-    current_vessel_name: "MSC LENA F",
-    current_voyage_number: "YF432A",
-    container_id: id,
+
+  /** @param {string} stamp @param {Record<string, unknown>} fields */
+  function row(stamp, fields) {
+    return {
+      container_id: id,
+      container_type: "40' HIGH CUBE REEFER",
+      shipping_line_name: "Mediterranean Shipping Company",
+      shipping_line_id: "0015",
+      tare: 3900,
+      shipped_from: "SHANGHAI, CN",
+      shipped_from_terminal: "SHANGHAI CNTS — YANGSHAN PHASE 4",
+      shipped_to: "LOS ANGELES, US",
+      shipped_to_terminal: "APM TERMINALS PIER 400",
+      loading_port: "SHANGHAI, CN",
+      discharging_port: "LOS ANGELES, US",
+      bill_of_lading: "MEDUSH914201",
+      last_vessel_name: "MSC LORETO",
+      last_voyage_number: "FY428W",
+      current_vessel_name: "MSC LORETO",
+      current_voyage_number: "FY428W",
+      last_updated: stamp,
+      timestamp_of_last_location: stamp,
+      last_movement_timestamp: stamp,
+      ...fields,
+    };
+  }
+
+  const oceanSchedule = {
+    atd_origin: "2025-01-06 18:00",
+    eta_final_destination: "2025-02-05 00:00",
   };
 
+  /** One stage per GET. `container_status` is carrier-facing text only. */
+  const stamps = [
+    "2025-01-02 08:00",
+    "2025-01-03 10:00",
+    "2025-01-04 14:00",
+    "2025-01-05 09:00",
+    "2025-01-05 18:00",
+    "2025-01-06 06:00",
+    "2025-01-07 00:00",
+    "2025-01-10 12:00",
+    "2025-01-14 08:00",
+    "2025-01-15 22:00",
+    "2025-01-18 06:00",
+    "2025-01-19 11:00",
+    "2025-01-22 07:00",
+    "2025-01-23 04:00",
+    "2025-01-24 15:00",
+    "2025-01-25 09:00",
+    "2025-01-26 14:00",
+    "2025-01-27 10:00",
+    "2025-01-28 08:00",
+    "2025-01-29 16:00",
+    "2025-01-30 11:00",
+    "2025-02-01 09:00",
+    "2025-02-02 13:00",
+    "2025-02-03 17:00",
+  ];
+
+  const T = row;
+  const from = "SHANGHAI CNTS — YANGSHAN PHASE 4";
+  const toT = "APM TERMINALS PIER 400";
+
   return [
-    {
-      ...base,
+    T(stamps[0], {
+      container_status: "Webhook — carrier data linked",
+      last_location: "SHANGHAI, CN",
+      last_location_terminal: from,
+    }),
+    T(stamps[1], {
       container_status: "Booking confirmed",
-      last_location: "GUAYAQUIL, EC",
-      last_location_terminal: base.shipped_from_terminal,
-      next_location: "GUAYAQUIL, EC - CY",
-      last_updated: "2024-07-05 09:00",
-      timestamp_of_last_location: "2024-07-05 09:00",
-      last_movement_timestamp: "2024-07-05 09:00",
-    },
-    {
-      ...base,
+      last_location: "SHANGHAI, CN",
+      last_location_terminal: from,
+      next_location: "SHANGHAI, CN — CY",
+      next_location_terminal: "YANGSHAN PHASE 4 CY",
+      eta_next_destination: "2025-01-05 20:00",
+    }),
+    T(stamps[2], {
+      container_status: "Packed — cartons sealed at shipper warehouse",
+      last_location: "KUNSHAN, CN",
+      last_location_terminal: "JBS FOODS — EXPORT CFS",
+      atd_last_location: "2025-01-04 14:00",
+      eta_next_destination: "2025-01-05 12:00",
+    }),
+    T(stamps[3], {
       container_status: "Gate out empty for loading",
-      last_location: "GUAYAQUIL, EC",
-      last_location_terminal: base.shipped_from_terminal,
-      atd_origin: "2024-07-08 14:00",
-      last_updated: "2024-07-08 14:00",
-      timestamp_of_last_location: "2024-07-08 14:00",
-      last_movement_timestamp: "2024-07-08 14:00",
-    },
-    {
-      ...base,
+      last_location: "SHANGHAI, CN",
+      last_location_terminal: from,
+    }),
+    T(stamps[4], {
+      container_status: "Rail arrival at quay",
+      last_location: "SHANGHAI, CN",
+      last_location_terminal: "INTERMODAL RAMP — NANHUI",
+    }),
+    T(stamps[5], {
       container_status: "Loaded on vessel",
-      last_location: "GUAYAQUIL, EC",
-      last_location_terminal: base.shipped_from_terminal,
-      atd_origin: "2024-07-09 00:00",
-      eta_final_destination: "2024-08-10 00:00",
-      last_updated: "2024-07-09 06:00",
-      timestamp_of_last_location: "2024-07-09 06:00",
-      last_movement_timestamp: "2024-07-09 06:00",
-    },
-    {
-      ...base,
-      container_status: "In transit",
-      last_location: "AT SEA",
-      last_location_terminal: null,
-      atd_origin: "2024-07-09 00:00",
-      eta_final_destination: "2024-08-10 00:00",
-      last_updated: "2024-07-20 12:00",
-      timestamp_of_last_location: "2024-07-20 12:00",
-      last_movement_timestamp: "2024-07-20 12:00",
-    },
-    {
-      ...base,
-      container_status: "Vessel arrived — discharging",
-      last_location: "TRIPOLI, LY",
-      last_location_terminal: base.shipped_to_terminal,
-      next_location: "TRIPOLI, LY - CY Depot",
-      next_location_terminal: "AL MOURSSALAT CONTAINER YARD",
-      atd_last_location: "2024-08-11 00:00",
-      eta_next_destination: "2024-08-20 00:00",
-      last_updated: "2024-08-12 10:00",
-      timestamp_of_last_location: "2024-08-12 10:00",
-      last_movement_timestamp: "2024-08-12 10:00",
-    },
-    {
-      ...base,
+      last_location: "SHANGHAI, CN",
+      last_location_terminal: from,
+      ...oceanSchedule,
+    }),
+    T(stamps[6], {
+      container_status: "Vessel departed origin",
+      last_location: "EAST CHINA SEA",
+      ...oceanSchedule,
+    }),
+    T(stamps[7], {
+      container_status: "In transit — ocean",
+      last_location: "PACIFIC OCEAN",
+      ...oceanSchedule,
+    }),
+    T(stamps[8], {
+      container_status: "Discharged at transshipment hub",
+      last_location: "BUSAN, KR",
+      last_location_terminal: "HMM PUSAN NEW PORT",
+      next_location: "BUSAN, KR — feeder berth",
+      next_location_terminal: "HMM PUSAN NEW PORT",
+      atd_last_location: "2025-01-14 08:00",
+      eta_next_destination: "2025-01-15 20:00",
+      ...oceanSchedule,
+    }),
+    T(stamps[9], {
+      container_status: "Reloaded on mainline vessel",
+      last_location: "BUSAN, KR",
+      last_location_terminal: "HMM PUSAN NEW PORT",
+      ...oceanSchedule,
+    }),
+    T(stamps[10], {
+      container_status: "Customs exam scheduled (T/S)",
+      last_location: "BUSAN, KR",
+      last_location_terminal: "CUSTOMS EXAM AREA",
+      ...oceanSchedule,
+    }),
+    T(stamps[11], {
+      container_status: "In transit — Pacific main leg",
+      last_location: "PACIFIC OCEAN",
+      ...oceanSchedule,
+    }),
+    T(stamps[12], {
+      container_status: "Delayed — awaiting berth window",
+      last_location: "LOS ANGELES ANCHORAGE",
+      ...oceanSchedule,
+    }),
+    T(stamps[13], {
+      container_status: "Vessel arrived POD",
+      last_location: "LOS ANGELES, US",
+      ...oceanSchedule,
+    }),
+    T(stamps[14], {
+      container_status: "Berthed alongside",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: toT,
+      ...oceanSchedule,
+    }),
+    T(stamps[15], {
+      container_status: "Discharged from vessel",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: toT,
+      ...oceanSchedule,
+    }),
+    T(stamps[16], {
+      container_status: "Customs clearance released",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: "CBP — LONG BEACH",
+      customs_clearance: "2025-01-26 16:00",
+      ...oceanSchedule,
+    }),
+    T(stamps[17], {
+      container_status: "CFS available for pickup",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: "OFF-DOCK CFS",
+      ...oceanSchedule,
+    }),
+    T(stamps[18], {
+      container_status: "Truck dispatched for delivery",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: "PIER 400 — OUTGATE",
+      next_location: "COMMERCE, CA",
+      next_location_terminal: "JBS FOODS — DC 7",
+      atd_last_location: "2025-01-29 09:00",
+      eta_next_destination: "2025-01-29 18:00",
+      ...oceanSchedule,
+    }),
+    T(stamps[19], {
+      container_status: "Delivered to consignee door",
+      last_location: "COMMERCE, CA",
+      last_location_terminal: "JBS FOODS — DC 7",
+      ...oceanSchedule,
+    }),
+    T(stamps[20], {
+      container_status: "Rail arrived at inland ramp",
+      last_location: "SAN BERNARDINO, CA",
+      last_location_terminal: "BNSF INTERMODAL",
+      ...oceanSchedule,
+    }),
+    T(stamps[21], {
+      container_status: "Devanning complete — storage yard",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: "APM EMPTY DEPOT",
+      ...oceanSchedule,
+    }),
+    T(stamps[22], {
       container_status: "Empty received at CY",
-      last_location: "TRIPOLI, LY",
-      last_location_terminal: "SPCO ( SOCIALIST PORTS CO UNDER MINISTRY OF TRANSPORT ) ",
-      next_location: "TRIPOLI, LY - CY Depot",
-      next_location_terminal: "AL MOURSSALAT CONTAINER YARD",
-      atd_last_location: "2024-08-11 00:00",
-      eta_next_destination: "2024-08-20 00:00",
-      timestamp_of_last_location: "2024-08-13 00:00",
-      last_movement_timestamp: "2024-08-17 00:00",
-      customs_clearance: "2024-08-14 00:00",
-      last_updated: "2024-09-09 18:34",
-    },
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: toT,
+      next_location: "LOS ANGELES, US — CY depot",
+      next_location_terminal: "APM EMPTY DEPOT",
+      atd_last_location: "2025-02-02 11:00",
+      eta_next_destination: "2025-02-02 14:00",
+      ...oceanSchedule,
+    }),
+    T(stamps[23], {
+      container_status: "Shipment complete",
+      last_location: "LOS ANGELES, US",
+      last_location_terminal: toT,
+      next_location: "LOS ANGELES, US — CY depot",
+      next_location_terminal: "APM EMPTY DEPOT",
+      atd_last_location: "2025-02-03 08:00",
+      eta_next_destination: "2025-02-03 12:00",
+      ...oceanSchedule,
+    }),
   ];
 }
 

@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { TrackingRequest, Alert } from "@/types/database";
 import { MockJourneySimulator, shouldShowMockJourneyPanel } from "@/components/mock-journey-simulator";
 import { NewTrackingForm } from "@/components/new-tracking-form";
+import { TrackingWorkflowStatusPill } from "@/components/status-pills";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
 export function TrackingDashboard() {
+  const router = useRouter();
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const [requests, setRequests] = useState<TrackingRequest[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -125,17 +128,42 @@ export function TrackingDashboard() {
                     <th className="py-2 pr-4 font-medium">Container</th>
                     <th className="py-2 pr-4 font-medium">Status</th>
                     <th className="py-2 pr-4 font-medium">Last sync</th>
+                    <th className="py-2 pr-4 font-medium">Details</th>
                   </tr>
                 </thead>
                 <tbody>
                   {requests.map((r) => (
-                    <tr key={r.id} className="border-b border-zinc-100 dark:border-zinc-900">
+                    <tr
+                      key={r.id}
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open tracking request ${r.container_number}`}
+                      className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-900 dark:hover:bg-zinc-900/50"
+                      onClick={() => router.push(`/requests/${r.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/requests/${r.id}`);
+                        }
+                      }}
+                    >
                       <td className="py-2 pr-4 font-mono">{r.container_number}</td>
-                      <td className="py-2 pr-4">{r.status}</td>
+                      <td className="py-2 pr-4">
+                        <TrackingWorkflowStatusPill status={r.status} />
+                      </td>
                       <td className="py-2 pr-4 text-zinc-500">
                         {r.last_sync_at
                           ? new Date(r.last_sync_at).toLocaleString()
                           : r.error_message ?? "—"}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <Link
+                          href={`/requests/${r.id}`}
+                          className="text-xs font-medium text-zinc-900 underline dark:text-zinc-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Details
+                        </Link>
                       </td>
                     </tr>
                   ))}

@@ -208,3 +208,358 @@ begin
     (v_org_id, v_member_user_id, 'member'),
     (v_org_id, v_org_admin_user_id, 'admin');
 end $$;
+
+-- Demo container + tracking + shared report (customer link: /report/<id> in the app)
+insert into public.containers (
+  id,
+  organization_id,
+  container_number,
+  normalized_number,
+  carrier,
+  status,
+  location,
+  raw_external,
+  last_synced_at,
+  last_checked_at
+) values (
+  'b0000001-0000-4000-8000-000000000010',
+  'a0000001-0000-4000-8000-000000000001',
+  'MSCU1234567',
+  'MSCU1234567',
+  'MSC',
+  'Shipment complete',
+  $SHIP_LOC${
+    "container_id": "MSCU1234567",
+    "container_type": "40' HIGH CUBE REEFER",
+    "container_status": "Shipment complete",
+    "tare": 3900,
+    "shipping_line_name": "Mediterranean Shipping Company",
+    "shipping_line_id": "0015",
+    "shipped_from": "SHANGHAI, CN",
+    "shipped_from_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4",
+    "shipped_to": "LOS ANGELES, US",
+    "shipped_to_terminal": "APM TERMINALS PIER 400",
+    "loading_port": "SHANGHAI, CN",
+    "discharging_port": "LOS ANGELES, US",
+    "last_location": "LOS ANGELES, US",
+    "last_location_terminal": "APM TERMINALS PIER 400",
+    "next_location": "LOS ANGELES, US — CY depot",
+    "next_location_terminal": "APM EMPTY DEPOT",
+    "atd_origin": "2025-01-06 18:00",
+    "eta_final_destination": "2025-02-05 00:00",
+    "atd_last_location": "2025-02-03 08:00",
+    "eta_next_destination": "2025-02-03 12:00",
+    "customs_clearance": "2025-01-26 16:00",
+    "timestamp_of_last_location": "2025-02-04 10:00",
+    "last_movement_timestamp": "2025-02-04 10:00",
+    "last_updated": "2025-02-04 10:00",
+    "last_vessel_name": "MSC LORETO",
+    "last_voyage_number": "FY428W",
+    "current_vessel_name": "MSC LORETO",
+    "current_voyage_number": "FY428W",
+    "bill_of_lading": "MEDUSH914201"
+  }$SHIP_LOC$::jsonb,
+  $SHIP_RAW${
+    "data": {
+      "container_id": "MSCU1234567",
+      "container_type": "40' HIGH CUBE REEFER",
+      "container_status": "Shipment complete",
+      "shipping_line_name": "Mediterranean Shipping Company",
+      "shipping_line_id": "0015",
+      "tare": 3900,
+      "shipped_from": "SHANGHAI, CN",
+      "shipped_from_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4",
+      "shipped_to": "LOS ANGELES, US",
+      "shipped_to_terminal": "APM TERMINALS PIER 400",
+      "atd_origin": "2025-01-06 18:00",
+      "eta_final_destination": "2025-02-05 00:00",
+      "last_location": "LOS ANGELES, US",
+      "last_location_terminal": "APM TERMINALS PIER 400",
+      "next_location": "LOS ANGELES, US — CY depot",
+      "next_location_terminal": "APM EMPTY DEPOT",
+      "atd_last_location": "2025-02-03 08:00",
+      "eta_next_destination": "2025-02-03 12:00",
+      "timestamp_of_last_location": "2025-02-04 10:00",
+      "last_movement_timestamp": "2025-02-04 10:00",
+      "loading_port": "SHANGHAI, CN",
+      "discharging_port": "LOS ANGELES, US",
+      "customs_clearance": "2025-01-26 16:00",
+      "bill_of_lading": "MEDUSH914201",
+      "last_vessel_name": "MSC LORETO",
+      "last_voyage_number": "FY428W",
+      "current_vessel_name": "MSC LORETO",
+      "current_voyage_number": "FY428W",
+      "last_updated": "2025-02-04 10:00"
+    }
+  }$SHIP_RAW$::jsonb,
+  now(),
+  now()
+);
+
+insert into public.tracking_requests (
+  id,
+  organization_id,
+  created_by,
+  container_id,
+  container_number,
+  normalized_number,
+  status,
+  last_sync_at,
+  next_check_at
+) values (
+  'b0000001-0000-4000-8000-000000000011',
+  'a0000001-0000-4000-8000-000000000001',
+  'a0000004-0000-4000-8000-000000000004',
+  'b0000001-0000-4000-8000-000000000010',
+  'MSCU1234567',
+  'MSCU1234567',
+  'completed',
+  now(),
+  now() + interval '7 days'
+);
+
+-- Full demo journey (Shanghai → LA): mix of event_type values (WEBHOOK, SYNC, …) for UI phases; final carrier-facing status matches containers.status.
+insert into public.tracking_events (
+  tracking_request_id,
+  event_type,
+  status,
+  location,
+  occurred_at,
+  raw_payload
+) values
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'WEBHOOK',
+    'Webhook — carrier data linked',
+    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    now() - interval '25 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Booking confirmed',
+    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    now() - interval '24 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Packed — cartons sealed at shipper warehouse',
+    '{"last_location": "KUNSHAN, CN", "last_location_terminal": "JBS FOODS — EXPORT CFS"}'::jsonb,
+    now() - interval '23 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Gate out empty for loading',
+    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    now() - interval '22 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Rail arrival at quay',
+    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "INTERMODAL RAMP — NANHUI"}'::jsonb,
+    now() - interval '21 days 18 hours',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Loaded on vessel',
+    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    now() - interval '21 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Vessel departed origin',
+    '{"last_location": "EAST CHINA SEA"}'::jsonb,
+    now() - interval '20 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'In transit — ocean',
+    '{"last_location": "PACIFIC OCEAN"}'::jsonb,
+    now() - interval '18 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Discharged at transshipment hub',
+    '{"last_location": "BUSAN, KR", "last_location_terminal": "HMM PUSAN NEW PORT"}'::jsonb,
+    now() - interval '15 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Reloaded on mainline vessel',
+    '{"last_location": "BUSAN, KR", "last_location_terminal": "HMM PUSAN NEW PORT"}'::jsonb,
+    now() - interval '14 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Customs exam scheduled (T/S)',
+    '{"last_location": "BUSAN, KR", "last_location_terminal": "CUSTOMS EXAM AREA"}'::jsonb,
+    now() - interval '13 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'In transit — Pacific main leg',
+    '{"last_location": "PACIFIC OCEAN"}'::jsonb,
+    now() - interval '12 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Delayed — awaiting berth window',
+    '{"last_location": "LOS ANGELES ANCHORAGE"}'::jsonb,
+    now() - interval '10 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Vessel arrived POD',
+    '{"last_location": "LOS ANGELES, US"}'::jsonb,
+    now() - interval '9 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Berthed alongside',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '8 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Discharged from vessel',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '7 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Customs clearance released',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "CBP — LONG BEACH"}'::jsonb,
+    now() - interval '6 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'CFS available for pickup',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "OFF-DOCK CFS"}'::jsonb,
+    now() - interval '5 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Truck dispatched for delivery',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "PIER 400 — OUTGATE"}'::jsonb,
+    now() - interval '4 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Delivered to consignee door',
+    '{"last_location": "COMMERCE, CA", "last_location_terminal": "JBS FOODS — DC 7"}'::jsonb,
+    now() - interval '3 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Rail arrived at inland ramp',
+    '{"last_location": "SAN BERNARDINO, CA", "last_location_terminal": "BNSF INTERMODAL"}'::jsonb,
+    now() - interval '2 days 12 hours',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Devanning complete — storage yard',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM EMPTY DEPOT"}'::jsonb,
+    now() - interval '2 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Empty received at CY',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '36 hours',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Shipment complete',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '24 hours',
+    '{}'::jsonb
+  );
+
+insert into public.shared_reports (
+  id,
+  organization_id,
+  tracking_request_id,
+  created_by,
+  title,
+  settings
+) values (
+  'b0000001-0000-4000-8000-0000000000f1',
+  'a0000001-0000-4000-8000-000000000001',
+  'b0000001-0000-4000-8000-000000000011',
+  'a0000004-0000-4000-8000-000000000004',
+  'JBS Foods — demo shipment',
+  '{"include_alerts": true, "include_raw_external": false}'::jsonb
+);
+
+insert into public.report_messages (
+  tracking_request_id,
+  author_user_id,
+  author_kind,
+  is_internal,
+  body
+) values (
+  'b0000001-0000-4000-8000-000000000011',
+  'a0000004-0000-4000-8000-000000000004',
+  'member',
+  true,
+  'Internal: chassis pre-pull arranged for LA terminal.'
+);
+
+insert into public.report_messages (
+  tracking_request_id,
+  author_kind,
+  is_internal,
+  author_display_name,
+  body
+) values (
+  'b0000001-0000-4000-8000-000000000011',
+  'customer',
+  false,
+  'Alex (JBS)',
+  'Thanks — please confirm once the container is available for pickup.'
+);

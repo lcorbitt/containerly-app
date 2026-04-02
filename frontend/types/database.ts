@@ -63,3 +63,39 @@ export type Alert = {
   acknowledged_at: string | null;
   created_at: string;
 };
+
+export type SharedReport = {
+  id: string;
+  organization_id: string;
+  tracking_request_id: string;
+  created_by: string;
+  title: string | null;
+  settings: Record<string, unknown>;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ReportMessage = {
+  id: string;
+  organization_id: string;
+  tracking_request_id: string;
+  author_user_id: string | null;
+  author_kind: string;
+  is_internal: boolean;
+  author_display_name: string | null;
+  body: string;
+  created_at: string;
+};
+
+export type ReportActivity = {
+  id: string;
+  organization_id: string;
+  tracking_request_id: string;
+  shared_report_id: string | null;
+  actor_user_id: string | null;
+  action: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};

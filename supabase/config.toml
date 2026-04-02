@@ -31,3 +31,9 @@ verify_jwt = false
 
 [functions.sync-stale-requests]
 verify_jwt = false
+
+[functions.get-public-report]
+verify_jwt = false
+
+[functions.post-public-report-message]
+verify_jwt = false

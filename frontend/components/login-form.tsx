@@ -20,6 +20,10 @@ export function LoginForm() {
     e.preventDefault();
     setMessage(null);
     setLoading(true);
+    // Yield so React can paint loading state before the auth round-trip (helps fast/local Supabase too).
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
     try {
       const supabase = createClient();
       if (mode === "signup") {
@@ -51,30 +55,37 @@ export function LoginForm() {
       <p className="mt-1 text-sm text-zinc-500">
         Use Supabase Auth (email / password). Create an organization on the dashboard.
       </p>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
+      <form
+        onSubmit={submit}
+        className="mt-6 flex flex-col gap-3"
+        aria-busy={loading}
+      >
         <input
           type="email"
           autoComplete="email"
-          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={loading}
         />
         <input
           type="password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
+          disabled={loading}
         />
         <div className="flex gap-2 text-xs">
           <button
             type="button"
-            className={mode === "signin" ? "font-semibold text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}
+            disabled={loading}
+            className={`disabled:opacity-50 ${mode === "signin" ? "font-semibold text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}`}
             onClick={() => setMode("signin")}
           >
             Sign in
@@ -82,19 +93,37 @@ export function LoginForm() {
           <span className="text-zinc-300">|</span>
           <button
             type="button"
-            className={mode === "signup" ? "font-semibold text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}
+            disabled={loading}
+            className={`disabled:opacity-50 ${mode === "signup" ? "font-semibold text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}`}
             onClick={() => setMode("signup")}
           >
             Sign up
           </button>
         </div>
-        {message ? <p className="text-sm text-zinc-600 dark:text-zinc-400">{message}</p> : null}
+        {message ? (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400" role="status">
+            {message}
+          </p>
+        ) : null}
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-foreground py-2 text-sm font-medium text-background disabled:opacity-50 cursor-pointer"
+          aria-busy={loading}
+          className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-900 text-sm font-medium text-white transition-[opacity,transform] active:scale-[0.99] disabled:cursor-wait disabled:opacity-90 dark:bg-zinc-100 dark:text-zinc-900"
         >
-          {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Continue"}
+          {loading ? (
+            <>
+              <span
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+                aria-hidden
+              />
+              <span>{mode === "signup" ? "Creating account…" : "Signing in…"}</span>
+            </>
+          ) : mode === "signup" ? (
+            "Create account"
+          ) : (
+            "Continue"
+          )}
         </button>
       </form>
       <p className="mt-4 text-center text-xs text-zinc-400">

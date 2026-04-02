@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 :root {
   --background: #ffffff;
@@ -8,7 +9,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-fustat);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -23,4 +24,94 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Public marketing shell */
+.landing-root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #030303;
+  color: #fafafa;
+}
+
+.landing-grid-bg {
+  background-color: #030303;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--color-primary-orange) 12%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-primary-orange) 12%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  background-position: center top;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+}
+
+.landing-hero-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -20% -10% auto;
+  height: min(70vh, 520px);
+  background: radial-gradient(
+    ellipse 50% 45% at 50% 0%,
+    color-mix(in srgb, var(--color-primary-orange) 22%, transparent) 0%,
+    transparent 65%
+  );
+}
+
+/* App-wide: interactive buttons show pointer; disabled stays default arrow */
+button:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled {
+  cursor: not-allowed;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.toast-enter {
+  animation: toast-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(0.75rem) scale(0.96);
+  }
+}
+
+.toast-exit {
+  animation: toast-exit 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-exit {
+    animation-duration: 0.15s;
+  }
 }
