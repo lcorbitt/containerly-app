@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export function CreateOrgForm({ onCreated }: { onCreated: (orgId: string) => void }) {
   const [name, setName] = useState("");
@@ -14,13 +13,20 @@ export function CreateOrgForm({ onCreated }: { onCreated: (orgId: string) => voi
     setError(null);
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error: rpcErr } = await supabase.rpc("create_organization", {
-        org_name: name.trim(),
-        org_slug: slug.trim() || null,
+      const res = await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          slug: slug.trim() || null,
+        }),
       });
-      if (rpcErr) throw rpcErr;
-      onCreated(data as string);
+      const payload = (await res.json()) as { id?: string; error?: string };
+      if (!res.ok) {
+        throw new Error(payload.error ?? res.statusText);
+      }
+      if (!payload.id) throw new Error("Missing organization id");
+      onCreated(payload.id);
       setName("");
       setSlug("");
     } catch (err) {

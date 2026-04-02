@@ -1,0 +1,276 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  ADMIN_TABLE_HEAD_ROW,
+  ADMIN_TABLE_ROW,
+  ADMIN_TABLE_TD,
+  ADMIN_TABLE_TH,
+  AdminTableSection,
+} from "@/components/admin-table-section";
+import type { Profile } from "@/types/database";
+
+type Row = Pick<Profile, "id" | "email" | "role" | "created_at"> & {
+  /** Comma-separated organization names from organization_members, or "—" if none */
+  organizations_label: string;
+};
+
+const ROLE_OPTIONS: Profile["role"][] = ["user", "superadmin"];
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
+
+function matchesSearch(row: Row, q: string): boolean {
+  if (!q.trim()) return true;
+  const s = q.trim().toLowerCase();
+  return (
+    (row.email?.toLowerCase().includes(s) ?? false) ||
+    row.id.toLowerCase().includes(s) ||
+    row.organizations_label.toLowerCase().includes(s)
+  );
+}
+
+export function AdminProfilesTable({
+  initialProfiles,
+  currentUserId,
+}: {
+  initialProfiles: Row[];
+  currentUserId: string;
+}) {
+  const [profiles, setProfiles] = useState<Row[]>(initialProfiles);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(50);
+
+  useEffect(() => {
+    setProfiles(initialProfiles);
+  }, [initialProfiles]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, pageSize]);
+
+  async function updateRole(profileId: string, role: Profile["role"]) {
+    setError(null);
+    setPendingId(profileId);
+    try {
+      const res = await fetch(`/api/profiles/${profileId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      const payload = (await res.json()) as {
+        profile?: Pick<Profile, "id" | "email" | "role" | "created_at">;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error ?? res.statusText);
+      }
+      if (payload.profile) {
+        const nextRole = payload.profile.role;
+        setProfiles((prev) =>
+          prev.map((p) => (p.id === profileId ? { ...p, role: nextRole } : p)),
+        );
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  const sorted = useMemo(
+    () => [...profiles].sort((a, b) => (a.email ?? a.id).localeCompare(b.email ?? b.id)),
+    [profiles],
+  );
+
+  const filtered = useMemo(() => sorted.filter((row) => matchesSearch(row, search)), [sorted, search]);
+
+  useEffect(() => {
+    const tp = Math.max(1, Math.ceil(filtered.length / pageSize));
+    setPage((p) => Math.min(p, tp));
+  }, [filtered.length, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageRows = useMemo(
+    () => filtered.slice(pageStart, pageStart + pageSize),
+    [filtered, pageStart, pageSize],
+  );
+
+  const summaryLine =
+    filtered.length === sorted.length
+      ? `${sorted.length.toLocaleString()} account${sorted.length === 1 ? "" : "s"}`
+      : `${filtered.length.toLocaleString()} of ${sorted.length.toLocaleString()} accounts`;
+
+  const pageRange =
+    filtered.length === 0
+      ? "0–0"
+      : `${(pageStart + 1).toLocaleString()}–${Math.min(pageStart + pageSize, filtered.length).toLocaleString()}`;
+
+  const toolbar = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex min-w-0 max-w-md flex-1 flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          Search
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Email, user ID, or organization…"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+          />
+        </label>
+        <label className="flex w-full min-w-[6rem] max-w-[8rem] flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:w-28">
+          Page size
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])}
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{summaryLine}</p>
+    </div>
+  );
+
+  const pagination =
+    filtered.length > 0 ? (
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="tabular-nums text-zinc-600 dark:text-zinc-400">
+          Rows <span className="font-medium text-zinc-800 dark:text-zinc-200">{pageRange}</span> of{" "}
+          {filtered.length.toLocaleString()}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-zinc-700"
+          >
+            Previous
+          </button>
+          <span className="min-w-[5rem] text-center text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+            {safePage} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={safePage >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-zinc-700"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    ) : null;
+
+  return (
+    <AdminTableSection
+      title="Platform accounts"
+      description={
+        <>
+          Global flag <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">profiles.role</code> —{" "}
+          <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">superadmin</code> bypasses tenant RLS.
+          Not an organization role.
+        </>
+      }
+      toolbar={toolbar}
+      footer={
+        <>
+          {pagination}
+          <p className="mt-2 text-zinc-500">
+            Your own row is read-only so you cannot remove your platform superadmin access by accident.
+          </p>
+        </>
+      }
+    >
+      {error ? (
+        <p className="p-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : profiles.length === 0 ? (
+        <p className="p-6 text-sm text-zinc-500">No profiles yet.</p>
+      ) : filtered.length === 0 ? (
+        <p className="p-6 text-sm text-zinc-500">No rows match your search.</p>
+      ) : (
+        <table className="w-full min-w-[56rem] table-fixed border-collapse text-left">
+          <colgroup>
+            <col className="w-[20%]" />
+            <col className="w-[22%]" />
+            <col className="w-[24%]" />
+            <col className="w-[12%]" />
+            <col className="w-[22%]" />
+          </colgroup>
+          <thead>
+            <tr className={ADMIN_TABLE_HEAD_ROW}>
+              <th className={ADMIN_TABLE_TH}>Email</th>
+              <th className={ADMIN_TABLE_TH}>Organizations</th>
+              <th className={ADMIN_TABLE_TH}>User ID</th>
+              <th className={ADMIN_TABLE_TH}>Platform role</th>
+              <th className={ADMIN_TABLE_TH}>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((row) => {
+              const isSelf = row.id === currentUserId;
+              const busy = pendingId === row.id;
+              return (
+                <tr key={row.id} className={ADMIN_TABLE_ROW}>
+                  <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
+                    <span className="block truncate" title={row.email ?? undefined}>
+                      {row.email ?? "—"}
+                    </span>
+                  </td>
+                  <td className={`${ADMIN_TABLE_TD} text-zinc-800 dark:text-zinc-200`}>
+                    <span
+                      className="block truncate text-sm"
+                      title={row.organizations_label === "—" ? undefined : row.organizations_label}
+                    >
+                      {row.organizations_label}
+                    </span>
+                  </td>
+                  <td className={`${ADMIN_TABLE_TD} font-mono text-xs text-zinc-600 dark:text-zinc-300`}>
+                    <span className="block truncate" title={row.id}>
+                      {row.id}
+                    </span>
+                  </td>
+                  <td className={ADMIN_TABLE_TD}>
+                    <select
+                      className="w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+                      value={row.role}
+                      disabled={isSelf || busy}
+                      title={
+                        isSelf ? "You cannot change your own role from this screen." : undefined
+                      }
+                      aria-label={`Platform role for ${row.email ?? row.id}`}
+                      onChange={(e) => {
+                        const next = e.target.value as Profile["role"];
+                        if (next === row.role) return;
+                        void updateRole(row.id, next);
+                      }}
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
+                    {new Date(row.created_at).toLocaleString()}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </AdminTableSection>
+  );
+}

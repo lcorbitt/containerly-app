@@ -92,7 +92,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-foreground py-2 text-sm font-medium text-background disabled:opacity-50"
+          className="rounded-lg bg-foreground py-2 text-sm font-medium text-background disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Continue"}
         </button>

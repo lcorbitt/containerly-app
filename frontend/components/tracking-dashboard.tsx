@@ -1,21 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Organization, TrackingRequest, Alert } from "@/types/database";
-import { CreateOrgForm } from "@/components/create-org-form";
+import type { TrackingRequest, Alert } from "@/types/database";
+import { MockJourneySimulator, shouldShowMockJourneyPanel } from "@/components/mock-journey-simulator";
 import { NewTrackingForm } from "@/components/new-tracking-form";
+import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
-type OrgRow = {
-  role: string;
-  organizations: Organization | null;
-};
-
-export function TrackingDashboard({ initialOrgs }: { initialOrgs: OrgRow[] }) {
-  const [orgs, setOrgs] = useState(initialOrgs);
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(
-    initialOrgs[0]?.organizations?.id ?? null,
-  );
+export function TrackingDashboard() {
+  const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const [requests, setRequests] = useState<TrackingRequest[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
@@ -44,27 +38,6 @@ export function TrackingDashboard({ initialOrgs }: { initialOrgs: OrgRow[] }) {
     void loadLists();
   }, [loadLists]);
 
-  const onOrgCreated = useCallback((id: string) => {
-    void (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("organization_members")
-        .select("role, organizations(id, name, slug, created_at, updated_at)")
-        .eq("user_id", user.id);
-      const rows: OrgRow[] = (data ?? []).map((row) => {
-        const o = row.organizations;
-        const org = Array.isArray(o) ? o[0] : o;
-        return { role: row.role as string, organizations: org ?? null };
-      });
-      setOrgs(rows);
-      setSelectedOrgId(id);
-    })();
-  }, []);
-
   const selectedOrg = orgs.find((o) => o.organizations?.id === selectedOrgId)?.organizations;
 
   return (
@@ -79,29 +52,22 @@ export function TrackingDashboard({ initialOrgs }: { initialOrgs: OrgRow[] }) {
       </header>
 
       {orgs.length === 0 ? (
-        <CreateOrgForm onCreated={onOrgCreated} />
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            You are not a member of any organization yet.
+          </p>
+          {isSuperAdmin ? (
+            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+              As platform superadmin you still pick an org for context, or create one under{" "}
+              <Link href="/admin/organizations" className="font-medium text-zinc-900 underline dark:text-zinc-100">
+                Platform → Organizations
+              </Link>
+              .
+            </p>
+          ) : null}
+        </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-zinc-500">Organization</span>
-              <select
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
-                value={selectedOrgId ?? ""}
-                onChange={(e) => setSelectedOrgId(e.target.value || null)}
-              >
-                {orgs.map((row) =>
-                  row.organizations ? (
-                    <option key={row.organizations.id} value={row.organizations.id}>
-                      {row.organizations.name}
-                    </option>
-                  ) : null,
-                )}
-              </select>
-            </label>
-            <CreateOrgForm onCreated={onOrgCreated} />
-          </div>
-
           {selectedOrgId ? (
             <div className="grid gap-6 md:grid-cols-2">
               <NewTrackingForm organizationId={selectedOrgId} onCreated={() => void loadLists()} />
@@ -129,6 +95,14 @@ export function TrackingDashboard({ initialOrgs }: { initialOrgs: OrgRow[] }) {
                 </ul>
               </section>
             </div>
+          ) : null}
+
+          {shouldShowMockJourneyPanel() && selectedOrgId ? (
+            <MockJourneySimulator
+              organizationId={selectedOrgId}
+              requests={requests}
+              onComplete={() => void loadLists()}
+            />
           ) : null}
 
           <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">

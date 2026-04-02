@@ -5,6 +5,11 @@ import { logExternalCall } from "./logger.ts";
 
 const STALE_MS = Number(Deno.env.get("CONTAINER_STALE_MS") ?? 15 * 60 * 1000);
 
+/** After a successful sync with a tracking request, when cron should reconsider this row (default 1h). Lower in dev to test cron. */
+const TRACKING_NEXT_CHECK_MS = Number(
+  Deno.env.get("TRACKING_NEXT_CHECK_MS") ?? 60 * 60 * 1000,
+);
+
 export async function syncContainerByNumber(
   userClient: SupabaseClient,
   admin: SupabaseClient,
@@ -134,7 +139,7 @@ async function appendEventsAndAlerts(
       container_id: containerId,
       status: "active",
       last_sync_at: new Date().toISOString(),
-      next_check_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      next_check_at: new Date(Date.now() + TRACKING_NEXT_CHECK_MS).toISOString(),
       error_message: null,
     })
     .eq("id", trackingRequestId);

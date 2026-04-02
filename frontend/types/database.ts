@@ -1,3 +1,16 @@
+/** Global account type: platform operator (RLS bypass) vs normal user. */
+export type ProfileRole = "user" | "superadmin";
+
+export type Profile = {
+  id: string;
+  email: string | null;
+  role: ProfileRole;
+  created_at: string;
+};
+
+/** Tenant-scoped role in organization_members (separate from profiles.superadmin). */
+export type OrganizationMemberRole = "admin" | "member";
+
 export type Organization = {
   id: string;
   name: string;
@@ -10,7 +23,7 @@ export type OrganizationMember = {
   id: string;
   organization_id: string;
   user_id: string;
-  role: "owner" | "admin" | "member";
+  role: OrganizationMemberRole;
   created_at: string;
 };
 

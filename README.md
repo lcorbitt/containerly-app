@@ -5,7 +5,7 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
 ## Layout
 
 - `frontend/` — Next.js + Tailwind + Geist (via `next/font`)
-- `supabase/migrations/` — schema, indexes, RLS, `create_organization` RPC
+- `supabase/migrations/` — schema, indexes, RLS, `profiles` (global roles), `organization_members` (org roles)
 - `supabase/functions/` — Edge Functions (`create-tracking-request`, `get-container-details`, `search-containers`, `sync-container`, `sync-stale-requests`)
 
 ## Quick start
@@ -16,7 +16,7 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
    cd supabase && supabase db push
    ```
 
-   Or paste `supabase/migrations/20250401000000_initial_schema.sql` into the SQL editor.
+   Apply migrations in order (or use `supabase db push` for the full chain).
 
 2. Deploy Edge Functions and set secrets (service role is injected automatically; add these in the dashboard or CLI):
 
@@ -32,7 +32,7 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
    cp frontend/.env.local.example frontend/.env.local
    ```
 
-   Fill `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   Fill `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (server-only; required for superadmin org creation via `POST /api/organizations`).
 
    ```bash
    cd frontend && npm run dev
@@ -40,8 +40,10 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
 
 ## Security notes
 
-- The browser only uses the **anon** key; **service role** stays on the server (Edge Functions / Supabase backend).
-- All tenant data is scoped with **RLS** via `organization_id` and `is_org_member()`.
+- The browser only uses the **anon** key; **service role** stays on the server (Edge Functions, Next.js Route Handlers such as `/api/organizations`).
+- **Three access tiers:** (1) **Platform superadmin** — `profiles.role = superadmin`, not an org member; RLS helpers treat you as bypassing tenant checks (`is_superadmin()`). (2) **Org admin** — `profiles.role = user` and `organization_members.role = admin` for that org. (3) **Org member** — `profiles.role = user` and `organization_members.role = member`.
+- Promote someone to platform superadmin with SQL or the Platform UI, e.g. `update public.profiles set role = 'superadmin' where id = '<user uuid>';` — not from an untrusted client.
+- All tenant data is scoped with **RLS** via `organization_id` and membership helpers.
 - `external_api_logs` has deny-all RLS for JWT clients; inserts use the service role from Edge Functions.
 
 ## External API

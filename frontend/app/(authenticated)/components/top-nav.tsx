@@ -42,11 +42,11 @@ export function TopNav({ email }: { email: string }) {
   const initials = initialsFromEmail(email);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+    <header className="z-40 shrink-0 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+      <div className="flex h-14 w-full items-center justify-between p4 md:p-8">
         <Link
           href="/dashboard"
-          className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+          className="text-sm md:text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
           Containerly
         </Link>

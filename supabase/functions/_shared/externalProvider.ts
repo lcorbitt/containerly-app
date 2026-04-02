@@ -24,6 +24,30 @@ function hashString(s: string): number {
   return Math.abs(h);
 }
 
+function buildContainersUrl(baseUrl: string, normalizedNumber: string): string {
+  const base = baseUrl.replace(/\/$/, "");
+  let url = `${base}/containers/${encodeURIComponent(normalizedNumber)}`;
+  const shippingLine = Deno.env.get("EXTERNAL_TRACKING_SHIPPING_LINE");
+  if (shippingLine) {
+    const q = new URLSearchParams({ shipping_line: shippingLine });
+    url += `?${q.toString()}`;
+  }
+  return url;
+}
+
+function externalRequestHeaders(baseUrl: string, apiKey: string): Record<string, string> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const useApiKey =
+    /jsoncargo\.com/i.test(baseUrl) ||
+    Deno.env.get("EXTERNAL_TRACKING_AUTH") === "x-api-key";
+  if (useApiKey) {
+    headers["x-api-key"] = apiKey;
+  } else {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+  return headers;
+}
+
 export async function fetchLiveFromProvider(
   normalizedNumber: string,
 ): Promise<NormalizedContainer> {
@@ -31,15 +55,10 @@ export async function fetchLiveFromProvider(
   const apiKey = Deno.env.get("EXTERNAL_TRACKING_API_KEY");
 
   if (baseUrl && apiKey) {
-    const res = await fetch(
-      `${baseUrl.replace(/\/$/, "")}/containers/${encodeURIComponent(normalizedNumber)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          Accept: "application/json",
-        },
-      },
-    );
+    const url = buildContainersUrl(baseUrl, normalizedNumber);
+    const res = await fetch(url, {
+      headers: externalRequestHeaders(baseUrl, apiKey),
+    });
     if (!res.ok) {
       throw new Error(`External API ${res.status}: ${await res.text()}`);
     }
@@ -70,10 +89,63 @@ export async function fetchLiveFromProvider(
   };
 }
 
+/** JSON Cargo: GET .../containers/{tracking_number}?shipping_line=MSC — body `{ data: { container_id, container_status, ... } }`. */
+function mapJsonCargoData(
+  normalizedNumber: string,
+  inner: Record<string, unknown>,
+  rawEnvelope: Record<string, unknown>,
+): NormalizedContainer {
+  const container_number = String(inner.container_id ?? inner.container_number ?? normalizedNumber);
+  const status = String(inner.container_status ?? "UNKNOWN");
+  const occurred_at = String(
+    inner.last_updated ??
+      inner.timestamp_of_last_location ??
+      inner.last_movement_timestamp ??
+      new Date().toISOString(),
+  );
+  const location: Record<string, unknown> = {
+    last_location: inner.last_location,
+    last_location_terminal: inner.last_location_terminal,
+    next_location: inner.next_location,
+    next_location_terminal: inner.next_location_terminal,
+    loading_port: inner.loading_port,
+    discharging_port: inner.discharging_port,
+    shipped_from: inner.shipped_from,
+    shipped_to: inner.shipped_to,
+  };
+  const carrier = inner.shipping_line_name != null ? String(inner.shipping_line_name) : null;
+  return {
+    container_number,
+    carrier,
+    status,
+    location,
+    occurred_at,
+    events: [
+      {
+        event_type: "STATUS",
+        status,
+        location,
+        occurred_at,
+      },
+    ],
+    raw: rawEnvelope,
+  };
+}
+
 function mapExternalPayload(
   normalizedNumber: string,
   data: Record<string, unknown>,
 ): NormalizedContainer {
+  const nested = data.data;
+  if (
+    nested &&
+    typeof nested === "object" &&
+    !Array.isArray(nested) &&
+    ("container_id" in nested || "container_status" in nested)
+  ) {
+    return mapJsonCargoData(normalizedNumber, nested as Record<string, unknown>, data);
+  }
+
   const status = String(data.status ?? data.current_status ?? "UNKNOWN");
   const occurred_at = String(data.updated_at ?? data.timestamp ?? new Date().toISOString());
   return {
