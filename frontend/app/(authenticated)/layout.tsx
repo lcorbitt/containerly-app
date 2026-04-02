@@ -49,9 +49,9 @@ export default async function AuthenticatedLayout({
   }
 
   return (
-    <div className="flex h-[100dvh] min-h-0 w-full flex-1 flex-col overflow-hidden">
+    <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
       <TopNav email={user.email ?? ""} />
-      <div className="flex min-h-0 flex-1 items-stretch">
+      <div className="flex min-h-0 overflow-hidden">
         <SideNav isSuperAdmin={isSuperAdmin} />
         <OrganizationWorkspaceProvider
           initialOrgs={initialOrgs}

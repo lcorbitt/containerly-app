@@ -1,14 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { invokeEdgeFunction } from "@/lib/api/edge";
+import { useEffect, useRef, useState } from "react";
+import { syncContainerAction } from "@/app/actions/edge-functions";
 import type { TrackingRequest } from "@/types/database";
 
 /** Must match stage count in `scripts/mock-jsoncargo-server.mjs`. */
 const MOCK_TRIP_STAGES = 6;
 
-const mockControlBase = process.env.NEXT_PUBLIC_MOCK_JSONCARGO_URL?.replace(/\/$/, "") ?? "";
+/**
+ * Base URL for browser → mock server control routes (`/__dev/reset`).
+ * Edge Functions use `EXTERNAL_TRACKING_API_URL` in supabase/functions/.env instead.
+ * In development, default to localhost so reset works without extra env.
+ */
+function getMockControlBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_MOCK_JSONCARGO_URL?.replace(/\/$/, "").trim();
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === "development") {
+    return "http://127.0.0.1:9999";
+  }
+  return "";
+}
+
+const mockControlBase = getMockControlBase();
+
+async function waitOrAbort(totalMs: number, cancelledRef: React.MutableRefObject<boolean>): Promise<void> {
+  const step = 250;
+  let waited = 0;
+  while (waited < totalMs) {
+    if (cancelledRef.current) return;
+    const slice = Math.min(step, totalMs - waited);
+    await new Promise((r) => setTimeout(r, slice));
+    waited += slice;
+  }
+}
 
 export function MockJourneySimulator({
   organizationId,
@@ -24,6 +48,8 @@ export function MockJourneySimulator({
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const stopRequestedRef = useRef(false);
 
   useEffect(() => {
     if (requests.length === 0) {
@@ -37,12 +63,48 @@ export function MockJourneySimulator({
 
   const selected = requests.find((r) => r.id === selectedId);
 
+  async function resetMockTrip(): Promise<void> {
+    if (!selected) {
+      setError("Choose a tracking request first.");
+      return;
+    }
+    if (!mockControlBase) {
+      setError(
+        "Set NEXT_PUBLIC_MOCK_JSONCARGO_URL (e.g. http://127.0.0.1:9999) so the browser can call the mock reset API.",
+      );
+      return;
+    }
+    setError(null);
+    setResetting(true);
+    try {
+      const rr = await fetch(`${mockControlBase}/__dev/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tracking_number: selected.container_number }),
+      });
+      if (!rr.ok) {
+        throw new Error(`Mock reset failed (${rr.status}). Is the mock server running on :9999?`);
+      }
+      setLog((prev) => [...prev, `Reset: mock trip back to stage 0 for ${selected.container_number}.`]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reset failed");
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  function stopSimulation() {
+    stopRequestedRef.current = true;
+    setLog((prev) => [...prev, "Stop requested — finishing current step, then halting."]);
+  }
+
   async function run() {
     if (!selected) {
       setError("Choose a tracking request that uses your mock container number.");
       return;
     }
     setError(null);
+    stopRequestedRef.current = false;
     setRunning(true);
     setLog([]);
     const lines: string[] = [];
@@ -60,35 +122,38 @@ export function MockJourneySimulator({
         setLog([...lines]);
       } else {
         lines.push(
-          "No NEXT_PUBLIC_MOCK_JSONCARGO_URL — skipping reset (mock may start mid-journey).",
+          "No mock control URL (set NEXT_PUBLIC_MOCK_JSONCARGO_URL outside development) — starting mid-journey is possible.",
         );
         setLog([...lines]);
       }
 
-      const supabase = createClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not signed in");
-
       for (let i = 0; i < MOCK_TRIP_STAGES; i++) {
+        if (stopRequestedRef.current) {
+          lines.push(`Stopped after ${i} stage(s).`);
+          setLog([...lines]);
+          return;
+        }
+
         lines.push(`Stage ${i + 1}/${MOCK_TRIP_STAGES}: sync-container (force)…`);
         setLog([...lines]);
 
-        await invokeEdgeFunction("sync-container", token, {
-          method: "POST",
-          body: JSON.stringify({
-            organization_id: organizationId,
-            container_number: selected.container_number,
-            tracking_request_id: selected.id,
-            force: true,
-          }),
+        await syncContainerAction({
+          organization_id: organizationId,
+          container_number: selected.container_number,
+          tracking_request_id: selected.id,
+          force: true,
         });
 
         lines.push(`Stage ${i + 1} applied.`);
         setLog([...lines]);
 
         if (i < MOCK_TRIP_STAGES - 1) {
-          await new Promise((r) => setTimeout(r, delaySec * 1000));
+          await waitOrAbort(delaySec * 1000, stopRequestedRef);
+          if (stopRequestedRef.current) {
+            lines.push(`Stopped after stage ${i + 1}.`);
+            setLog([...lines]);
+            return;
+          }
         }
       }
 
@@ -99,6 +164,7 @@ export function MockJourneySimulator({
       setError(e instanceof Error ? e.message : "Simulation failed");
     } finally {
       setRunning(false);
+      stopRequestedRef.current = false;
     }
   }
 
@@ -108,10 +174,15 @@ export function MockJourneySimulator({
         Simulate journey (dev)
       </h2>
       <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-200/80">
-        Runs several forced syncs so your mock API returns each leg of a trip. Does not depend on
-        cron: each step calls <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">sync-container</code> with{" "}
-        <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">force: true</code>.
-        Point Edge secrets at the local mock server and use the same container number you track.
+        Each step calls the <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">sync-container</code> Edge
+        Function with <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">force: true</code>. Configure
+        the Edge env for the mock API (
+        <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">EXTERNAL_TRACKING_API_URL</code> in{" "}
+        <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">supabase/functions/.env</code>).{" "}
+        <strong>Reset mock</strong> / auto-reset before a run use your browser → mock on{" "}
+        <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">NEXT_PUBLIC_MOCK_JSONCARGO_URL</code> (defaults
+        to <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">http://127.0.0.1:9999</code> in{" "}
+        <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">next dev</code>).
       </p>
 
       <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -152,7 +223,23 @@ export function MockJourneySimulator({
           onClick={() => void run()}
           className="rounded-lg bg-amber-900 px-4 py-2 text-sm font-medium text-amber-50 disabled:opacity-50 dark:bg-amber-700"
         >
-          {running ? "Running…" : "Run mock journey"}
+          {running ? "Simulating…" : "Simulate journey"}
+        </button>
+        <button
+          type="button"
+          disabled={!running}
+          onClick={stopSimulation}
+          className="rounded-lg border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
+        >
+          Stop
+        </button>
+        <button
+          type="button"
+          disabled={running || resetting || requests.length === 0 || !selectedId}
+          onClick={() => void resetMockTrip()}
+          className="rounded-lg border border-amber-800 px-4 py-2 text-sm font-medium text-amber-950 disabled:opacity-40 dark:border-amber-600 dark:text-amber-100"
+        >
+          {resetting ? "Resetting…" : "Reset mock"}
         </button>
       </div>
 

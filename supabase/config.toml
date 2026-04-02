@@ -13,17 +13,21 @@ enabled = true
 [db]
 major_version = 15
 
+# Kong "verify_jwt" runs BEFORE your Edge code. Local CLI stacks often return "Invalid JWT" here
+# even with a valid login (cookie/session vs gateway quirks). These functions still authenticate
+# inside Deno via createUserClient(req) + auth.getUser() — anonymous calls fail there, not open.
+# Re-enable verify_jwt = true on Supabase Cloud if your project accepts it without false rejects.
 [functions.create-tracking-request]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-container-details]
-verify_jwt = true
+verify_jwt = false
 
 [functions.search-containers]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-container]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-stale-requests]
 verify_jwt = false

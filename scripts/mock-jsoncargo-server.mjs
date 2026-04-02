@@ -4,9 +4,9 @@
  *
  * Run: npm run mock:jsoncargo (from frontend/) or: node scripts/mock-jsoncargo-server.mjs
  *
- * Point Edge env at:
- *   EXTERNAL_TRACKING_API_URL=http://host.docker.internal:9999/api/v1   (Supabase CLI Docker on Mac/Win)
- *   EXTERNAL_TRACKING_API_URL=http://127.0.0.1:9999/api/v1              (functions serve on host)
+ * Point Edge env at (see supabase/functions/.env.example):
+ *   http://host.docker.internal:9999/api/v1  — required for `supabase start` (functions run in Docker)
+ *   http://127.0.0.1:9999/api/v1             — only if `supabase functions serve` runs on your host, no Docker
  *   EXTERNAL_TRACKING_API_KEY=dev
  *
  * Optional: EXTERNAL_TRACKING_SHIPPING_LINE=MSC — mock ignores query but your edge will send it.

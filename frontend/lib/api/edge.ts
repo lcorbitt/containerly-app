@@ -34,8 +34,8 @@ export async function invokeEdgeFunction<T = unknown>(
   }
 
   if (!res.ok) {
-    const err = body as { error?: string };
-    throw new Error(err?.error ?? res.statusText ?? "Edge function error");
+    const err = body as { error?: string; msg?: string };
+    throw new Error(err?.error ?? err?.msg ?? res.statusText ?? "Edge function error");
   }
 
   return body as T;

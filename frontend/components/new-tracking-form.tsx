@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { invokeEdgeFunction } from "@/lib/api/edge";
+import { createTrackingRequestAction } from "@/app/actions/edge-functions";
 
 export function NewTrackingForm({
   organizationId,
@@ -20,18 +19,10 @@ export function NewTrackingForm({
     setError(null);
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not signed in");
-
-      await invokeEdgeFunction("create-tracking-request", token, {
-        method: "POST",
-        body: JSON.stringify({
-          organization_id: organizationId,
-          container_number: number.trim(),
-          run_sync: true,
-        }),
+      await createTrackingRequestAction({
+        organization_id: organizationId,
+        container_number: number.trim(),
+        run_sync: true,
       });
 
       setNumber("");
