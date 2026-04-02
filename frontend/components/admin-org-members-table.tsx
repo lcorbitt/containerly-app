@@ -309,8 +309,8 @@ export function AdminOrgMembersTable() {
           </colgroup>
           <thead>
             <tr className={ADMIN_TABLE_HEAD_ROW}>
+            <th className={ADMIN_TABLE_TH}>Email</th>
               <th className={ADMIN_TABLE_TH}>Organization</th>
-              <th className={ADMIN_TABLE_TH}>Email</th>
               <th className={ADMIN_TABLE_TH}>User ID</th>
               <th className={ADMIN_TABLE_TH}>Org role</th>
               <th className={ADMIN_TABLE_TH}>Joined</th>
@@ -322,13 +322,13 @@ export function AdminOrgMembersTable() {
               return (
                 <tr key={row.membershipId} className={ADMIN_TABLE_ROW}>
                   <td className={`${ADMIN_TABLE_TD} font-medium text-zinc-900 dark:text-zinc-100`}>
-                    <span className="block truncate" title={row.organizationName}>
-                      {row.organizationName}
-                    </span>
-                  </td>
-                  <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
                     <span className="block truncate" title={row.email ?? undefined}>
                       {row.email ?? "—"}
+                    </span>
+                  </td>
+                  <td className={`${ADMIN_TABLE_TD} font-medium text-zinc-900 dark:text-zinc-100`}>
+                    <span className="block truncate" title={row.organizationName}>
+                      {row.organizationName}
                     </span>
                   </td>
                   <td className={`${ADMIN_TABLE_TD} font-mono text-xs text-zinc-600 dark:text-zinc-300`}>

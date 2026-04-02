@@ -210,7 +210,7 @@ export function AdminProfilesTable({
           <thead>
             <tr className={ADMIN_TABLE_HEAD_ROW}>
               <th className={ADMIN_TABLE_TH}>Email</th>
-              <th className={ADMIN_TABLE_TH}>Organizations</th>
+              <th className={ADMIN_TABLE_TH}>Organization</th>
               <th className={ADMIN_TABLE_TH}>User ID</th>
               <th className={ADMIN_TABLE_TH}>Platform role</th>
               <th className={ADMIN_TABLE_TH}>Joined</th>
