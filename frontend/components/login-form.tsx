@@ -12,6 +12,7 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,15 @@ export function LoginForm() {
     try {
       const supabase = createClient();
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const trimmedName = fullName.trim();
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options:
+            trimmedName !== ""
+              ? { data: { full_name: trimmedName } }
+              : undefined,
+        });
         if (error) throw error;
         // Local Supabase defaults to enable_confirmations = false: no email is sent, session is often returned immediately.
         if (data.session) {
@@ -60,6 +69,18 @@ export function LoginForm() {
         className="mt-6 flex flex-col gap-3"
         aria-busy={loading}
       >
+        {mode === "signup" ? (
+          <input
+            type="text"
+            autoComplete="name"
+            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+            placeholder="Full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            disabled={loading}
+          />
+        ) : null}
         <input
           type="email"
           autoComplete="email"

@@ -16,6 +16,7 @@ type Row = {
   organizationId: string;
   organizationName: string;
   userId: string;
+  fullName: string | null;
   email: string | null;
   role: OrganizationMemberRole;
   createdAt: string;
@@ -29,6 +30,7 @@ function matchesSearch(row: Row, q: string): boolean {
   const s = q.trim().toLowerCase();
   return (
     row.organizationName.toLowerCase().includes(s) ||
+    (row.fullName?.toLowerCase().includes(s) ?? false) ||
     (row.email?.toLowerCase().includes(s) ?? false) ||
     row.userId.toLowerCase().includes(s)
   );
@@ -64,22 +66,29 @@ export function AdminOrgMembersTable() {
 
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
-        .select("id, email")
+        .select("id, email, full_name")
         .in("id", userIds);
 
       if (pErr) throw pErr;
-      const emailByUser = new Map((profiles ?? []).map((p) => [p.id, p.email as string | null]));
+      const profileByUser = new Map(
+        (profiles ?? []).map((p) => [
+          p.id,
+          { email: p.email as string | null, fullName: (p.full_name as string | null) ?? null },
+        ]),
+      );
 
       setRows(
         list.map((m) => {
           const o = m.organizations as { id: string; name: string } | { id: string; name: string }[] | null;
           const org = Array.isArray(o) ? o[0] : o;
+          const prof = profileByUser.get(m.user_id);
           return {
             membershipId: m.id,
             organizationId: m.organization_id,
             organizationName: org?.name ?? "—",
             userId: m.user_id,
-            email: emailByUser.get(m.user_id) ?? null,
+            fullName: prof?.fullName ?? null,
+            email: prof?.email ?? null,
             role: m.role as OrganizationMemberRole,
             createdAt: m.created_at,
           };
@@ -136,7 +145,9 @@ export function AdminOrgMembersTable() {
       [...rows].sort((a, b) => {
         const byOrg = a.organizationName.localeCompare(b.organizationName);
         if (byOrg !== 0) return byOrg;
-        return (a.email ?? a.userId).localeCompare(b.email ?? b.userId);
+        const aLabel = a.fullName?.trim() || a.email || a.userId;
+        const bLabel = b.fullName?.trim() || b.email || b.userId;
+        return aLabel.localeCompare(bLabel);
       }),
     [rows],
   );
@@ -190,7 +201,7 @@ export function AdminOrgMembersTable() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Organization, email, or user ID…"
+            placeholder="Organization, name, email, or user ID…"
             className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
         </label>
@@ -299,17 +310,19 @@ export function AdminOrgMembersTable() {
       ) : filtered.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No rows match your filters.</p>
       ) : (
-        <table className="w-full min-w-[52rem] table-fixed border-collapse text-left">
+        <table className="w-full min-w-[60rem] table-fixed border-collapse text-left">
           <colgroup>
+            <col className="w-[16%]" />
+            <col className="w-[18%]" />
             <col className="w-[18%]" />
             <col className="w-[22%]" />
-            <col className="w-[26%]" />
-            <col className="w-[12%]" />
-            <col className="w-[22%]" />
+            <col className="w-[10%]" />
+            <col className="w-[16%]" />
           </colgroup>
           <thead>
             <tr className={ADMIN_TABLE_HEAD_ROW}>
-            <th className={ADMIN_TABLE_TH}>Email</th>
+              <th className={ADMIN_TABLE_TH}>Full name</th>
+              <th className={ADMIN_TABLE_TH}>Email</th>
               <th className={ADMIN_TABLE_TH}>Organization</th>
               <th className={ADMIN_TABLE_TH}>User ID</th>
               <th className={ADMIN_TABLE_TH}>Org role</th>
@@ -322,6 +335,11 @@ export function AdminOrgMembersTable() {
               return (
                 <tr key={row.membershipId} className={ADMIN_TABLE_ROW}>
                   <td className={`${ADMIN_TABLE_TD} font-medium text-zinc-900 dark:text-zinc-100`}>
+                    <span className="block truncate" title={row.fullName?.trim() || undefined}>
+                      {row.fullName?.trim() || "—"}
+                    </span>
+                  </td>
+                  <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
                     <span className="block truncate" title={row.email ?? undefined}>
                       {row.email ?? "—"}
                     </span>
@@ -341,7 +359,7 @@ export function AdminOrgMembersTable() {
                       className="w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 disabled:opacity-60"
                       value={row.role}
                       disabled={busy}
-                      aria-label={`Org role for ${row.email ?? row.userId}`}
+                      aria-label={`Org role for ${row.fullName?.trim() || row.email || row.userId}`}
                       onChange={(e) => {
                         const next = e.target.value as OrganizationMemberRole;
                         if (next === row.role) return;

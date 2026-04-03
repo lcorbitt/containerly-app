@@ -3,6 +3,23 @@
  * Keep aligned with `supabase/functions/_shared/jsoncargoLocation.ts` key list.
  */
 
+import { formatMessageTimestamp } from "./format-message-timestamp";
+
+/** Keys whose values are normally ISO instants in carrier payloads (container details modal, etc.). */
+const JSONCARGO_DATETIME_KEYS = new Set<string>([
+  "atd_origin",
+  "eta_final_destination",
+  "atd_last_location",
+  "eta_next_destination",
+  "timestamp_of_last_location",
+  "last_movement_timestamp",
+  "last_updated",
+]);
+
+function isIsoLikeDateString(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}/.test(s.trim());
+}
+
 export const JSONCARGO_FIELD_ORDER: readonly string[] = [
   "container_id",
   "container_type",
@@ -83,7 +100,18 @@ function formatValue(key: string, raw: unknown): string {
     if (key === "tare") return `${raw.toLocaleString()} kg`;
     return String(raw);
   }
-  if (typeof raw === "string") return raw.trim();
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return "";
+    const ms = Date.parse(t);
+    if (
+      !Number.isNaN(ms) &&
+      (JSONCARGO_DATETIME_KEYS.has(key) || isIsoLikeDateString(t))
+    ) {
+      return formatMessageTimestamp(t);
+    }
+    return t;
+  }
   try {
     return JSON.stringify(raw, null, 2);
   } catch {

@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Anchor,
+  ArrowDownUp,
   Building2,
   Route,
   Clock,
@@ -16,30 +17,15 @@ import {
   X,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { formatMessageTimestamp } from "@/lib/format-message-timestamp";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
-export function formatTimelineWhen(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
-}
+const TIMELINE_ORDER_FADE_MS = 200;
 
-function formatTimelineWhenLong(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      weekday: "long",
-      dateStyle: "full",
-      timeStyle: "long",
-    });
-  } catch {
-    return iso;
-  }
+/** Absolute clock time on timeline cards and related UI (matches messages / activity). */
+export function formatTimelineWhen(iso: string) {
+  return formatMessageTimestamp(iso);
 }
 
 function formatIsoUtc(iso: string) {
@@ -344,7 +330,7 @@ function TimelineEventDetailModal({
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2">
-          <p className="text-xs font-medium text-zinc-400">Event details</p>
+          <p className="text-lg font-medium text-white">Event Details</p>
           <button
             type="button"
             onClick={onClose}
@@ -382,7 +368,7 @@ function TimelineEventDetailModal({
           <div className="mt-3 divide-y divide-zinc-800">
             <div className="pb-2.5">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">When</p>
-              <p className="text-sm font-medium text-zinc-100">{formatTimelineWhenLong(event.occurred_at)}</p>
+              <p className="text-sm font-medium text-zinc-100">{formatTimelineWhen(event.occurred_at)}</p>
               <p className="mt-0.5 text-xs text-zinc-400">
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
@@ -485,7 +471,7 @@ function formatLocationSnippet(loc: Record<string, unknown>): string | null {
 }
 
 const STEP_CARD_BASE =
-  "w-full rounded-lg border px-2.5 py-2 text-left shadow-[0_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)] sm:px-3 sm:py-2.5";
+  "w-full rounded-md border px-2.5 py-2 text-left shadow-[0_1px_0_0_rgba(0,0,0,0.03)] ring-1 ring-slate-200/40 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)] dark:ring-slate-600/30 sm:px-3 sm:py-2.5";
 
 const STEP_CARD_INTERACTIVE =
   "cursor-pointer transition-[border-color,box-shadow,transform] duration-200 motion-safe:hover:border-zinc-300/90 motion-safe:hover:shadow-md motion-safe:active:scale-[0.99] dark:motion-safe:hover:border-zinc-600/90";
@@ -521,21 +507,95 @@ export type ContainerTimelineProps = {
   interactiveDetail?: boolean;
   /** Omit the titled header row when embedding inside another shell (e.g. tabbed request page). */
   hideHeader?: boolean;
+  /** When false, hides the new→old / old→new order toggle. Default true. */
+  showOrderToggle?: boolean;
   /** Merged onto the outer section (e.g. `rounded-none border-0` inside a tab panel). */
   className?: string;
 };
 
-export function ContainerTimeline({
+export function TimelineOrderToggle({
+  newestFirst,
+  onToggle,
+}: {
+  newestFirst: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={newestFirst}
+      aria-label={
+        newestFirst
+          ? "Timeline order: new to old. Activate to show old to new."
+          : "Timeline order: old to new. Activate to show new to old."
+      }
+      title={newestFirst ? "Show old to new" : "Show new to old"}
+      className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+    >
+      <ArrowDownUp className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+      <span className="hidden sm:inline">{newestFirst ? "New → Old" : "Old → New"}</span>
+      <span className="sm:hidden">Order</span>
+    </button>
+  );
+}
+
+export type ContainerTimelineOrder = {
+  newestFirst: boolean;
+  displayEvents: PublicTimelineEvent[];
+  orderFadeOut: boolean;
+  handleOrderToggle: () => void;
+};
+
+export function useContainerTimelineOrder(events: PublicTimelineEvent[]): ContainerTimelineOrder {
+  const [newestFirst, setNewestFirst] = useState(false);
+  const [listNewestFirst, setListNewestFirst] = useState(false);
+  const [orderFadeOut, setOrderFadeOut] = useState(false);
+
+  const displayEvents = useMemo(
+    () => (listNewestFirst ? [...events].reverse() : events),
+    [events, listNewestFirst],
+  );
+
+  useEffect(() => {
+    if (!orderFadeOut) return;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ms = reduced ? 0 : TIMELINE_ORDER_FADE_MS;
+    const id = window.setTimeout(() => {
+      setListNewestFirst(newestFirst);
+      setOrderFadeOut(false);
+    }, ms);
+    return () => window.clearTimeout(id);
+  }, [orderFadeOut, newestFirst]);
+
+  const handleOrderToggle = useCallback(() => {
+    setNewestFirst((v) => !v);
+    setOrderFadeOut(true);
+  }, []);
+
+  return { newestFirst, displayEvents, orderFadeOut, handleOrderToggle };
+}
+
+export type ContainerTimelineViewProps = ContainerTimelineProps & {
+  order: ContainerTimelineOrder;
+};
+
+export function ContainerTimelineView({
   events,
+  order,
   interactiveDetail = true,
   hideHeader = false,
+  showOrderToggle = true,
   className: classNameProp,
-}: ContainerTimelineProps) {
+}: ContainerTimelineViewProps) {
+  const { displayEvents, orderFadeOut, newestFirst, handleOrderToggle } = order;
   const [detailEvent, setDetailEvent] = useState<PublicTimelineEvent | null>(null);
 
   return (
     <section
-      className={`overflow-hidden rounded-xl bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${classNameProp ?? ""}`}
+      className={`overflow-x-hidden shadow-sm ${classNameProp ?? ""}`}
       aria-label="Journey timeline"
     >
       {interactiveDetail && detailEvent ? (
@@ -549,25 +609,22 @@ export function ContainerTimeline({
               <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-400/70 bg-transparent text-zinc-600 dark:border-zinc-500 dark:text-zinc-400">
                 <Route className="h-4 w-4" strokeWidth={2} aria-hidden />
               </span>
-              <div>
-                <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Journey timeline
-                </h2>
-                <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                  What the carrier reported, in order
-                </p>
-              </div>
             </div>
-            {events.length > 0 ? (
-              <span className="rounded-full border border-zinc-200/80 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
-                {events.length} event{events.length !== 1 ? "s" : ""}
-              </span>
-            ) : null}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {events.length > 0 && showOrderToggle ? (
+                <TimelineOrderToggle newestFirst={newestFirst} onToggle={handleOrderToggle} />
+              ) : null}
+              {events.length > 0 ? (
+                <span className="rounded-full border border-zinc-200/80 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
+                  {events.length} event{events.length !== 1 ? "s" : ""}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       )}
 
-      <div className={`p-3 sm:p-4 ${hideHeader ? "pt-4" : ""}`}>
+      <div className={`p-3 sm:p-4 ${hideHeader ? "pt-3 sm:pt-4" : ""}`}>
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/30">
             <MapPin className="h-8 w-8 text-zinc-300 dark:text-zinc-600" strokeWidth={1.25} aria-hidden />
@@ -578,11 +635,16 @@ export function ContainerTimeline({
           </div>
         ) : (
           <div className="relative">
+            <div
+              className={`motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out motion-reduce:transition-none ${
+                orderFadeOut ? "opacity-0" : "opacity-100"
+              }`}
+            >
             <ol className="relative list-none py-1">
-              {events.map((ev, index) => {
+              {displayEvents.map((ev, index) => {
                 const { tone, Icon, label } = inferTimelineVisual(ev.event_type, ev.status);
                 const s = TONE_STYLES[tone];
-                const isLast = index === events.length - 1;
+                const isLast = index === displayEvents.length - 1;
                 const relative = formatRelativeWhen(ev.occurred_at);
                 const { title, subtitle } = eventHeading(ev);
                 const locSnippet =
@@ -665,9 +727,15 @@ export function ContainerTimeline({
                 );
               })}
             </ol>
+            </div>
           </div>
         )}
       </div>
     </section>
   );
+}
+
+export function ContainerTimeline(props: ContainerTimelineProps) {
+  const order = useContainerTimelineOrder(props.events);
+  return <ContainerTimelineView {...props} order={order} />;
 }

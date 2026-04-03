@@ -60,7 +60,7 @@ begin
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    '{"full_name":"Jordan Member"}'::jsonb,
     now(),
     now()
   );
@@ -117,7 +117,7 @@ begin
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    '{"full_name":"Pat Platform"}'::jsonb,
     now(),
     now()
   );
@@ -178,7 +178,7 @@ begin
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    '{"full_name":"Avery Admin"}'::jsonb,
     now(),
     now()
   );
@@ -563,3 +563,57 @@ insert into public.report_messages (
   'Alex (JBS)',
   'Thanks — please confirm once the container is available for pickup.'
 );
+
+-- Demo alerts (bell + dashboard "Recent alerts"; mix of open vs acknowledged)
+insert into public.alerts (
+  id,
+  organization_id,
+  tracking_request_id,
+  container_id,
+  alert_type,
+  severity,
+  message,
+  details,
+  acknowledged_at,
+  acknowledged_by,
+  created_at
+) values
+  (
+    'c0000001-0000-4000-8000-000000000001',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000011',
+    'b0000001-0000-4000-8000-000000000010',
+    'SHIPMENT_DELAYED',
+    'warning',
+    'MSCU1234567: carrier reported a schedule slip at transshipment (demo seed).',
+    '{"seed": true}'::jsonb,
+    null,
+    null,
+    now() - interval '3 hours'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000011',
+    'b0000001-0000-4000-8000-000000000010',
+    'STATUS_EXCEPTION',
+    'critical',
+    'MSCU1234567: customs documentation flagged for review (demo seed).',
+    '{"seed": true}'::jsonb,
+    null,
+    null,
+    now() - interval '90 minutes'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000011',
+    'b0000001-0000-4000-8000-000000000010',
+    'INFO',
+    'info',
+    'Weekly digest: no action required for this shipment (demo seed).',
+    '{"seed": true}'::jsonb,
+    now() - interval '2 days',
+    'a0000004-0000-4000-8000-000000000004',
+    now() - interval '5 days'
+  );

@@ -51,7 +51,7 @@ export async function PATCH(
     .from("profiles")
     .update({ role })
     .eq("id", profileId)
-    .select("id, email, role, created_at")
+    .select("id, email, full_name, role, created_at")
     .single();
 
   if (error) {

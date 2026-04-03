@@ -54,6 +54,7 @@ export type PublicThreadMessage = {
   body: string;
   author_kind: string;
   author_display_name: string | null;
+  parent_message_id: string | null;
   created_at: string;
 };
 

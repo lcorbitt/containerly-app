@@ -66,7 +66,7 @@ export async function buildPublicReportPayload(
     .from("tracking_events")
     .select("id, event_type, status, location, occurred_at")
     .eq("tracking_request_id", tr.id as string)
-    .order("occurred_at", { ascending: false })
+    .order("occurred_at", { ascending: true })
     .limit(100);
 
   let alerts: unknown[] | null = null;
@@ -82,7 +82,7 @@ export async function buildPublicReportPayload(
 
   const { data: messages } = await admin
     .from("report_messages")
-    .select("id, body, author_kind, author_display_name, created_at")
+    .select("id, body, author_kind, author_display_name, parent_message_id, created_at")
     .eq("tracking_request_id", tr.id as string)
     .eq("is_internal", false)
     .order("created_at", { ascending: true })

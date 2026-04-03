@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavBrand } from "./nav-brand";
@@ -22,6 +23,8 @@ const publicLinks = [
 ] as const;
 
 export function PublicTopNav() {
+  const pathname = usePathname();
+  const hideMarketingLinks = pathname === "/login";
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -38,16 +41,18 @@ export function PublicTopNav() {
       <TopNavShell variant="marketing">
         <NavBrand href="/" variant="marketing" />
 
-        <nav
-          className="hidden items-center gap-8 md:flex"
-          aria-label="Marketing"
-        >
-          {publicLinks.map(({ href, label }) => (
-            <Link key={href} href={href} className={navLinkClass}>
-              {label}
-            </Link>
-          ))}
-        </nav>
+        {!hideMarketingLinks ? (
+          <nav
+            className="hidden items-center gap-8 md:flex"
+            aria-label="Marketing"
+          >
+            {publicLinks.map(({ href, label }) => (
+              <Link key={href} href={href} className={navLinkClass}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
 
         <div className="hidden items-center gap-3 md:flex">
           <Link href="/login" className={secondaryLinkClass}>
@@ -72,17 +77,21 @@ export function PublicTopNav() {
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 flex flex-col bg-[#030303] pt-14 md:hidden">
           <div className="flex flex-1 flex-col gap-1 px-4 py-6">
-            {publicLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-lg px-3 py-3 text-base font-medium text-zinc-200 hover:bg-white/5"
-                onClick={() => setMobileOpen(false)}
-              >
-                {label}
-              </Link>
-            ))}
-            <hr className="my-4 border-white/10" />
+            {!hideMarketingLinks
+              ? publicLinks.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="rounded-lg px-3 py-3 text-base font-medium text-zinc-200 hover:bg-white/5"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {label}
+                  </Link>
+                ))
+              : null}
+            {!hideMarketingLinks ? (
+              <hr className="my-4 border-white/10" />
+            ) : null}
             <Link
               href="/login"
               className="rounded-lg px-3 py-3 text-base font-medium text-zinc-200 hover:bg-white/5"

@@ -20,11 +20,14 @@ Deno.serve(async (req) => {
       report_id?: string;
       body?: string;
       author_display_name?: string;
+      parent_message_id?: string | null;
     };
 
     const reportId = body.report_id?.trim() ?? "";
     const text = body.body?.trim() ?? "";
     const name = body.author_display_name?.trim().slice(0, 120) ?? null;
+    const parentRaw = body.parent_message_id?.trim() ?? "";
+    const parentId = parentRaw && UUID_RE.test(parentRaw) ? parentRaw : null;
 
     if (!reportId || !UUID_RE.test(reportId)) {
       return jsonResponse({ error: "Invalid report_id" }, { status: 400 });
@@ -52,15 +55,34 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "This report link has expired" }, { status: 410 });
     }
 
+    const trId = share.tracking_request_id as string;
+
+    if (parentId) {
+      const { data: parent, error: parentErr } = await admin
+        .from("report_messages")
+        .select("id, tracking_request_id, is_internal")
+        .eq("id", parentId)
+        .maybeSingle();
+
+      if (parentErr) throw parentErr;
+      if (!parent || (parent.tracking_request_id as string) !== trId) {
+        return jsonResponse({ error: "Invalid parent message" }, { status: 400 });
+      }
+      if (parent.is_internal === true) {
+        return jsonResponse({ error: "Cannot reply to an internal message" }, { status: 400 });
+      }
+    }
+
     const { data: inserted, error: insErr } = await admin
       .from("report_messages")
       .insert({
-        tracking_request_id: share.tracking_request_id as string,
+        tracking_request_id: trId,
         author_kind: "customer",
         author_user_id: null,
         is_internal: false,
         author_display_name: name,
         body: text,
+        parent_message_id: parentId,
       })
       .select("id, body, author_display_name, created_at, author_kind")
       .single();

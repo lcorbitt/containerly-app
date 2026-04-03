@@ -13,7 +13,10 @@ export default async function AdminPage() {
   } = await supabase.auth.getUser();
 
   const [profilesRes, membersRes] = await Promise.all([
-    supabase.from("profiles").select("id, email, role, created_at").order("created_at", { ascending: false }),
+    supabase
+      .from("profiles")
+      .select("id, email, full_name, role, created_at")
+      .order("created_at", { ascending: false }),
     supabase.from("organization_members").select("user_id, organizations(name)"),
   ]);
 

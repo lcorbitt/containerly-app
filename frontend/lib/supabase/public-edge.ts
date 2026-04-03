@@ -44,6 +44,7 @@ export async function postPublicReportMessage(args: {
   reportId: string;
   body: string;
   authorDisplayName?: string;
+  parentMessageId?: string | null;
 }): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
   const { base, anon } = requireEnv();
   const url = `${base}/functions/v1/post-public-report-message`;
@@ -58,6 +59,7 @@ export async function postPublicReportMessage(args: {
       report_id: args.reportId,
       body: args.body,
       author_display_name: args.authorDisplayName?.trim() || undefined,
+      ...(args.parentMessageId ? { parent_message_id: args.parentMessageId } : {}),
     }),
   });
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/admin-table-section";
 import type { Profile } from "@/types/database";
 
-type Row = Pick<Profile, "id" | "email" | "role" | "created_at"> & {
+type Row = Pick<Profile, "id" | "email" | "full_name" | "role" | "created_at"> & {
   /** Comma-separated organization names from organization_members, or "—" if none */
   organizations_label: string;
 };
@@ -23,6 +23,7 @@ function matchesSearch(row: Row, q: string): boolean {
   const s = q.trim().toLowerCase();
   return (
     (row.email?.toLowerCase().includes(s) ?? false) ||
+    (row.full_name?.toLowerCase().includes(s) ?? false) ||
     row.id.toLowerCase().includes(s) ||
     row.organizations_label.toLowerCase().includes(s)
   );
@@ -60,7 +61,7 @@ export function AdminProfilesTable({
         body: JSON.stringify({ role }),
       });
       const payload = (await res.json()) as {
-        profile?: Pick<Profile, "id" | "email" | "role" | "created_at">;
+        profile?: Pick<Profile, "id" | "email" | "full_name" | "role" | "created_at">;
         error?: string;
       };
       if (!res.ok) {
@@ -80,7 +81,10 @@ export function AdminProfilesTable({
   }
 
   const sorted = useMemo(
-    () => [...profiles].sort((a, b) => (a.email ?? a.id).localeCompare(b.email ?? b.id)),
+    () =>
+      [...profiles].sort((a, b) =>
+        (a.full_name?.trim() || a.email || a.id).localeCompare(b.full_name?.trim() || b.email || b.id),
+      ),
     [profiles],
   );
 
@@ -118,7 +122,7 @@ export function AdminProfilesTable({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Email, user ID, or organization…"
+            placeholder="Name, email, user ID, or organization…"
             className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
         </label>
@@ -199,16 +203,18 @@ export function AdminProfilesTable({
       ) : filtered.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No rows match your search.</p>
       ) : (
-        <table className="w-full min-w-[56rem] table-fixed border-collapse text-left">
+        <table className="w-full min-w-[64rem] table-fixed border-collapse text-left">
           <colgroup>
+            <col className="w-[16%]" />
+            <col className="w-[18%]" />
+            <col className="w-[18%]" />
             <col className="w-[20%]" />
-            <col className="w-[22%]" />
-            <col className="w-[24%]" />
-            <col className="w-[12%]" />
-            <col className="w-[22%]" />
+            <col className="w-[10%]" />
+            <col className="w-[18%]" />
           </colgroup>
           <thead>
             <tr className={ADMIN_TABLE_HEAD_ROW}>
+              <th className={ADMIN_TABLE_TH}>Full name</th>
               <th className={ADMIN_TABLE_TH}>Email</th>
               <th className={ADMIN_TABLE_TH}>Organization</th>
               <th className={ADMIN_TABLE_TH}>User ID</th>
@@ -222,6 +228,11 @@ export function AdminProfilesTable({
               const busy = pendingId === row.id;
               return (
                 <tr key={row.id} className={ADMIN_TABLE_ROW}>
+                  <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
+                    <span className="block truncate" title={row.full_name?.trim() || undefined}>
+                      {row.full_name?.trim() || "—"}
+                    </span>
+                  </td>
                   <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
                     <span className="block truncate" title={row.email ?? undefined}>
                       {row.email ?? "—"}

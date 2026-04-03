@@ -4,6 +4,8 @@ export type ProfileRole = "user" | "superadmin";
 export type Profile = {
   id: string;
   email: string | null;
+  /** From Supabase user_metadata at signup; editable via auth.updateUser metadata sync. */
+  full_name: string | null;
   role: ProfileRole;
   created_at: string;
 };
@@ -86,6 +88,7 @@ export type ReportMessage = {
   is_internal: boolean;
   author_display_name: string | null;
   body: string;
+  parent_message_id: string | null;
   created_at: string;
 };
 
@@ -97,5 +100,19 @@ export type ReportActivity = {
   actor_user_id: string | null;
   action: string;
   metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type TrackingRequestAttachment = {
+  id: string;
+  organization_id: string;
+  tracking_request_id: string;
+  storage_path: string;
+  file_name: string;
+  content_type: string | null;
+  file_size_bytes: number;
+  uploaded_by: string;
+  /** When set, file was posted with this thread message (still listed in Documents). */
+  report_message_id: string | null;
   created_at: string;
 };

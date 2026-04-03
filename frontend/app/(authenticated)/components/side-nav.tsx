@@ -50,7 +50,7 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             title="Platform role bypasses RLS; not an organization membership."
           >
             <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-              Platform
+              Super Admin
             </p>
             <div className="flex flex-col gap-2">
               <Link

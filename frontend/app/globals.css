@@ -9,6 +9,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Used by custom CSS (landing grid/glow, nav text-shadow); Tailwind utilities use hex from config. */
+  --color-primary-orange: #ff4e00;
   --font-sans: var(--font-fustat);
   --font-mono: var(--font-geist-mono);
 }
@@ -24,6 +26,39 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dark scrollbars everywhere; WebKit’s default thumb:hover can jump to a light/system color. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 #27272a;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #27272a;
+}
+
+*::-webkit-scrollbar-track {
+  background: #27272a;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #3f3f46;
+  border-radius: 5px;
+  border: 2px solid #27272a;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #52525b;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: #71717a;
 }
 
 /* Public marketing shell */
