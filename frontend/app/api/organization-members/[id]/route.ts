@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { OrganizationMemberRole } from "@/types/database";
 
@@ -21,11 +19,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const sessionProfile = await getSessionProfile(supabase, user.id);
-  if (!isSuperadminRole(sessionProfile?.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   let body: { role?: string };
   try {
     body = (await request.json()) as { role?: string };
@@ -38,17 +31,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return NextResponse.json(
-      { error: "Server misconfigured: service role unavailable" },
-      { status: 500 },
-    );
-  }
-
-  const { data, error } = await admin
+  const { data, error } = await supabase
     .from("organization_members")
     .update({ role })
     .eq("id", membershipId)
@@ -56,7 +39,11 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const forbidden = /rls|policy|permission|denied/i.test(error.message);
+    return NextResponse.json(
+      { error: error.message },
+      { status: forbidden ? 403 : 500 },
+    );
   }
 
   if (!data) {

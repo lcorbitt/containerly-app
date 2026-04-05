@@ -14,18 +14,18 @@ import {
   Shield,
   Ship,
   Truck,
-  X,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { formatMessageTimestamp } from "@/lib/format-message-timestamp";
+import { DialogCloseButton } from "@/components/dialog-close-button";
+import { formatTimestamp } from "@/utils/datetime";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
 const TIMELINE_ORDER_FADE_MS = 200;
 
 /** Absolute clock time on timeline cards and related UI (matches messages / activity). */
 export function formatTimelineWhen(iso: string) {
-  return formatMessageTimestamp(iso);
+  return formatTimestamp(iso);
 }
 
 function formatIsoUtc(iso: string) {
@@ -277,7 +277,7 @@ function TimelineEventDetailModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   const onBackdrop = useCallback(
@@ -331,14 +331,7 @@ function TimelineEventDetailModal({
       >
         <header className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2">
           <p className="text-lg font-medium text-white">Event Details</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" strokeWidth={2} />
-          </button>
+          <DialogCloseButton tone="inverse" onClick={onClose} />
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
@@ -652,6 +645,7 @@ export function ContainerTimelineView({
                     ? formatLocationSnippet(ev.location)
                     : null;
 
+                // `mb-8` (2rem) is included in the tab panel height budget (`tracking-request-workspace.tsx`).
                 return (
                   <li key={ev.id} className="group mb-8 last:mb-0">
                     <div className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3">

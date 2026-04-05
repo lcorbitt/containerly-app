@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export async function logExternalCall(
-  admin: SupabaseClient,
+  admin: SupabaseClient | null,
   row: {
     organization_id?: string | null;
     function_name: string;
@@ -12,6 +12,7 @@ export async function logExternalCall(
     duration_ms: number;
   },
 ): Promise<void> {
+  if (!admin) return;
   try {
     await admin.from("external_api_logs").insert({
       organization_id: row.organization_id ?? null,

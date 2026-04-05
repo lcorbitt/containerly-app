@@ -1,13 +1,10 @@
 "use client";
 
 import { Check, FileText, Loader2, Pencil, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  isImageThumbnailCandidate,
-  TRACKING_REQUEST_FILES_BUCKET,
-} from "@/lib/tracking-request-attachments";
-import type { TrackingRequestAttachment } from "@/types/database";
+import { isImageThumbnailCandidate, WORKSPACE_FILES_BUCKET } from "@/lib/workspace-files";
+import type { WorkspaceAttachment } from "@/types/database";
 
 const THUMB_BOX_THREAD = "h-14 w-14 shrink-0 overflow-hidden rounded-md border border-zinc-200/90 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/80";
 const THUMB_BOX_COMPOSER = "h-10 w-10 shrink-0 overflow-hidden rounded border border-zinc-200/90 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/80";
@@ -33,21 +30,18 @@ export function ComposerPendingAttachmentChip({
   onRemove: (index: number) => void;
 }) {
   const showImg = isImageThumbnailCandidate(file.type || null, file.name);
-  const [url, setUrl] = useState<string | null>(null);
+  const url = useMemo(() => (showImg ? URL.createObjectURL(file) : null), [file, showImg]);
 
   useEffect(() => {
-    if (!showImg) return;
-    const u = URL.createObjectURL(file);
-    setUrl(u);
-    return () => {
-      URL.revokeObjectURL(u);
-    };
-  }, [file, showImg]);
+    if (!url) return;
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
 
   return (
     <li className="flex max-w-[min(100%,280px)] items-center gap-2 rounded-md border border-zinc-200/90 bg-white/90 py-1.5 pr-1 pl-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-900/80">
       <div className={THUMB_BOX_COMPOSER}>
         {showImg && url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- blob: preview URL
           <img src={url} alt="" className="h-full w-full object-cover" />
         ) : (
           <FileIconPlaceholder className="h-full w-full" />
@@ -76,7 +70,7 @@ export function StoredMessageAttachmentButton({
   onOpen,
   onRename,
 }: {
-  row: TrackingRequestAttachment;
+  row: WorkspaceAttachment;
   uploaderLabel: string;
   currentUserId: string | null;
   renamingAttachmentId: string | null;
@@ -92,16 +86,12 @@ export function StoredMessageAttachmentButton({
   const [draft, setDraft] = useState(row.file_name);
 
   useEffect(() => {
-    if (!editing) setDraft(row.file_name);
-  }, [row.file_name, editing]);
-
-  useEffect(() => {
     if (!tryImage) return;
     let cancelled = false;
     const run = async () => {
       const supabase = createClient();
       const { data, error } = await supabase.storage
-        .from(TRACKING_REQUEST_FILES_BUCKET)
+        .from(WORKSPACE_FILES_BUCKET)
         .createSignedUrl(row.storage_path, 3600);
       if (cancelled) return;
       if (error || !data?.signedUrl) {
@@ -188,6 +178,7 @@ export function StoredMessageAttachmentButton({
       >
         <div className={THUMB_BOX_THREAD}>
           {showImage && thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
             <img
               src={thumbUrl}
               alt=""
@@ -202,6 +193,7 @@ export function StoredMessageAttachmentButton({
           <span className="block font-medium wrap-break-word text-zinc-800 dark:text-zinc-200">
             {row.file_name}
           </span>
+          <span className="mt-0.5 block text-[11px] text-zinc-500 dark:text-zinc-400">{uploaderLabel}</span>
         </span>
       </button>
       {isUploader ? (

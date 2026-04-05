@@ -1,7 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { createServiceClient, createUserClient } from "../_shared/supabase.ts";
+import { createUserClient, tryCreateServiceClient } from "../_shared/supabase.ts";
 import { normalizeContainerNumber } from "../_shared/normalize.ts";
-import { syncContainerByNumber } from "../_shared/sync.ts";
+import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "../_shared/sync.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const userClient = createUserClient(req);
-    const admin = createServiceClient();
+    const admin = tryCreateServiceClient();
     const body = (await req.json()) as {
       organization_id?: string;
       container_number?: string;
@@ -67,6 +67,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    let shippingLine: string | null = null;
+    if (body.tracking_request_id) {
+      shippingLine = await resolveShippingLineForTrackingRequest(
+        userClient,
+        body.organization_id,
+        body.tracking_request_id,
+      );
+    }
+
+    let shipmentId: string | null = null;
+    if (body.tracking_request_id) {
+      const { data: trWithC } = await userClient
+        .from("tracking_requests")
+        .select("containers(shipment_id)")
+        .eq("organization_id", body.organization_id)
+        .eq("id", body.tracking_request_id)
+        .maybeSingle();
+      const nested = trWithC as {
+        containers?: { shipment_id?: string | null } | { shipment_id?: string | null }[] | null;
+      } | null;
+      const c = nested?.containers;
+      const one = Array.isArray(c) ? c[0] : c;
+      if (typeof one?.shipment_id === "string") shipmentId = one.shipment_id;
+    }
+
     const result = await syncContainerByNumber(
       userClient,
       admin,
@@ -74,7 +99,9 @@ Deno.serve(async (req) => {
       number,
       {
         trackingRequestId: body.tracking_request_id,
+        shipmentId,
         forceRefresh: Boolean(body.force),
+        shippingLine,
       },
     );
 

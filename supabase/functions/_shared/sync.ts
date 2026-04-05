@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { buildContainerEnrichment } from "./containerEnrichment.ts";
+import { getJsoncargoConfig } from "./jsoncargoClient.ts";
 import { fetchLiveFromProvider, NormalizedContainer } from "./externalProvider.ts";
 import { normalizeContainerNumber } from "./normalize.ts";
 import { logExternalCall } from "./logger.ts";
@@ -12,10 +14,17 @@ const TRACKING_NEXT_CHECK_MS = Number(
 
 export async function syncContainerByNumber(
   userClient: SupabaseClient,
-  admin: SupabaseClient,
+  admin: SupabaseClient | null,
   organizationId: string,
   containerNumber: string,
-  opts: { trackingRequestId?: string; forceRefresh?: boolean },
+  opts: {
+    trackingRequestId?: string;
+    forceRefresh?: boolean;
+    /** Parent shipment for new container rows (containers.shipment_id). */
+    shipmentId?: string | null;
+    /** JSONCargo `shipping_line` query param (from shipment or env fallback in provider). */
+    shippingLine?: string | null;
+  },
 ): Promise<{ container: Record<string, unknown>; refreshed: boolean; data: NormalizedContainer }> {
   const normalized = normalizeContainerNumber(containerNumber);
   const started = performance.now();
@@ -32,15 +41,46 @@ export async function syncContainerByNumber(
 
   if (loadErr) throw loadErr;
 
+  let effectiveShipmentId: string | null =
+    typeof opts.shipmentId === "string" && opts.shipmentId.trim()
+      ? opts.shipmentId.trim()
+      : null;
+  if (!effectiveShipmentId && existing?.shipment_id) {
+    effectiveShipmentId = existing.shipment_id as string;
+  }
+  if (!effectiveShipmentId && opts.trackingRequestId) {
+    const { data: trRow } = await userClient
+      .from("tracking_requests")
+      .select("container_id")
+      .eq("id", opts.trackingRequestId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    const cid = trRow?.container_id as string | null | undefined;
+    if (cid) {
+      const { data: cRow } = await userClient
+        .from("containers")
+        .select("shipment_id")
+        .eq("id", cid)
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      if (cRow?.shipment_id) effectiveShipmentId = cRow.shipment_id as string;
+    }
+  }
+  if (!existing && !effectiveShipmentId) {
+    throw new Error(
+      "Cannot register a new container without a shipment context (create a tracking request from the dashboard first).",
+    );
+  }
+
   const stale =
     opts.forceRefresh ||
     !existing?.last_synced_at ||
     Date.now() - new Date(existing.last_synced_at as string).getTime() > STALE_MS;
 
   if (stale) {
-    data = await fetchLiveFromProvider(normalized);
+    data = await fetchLiveFromProvider(normalized, { shippingLine: opts.shippingLine });
     refreshed = true;
-    const upsertPayload = {
+    const upsertPayload: Record<string, unknown> = {
       organization_id: organizationId,
       container_number: data.container_number,
       normalized_number: normalized,
@@ -51,6 +91,9 @@ export async function syncContainerByNumber(
       last_synced_at: new Date().toISOString(),
       last_checked_at: new Date().toISOString(),
     };
+    if (effectiveShipmentId) {
+      upsertPayload.shipment_id = effectiveShipmentId;
+    }
 
     const { data: upserted, error: upErr } = await userClient
       .from("containers")
@@ -60,11 +103,21 @@ export async function syncContainerByNumber(
 
     if (upErr) throw upErr;
 
+    const jc = getJsoncargoConfig();
+    if (jc) {
+      try {
+        const enrichment = await buildContainerEnrichment(jc.baseUrl, jc.apiKey, data.location);
+        await userClient.from("containers").update({ enrichment }).eq("id", upserted.id as string);
+      } catch {
+        /* enrichment is best-effort */
+      }
+    }
+
     await logExternalCall(admin, {
       organization_id: organizationId,
       function_name: "sync-container",
       endpoint: "externalProvider",
-      request_payload: { normalized },
+      request_payload: { normalized, shipping_line: opts.shippingLine ?? null },
       response_status: 200,
       response_body: { refreshed: true },
       duration_ms: Math.round(performance.now() - started),
@@ -109,6 +162,32 @@ export async function syncContainerByNumber(
   });
 
   return { container: existing as Record<string, unknown>, refreshed: false, data };
+}
+
+/** Loads `shipments.shipping_line` via tracking_request → container → shipment. */
+export async function resolveShippingLineForTrackingRequest(
+  userClient: SupabaseClient,
+  organizationId: string,
+  trackingRequestId: string,
+): Promise<string | null> {
+  const { data: tr, error } = await userClient
+    .from("tracking_requests")
+    .select("containers(shipments(shipping_line))")
+    .eq("id", trackingRequestId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (error || !tr) return null;
+  const row = tr as {
+    containers:
+      | { shipments?: { shipping_line?: string | null } | { shipping_line?: string | null }[] | null }
+      | { shipments?: { shipping_line?: string | null } | { shipping_line?: string | null }[] | null }[]
+      | null;
+  };
+  const cont = Array.isArray(row.containers) ? row.containers[0] : row.containers;
+  const rel = cont?.shipments;
+  const ship = Array.isArray(rel) ? rel[0] : rel;
+  const sl = ship?.shipping_line;
+  return typeof sl === "string" && sl.trim() ? sl.trim() : null;
 }
 
 async function appendEventsAndAlerts(

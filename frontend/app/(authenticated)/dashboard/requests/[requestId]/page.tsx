@@ -6,5 +6,5 @@ export default async function LegacyDashboardRequestRedirect({
   params: Promise<{ requestId: string }>;
 }>) {
   const { requestId } = await params;
-  redirect(`/requests/${requestId}`);
+  redirect(`/containers/${requestId}`);
 }

@@ -1,4 +1,7 @@
-export const TRACKING_REQUEST_FILES_BUCKET = "tracking-request-files";
+export const WORKSPACE_FILES_BUCKET = "workspace-files";
+
+/** @deprecated use WORKSPACE_FILES_BUCKET */
+export const TRACKING_REQUEST_FILES_BUCKET = WORKSPACE_FILES_BUCKET;
 
 /** Per-file size limit (25 MB) — typical for team chat / customer portals. */
 export const MAX_ATTACHMENT_FILE_BYTES = 25 * 1024 * 1024;
@@ -9,11 +12,11 @@ export const MAX_ATTACHMENTS_PER_MESSAGE = 8;
 /** Human-readable max size for UI copy. */
 export const MAX_ATTACHMENT_SIZE_LABEL = "25 MB";
 
+/** Max length for editable display name (`workspace_attachments.file_name`). */
+export const ATTACHMENT_DISPLAY_NAME_MAX_LEN = 500;
+
 /** Max object path segment length for storage + display safety. */
 const MAX_FILENAME_LEN = 180;
-
-/** Max length for editable display name (`tracking_request_attachments.file_name`). */
-export const ATTACHMENT_DISPLAY_NAME_MAX_LEN = 500;
 
 /**
  * Whether we should show a raster thumbnail (browser-safe `<img>`).
@@ -32,7 +35,7 @@ export function isImageThumbnailCandidate(contentType: string | null, fileName: 
 /**
  * Storage object names must be S3/Supabase-safe: no spaces, colons, or exotic Unicode
  * (macOS screenshots often use narrow no-break space U+202F before "PM", which breaks keys).
- * Original `File.name` is still stored in `tracking_request_attachments.file_name` for UI.
+ * Original `File.name` is still stored in `workspace_attachments.file_name` for UI.
  */
 export function sanitizeAttachmentFileName(name: string): string {
   const base = name.replace(/^.*[/\\]/, "").trim() || "file";
@@ -47,16 +50,38 @@ export function sanitizeAttachmentFileName(name: string): string {
 }
 
 /**
- * Storage object path (within bucket): org / tracking_request / {uuid}_{sanitizedName}
- * Matches RLS in migration `20260403120000_tracking_request_attachments.sql`.
+ * Storage path (within bucket): org / c / container_id / {uuid}_{sanitizedName}
  */
-export function buildTrackingRequestAttachmentPath(
+export function buildContainerAttachmentPath(
   organizationId: string,
-  trackingRequestId: string,
+  containerId: string,
   file: File,
 ): { path: string; attachmentId: string } {
   const attachmentId = crypto.randomUUID();
   const safe = sanitizeAttachmentFileName(file.name);
-  const path = `${organizationId}/${trackingRequestId}/${attachmentId}_${safe}`;
+  const path = `${organizationId}/c/${containerId}/${attachmentId}_${safe}`;
   return { path, attachmentId };
+}
+
+/**
+ * Storage path (within bucket): org / s / shipment_id / {uuid}_{sanitizedName}
+ */
+export function buildShipmentAttachmentPath(
+  organizationId: string,
+  shipmentId: string,
+  file: File,
+): { path: string; attachmentId: string } {
+  const attachmentId = crypto.randomUUID();
+  const safe = sanitizeAttachmentFileName(file.name);
+  const path = `${organizationId}/s/${shipmentId}/${attachmentId}_${safe}`;
+  return { path, attachmentId };
+}
+
+/** @deprecated use buildContainerAttachmentPath */
+export function buildTrackingRequestAttachmentPath(
+  organizationId: string,
+  containerId: string,
+  file: File,
+): { path: string; attachmentId: string } {
+  return buildContainerAttachmentPath(organizationId, containerId, file);
 }

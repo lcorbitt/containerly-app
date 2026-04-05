@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { DialogCloseButton } from "@/components/dialog-close-button";
 
 export type ConfirmVariant = "default" | "danger";
 
@@ -100,17 +101,24 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
             aria-labelledby={titleId}
             aria-describedby={opts.description ? descId : undefined}
             tabIndex={-1}
-            className="relative z-10 w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
           >
-            <h2 id={titleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {opts.title}
-            </h2>
+            <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+              <h2
+                id={titleId}
+                className="min-w-0 flex-1 pr-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+              >
+                {opts.title}
+              </h2>
+              <DialogCloseButton onClick={() => close(false)} />
+            </div>
+            <div className="px-6 pb-6 pt-4">
             {opts.description ? (
-              <p id={descId} className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              <p id={descId} className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                 {opts.description}
               </p>
             ) : null}
-            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className={`flex flex-col-reverse gap-2 sm:flex-row sm:justify-end ${opts.description ? "mt-6" : "mt-2"}`}>
               <button
                 type="button"
                 onClick={() => close(false)}
@@ -125,6 +133,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
               >
                 {confirmLabel}
               </button>
+            </div>
             </div>
           </div>
         </div>

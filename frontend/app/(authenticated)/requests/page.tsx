@@ -1,5 +1,6 @@
-import { TrackingRequestsList } from "@/components/tracking-requests-list";
+import { redirect } from "next/navigation";
 
-export default function RequestsPage() {
-  return <TrackingRequestsList />;
+/** Container workspaces live under `/containers/[id]`; the catalog is shipment-first at `/shipments`. */
+export default function RequestsListRedirectPage() {
+  redirect("/shipments");
 }

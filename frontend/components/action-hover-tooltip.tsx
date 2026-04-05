@@ -62,10 +62,7 @@ export function ActionHoverTooltip({ label, children }: Props) {
   }, []);
 
   useLayoutEffect(() => {
-    if (!shown) {
-      setFixedPos(null);
-      return;
-    }
+    if (!shown) return;
     updatePosition();
     window.addEventListener("scroll", updatePosition, true);
     window.addEventListener("resize", updatePosition);
@@ -76,12 +73,12 @@ export function ActionHoverTooltip({ label, children }: Props) {
   }, [shown, updatePosition]);
 
   useEffect(() => {
-    if (!fixedPos) {
-      setEntered(false);
-      return;
-    }
+    if (!fixedPos) return;
     const id = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(id);
+    return () => {
+      cancelAnimationFrame(id);
+      setEntered(false);
+    };
   }, [fixedPos]);
 
   const child = isValidElement(children)

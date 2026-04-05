@@ -41,17 +41,22 @@ export function OrganizationWorkspaceProvider({
 }) {
   const [orgs, setOrgs] = useState<OrgMembershipRow[]>(initialOrgs);
 
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(() => {
-    const first = initialOrgs[0]?.organizations?.id ?? null;
-    if (typeof window === "undefined") return first;
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(
+    () => initialOrgs[0]?.organizations?.id ?? null,
+  );
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && initialOrgs.some((r) => r.organizations?.id === saved)) return saved;
+      if (saved && initialOrgs.some((r) => r.organizations?.id === saved)) {
+        setSelectedOrgId(saved);
+      }
     } catch {
       /* ignore */
     }
-    return first;
-  });
+    // Apply stored org once after mount so server and client first paint match (hydration-safe).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initialOrgs from first paint only
+  }, []);
 
   useEffect(() => {
     setOrgs(initialOrgs);
@@ -62,7 +67,7 @@ export function OrganizationWorkspaceProvider({
     if (isSuperAdmin) {
       const { data, error } = await supabase
         .from("organizations")
-        .select("id, name, slug, created_at, updated_at")
+        .select("id, name, slug, org_image_path, created_at, updated_at")
         .order("name");
       if (error) return;
       const rows: OrgMembershipRow[] = (data ?? []).map((o) => ({
@@ -78,7 +83,7 @@ export function OrganizationWorkspaceProvider({
     }
     const { data, error } = await supabase
       .from("organization_members")
-      .select("role, organizations(id, name, slug, created_at, updated_at)")
+      .select("role, organizations(id, name, slug, org_image_path, created_at, updated_at)")
       .eq("user_id", userId);
     if (error) return;
     const rows: OrgMembershipRow[] = (data ?? []).map((row) => {

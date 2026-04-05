@@ -61,9 +61,6 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
       <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Sign in</h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        Use Supabase Auth (email / password). Create an organization on the dashboard.
-      </p>
       <form
         onSubmit={submit}
         className="mt-6 flex flex-col gap-3"

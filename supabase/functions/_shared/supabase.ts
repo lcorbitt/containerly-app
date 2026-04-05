@@ -20,3 +20,12 @@ export function createServiceClient(): SupabaseClient {
   }
   return createClient(url, key);
 }
+
+/** Service client for logging / admin tasks; null if env missing (avoid failing user-facing flows). */
+export function tryCreateServiceClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch {
+    return null;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
-import { Package, X } from "lucide-react";
+import { Package } from "lucide-react";
+import { DialogCloseButton } from "@/components/dialog-close-button";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useState, type MouseEvent, type ReactNode } from "react";
 import { CarrierReportedStatusPill } from "@/components/status-pills";
@@ -32,7 +33,7 @@ export function ContainerDetailsModal({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   const onBackdrop = useCallback(
@@ -99,14 +100,7 @@ export function ContainerDetailsModal({
       >
         <header className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2">
           <p className="text-lg font-medium text-white">Container Details</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" strokeWidth={2} />
-          </button>
+          <DialogCloseButton tone="inverse" onClick={onClose} />
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4">

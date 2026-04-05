@@ -22,7 +22,7 @@ export function AdminOrganizationsPanel() {
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-zinc-500">Active organization</span>
           <select
-            className="min-w-[12rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
+            className="min-w-48 rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
             value={selectedOrgId ?? ""}
             onChange={(e) => setSelectedOrgId(e.target.value || null)}
             disabled={orgs.length === 0}

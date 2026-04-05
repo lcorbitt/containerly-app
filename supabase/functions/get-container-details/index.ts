@@ -1,5 +1,5 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { createServiceClient, createUserClient } from "../_shared/supabase.ts";
+import { createUserClient, tryCreateServiceClient } from "../_shared/supabase.ts";
 import { normalizeContainerNumber } from "../_shared/normalize.ts";
 import { syncContainerByNumber } from "../_shared/sync.ts";
 
@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const userClient = createUserClient(req);
-    const admin = createServiceClient();
+    const admin = tryCreateServiceClient();
     const url = new URL(req.url);
     const organizationId = url.searchParams.get("organization_id");
     const containerId = url.searchParams.get("container_id");

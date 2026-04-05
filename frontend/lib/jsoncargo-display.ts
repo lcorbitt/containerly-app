@@ -3,7 +3,7 @@
  * Keep aligned with `supabase/functions/_shared/jsoncargoLocation.ts` key list.
  */
 
-import { formatMessageTimestamp } from "./format-message-timestamp";
+import { formatTimestamp } from "@/utils/datetime";
 
 /** Keys whose values are normally ISO instants in carrier payloads (container details modal, etc.). */
 const JSONCARGO_DATETIME_KEYS = new Set<string>([
@@ -108,7 +108,7 @@ function formatValue(key: string, raw: unknown): string {
       !Number.isNaN(ms) &&
       (JSONCARGO_DATETIME_KEYS.has(key) || isIsoLikeDateString(t))
     ) {
-      return formatMessageTimestamp(t);
+      return formatTimestamp(t);
     }
     return t;
   }

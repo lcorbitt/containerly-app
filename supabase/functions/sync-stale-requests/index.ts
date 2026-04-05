@@ -27,7 +27,9 @@ Deno.serve(async (req) => {
 
     const { data: batch, error } = await admin
       .from("tracking_requests")
-      .select("id, organization_id, container_number, status")
+      .select(
+        "id, organization_id, container_number, status, container_id, containers(shipment_id, shipments(shipping_line))",
+      )
       .in("status", ["pending", "syncing", "active"])
       .lte("next_check_at", nowIso)
       .order("next_check_at", { ascending: true })
@@ -39,12 +41,35 @@ Deno.serve(async (req) => {
 
     for (const row of batch ?? []) {
       try {
+        const cont = (row as {
+          containers?:
+            | {
+                shipment_id?: string | null;
+                shipments?: { shipping_line?: string | null } | { shipping_line?: string | null }[] | null;
+              }
+            | {
+                shipment_id?: string | null;
+                shipments?: { shipping_line?: string | null } | { shipping_line?: string | null }[] | null;
+              }[]
+            | null;
+        }).containers;
+        const c = Array.isArray(cont) ? cont[0] : cont;
+        const shipmentId = typeof c?.shipment_id === "string" ? c.shipment_id : null;
+        const rel = c?.shipments;
+        const ship = Array.isArray(rel) ? rel[0] : rel;
+        const sl = ship?.shipping_line;
+        const shippingLine = typeof sl === "string" && sl.trim() ? sl.trim() : null;
         await syncContainerByNumber(
           admin,
           admin,
           row.organization_id as string,
           row.container_number as string,
-          { trackingRequestId: row.id as string, forceRefresh: false },
+          {
+            trackingRequestId: row.id as string,
+            shipmentId,
+            forceRefresh: false,
+            shippingLine,
+          },
         );
         results.push({ id: row.id as string, ok: true });
       } catch (e) {

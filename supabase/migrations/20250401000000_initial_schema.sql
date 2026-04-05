@@ -23,9 +23,20 @@ create table public.organization_members (
   unique (organization_id, user_id)
 );
 
+create table public.shipments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  reference text not null,
+  status text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table public.containers (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
+  shipment_id uuid not null references public.shipments (id) on delete cascade,
   container_number text not null,
   normalized_number text not null,
   carrier text,
@@ -37,17 +48,6 @@ create table public.containers (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (organization_id, normalized_number)
-);
-
-create table public.shipments (
-  id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null references public.organizations (id) on delete cascade,
-  container_id uuid references public.containers (id) on delete set null,
-  reference text not null,
-  status text,
-  metadata jsonb default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
 );
 
 create table public.tracking_requests (
@@ -111,8 +111,8 @@ create table public.external_api_logs (
 
 create index idx_containers_org_normalized on public.containers (organization_id, normalized_number);
 create index idx_containers_org_status on public.containers (organization_id, status);
+create index idx_containers_shipment on public.containers (shipment_id);
 create index idx_shipments_org on public.shipments (organization_id);
-create index idx_shipments_container on public.shipments (container_id);
 create index idx_tracking_requests_org_status on public.tracking_requests (organization_id, status);
 create index idx_tracking_requests_next_check on public.tracking_requests (next_check_at) where status in ('pending', 'syncing', 'active');
 create index idx_tracking_events_request on public.tracking_events (tracking_request_id, occurred_at desc);
@@ -141,6 +141,31 @@ create trigger organizations_updated_at
 create trigger containers_updated_at
   before update on public.containers
   for each row execute function public.set_updated_at();
+
+-- containers.shipment_id must reference a shipment in the same organization
+create or replace function public.containers_shipment_org_match()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.shipment_id is null then
+    raise exception 'containers.shipment_id is required';
+  end if;
+  if not exists (
+    select 1
+    from public.shipments s
+    where s.id = new.shipment_id
+      and s.organization_id = new.organization_id
+  ) then
+    raise exception 'container organization_id must match its shipment row';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger containers_shipment_org_before_insert_update
+  before insert or update of shipment_id, organization_id on public.containers
+  for each row execute function public.containers_shipment_org_match();
 
 create trigger shipments_updated_at
   before update on public.shipments

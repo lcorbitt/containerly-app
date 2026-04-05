@@ -58,4 +58,4 @@ export function truncatedReplyPreview(text: string, maxLen = 72): string {
   return `${t.slice(0, maxLen - 1)}…`;
 }
 
-export { formatMessageTimestamp } from "./format-message-timestamp";
+export { formatTimestamp } from "@/utils/datetime";

@@ -1,11 +1,32 @@
 # https://supabase.com/docs/guides/cli/config
 project_id = "containerly-app"
 
-# Local Auth: the CLI default is enable_confirmations = false, so sign-up does NOT send an email
-# (Mailpit at http://127.0.0.1:54324 stays empty). Uncomment to test confirmation emails locally:
-# [auth.email]
-# enable_confirmations = true
-# Then: supabase stop && supabase start
+# -----------------------------------------------------------------------------
+# Local email (Mailpit)
+# -----------------------------------------------------------------------------
+# After `supabase start`, open http://127.0.0.1:54324 — all Auth emails (invites, magic links,
+# password reset, optional sign-up confirmation) are captured there; nothing is sent to the internet.
+#
+# Next.js must call the same API URL as this stack (`supabase status` → Project URL) and use the
+# Secret key server-side for admin.inviteUserByEmail (see frontend/.env.local.example + README).
+#
+# Sign-up: with enable_confirmations = false (below), new users can sign in immediately without a
+# confirmation email; Mailpit stays quiet for sign-up only. Invites and password reset still appear
+# in Mailpit. Set enable_confirmations = true to test confirmation links, then `supabase stop && supabase start`.
+
+[auth]
+# Base URL for links in Auth emails; must match where you run the Next app.
+site_url = "http://localhost:3000"
+# inviteUserByEmail redirectTo + common dev origins (exact URLs; add more if you use another port).
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "http://localhost:3000/login",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3000/login",
+]
+
+[auth.email]
+enable_confirmations = false
 
 [api]
 enabled = true
@@ -36,4 +57,25 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.post-public-report-message]
+verify_jwt = false
+
+[functions.get-shipment]
+verify_jwt = false
+
+[functions.post-customer-shipment-message]
+verify_jwt = false
+
+[functions.create-customer-invite]
+verify_jwt = false
+
+[functions.accept-customer-invite]
+verify_jwt = false
+
+[functions.complete-customer-shipment-setup]
+verify_jwt = false
+
+[functions.lookup-bol-containers]
+verify_jwt = false
+
+[functions.preview-customer-shipment]
 verify_jwt = false

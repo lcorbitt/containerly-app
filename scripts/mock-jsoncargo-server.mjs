@@ -9,7 +9,8 @@
  *   http://127.0.0.1:9999/api/v1             — only if `supabase functions serve` runs on your host, no Docker
  *   EXTERNAL_TRACKING_API_KEY=dev
  *
- * Optional: EXTERNAL_TRACKING_SHIPPING_LINE=MSC — mock ignores query but your edge will send it.
+ * Container GET echoes `shipping_line` as `shipping_line_request` in `data` (JSONCargo-style query param).
+ * BOL GET echoes `shipping_line` as `shipping_line_query` in `data`.
  */
 
 import http from "node:http";
@@ -316,6 +317,168 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  /** Fixed UUID used by enrichment + mock vessel APIs */
+  const MOCK_MSC_LORETO_UUID = "a1111111-1111-4111-8111-111111111111";
+
+  const bolMatch = url.pathname.match(/^\/api\/v1\/bill-of-lading\/([^/]+)$/i);
+  if (req.method === "GET" && bolMatch) {
+    const bol = decodeURIComponent(bolMatch[1]).toUpperCase();
+    const bolShippingLineQ = url.searchParams.get("shipping_line");
+    const nums =
+      bol === "MEDUSH914201" || bol.includes("MEDU")
+        ? ["MSCU1234567", "MSCU7654321", "TEMU8880001"]
+        : ["MSCU1234567", "CAIU9933760"];
+    if (bolShippingLineQ) {
+      console.log(`[mock-jsoncargo] GET bill-of-lading/${bol} shipping_line=${bolShippingLineQ}`);
+    }
+    sendJson(res, 200, {
+      data: {
+        bill_of_lading: bol,
+        shipping_line_name: "Mediterranean Shipping Company",
+        shipping_line_id: "0015",
+        shipping_line_query: bolShippingLineQ,
+        associated_containers: nums.length,
+        associated_container_numbers: nums,
+        last_updated: new Date().toISOString().slice(0, 16).replace("T", " "),
+      },
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/v1/vessels/live/bulk") {
+    let raw = "";
+    req.on("data", (c) => (raw += c));
+    req.on("end", () => {
+      try {
+        const j = raw ? JSON.parse(raw) : {};
+        const uuids = Array.isArray(j.uuids) ? j.uuids : [];
+        const vessels = uuids.map((uuid) => ({
+          uuid,
+          name: uuid === MOCK_MSC_LORETO_UUID ? "MSC LORETO" : "MOCK VESSEL",
+          mmsi: "566093000",
+          imo: "9525338",
+          lat: 22.4 + Math.random() * 0.1,
+          lon: 118.2 + Math.random() * 0.1,
+          speed: 12.5,
+          course: 90,
+          heading: 88,
+          destination: "USLAX>USLAX",
+          dest_port: "LOS ANGELES",
+          dest_port_unlocode: "USLAX",
+          last_position_UTC: new Date().toISOString(),
+          eta_UTC: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        }));
+        sendJson(res, 200, { data: { total: vessels.length, vessels } });
+      } catch {
+        sendJson(res, 400, { error: "invalid JSON" });
+      }
+    });
+    return;
+  }
+
+  const liveMatch = url.pathname.match(/^\/api\/v1\/vessels\/live\/([^/]+)$/i);
+  if (req.method === "GET" && liveMatch) {
+    const uuid = decodeURIComponent(liveMatch[1]);
+    sendJson(res, 200, {
+      data: {
+        uuid,
+        name: "MSC LORETO",
+        mmsi: "566093000",
+        imo: "9525338",
+        lat: 22.45,
+        lon: 118.28,
+        speed: 12.4,
+        course: 92,
+        heading: 90,
+        type_specific: "Container Ship",
+        destination: "USLAX>USLAX",
+        dest_port: "LOS ANGELES",
+        dest_port_unlocode: "USLAX",
+        dep_port: "SHANGHAI",
+        dep_port_unlocode: "CNSHA",
+        last_position_UTC: new Date().toISOString(),
+        atd_UTC: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        eta_UTC: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+        timezone: "GMT",
+      },
+    });
+    return;
+  }
+
+  const specsMatch = url.pathname.match(/^\/api\/v1\/vessels\/([^/]+)\/specs$/i);
+  if (req.method === "GET" && specsMatch) {
+    const uuid = decodeURIComponent(specsMatch[1]);
+    sendJson(res, 200, {
+      data: {
+        uuid,
+        name: "MSC LORETO",
+        name_ais: "MSC LORETO",
+        mmsi: "566093000",
+        imo: "9525338",
+        country_iso: "SG",
+        country_name: "Singapore",
+        type_specific: "Container Ship",
+        gross_tonnage: 50869,
+        deadweight: 68898,
+        teu: "4500",
+        length: 249.12,
+        breadth: 37.4,
+        draught_max: 14.2,
+        speed_max: 20,
+        year_built: "2011",
+        home_port: "SINGAPORE",
+      },
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/v1/vessels/find") {
+    const q = (url.searchParams.get("name") ?? "").trim() || "MSC";
+    sendJson(res, 200, {
+      data: [
+        {
+          uuid: MOCK_MSC_LORETO_UUID,
+          name: "MSC LORETO",
+          name_ais: "MSC LORETO",
+          mmsi: "566093000",
+          imo: "9525338",
+          country_iso: "PA",
+          type: "Cargo",
+          type_specific: "Container Ship",
+        },
+        {
+          uuid: "b2222222-2222-4222-8222-222222222222",
+          name: "MSC LORETO SISTER",
+          name_ais: "MSC LORETO SISTER",
+          mmsi: "123456789",
+          imo: "9525339",
+          country_iso: "PA",
+          type_specific: "Container Ship",
+        },
+      ],
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/v1/ports/find") {
+    const q = (url.searchParams.get("q") ?? "").trim().toUpperCase();
+    sendJson(res, 200, {
+      data: [
+        {
+          uuid: "p1111111-1111-4111-8111-111111111111",
+          port_name: q.includes("LOS") ? "LOS ANGELES" : "SHANGHAI",
+          country_iso: q.includes("LOS") ? "US" : "CN",
+          country_name: q.includes("LOS") ? "United States" : "China",
+          unlocode: q.includes("LOS") ? "USLAX" : "CNSHA",
+          port_type: "Port",
+          lat: q.includes("LOS") ? 33.75 : 31.23,
+          lon: q.includes("LOS") ? -118.27 : 121.5,
+        },
+      ],
+    });
+    return;
+  }
+
   const m = url.pathname.match(/^\/api\/v1\/containers\/([^/]+)$/);
   if (req.method === "GET" && m) {
     const rawId = decodeURIComponent(m[1]);
@@ -323,7 +486,12 @@ const server = http.createServer((req, res) => {
     const stages = buildStages(rawId);
     let idx = stageByKey.get(key) ?? 0;
     if (idx >= stages.length) idx = stages.length - 1;
-    const data = { ...stages[idx], container_id: rawId.toUpperCase() };
+    const shippingLineRequest = url.searchParams.get("shipping_line");
+    const data = {
+      ...stages[idx],
+      container_id: rawId.toUpperCase(),
+      shipping_line_request: shippingLineRequest,
+    };
     const envelope = { data };
 
     if (idx < stages.length - 1) {
@@ -332,7 +500,9 @@ const server = http.createServer((req, res) => {
       stageByKey.set(key, stages.length - 1);
     }
 
-    console.log(`[mock-jsoncargo] GET containers/${rawId} -> stage ${idx}/${stages.length - 1}`);
+    console.log(
+      `[mock-jsoncargo] GET containers/${rawId}${shippingLineRequest ? `?shipping_line=${shippingLineRequest}` : ""} -> stage ${idx}/${stages.length - 1}`,
+    );
     sendJson(res, 200, envelope);
     return;
   }
@@ -343,6 +513,12 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Mock JSON Cargo listening on http://127.0.0.1:${PORT}`);
   console.log(`  GET  /api/v1/containers/{tracking_number}`);
+  console.log(`  GET  /api/v1/bill-of-lading/{bol}`);
+  console.log(`  GET  /api/v1/vessels/find?name=`);
+  console.log(`  GET  /api/v1/vessels/live/{uuid}`);
+  console.log(`  POST /api/v1/vessels/live/bulk`);
+  console.log(`  GET  /api/v1/vessels/{uuid}/specs`);
+  console.log(`  GET  /api/v1/ports/find?q=`);
   console.log(`  POST /__dev/reset  body: {"tracking_number":"MSCU1234567"}`);
   console.log(`  GET  /__dev/state?tracking_number=MSCU1234567`);
 });

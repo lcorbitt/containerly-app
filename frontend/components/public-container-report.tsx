@@ -1,20 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Map as MapIcon, MessageSquare, Reply, Route } from "lucide-react";
 import { ActionHoverTooltip } from "@/components/action-hover-tooltip";
 import { AutoGrowTextarea } from "@/components/auto-grow-textarea";
 import { useToast } from "@/contexts/toast";
-import { postPublicReportMessage } from "@/lib/supabase/public-edge";
+import {
+  completeImporterPortalSetup,
+  fetchShipment,
+  postShipmentThreadMessage,
+} from "@/lib/supabase/shipment-edge";
 import { ContainerTimeline } from "@/components/container-timeline";
-import { formatMessageTimestamp } from "@/lib/format-message-timestamp";
+import { formatTimestamp } from "@/utils/datetime";
 import { ShipmentDetailsPanel } from "@/components/shipment-details-panel";
 import { ShipmentTrackingMapPanel } from "@/components/shipment-tracking-map";
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
 import { riskInsightBadgeClass } from "@/lib/report-insights";
 import { buildMessageTree, truncatedReplyPreview, type ThreadNode } from "@/lib/report-message-tree";
+import { createClient } from "@/lib/supabase/client";
+import { WORKSPACE_FILES_BUCKET } from "@/lib/workspace-files";
 import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
+import { VesselEnrichmentCard } from "@/components/vessel-enrichment-card";
 
 function SubmitSpinner() {
   return (
@@ -27,7 +35,7 @@ function SubmitSpinner() {
 
 function publicThreadAuthorName(m: PublicThreadMessage): string {
   if (m.author_kind === "system") return "System";
-  if (m.author_kind === "customer") return m.author_display_name?.trim() || "Customer";
+  if (m.author_kind === "customer") return m.author_display_name?.trim() || "Importer";
   if (m.author_kind === "member") return m.author_display_name?.trim() || "Logistics team";
   return m.author_kind;
 }
@@ -38,12 +46,17 @@ function PublicThreadItem({
   replyTargetId,
   onReply,
   messageById,
+  readOnly,
+  showUnitLabel,
 }: {
   node: ThreadNode<PublicThreadMessage>;
   depth: number;
   replyTargetId: string | null;
   onReply: (id: string) => void;
   messageById: Map<string, PublicThreadMessage>;
+  readOnly?: boolean;
+  /** When the portal covers multiple containers, show which unit each message belongs to. */
+  showUnitLabel?: boolean;
 }) {
   const parent = node.parent_message_id ? messageById.get(node.parent_message_id) : undefined;
   const isTarget = replyTargetId === node.id;
@@ -76,20 +89,29 @@ function PublicThreadItem({
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
             {publicThreadAuthorName(node)}
           </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatMessageTimestamp(node.created_at)}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(node.created_at)}</span>
+          {showUnitLabel ? (
+            <span className="rounded-full bg-zinc-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+              {node.scope === "shipment" || node.container_id == null
+                ? "Entire shipment"
+                : `Unit · ${node.container_number?.trim() || "—"}`}
+            </span>
+          ) : null}
         </div>
         <p className="mt-3 whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200">{node.body}</p>
-        <ActionHoverTooltip label="Reply">
-          <button
-            type="button"
-            onClick={() => onReply(node.id)}
-            aria-label="Reply to this message"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          >
-            <Reply className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-            Reply
-          </button>
-        </ActionHoverTooltip>
+        {readOnly ? null : (
+          <ActionHoverTooltip label="Reply">
+            <button
+              type="button"
+              onClick={() => onReply(node.id)}
+              aria-label="Reply to this message"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            >
+              <Reply className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              Reply
+            </button>
+          </ActionHoverTooltip>
+        )}
       </div>
       {node.children.length > 0 ? (
         <ul className="relative mt-6 flex flex-col gap-6 border-l-2 border-zinc-300 pl-6 dark:border-zinc-600">
@@ -101,6 +123,8 @@ function PublicThreadItem({
               replyTargetId={replyTargetId}
               onReply={onReply}
               messageById={messageById}
+              readOnly={readOnly}
+              showUnitLabel={showUnitLabel}
             />
           ))}
         </ul>
@@ -110,11 +134,14 @@ function PublicThreadItem({
 }
 
 export function PublicContainerReport({
-  reportId,
+  shipmentId,
   initial,
+  readOnlyMessaging = false,
 }: {
-  reportId: string;
+  shipmentId: string;
   initial: PublicReportPayload;
+  /** When true, hide composer and replies (e.g. operator preview). */
+  readOnlyMessaging?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -125,10 +152,24 @@ export function PublicContainerReport({
   const [sending, setSending] = useState(false);
   const [rawOpen, setRawOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<"tracking" | "map" | "documents" | "messages">("tracking");
+  const [setupDismissBusy, setSetupDismissBusy] = useState(false);
+  const [messageContainerId, setMessageContainerId] = useState(
+    () => initial.primary_container_id ?? initial.container_lines?.[0]?.id ?? "",
+  );
+  /** Importer composer: post to whole shipment vs one container line. */
+  const [messageTarget, setMessageTarget] = useState<"shipment" | "container">("container");
+
+  useEffect(() => {
+    const fallback =
+      payload.primary_container_id ?? payload.container_lines?.[0]?.id ?? "";
+    setMessageContainerId((prev) => {
+      if (prev && payload.container_lines?.some((c) => c.id === prev)) return prev;
+      return fallback;
+    });
+  }, [payload.primary_container_id, payload.container_lines]);
 
   async function refresh() {
-    const mod = await import("@/lib/supabase/public-edge");
-    const r = await mod.fetchPublicReport(reportId);
+    const r = await fetchShipment(shipmentId);
     if (r.ok) setPayload(r.data);
     router.refresh();
   }
@@ -137,10 +178,15 @@ export function PublicContainerReport({
     e.preventDefault();
     const t = body.trim();
     if (!t) return;
+    if (messageTarget === "container" && !messageContainerId) {
+      toast("Select which container this message is about.", "error");
+      return;
+    }
     setSending(true);
     try {
-      const r = await postPublicReportMessage({
-        reportId,
+      const r = await postShipmentThreadMessage({
+        shipmentId,
+        ...(messageTarget === "container" ? { containerId: messageContainerId } : {}),
         body: t,
         authorDisplayName: name.trim() || undefined,
         parentMessageId: replyParentId,
@@ -159,6 +205,11 @@ export function PublicContainerReport({
   }
 
   const { report, organization, summary, insights, timeline, alerts, messages } = payload;
+  const attachments = payload.attachments ?? [];
+  const containerLines = payload.container_lines ?? [];
+  const logisticsHints = payload.logistics_hints;
+  const threadReadOnly = readOnlyMessaging || payload.viewer === "operator";
+  const enrichmentBlock = payload.enrichment;
   const messageTree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
   const replyPreview = useMemo(() => {
@@ -167,6 +218,25 @@ export function PublicContainerReport({
     if (!m) return null;
     return { label: publicThreadAuthorName(m), excerpt: truncatedReplyPreview(m.body, 120) };
   }, [replyParentId, messages]);
+
+  useEffect(() => {
+    if (!replyParentId) return;
+    const m = messages.find((x) => x.id === replyParentId);
+    if (!m) return;
+    if (m.scope === "shipment" || m.container_id == null) {
+      setMessageTarget("shipment");
+    } else {
+      setMessageTarget("container");
+      setMessageContainerId(m.container_id);
+    }
+  }, [replyParentId, messages]);
+
+  const showMessageScopeLabels = useMemo(
+    () =>
+      containerLines.length > 1 ||
+      messages.some((m) => m.scope === "shipment" || m.container_id == null),
+    [containerLines.length, messages],
+  );
 
   const updatesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef<number | null>(null);
@@ -194,9 +264,15 @@ export function PublicContainerReport({
         { id: "tracking" as const, label: "Tracking", shortLabel: "Tracking", icon: Route },
         { id: "map" as const, label: "Map", shortLabel: "Map", icon: MapIcon },
         { id: "messages" as const, label: "Messages", shortLabel: "Messages", icon: MessageSquare, count: messages.length },
-        { id: "documents" as const, label: "Documents", shortLabel: "Documents", icon: FileText },
+        {
+          id: "documents" as const,
+          label: "Documents",
+          shortLabel: "Documents",
+          icon: FileText,
+          count: attachments.length,
+        },
       ],
-    [messages.length],
+    [messages.length, attachments.length],
   );
 
   return (
@@ -208,8 +284,29 @@ export function PublicContainerReport({
               {organization?.name ?? "Shipment report"}
             </p>
             <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50">
-              {report.title ?? `Container ${summary.container_number}`}
+              {report.title?.trim() ||
+                (summary.shipment_reference?.trim()
+                  ? summary.shipment_reference.trim()
+                  : `Container ${summary.container_number}`)}
             </h1>
+            {payload.viewer === "operator" ? (
+              <p className="mt-3">
+                <Link
+                  href={
+                    payload.primary_container_id
+                      ? `/containers/${payload.primary_container_id}`
+                      : `/shipments/${shipmentId}`
+                  }
+                  className="text-sm font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40"
+                >
+                  Open operator workspace
+                </Link>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {" "}
+                  for invites, attachments, assignee, and team messages.
+                </span>
+              </p>
+            ) : null}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span
                 className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
@@ -221,6 +318,59 @@ export function PublicContainerReport({
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
               {insights.headline}
             </p>
+            {summary.customer_note?.trim() ? (
+              <p className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
+                {summary.customer_note.trim()}
+              </p>
+            ) : null}
+            {logisticsHints?.note ? (
+              <div className="mt-4 rounded-lg border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/30 dark:text-amber-100">
+                <p className="font-medium">Logistics hint</p>
+                <p className="mt-1 leading-relaxed opacity-95">{logisticsHints.note}</p>
+                {typeof logisticsHints.ais_vs_carrier_eta_hours === "number" ? (
+                  <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
+                    Estimated divergence: {Math.round(Math.abs(logisticsHints.ais_vs_carrier_eta_hours))} hours
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {!threadReadOnly &&
+            payload.shipment_access &&
+            !payload.shipment_access.profile_completed_at &&
+            payload.shipment_access.configuration_reminder_due_at ? (
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-sky-950 dark:text-sky-100">
+                  You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
+                  until{" "}
+                  {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                  .
+                </p>
+                <button
+                  type="button"
+                  disabled={setupDismissBusy}
+                  onClick={async () => {
+                    setSetupDismissBusy(true);
+                    try {
+                      const r = await completeImporterPortalSetup(shipmentId);
+                      if (!r.ok) {
+                        toast(r.error, "error");
+                        return;
+                      }
+                      await refresh();
+                      toast("Got it — you can update your profile anytime from account settings.", "success");
+                    } finally {
+                      setSetupDismissBusy(false);
+                    }
+                  }}
+                  className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
+                >
+                  {setupDismissBusy ? "Saving…" : "Configure later"}
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <div className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
@@ -324,6 +474,10 @@ export function PublicContainerReport({
                 className="border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
               />
 
+              {enrichmentBlock && typeof enrichmentBlock === "object" ? (
+                <VesselEnrichmentCard enrichment={enrichmentBlock} />
+              ) : null}
+
               <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
                 <ContainerTimeline
                   events={timeline}
@@ -421,77 +575,127 @@ export function PublicContainerReport({
                         replyTargetId={replyParentId}
                         onReply={setReplyParentId}
                         messageById={messageById}
+                        readOnly={threadReadOnly}
+                        showUnitLabel={showMessageScopeLabels}
                       />
                     ))
                   )}
                 </ul>
                 <div ref={updatesEndRef} className="h-1 shrink-0 scroll-mt-4" aria-hidden />
               </div>
-              <form
-                onSubmit={onSubmit}
-                className="flex flex-col gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800"
-              >
-                {replyPreview ? (
-                  <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/50">
-                    <div className="min-w-0 border-l-[3px] border-sky-400/90 pl-3 dark:border-sky-500/70">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Replying to {replyPreview.label}
-                      </p>
-                      <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-300">
-                        {replyPreview.excerpt}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReplyParentId(null)}
-                      className="shrink-0 text-zinc-500 underline-offset-2 hover:text-zinc-800 hover:underline dark:hover:text-zinc-200"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : null}
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Your name (optional)
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                    maxLength={120}
-                    placeholder="e.g. Alex"
-                  />
-                </label>
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  Message
-                  <div className="mt-1 rounded-xl bg-sky-50/90 px-5 py-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-sky-500/35">
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-50">{name.trim() || "You"}</span>
-                    </div>
-                    <AutoGrowTextarea
-                      required
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                      maxLength={4000}
-                      className="mt-3 w-full border-0 bg-transparent p-0 text-sm leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none ring-0 focus:outline-none dark:text-zinc-200 dark:placeholder:text-zinc-500"
-                      placeholder="Ask a question or leave a note for the logistics team."
-                      aria-label="Message"
-                    />
-                  </div>
-                </label>
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="inline-flex h-9 min-w-34 items-center justify-center gap-2 self-start rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+              {threadReadOnly ? (
+                <p className="border-t border-zinc-100 pt-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                  Messaging is read-only in this preview.
+                </p>
+              ) : (
+                <form
+                  onSubmit={onSubmit}
+                  className="flex flex-col gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800"
                 >
-                  {sending ? (
-                    <>
-                      <SubmitSpinner />
-                      <span>Sending…</span>
-                    </>
-                  ) : (
-                    <span>Send message</span>
-                  )}
-                </button>
-              </form>
+                  {replyPreview ? (
+                    <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+                      <div className="min-w-0 border-l-[3px] border-sky-400/90 pl-3 dark:border-sky-500/70">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                          Replying to {replyPreview.label}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-300">
+                          {replyPreview.excerpt}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyParentId(null)}
+                        className="shrink-0 text-zinc-500 underline-offset-2 hover:text-zinc-800 hover:underline dark:hover:text-zinc-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Your name (optional)
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                      maxLength={120}
+                      placeholder="e.g. Alex"
+                    />
+                  </label>
+                  <fieldset className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    <legend className="sr-only">Message scope</legend>
+                    <p className="mb-2 font-medium">Post to</p>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
+                        <input
+                          type="radio"
+                          name="message-scope"
+                          checked={messageTarget === "shipment"}
+                          onChange={() => setMessageTarget("shipment")}
+                        />
+                        Entire shipment
+                      </label>
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
+                        <input
+                          type="radio"
+                          name="message-scope"
+                          checked={messageTarget === "container"}
+                          onChange={() => setMessageTarget("container")}
+                        />
+                        One container
+                      </label>
+                    </div>
+                  </fieldset>
+                  {messageTarget === "container" ? (
+                    <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                      Container
+                      <select
+                        value={messageContainerId}
+                        onChange={(e) => setMessageContainerId(e.target.value)}
+                        className="mt-1 w-full max-w-md rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-mono dark:border-zinc-700 dark:bg-zinc-950"
+                        aria-label="Select container for this message"
+                      >
+                        {containerLines.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.container_number}
+                            {c.carrier ? ` · ${c.carrier}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Message
+                    <div className="mt-1 rounded-xl bg-sky-50/90 px-5 py-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-sky-500/35">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-50">{name.trim() || "You"}</span>
+                      </div>
+                      <AutoGrowTextarea
+                        required
+                        value={body}
+                        onChange={(e) => setBody(e.target.value)}
+                        maxLength={4000}
+                        className="mt-3 w-full border-0 bg-transparent p-0 text-sm leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none ring-0 focus:outline-none dark:text-zinc-200 dark:placeholder:text-zinc-500"
+                        placeholder="Ask a question or leave a note for the logistics team."
+                        aria-label="Message"
+                      />
+                    </div>
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    className="inline-flex h-9 min-w-34 items-center justify-center gap-2 self-start rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+                  >
+                    {sending ? (
+                      <>
+                        <SubmitSpinner />
+                        <span>Sending…</span>
+                      </>
+                    ) : (
+                      <span>Send message</span>
+                    )}
+                  </button>
+                </form>
+              )}
             </div>
           ) : null}
 
@@ -500,16 +704,58 @@ export function PublicContainerReport({
               role="tabpanel"
               id="report-panel-documents"
               aria-labelledby="report-tab-documents"
-              className="rounded-2xl border border-dashed border-zinc-300/90 bg-white/80 px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-950/40 sm:px-10"
+              className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
             >
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900">
-                <FileText className="h-7 w-7 text-zinc-400 dark:text-zinc-500" strokeWidth={1.5} aria-hidden />
-              </div>
-              <h2 className="mt-6 text-lg font-semibold text-zinc-900 dark:text-zinc-50">No documents shared yet</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                When your logistics team adds bills of lading, packing lists, invoices, or other files to this
-                shipment, they will show up here for you to view and download.
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Documents</h2>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Files attached to this shipment overall or to a specific container.
               </p>
+              {attachments.length === 0 ? (
+                <p className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                  No documents yet.
+                </p>
+              ) : (
+                <ul className="mt-4 flex flex-col gap-2">
+                  {attachments.map((a) => (
+                    <li
+                      key={a.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{a.file_name}</p>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {a.container_number ? (
+                            <span className="font-mono">{a.container_number}</span>
+                          ) : null}
+                          {a.container_number ? " · " : null}
+                          {a.file_size_bytes != null && a.file_size_bytes > 0
+                            ? `${Math.round(a.file_size_bytes / 1024)} KB`
+                            : a.file_size_bytes === 0
+                              ? "0 KB"
+                              : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="shrink-0 text-xs font-medium text-sky-800 underline dark:text-sky-300"
+                        onClick={async () => {
+                          const supabase = createClient();
+                          const { data, error } = await supabase.storage
+                            .from(WORKSPACE_FILES_BUCKET)
+                            .createSignedUrl(a.storage_path, 3600);
+                          if (error || !data?.signedUrl) {
+                            toast(error?.message ?? "Could not open file", "error");
+                            return;
+                          }
+                          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        Open
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ) : null}
         </div>

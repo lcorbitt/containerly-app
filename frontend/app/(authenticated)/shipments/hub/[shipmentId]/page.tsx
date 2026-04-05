@@ -1,0 +1,75 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
+import { PublicContainerReport } from "@/components/public-container-report";
+import { PageLoading } from "@/components/page-loading";
+import { fetchShipment } from "@/lib/supabase/shipment-edge";
+import type { PublicReportPayload } from "@/types/public-report";
+
+export default function SharedShipmentTrackingPage({
+  params,
+}: {
+  params: Promise<{ shipmentId: string }>;
+}) {
+  const { shipmentId } = use(params);
+  const router = useRouter();
+  const [data, setData] = useState<PublicReportPayload | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      const r = await fetchShipment(shipmentId);
+      if (cancelled) return;
+      if (r.ok) {
+        setData(r.data);
+        setErr(null);
+        setLoading(false);
+        return;
+      }
+      setData(null);
+      if (r.status === 401) {
+        router.replace(`/login?next=${encodeURIComponent(`/shipments/hub/${shipmentId}`)}`);
+        setLoading(false);
+        return;
+      }
+      if (!cancelled) {
+        setErr(r.error);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [shipmentId, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[min(420px,55dvh)] flex-col px-4 py-8">
+        <PageLoading loadingText="Loading shared tracking…" />
+      </div>
+    );
+  }
+
+  if (err || !data) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Shared tracking unavailable</h1>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{err ?? "Unknown error"}</p>
+        <Link
+          href="/shipments"
+          className="mt-6 inline-block text-sm font-medium text-zinc-900 underline dark:text-zinc-100"
+        >
+          Back to Shared with me
+        </Link>
+      </div>
+    );
+  }
+
+  return <PublicContainerReport shipmentId={shipmentId} initial={data} />;
+}

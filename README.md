@@ -38,9 +38,19 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
    cd frontend && npm run dev
    ```
 
+### Local Supabase + Mailpit (Auth emails and invites)
+
+1. Run `supabase start` in `supabase/` (or from the repo root with the CLI pointed at this project).
+2. Run `supabase status` and copy **Project URL**, **Publishable** key, and **Secret** key into `frontend/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Older CLI versions label the keys “anon” and “service_role”; either shape works if it matches your stack.
+3. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (or your dev origin) so teammate **invite** links redirect to `/login` after acceptance. Local redirect allow-list lives in `supabase/config.toml` under `[auth]`; add more URLs there if you change host or port.
+4. Open **Mailpit** at [http://127.0.0.1:54324](http://127.0.0.1:54324) to read every Auth email (invites, password reset, magic links, and sign-up confirmation if you enable it). No SMTP provider is required locally.
+5. After editing `config.toml`, run `supabase stop && supabase start` so Auth picks up changes.
+
+**Hosted projects:** configure **SMTP** (or a provider) under Supabase Dashboard → **Authentication** → **SMTP Settings**, and add redirect URLs under **URL Configuration**. Invites still require `SUPABASE_SERVICE_ROLE_KEY` on the Next server.
+
 ## Security notes
 
-- The browser only uses the **anon** key; **service role** stays on the server (Edge Functions, Next.js Route Handlers such as `/api/organizations`).
+- The browser only uses the **anon** key; **service role** stays on the server (Edge Functions, Next.js Route Handlers such as `/api/organizations` and `/api/organization-members` for `inviteUserByEmail`).
 - **Three access tiers:** (1) **Platform superadmin** — `profiles.role = superadmin`, not an org member; RLS helpers treat you as bypassing tenant checks (`is_superadmin()`). (2) **Org admin** — `profiles.role = user` and `organization_members.role = admin` for that org. (3) **Org member** — `profiles.role = user` and `organization_members.role = member`.
 - Promote someone to platform superadmin with SQL or the Platform UI, e.g. `update public.profiles set role = 'superadmin' where id = '<user uuid>';` — not from an untrusted client.
 - All tenant data is scoped with **RLS** via `organization_id` and membership helpers.

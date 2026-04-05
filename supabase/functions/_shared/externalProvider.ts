@@ -26,10 +26,16 @@ function hashString(s: string): number {
   return Math.abs(h);
 }
 
-function buildContainersUrl(baseUrl: string, normalizedNumber: string): string {
+function buildContainersUrl(
+  baseUrl: string,
+  normalizedNumber: string,
+  shippingLineOverride?: string | null,
+): string {
   const base = baseUrl.replace(/\/$/, "");
   let url = `${base}/containers/${encodeURIComponent(normalizedNumber)}`;
-  const shippingLine = Deno.env.get("EXTERNAL_TRACKING_SHIPPING_LINE");
+  const shippingLine =
+    (shippingLineOverride?.trim() || Deno.env.get("EXTERNAL_TRACKING_SHIPPING_LINE") || "").trim() ||
+    null;
   if (shippingLine) {
     const q = new URLSearchParams({ shipping_line: shippingLine });
     url += `?${q.toString()}`;
@@ -52,12 +58,13 @@ function externalRequestHeaders(baseUrl: string, apiKey: string): Record<string,
 
 export async function fetchLiveFromProvider(
   normalizedNumber: string,
+  opts?: { shippingLine?: string | null },
 ): Promise<NormalizedContainer> {
   const baseUrl = Deno.env.get("EXTERNAL_TRACKING_API_URL");
   const apiKey = Deno.env.get("EXTERNAL_TRACKING_API_KEY");
 
   if (baseUrl && apiKey) {
-    const url = buildContainersUrl(baseUrl, normalizedNumber);
+    const url = buildContainersUrl(baseUrl, normalizedNumber, opts?.shippingLine);
     const res = await fetch(url, {
       headers: externalRequestHeaders(baseUrl, apiKey),
     });
@@ -87,7 +94,11 @@ export async function fetchLiveFromProvider(
         occurred_at: now,
       },
     ],
-    raw: { source: "mock-provider", normalizedNumber },
+    raw: {
+      source: "mock-provider",
+      normalizedNumber,
+      shipping_line_request: opts?.shippingLine ?? null,
+    },
   };
 }
 

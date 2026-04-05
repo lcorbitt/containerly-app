@@ -7,6 +7,7 @@ export type SessionProfile = {
   id: string;
   email: string | null;
   role: ProfileRole;
+  profile_image_path: string | null;
 };
 
 export function isSuperadminRole(role: string | null | undefined): boolean {
@@ -19,7 +20,7 @@ export async function getSessionProfile(
 ): Promise<SessionProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, role")
+    .select("id, email, role, profile_image_path")
     .eq("id", userId)
     .maybeSingle();
 
@@ -30,5 +31,6 @@ export async function getSessionProfile(
     id: data.id,
     email: data.email ?? null,
     role,
+    profile_image_path: data.profile_image_path ?? null,
   };
 }

@@ -126,7 +126,7 @@ export function LandingPage() {
 
         <div className="relative mx-auto max-w-5xl text-center">
           <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary-orange">
-            Operator to customer shipment intelligence
+            Operator-to-importer shipment intelligence
           </p>
           <h1 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-white md:text-6xl md:leading-[1.08]">
             One credible view of every shipment for{" "}

@@ -3,10 +3,7 @@
 import { Check, FileText, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  isImageThumbnailCandidate,
-  TRACKING_REQUEST_FILES_BUCKET,
-} from "@/lib/tracking-request-attachments";
+import { isImageThumbnailCandidate, WORKSPACE_FILES_BUCKET } from "@/lib/workspace-files";
 
 const THUMB_BOX_DOCS =
   "h-12 w-12 shrink-0 overflow-hidden rounded-md border border-zinc-200/90 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/80";
@@ -58,7 +55,7 @@ function DocumentsStoredFileThumbnail({
     const run = async () => {
       const supabase = createClient();
       const { data, error } = await supabase.storage
-        .from(TRACKING_REQUEST_FILES_BUCKET)
+        .from(WORKSPACE_FILES_BUCKET)
         .createSignedUrl(path, 3600);
       if (cancelled) return;
       if (error || !data?.signedUrl) {
@@ -77,6 +74,7 @@ function DocumentsStoredFileThumbnail({
   return (
     <div className={THUMB_BOX_DOCS}>
       {showImage && thumbUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
         <img
           src={thumbUrl}
           alt=""
@@ -97,7 +95,7 @@ export type DocumentsListStoredFile = {
   uploadedByUserId?: string;
   /** Shown under the file name (e.g. uploader). */
   uploadedByLabel?: string;
-  /** For image thumbnails via signed URL (tracking-request-files bucket). */
+  /** For image thumbnails via signed URL (`workspace-files` bucket). */
   contentType?: string | null;
   storagePath?: string | null;
   /** Direct URL when already known (e.g. public assets). */
@@ -194,17 +192,6 @@ export function DocumentsList({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
         {hasAny ? (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {bol ? (
-              <li className="flex items-start gap-2 px-2 py-2.5">
-                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" strokeWidth={2} aria-hidden />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Bill of lading
-                  </p>
-                  <p className="mt-0.5 font-mono text-xs text-zinc-800 dark:text-zinc-200">{bol}</p>
-                </div>
-              </li>
-            ) : null}
             {storedFiles?.map((f) => {
               const busyRemove = removingFileId === f.id;
               const busyRename = renamingFileId === f.id;
@@ -338,6 +325,17 @@ export function DocumentsList({
                 </li>
               );
             })}
+            {bol ? (
+              <li className="flex items-start gap-2 px-2 py-2.5">
+                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" strokeWidth={2} aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Bill of lading
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs text-zinc-800 dark:text-zinc-200">{bol}</p>
+                </div>
+              </li>
+            ) : null}
           </ul>
         ) : (
           <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">No documents yet.</p>

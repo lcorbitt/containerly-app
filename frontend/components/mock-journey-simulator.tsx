@@ -38,10 +38,13 @@ export function MockJourneySimulator({
   organizationId,
   requests,
   onComplete,
+  /** When false (e.g. header modal), omit outer card chrome; host supplies dialog title. */
+  showChrome = true,
 }: {
   organizationId: string;
   requests: TrackingRequest[];
   onComplete: () => void;
+  showChrome?: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string>(requests[0]?.id ?? "");
   const [delaySec, setDelaySec] = useState(20);
@@ -186,12 +189,24 @@ export function MockJourneySimulator({
     }
   }
 
+  const shell = showChrome
+    ? "rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20"
+    : "space-y-3";
+
   return (
-    <section className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-      <h2 className="text-sm font-medium text-amber-950 dark:text-amber-100">
-        Simulate journey (dev)
-      </h2>
-      <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-200/80">
+    <section className={shell}>
+      {showChrome ? (
+        <h2 className="text-sm font-medium text-amber-950 dark:text-amber-100">
+          Simulate journey (dev)
+        </h2>
+      ) : null}
+      <p
+        className={
+          showChrome
+            ? "mt-1 text-xs text-amber-900/80 dark:text-amber-200/80"
+            : "text-xs text-amber-900/80 dark:text-amber-200/80"
+        }
+      >
         Each step calls the <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">sync-container</code> Edge
         Function with <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">force: true</code>. Configure
         the Edge env for the mock API (
@@ -203,7 +218,7 @@ export function MockJourneySimulator({
         <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-900/40">next dev</code>).
       </p>
 
-      <div className="mt-3 flex flex-wrap items-end gap-3">
+      <div className={`flex flex-wrap items-end gap-3 ${showChrome ? "mt-3" : ""}`}>
         <label className="flex flex-col gap-1 text-xs text-amber-950 dark:text-amber-100">
           Tracking request
           <select
@@ -278,7 +293,7 @@ export function isMockJourneyEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_MOCK_JOURNEY === "true";
 }
 
-/** Show the simulate-journey panel: always in `next dev`, or when the env flag is set. */
+/** Show simulate-journey UI only in `next dev` (hidden in production builds). */
 export function shouldShowMockJourneyPanel(): boolean {
-  return process.env.NODE_ENV === "development" || isMockJourneyEnabled();
+  return process.env.NODE_ENV === "development";
 }
