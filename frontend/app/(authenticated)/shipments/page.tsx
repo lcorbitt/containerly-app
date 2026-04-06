@@ -6,9 +6,7 @@ import { OperatorShipmentsOverview } from "@/components/operator-shipments-overv
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { TablePagination } from "@/components/table-pagination";
-import { createClient } from "@/lib/supabase/client";
 import {
-  fetchImporterGrantedShipmentsPage,
   normalizeImporterGrantedShipmentSortColumn,
   type ImporterGrantedShipmentRow,
   type ImporterGrantedShipmentSortColumn,
@@ -18,6 +16,7 @@ import {
 import { formatTimestamp } from "@/utils/datetime";
 import { shipperReceiverFromLocation } from "@/lib/jsoncargo-display";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { loadImporterGrantedShipmentsPageBrowser } from "@/services/shipments-lists.service";
 
 function pickSingle<T>(v: T | T[] | null | undefined): T | null {
   if (v == null) return null;
@@ -86,16 +85,7 @@ function ImporterGrantedShipmentsList() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth.user?.id;
-      if (!userId) {
-        setRows([]);
-        setTotalCount(0);
-        return;
-      }
-      const { rows: data, totalCount: count } = await fetchImporterGrantedShipmentsPage(supabase, {
-        userId,
+      const { rows: data, totalCount: count } = await loadImporterGrantedShipmentsPageBrowser({
         page,
         pageSize,
         sortColumn,

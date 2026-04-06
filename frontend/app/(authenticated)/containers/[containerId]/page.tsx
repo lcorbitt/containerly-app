@@ -1,4 +1,4 @@
-import { ContainerWorkspace } from "@/components/container-workspace";
+import { ContainerWorkspace } from "./components/ContainerWorkspace";
 
 export default async function ContainerWorkspacePage({
   params,

@@ -1,0 +1,183 @@
+# Architecture & Refactoring Guidelines
+
+## Goals
+
+- Components are **dumb, thin, and UI-focused only** (no API calls, business logic, or non-UI state in components).
+- **Pure functions** live in colocated `utils/` (or `frontend/utils/` when shared across routes).
+- **Colocated component hooks** (`use<ComponentName>.ts`) only when needed for component-specific orchestration.
+- **Server state** is centralized with **TanStack Query** under `frontend/hooks/`.
+- **API calls** are centralized in `frontend/services/`.
+- **Frontend organization** follows **App Router routes** (what is on the page), not arbitrary feature folders.
+- **Backend API routes** are thin controllers that delegate to services.
+- **Backend services** hold all business logic.
+- **Database layer** is isolated and handles **persistence only**.
+
+---
+
+## Layer rules (apply in order of dependency)
+
+### 1. Component layer
+
+**Components MUST**
+
+- Render UI only.
+- Be presentational and reusable.
+- Receive data and callbacks via props or hooks.
+
+**Components MUST NOT**
+
+- Call APIs directly or use `axios`.
+- Contain business logic.
+- Hold complex derived logic (lift to hooks/utils).
+
+**When logic is needed:** lift state and orchestration into a **colocated hook** next to the component.
+
+**Example layout**
+
+- `DataTable/index.tsx`
+- `DataTable/hooks/useDataTable.ts`
+- `DataTable/utils/data-table.ts`
+
+---
+
+### 2. Colocated component structure
+
+**Path pattern:** `frontend/app/<route>/components/<ComponentName>/`
+
+| File | Role |
+|------|------|
+| `index.tsx` | UI only; no business logic. |
+| `hooks/use<ComponentName>.ts` | Optional. Orchestration; consumes TanStack Query hooks; local UI state if needed. |
+| `utils/<component-name>.ts` | Optional. **Pure** helpers only: no side effects, no API calls, no state. |
+
+**Rules**
+
+- Move pure functions out of components into `utils/`.
+- Create colocated hooks only when logic is non-trivial.
+- Keep components as thin as possible.
+
+---
+
+### 3. TanStack Query layer
+
+**Location:** `frontend/hooks/`  
+**Subfolders:** `frontend/hooks/queries/`, `frontend/hooks/mutations/`
+
+**Rules**
+
+- All **server state** logic (fetch, cache, invalidate) lives here.
+- Hooks are **reusable app-wide**; **do not** colocate Query hooks inside component folders.
+- Query/mutation hooks **must not** contain UI logic.
+- **Colocated component hooks** consume these hooks; they **do not** implement their own fetch logic.
+
+---
+
+### 4. Frontend services layer
+
+**Location:** `frontend/services/`
+
+**Responsibilities**
+
+- Wrap HTTP/API calls; abstract `axios` (or fetch client).
+- Typed request/response functions; isolate endpoints from UI and Query hooks.
+
+**Rules**
+
+- TanStack Query hooks call **service functions** only (not raw HTTP in hooks).
+- No UI logic, no app-level caching ownership (Query owns cache).
+
+---
+
+### 5. Backend API layer (controllers)
+
+**Routes/controllers MUST**
+
+- Validate input; handle auth/authz; call backend services; return responses.
+
+**Routes/controllers MUST NOT**
+
+- Contain business logic (keep thin).
+
+---
+
+### 6. Backend services layer
+
+**Responsibilities**
+
+- All **business logic**: data transformations, business rules, validation beyond basic input, orchestration between systems.
+
+**Rules**
+
+- API routes delegate to services.
+- Services are independent of HTTP/transport details.
+
+---
+
+### 7. Database layer
+
+**Responsibilities:** persistence only — queries and mutations.
+
+**MUST NOT:** business logic, orchestration, or application-level rules.
+
+---
+
+## Dependency flow (one direction)
+
+```
+Components → colocated hooks → TanStack Query hooks → frontend/services → API routes → backend services → database
+```
+
+**Avoid circular dependencies.**
+
+---
+
+## Migration checklist
+
+When refactoring, **identify and move**:
+
+| From | To |
+|------|-----|
+| Inline API calls | `frontend/services/` |
+| Server state / fetch / invalidation | `frontend/hooks/` (queries/mutations) |
+| Pure helpers (component-specific) | Colocated `utils/` |
+| Pure helpers (shared across routes) | `frontend/utils/` |
+| Heavy component logic | Colocated `hooks/use<ComponentName>.ts` |
+
+**Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
+
+---
+
+## Target structure (example)
+
+```
+frontend/app/container-details/components/ComponentName/
+  index.tsx
+  hooks/useComponentName.ts
+  utils/component-name.ts
+
+frontend/hooks/
+  queries/
+  mutations/
+
+frontend/services/
+  shipment.service.ts
+```
+
+---
+
+## Key principles
+
+- Strict separation of concerns per layer.
+- Predictable data flow from UI to database.
+- No logic leakage into dumb components.
+- Centralized, reusable data fetching (Query + services).
+- Route-based (App Router) frontend layout.
+- Single responsibility per layer.
+
+## Outcome
+
+- Dumb, reusable components.
+- Consistent, centralized data fetching.
+- Business logic on the backend in services.
+- Abstracted, typed API access via services.
+- Organized, scalable, maintainable codebase.

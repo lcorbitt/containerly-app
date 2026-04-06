@@ -4,9 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import {
-  fetchOperatorTrackingRequestsPage,
   normalizeOperatorSortColumn,
   type OperatorRequestScope,
   type OperatorRequestSortColumn,
@@ -17,7 +15,8 @@ import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { TablePagination } from "@/components/table-pagination";
 import { TrackingWorkflowStatusPill } from "@/components/status-pills";
-import { profileDisplayName } from "@/lib/author-display-name";
+import { loadOperatorTrackingRequestsPageBrowser } from "@/services/shipments-lists.service";
+import { fetchProfileDisplayNameMap } from "@/services/profile-display.service";
 
 const SEARCH_INPUT_CLASS =
   "w-full max-w-md rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500";
@@ -66,13 +65,8 @@ export function TrackingRequestsList({
     setLoading(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { data: u } = await supabase.auth.getUser();
-      const uid = u.user?.id ?? null;
-
-      const { rows, totalCount: count } = await fetchOperatorTrackingRequestsPage(supabase, {
+      const { rows, totalCount: count } = await loadOperatorTrackingRequestsPageBrowser({
         organizationId: selectedOrgId,
-        userId: uid,
         scope: listFilter,
         page,
         pageSize,
@@ -103,22 +97,8 @@ export function TrackingRequestsList({
           }).filter((id): id is string => Boolean(id)),
         ),
       ];
-      if (assigneeIds.length === 0) {
-        setShipmentAssigneeLabels({});
-      } else {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, email, full_name")
-          .in("id", assigneeIds);
-        const map: Record<string, string> = {};
-        for (const p of profs ?? []) {
-          map[p.id as string] = profileDisplayName({
-            full_name: p.full_name as string | null,
-            email: p.email as string | null,
-          });
-        }
-        setShipmentAssigneeLabels(map);
-      }
+      const map = await fetchProfileDisplayNameMap(assigneeIds);
+      setShipmentAssigneeLabels(map);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load requests");
       setRequests([]);

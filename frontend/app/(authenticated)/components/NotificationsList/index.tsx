@@ -1,57 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import {
-  AlertTriangle,
-  BadgeCheck,
-  Bell,
-  Building2,
-  Clock,
-  FileUp,
-  Info,
-  Mail,
-  MessageSquareReply,
-  RefreshCw,
-  ScrollText,
-  UserCheck,
-  Users,
-} from "lucide-react";
 import { formatTimestamp } from "@/utils/datetime";
 import type { Alert } from "@/types/database";
-
-type IconConfig = { Icon: LucideIcon; className: string };
-
-function alertTypeIconConfig(alertType: string): IconConfig {
-  switch (alertType) {
-    case "SHIPMENT_DELAYED":
-      return { Icon: Clock, className: "text-amber-600 dark:text-amber-400" };
-    case "STATUS_EXCEPTION":
-      return { Icon: AlertTriangle, className: "text-red-600 dark:text-red-400" };
-    case "INFO":
-      return { Icon: Info, className: "text-zinc-500 dark:text-zinc-400" };
-    case "ASSIGNMENT_ASSIGNEE":
-      return { Icon: UserCheck, className: "text-violet-600 dark:text-violet-400" };
-    case "ASSIGNMENT_PARTICIPANT":
-      return { Icon: Users, className: "text-indigo-600 dark:text-indigo-400" };
-    case "MESSAGE_NEW":
-      return { Icon: Mail, className: "text-sky-600 dark:text-sky-400" };
-    case "MESSAGE_REPLY":
-      return { Icon: MessageSquareReply, className: "text-cyan-600 dark:text-cyan-400" };
-    case "DOCUMENT_UPLOADED":
-      return { Icon: FileUp, className: "text-emerald-600 dark:text-emerald-400" };
-    case "ORG_INVITE_ACCEPTED":
-      return { Icon: BadgeCheck, className: "text-green-600 dark:text-green-400" };
-    case "CUSTOMER_JOINED_ORG":
-      return { Icon: Building2, className: "text-teal-600 dark:text-teal-400" };
-    case "BOL_IMPORTED":
-      return { Icon: ScrollText, className: "text-orange-600 dark:text-orange-400" };
-    case "TRACKING_SYNC_OK":
-      return { Icon: RefreshCw, className: "text-blue-600 dark:text-blue-400" };
-    default:
-      return { Icon: Bell, className: "text-zinc-500 dark:text-zinc-400" };
-  }
-}
+import { alertTypeIconConfig } from "./utils/notifications-list";
 
 function AlertRowBody({ alert: a }: { alert: Alert }) {
   const { Icon, className: iconColor } = alertTypeIconConfig(a.alert_type);
@@ -69,7 +21,7 @@ function AlertRowBody({ alert: a }: { alert: Alert }) {
           {a.message}
         </p>
       </div>
-      <div cl>
+      <div className="flex items-center justify-end gap-2">
         <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
           <span>{formatTimestamp(a.created_at)}</span>
         </p>

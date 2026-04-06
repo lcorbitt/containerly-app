@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { updateShipmentCustomerAccessSettings } from "@/services/shipment-customer-access-browser.service";
 import { previewImporterPortalShipment } from "@/lib/supabase/operator-shipment-edge";
 import { useToast } from "@/contexts/toast";
 import type { ShipmentCustomerAccess } from "@/types/database";
@@ -72,15 +72,11 @@ export function GrantAccessSettingsEditor({
   async function save() {
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("shipment_customer_access")
-        .update({
-          visibility_settings: visibilityPayload(),
-          operator_overrides: overridesPayload(),
-        })
-        .eq("id", access.id);
-      if (error) throw new Error(error.message);
+      await updateShipmentCustomerAccessSettings({
+        accessId: access.id,
+        visibilitySettings: visibilityPayload(),
+        operatorOverrides: overridesPayload(),
+      });
       toast("Importer portal settings saved", "success");
       onSaved();
     } catch (e) {

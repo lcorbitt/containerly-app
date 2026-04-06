@@ -2,25 +2,35 @@
 
 import { FileText, MessageSquare, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DocumentsList } from "@/components/documents-list";
 import { ThreadPanel } from "@/components/workspace-thread-panel";
 import {
   ATTACHMENT_DISPLAY_NAME_MAX_LEN,
-  buildShipmentAttachmentPath,
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,
   MAX_ATTACHMENTS_PER_MESSAGE,
-  WORKSPACE_FILES_BUCKET,
 } from "@/lib/workspace-files";
-import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
-import { profileDisplayName } from "@/lib/author-display-name";
 import { collectMessageSubtreeIds } from "@/lib/report-message-tree";
-import { ShipmentAccessTabContent } from "@/components/shipment-access-tab-content";
+import { ShipmentAccessTabContent } from "../ShipmentAccessTabContent";
 import { WORKSPACE_TAB_PANEL_HEIGHT_CSS, workspaceTabButtonClass } from "@/lib/workspace-tab-panel";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
+import {
+  shipmentScopeThreadQueryKey,
+  useShipmentScopeThreadQuery,
+} from "@/hooks/queries/use-shipment-scope-thread";
+import {
+  createWorkspaceAttachmentSignedUrl,
+  deleteShipmentScopeMessage,
+  insertShipmentScopeReportMessage,
+  persistShipmentScopeAttachment,
+  removeWorkspaceAttachmentRow,
+  renameWorkspaceAttachmentDisplayName,
+  uploadShipmentScopeStandaloneFiles,
+} from "@/services/workspace-shipment-thread.service";
 
 type Tab = "access" | "thread" | "documents";
 
@@ -32,70 +42,6 @@ function scopeToggleClass(active: boolean) {
       ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
       : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
   }`;
-}
-
-async function persistShipmentAttachmentFile(
-  supabase: ReturnType<typeof createClient>,
-  args: {
-    organizationId: string;
-    shipmentId: string;
-    userId: string;
-    file: File;
-    reportMessageId: string | null;
-    isInternal: boolean;
-  },
-): Promise<WorkspaceAttachment> {
-  const { organizationId, shipmentId, userId, file, reportMessageId, isInternal } = args;
-  if (file.size > MAX_ATTACHMENT_FILE_BYTES) {
-    throw new Error(`${file.name} is too large (max ${MAX_ATTACHMENT_SIZE_LABEL})`);
-  }
-  const { path } = buildShipmentAttachmentPath(organizationId, shipmentId, file);
-  const { error: upErr } = await supabase.storage
-    .from(WORKSPACE_FILES_BUCKET)
-    .upload(path, file, {
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-  if (upErr) throw new Error(upErr.message);
-
-  const insertRow: {
-    organization_id: string;
-    shipment_id: string;
-    container_id: null;
-    storage_path: string;
-    file_name: string;
-    content_type: string | null;
-    file_size_bytes: number;
-    uploaded_by: string;
-    is_internal: boolean;
-    report_message_id?: string;
-  } = {
-    organization_id: organizationId,
-    shipment_id: shipmentId,
-    container_id: null,
-    is_internal: isInternal,
-    storage_path: path,
-    file_name: file.name,
-    content_type: file.type || null,
-    file_size_bytes: file.size,
-    uploaded_by: userId,
-  };
-  if (reportMessageId) insertRow.report_message_id = reportMessageId;
-
-  const { data: inserted, error: insErr } = await supabase
-    .from("workspace_attachments")
-    .insert(insertRow)
-    .select()
-    .single();
-  if (insErr) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([path]);
-    throw new Error(insErr.message);
-  }
-  if (!inserted) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([path]);
-    throw new Error("Database did not return the new attachment row (check RLS SELECT on insert).");
-  }
-  return inserted as WorkspaceAttachment;
 }
 
 export function ShipmentWorkspaceScopePanel({
@@ -111,24 +57,43 @@ export function ShipmentWorkspaceScopePanel({
 }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
+  const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
+  const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
+
   const [tab, setTab] = useState<Tab>("thread");
-  const [messages, setMessages] = useState<ReportMessage[]>([]);
-  const [attachments, setAttachments] = useState<WorkspaceAttachment[]>([]);
-  const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [messageChannel, setMessageChannel] = useState<MessageChannel>("team");
   const [docChannel, setDocChannel] = useState<MessageChannel>("team");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [removingAttachmentId, setRemovingAttachmentId] = useState<string | null>(null);
   const [renamingAttachmentId, setRenamingAttachmentId] = useState<string | null>(null);
+
+  const invalidateThread = useCallback(() => {
+    if (selectedOrgId) {
+      void qc.invalidateQueries({
+        queryKey: shipmentScopeThreadQueryKey(selectedOrgId, shipmentId),
+      });
+    }
+  }, [qc, selectedOrgId, shipmentId]);
+
+  const messages = threadQuery.data?.ok ? threadQuery.data.messages : [];
+  const attachments = threadQuery.data?.ok ? threadQuery.data.attachments : [];
+  const messageAuthorByUserId = threadQuery.data?.ok ? threadQuery.data.messageAuthorByUserId : {};
+  const currentUserId = threadQuery.data?.ok ? threadQuery.data.currentUserId : null;
+
+  const loadError =
+    threadQuery.data && !threadQuery.data.ok
+      ? threadQuery.data.error
+      : threadQuery.error instanceof Error
+        ? threadQuery.error.message
+        : null;
+
+  const loading = threadQuery.isLoading;
 
   const attachmentsByMessageId = useMemo(() => {
     const m = new Map<string, WorkspaceAttachment[]>();
@@ -162,103 +127,6 @@ export function ShipmentWorkspaceScopePanel({
     const ok = filteredThreadMessages.some((m) => m.id === replyParentId);
     if (!ok) setReplyParentId(null);
   }, [filteredThreadMessages, replyParentId]);
-
-  const load = useCallback(
-    async (opts?: { quiet?: boolean }) => {
-      const quiet = opts?.quiet ?? false;
-      if (!selectedOrgId) return;
-      setLoadError(null);
-      if (!quiet) setLoading(true);
-      try {
-        const supabase = createClient();
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) {
-          setLoadError("Not signed in");
-          return;
-        }
-
-        const { data: sh, error: shErr } = await supabase
-          .from("shipments")
-          .select("id, organization_id")
-          .eq("id", shipmentId)
-          .eq("organization_id", selectedOrgId)
-          .maybeSingle();
-
-        if (shErr || !sh) {
-          setLoadError(shErr?.message ?? "Shipment not found.");
-          return;
-        }
-
-        const [msgRes, attRes] = await Promise.all([
-          supabase
-            .from("report_messages")
-            .select("*")
-            .eq("shipment_id", shipmentId)
-            .is("container_id", null)
-            .order("created_at", { ascending: true }),
-          supabase
-            .from("workspace_attachments")
-            .select("*")
-            .eq("shipment_id", shipmentId)
-            .is("container_id", null)
-            .order("created_at", { ascending: false }),
-        ]);
-
-        if (msgRes.error) {
-          setLoadError(msgRes.error.message);
-          return;
-        }
-
-        const msgList = (msgRes.data as ReportMessage[]) ?? [];
-        setMessages(msgList);
-
-        const attRows: WorkspaceAttachment[] = attRes.error
-          ? []
-          : ((attRes.data as WorkspaceAttachment[]) ?? []);
-        if (attRes.error && !quiet) {
-          toast(`Could not load shipment files: ${attRes.error.message}`, "error");
-        } else {
-          setAttachments(attRows);
-        }
-
-        const authorIds = [
-          ...new Set(msgList.map((m) => m.author_user_id).filter((id): id is string => Boolean(id))),
-        ];
-        const uploaderIds = [...new Set(attRows.map((a) => a.uploaded_by))];
-        const profileIds = [...new Set([...authorIds, ...uploaderIds])];
-        const nameByUser: Record<string, string> = {};
-        if (profileIds.length > 0) {
-          const { data: profs } = await supabase
-            .from("profiles")
-            .select("id, email, full_name")
-            .in("id", profileIds);
-          for (const p of profs ?? []) {
-            const id = p.id as string;
-            nameByUser[id] = profileDisplayName({
-              full_name: p.full_name as string | null,
-              email: p.email as string | null,
-            });
-          }
-        }
-        setMessageAuthorByUserId(nameByUser);
-      } finally {
-        if (!quiet) setLoading(false);
-      }
-    },
-    [selectedOrgId, shipmentId, toast],
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    void (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      setCurrentUserId(data.user?.id ?? null);
-    })();
-  }, []);
 
   const onComposerPickFiles = useCallback(
     (files: FileList | null) => {
@@ -311,21 +179,9 @@ export function ShipmentWorkspaceScopePanel({
     setDeletingMessageId(messageId);
     const idsToRemove = collectMessageSubtreeIds(messages, messageId);
     try {
-      const supabase = createClient();
-      const { data: deletedRows, error } = await supabase
-        .from("report_messages")
-        .delete()
-        .eq("id", messageId)
-        .select("id");
-      if (error) throw new Error(error.message);
-      if (!deletedRows?.length) {
-        throw new Error(
-          "Could not delete this message. It may have already been removed, or you can only delete messages you posted.",
-        );
-      }
+      await deleteShipmentScopeMessage({ messageId, messages });
       setReplyParentId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
-      setMessages((prev) => prev.filter((m) => !idsToRemove.has(m.id)));
-      await load({ quiet: true });
+      invalidateThread();
       toast("Message deleted", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not delete message", "error");
@@ -345,42 +201,20 @@ export function ShipmentWorkspaceScopePanel({
     }
     setPosting(true);
     try {
-      const supabase = createClient();
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data: selfProf } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", u.user.id)
-        .maybeSingle();
-      const displayName = profileDisplayName({
-        full_name: selfProf?.full_name as string | null,
-        email: (selfProf?.email as string | null) ?? u.user.email,
+      const messageId = await insertShipmentScopeReportMessage({
+        shipmentId,
+        body: t,
+        internalOnly: internalOnlyComposer,
+        replyParentId,
       });
-      const { data: inserted, error } = await supabase
-        .from("report_messages")
-        .insert({
-          shipment_id: shipmentId,
-          container_id: null,
-          author_user_id: u.user.id,
-          author_kind: "member",
-          author_display_name: displayName,
-          is_internal: internalOnlyComposer,
-          body: t,
-          parent_message_id: replyParentId,
-        })
-        .select()
-        .single();
-      if (error) throw new Error(error.message);
-      if (!inserted) throw new Error("Message was not saved.");
-      const messageId = (inserted as ReportMessage).id;
-
+      const uid = currentUserId;
+      if (!uid) return;
       for (const file of files) {
         try {
-          await persistShipmentAttachmentFile(supabase, {
+          await persistShipmentScopeAttachment({
             organizationId: selectedOrgId,
             shipmentId,
-            userId: u.user.id,
+            userId: uid,
             file,
             reportMessageId: messageId,
             isInternal: internalOnlyComposer,
@@ -389,11 +223,10 @@ export function ShipmentWorkspaceScopePanel({
           toast(e instanceof Error ? e.message : "Could not upload an attachment", "error");
         }
       }
-
       setBody("");
       setComposerPendingFiles([]);
       setReplyParentId(null);
-      await load({ quiet: true });
+      invalidateThread();
       toast(internalOnlyComposer ? "Internal note posted" : "Message posted", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not post message", "error");
@@ -404,15 +237,12 @@ export function ShipmentWorkspaceScopePanel({
 
   const openAttachment = useCallback(
     async (row: WorkspaceAttachment) => {
-      const supabase = createClient();
-      const { data, error } = await supabase.storage
-        .from(WORKSPACE_FILES_BUCKET)
-        .createSignedUrl(row.storage_path, 3600);
-      if (error || !data?.signedUrl) {
-        toast(error?.message ?? "Could not open file", "error");
-        return;
+      try {
+        const url = await createWorkspaceAttachmentSignedUrl(row.storage_path);
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not open file", "error");
       }
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     },
     [toast],
   );
@@ -421,36 +251,19 @@ export function ShipmentWorkspaceScopePanel({
     const queue = files ? Array.from(files) : [];
     if (!queue.length || !selectedOrgId) return;
     setUploadingAttachments(true);
-    let uploadedCount = 0;
     try {
-      const supabase = createClient();
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) {
-        toast("Sign in to upload files.", "error");
-        return;
-      }
-      for (const file of queue) {
-        try {
-          const inserted = await persistShipmentAttachmentFile(supabase, {
-            organizationId: selectedOrgId,
-            shipmentId,
-            userId: u.user.id,
-            file,
-            reportMessageId: null,
-            isInternal: docChannel === "team",
-          });
-          uploadedCount += 1;
-          setAttachments((prev) => [inserted, ...prev]);
-        } catch (e) {
-          toast(e instanceof Error ? e.message : "Upload failed", "error");
-        }
-      }
-      if (uploadedCount === 0) {
+      const uploaded = await uploadShipmentScopeStandaloneFiles({
+        organizationId: selectedOrgId,
+        shipmentId,
+        files: queue,
+        isInternal: docChannel === "team",
+      });
+      if (uploaded.length === 0) {
         toast("No files were uploaded.", "info");
         return;
       }
-      await load({ quiet: true });
-      toast(uploadedCount === 1 ? "File uploaded" : `${uploadedCount} files uploaded`, "success");
+      invalidateThread();
+      toast(uploaded.length === 1 ? "File uploaded" : `${uploaded.length} files uploaded`, "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Upload failed", "error");
     } finally {
@@ -474,15 +287,8 @@ export function ShipmentWorkspaceScopePanel({
       if (row.file_name === trimmed) return;
       setRenamingAttachmentId(attachmentId);
       try {
-        const supabase = createClient();
-        const { error } = await supabase
-          .from("workspace_attachments")
-          .update({ file_name: trimmed })
-          .eq("id", attachmentId);
-        if (error) throw new Error(error.message);
-        setAttachments((prev) =>
-          prev.map((a) => (a.id === attachmentId ? { ...a, file_name: trimmed } : a)),
-        );
+        await renameWorkspaceAttachmentDisplayName(attachmentId, trimmed);
+        invalidateThread();
         toast("File name updated", "success");
       } catch (e) {
         toast(e instanceof Error ? e.message : "Could not rename file", "error");
@@ -491,7 +297,7 @@ export function ShipmentWorkspaceScopePanel({
         setRenamingAttachmentId(null);
       }
     },
-    [attachments, toast],
+    [attachments, toast, invalidateThread],
   );
 
   async function removeAttachment(attachmentId: string) {
@@ -511,17 +317,8 @@ export function ShipmentWorkspaceScopePanel({
     if (!ok) return;
     setRemovingAttachmentId(attachmentId);
     try {
-      const supabase = createClient();
-      const { error: dbErr } = await supabase
-        .from("workspace_attachments")
-        .delete()
-        .eq("id", attachmentId);
-      if (dbErr) throw new Error(dbErr.message);
-      const { error: stErr } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([row.storage_path]);
-      if (stErr) {
-        toast("File removed from the list; storage cleanup may be incomplete.", "info");
-      }
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      await removeWorkspaceAttachmentRow(row);
+      invalidateThread();
       toast("File removed", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not remove file", "error");

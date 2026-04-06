@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { acceptImporterInvite } from "@/lib/supabase/shipment-edge";
-import { createClient } from "@/lib/supabase/client";
+import { getBrowserAuthSession } from "@/services/auth-browser.service";
 import { PageLoading } from "@/components/page-loading";
 
 function InviteAcceptInner() {
@@ -19,11 +19,10 @@ function InviteAcceptInner() {
 
     let cancelled = false;
     (async () => {
-      const supabase = createClient();
-      const { data: sessionData } = await supabase.auth.getSession();
+      const session = await getBrowserAuthSession();
       if (cancelled) return;
 
-      if (!sessionData.session) {
+      if (!session) {
         const next = `/invite/accept?token=${encodeURIComponent(token)}`;
         router.replace(`/login?next=${encodeURIComponent(next)}`);
         return;

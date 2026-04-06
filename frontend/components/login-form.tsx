@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signInWithPassword, signUpWithEmail } from "@/services/auth-browser.service";
 
 export function LoginForm() {
   const router = useRouter();
@@ -26,27 +26,21 @@ export function LoginForm() {
       requestAnimationFrame(() => resolve());
     });
     try {
-      const supabase = createClient();
       if (mode === "signup") {
-        const trimmedName = fullName.trim();
-        const { data, error } = await supabase.auth.signUp({
+        const { error, session } = await signUpWithEmail({
           email,
           password,
-          options:
-            trimmedName !== ""
-              ? { data: { full_name: trimmedName } }
-              : undefined,
+          fullName: fullName.trim() || undefined,
         });
         if (error) throw error;
-        // Local Supabase defaults to enable_confirmations = false: no email is sent, session is often returned immediately.
-        if (data.session) {
+        if (session) {
           router.push(next);
           router.refresh();
           return;
         }
         setMessage("Check your email to confirm, then sign in.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await signInWithPassword(email, password);
         if (error) throw error;
         router.push(next);
         router.refresh();

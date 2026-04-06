@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import {
-  OrganizationWorkspaceProvider,
-  type OrgMembershipRow,
-} from "@/contexts/organization-workspace";
+import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
+import type { OrgMembershipRow } from "@/types/organization-workspace";
 import { SessionAvatarProvider } from "@/contexts/session-avatar";
 import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/server";

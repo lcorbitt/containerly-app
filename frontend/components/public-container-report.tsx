@@ -19,8 +19,7 @@ import { ShipmentTrackingMapPanel } from "@/components/shipment-tracking-map";
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
 import { riskInsightBadgeClass } from "@/lib/report-insights";
 import { buildMessageTree, truncatedReplyPreview, type ThreadNode } from "@/lib/report-message-tree";
-import { createClient } from "@/lib/supabase/client";
-import { WORKSPACE_FILES_BUCKET } from "@/lib/workspace-files";
+import { createWorkspaceStorageSignedUrl } from "@/services/workspace-storage.service";
 import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
 import { VesselEnrichmentCard } from "@/components/vessel-enrichment-card";
 
@@ -739,15 +738,12 @@ export function PublicContainerReport({
                         type="button"
                         className="shrink-0 text-xs font-medium text-sky-800 underline dark:text-sky-300"
                         onClick={async () => {
-                          const supabase = createClient();
-                          const { data, error } = await supabase.storage
-                            .from(WORKSPACE_FILES_BUCKET)
-                            .createSignedUrl(a.storage_path, 3600);
-                          if (error || !data?.signedUrl) {
-                            toast(error?.message ?? "Could not open file", "error");
-                            return;
+                          try {
+                            const url = await createWorkspaceStorageSignedUrl(a.storage_path, 3600);
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          } catch (e) {
+                            toast(e instanceof Error ? e.message : "Could not open file", "error");
                           }
-                          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
                         }}
                       >
                         Open

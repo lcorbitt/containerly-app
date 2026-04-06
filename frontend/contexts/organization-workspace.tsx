@@ -8,13 +8,10 @@ import {
   useMemo,
   useState,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { Organization } from "@/types/database";
+import type { OrgMembershipRow } from "@/types/organization-workspace";
+import { fetchOrganizationMembershipRows } from "@/services/organization-membership.service";
 
-export type OrgMembershipRow = {
-  role: string;
-  organizations: Organization | null;
-};
+export type { OrgMembershipRow };
 
 type OrganizationWorkspaceValue = {
   orgs: OrgMembershipRow[];
@@ -63,39 +60,16 @@ export function OrganizationWorkspaceProvider({
   }, [initialOrgs]);
 
   const refreshOrgs = useCallback(async () => {
-    const supabase = createClient();
-    if (isSuperAdmin) {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("id, name, slug, org_image_path, created_at, updated_at")
-        .order("name");
-      if (error) return;
-      const rows: OrgMembershipRow[] = (data ?? []).map((o) => ({
-        role: "platform",
-        organizations: o,
-      }));
+    try {
+      const rows = await fetchOrganizationMembershipRows({ userId, isSuperAdmin });
       setOrgs(rows);
       setSelectedOrgId((prev) => {
         if (prev && rows.some((r) => r.organizations?.id === prev)) return prev;
         return rows[0]?.organizations?.id ?? null;
       });
-      return;
+    } catch {
+      /* ignore */
     }
-    const { data, error } = await supabase
-      .from("organization_members")
-      .select("role, organizations(id, name, slug, org_image_path, created_at, updated_at)")
-      .eq("user_id", userId);
-    if (error) return;
-    const rows: OrgMembershipRow[] = (data ?? []).map((row) => {
-      const o = row.organizations;
-      const org = Array.isArray(o) ? o[0] : o;
-      return { role: row.role as string, organizations: org ?? null };
-    });
-    setOrgs(rows);
-    setSelectedOrgId((prev) => {
-      if (prev && rows.some((r) => r.organizations?.id === prev)) return prev;
-      return rows[0]?.organizations?.id ?? null;
-    });
   }, [userId, isSuperAdmin]);
 
   useEffect(() => {

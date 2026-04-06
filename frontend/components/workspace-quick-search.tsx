@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Package, Search, Ship } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchWorkspaceQuickSearch, type WorkspaceQuickSearchRow } from "@/lib/workspace-quick-search";
+import { loadWorkspaceQuickSearchBrowser } from "@/services/shipments-lists.service";
+import type { WorkspaceQuickSearchRow } from "@/lib/workspace-quick-search";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
 const DEBOUNCE_MS = 260;
@@ -80,8 +80,7 @@ export function WorkspaceQuickSearch() {
       setLoading(true);
       setError(null);
       try {
-        const supabase = createClient();
-        const rows = await fetchWorkspaceQuickSearch(supabase, {
+        const rows = await loadWorkspaceQuickSearchBrowser({
           organizationId: selectedOrgId,
           query: debounced,
           limit: 10,

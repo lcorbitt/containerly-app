@@ -2,7 +2,7 @@
 
 import { Suspense, use } from "react";
 import { PageLoading } from "@/components/page-loading";
-import { ShipmentWorkspace } from "@/components/shipment-workspace";
+import { ShipmentWorkspace } from "./components/ShipmentWorkspace";
 
 export default function AuthenticatedShipmentPortalPage({
   params,

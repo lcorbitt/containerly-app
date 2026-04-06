@@ -4,17 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageLoading } from "@/components/page-loading";
-import { ShipmentWorkspaceScopePanel } from "@/components/shipment-workspace-scope-panel";
-import { ContainerWorkspace } from "@/components/container-workspace";
+import { ShipmentWorkspaceScopePanel } from "../ShipmentWorkspaceScopePanel";
+import { ContainerWorkspace } from "@/app/(authenticated)/containers/[containerId]/components/ContainerWorkspace";
 import {
   pickTrackingRowsExported,
   type ShipmentOverviewRow,
   type ShipmentOverviewTrackingRow,
 } from "@/lib/operator-shipments-overview-query";
-import { createClient } from "@/lib/supabase/client";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { TrackingWorkflowStatusPill } from "@/components/status-pills";
+import {
+  shipmentWorkspaceRowQueryKeyRoot,
+  useShipmentWorkspaceRowQuery,
+} from "@/hooks/queries/use-shipment-workspace-row";
 
 type WorkspaceMode = "shipment" | "container";
 
@@ -30,109 +34,36 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const [row, setRow] = useState<ShipmentOverviewRow | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("shipment");
 
-  const load = useCallback(async () => {
-    if (!selectedOrgId) {
-      setRow(null);
-      setError("Select an organization.");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const supabase = createClient();
-      const { data, error: qErr } = await supabase
-        .from("shipments")
-        .select(
-          `
-          id,
-          organization_id,
-          reference,
-          bill_of_lading,
-          shipping_line,
-          shipment_group_id,
-          created_at,
-          created_by,
-          assignee_user_id,
-          containers (
-            id,
-            container_number,
-            tracking_requests (
-              id,
-              container_id,
-              container_number,
-              normalized_number,
-              status,
-              last_sync_at,
-              created_at,
-              error_message,
-              source_bill_of_lading
-            )
-          )
-        `,
-        )
-        .eq("id", shipmentId)
-        .eq("organization_id", selectedOrgId)
-        .maybeSingle();
+  const rowQuery = useShipmentWorkspaceRowQuery({ shipmentId, organizationId: selectedOrgId });
 
-      if (qErr) throw new Error(qErr.message);
-      if (!data) {
-        setRow(null);
-        setError("Shipment not found in this organization.");
-        return;
-      }
-      const raw = data as {
-        id: string;
-        organization_id: string;
-        reference: string;
-        bill_of_lading: string | null;
-        shipping_line: string | null;
-        shipment_group_id: string | null;
-        created_at: string;
-        created_by: string | null;
-        assignee_user_id: string | null;
-        containers?: Array<{
-          id: string;
-          container_number: string;
-          tracking_requests?: ShipmentOverviewTrackingRow | ShipmentOverviewTrackingRow[] | null;
-        }> | null;
-      };
-      const lines: ShipmentOverviewTrackingRow[] = [];
-      for (const c of raw.containers ?? []) {
-        const trs = c.tracking_requests;
-        if (Array.isArray(trs)) lines.push(...trs);
-        else if (trs) lines.push(trs);
-      }
-
-      setRow({
-        id: raw.id,
-        organization_id: raw.organization_id,
-        reference: raw.reference,
-        bill_of_lading: raw.bill_of_lading,
-        shipping_line: raw.shipping_line,
-        shipment_group_id: raw.shipment_group_id,
-        created_at: raw.created_at,
-        owner_user_id: raw.created_by,
-        assignee_user_id: raw.assignee_user_id ?? null,
-        tracking_requests: lines,
+  const refetchShipment = useCallback(() => {
+    if (selectedOrgId) {
+      void qc.invalidateQueries({
+        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId, selectedOrgId],
       });
-    } catch (e) {
-      setRow(null);
-      setError(e instanceof Error ? e.message : "Could not load shipment");
-    } finally {
-      setLoading(false);
     }
-  }, [shipmentId, selectedOrgId]);
+  }, [qc, shipmentId, selectedOrgId]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const row: ShipmentOverviewRow | null = useMemo(() => {
+    const d = rowQuery.data;
+    if (!d?.ok) return null;
+    return d.row;
+  }, [rowQuery.data]);
+
+  const error =
+    !selectedOrgId
+      ? "Select an organization."
+      : rowQuery.data && !rowQuery.data.ok
+        ? rowQuery.data.error
+        : rowQuery.error instanceof Error
+          ? rowQuery.error.message
+          : null;
+
+  const loading = rowQuery.isLoading && Boolean(selectedOrgId);
 
   const lines = row ? pickTrackingRowsExported(row) : [];
 
@@ -311,7 +242,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           shipmentId={shipmentId}
           shipmentReference={row.reference}
           initialAssigneeUserId={row.assignee_user_id ?? null}
-          onShipmentMetaChanged={() => void load()}
+          onShipmentMetaChanged={refetchShipment}
         />
       ) : activeContainerId ? (
         <ContainerWorkspace

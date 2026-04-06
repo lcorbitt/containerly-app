@@ -2,7 +2,7 @@
 
 import { Building2, User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { OrganizationSettingsPanel } from "@/components/organization-settings-panel";
+import { OrganizationSettingsPanel } from "@/app/(authenticated)/settings/components/OrganizationSettingsPanel";
 import { ProfileImageSettings } from "@/components/profile-image-settings";
 import { SettingsDisplayName } from "@/components/settings-display-name";
 import { canManageOrganizationSettings } from "@/lib/org-role";

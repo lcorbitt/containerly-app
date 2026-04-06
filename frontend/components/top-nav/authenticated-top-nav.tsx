@@ -8,8 +8,8 @@ import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useTrackContainerModal } from "@/contexts/track-container-modal";
 import { shouldShowMockJourneyPanel } from "@/components/mock-journey-simulator";
 import { useSessionAvatar } from "@/contexts/session-avatar";
-import { getProfileImagePublicUrl } from "@/lib/profile-image";
-import { createClient } from "@/lib/supabase/client";
+import { getProfileImagePublicUrlBrowser } from "@/services/profile-browser.service";
+import { signOutBrowser } from "@/services/auth-browser.service";
 import { NavBrand } from "./nav-brand";
 import { TopNavShell } from "./top-nav-shell";
 
@@ -30,8 +30,7 @@ export function AuthenticatedTopNav({ email }: { email: string }) {
   const showMockJourney = shouldShowMockJourneyPanel();
   const { orgs, selectedOrgId } = useOrganizationWorkspace();
   const { profileImagePath } = useSessionAvatar();
-  const supabase = createClient();
-  const avatarUrl = getProfileImagePublicUrl(supabase, profileImagePath);
+  const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -55,8 +54,7 @@ export function AuthenticatedTopNav({ email }: { email: string }) {
 
   const logout = useCallback(async () => {
     setOpen(false);
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOutBrowser();
     router.push("/login");
     router.refresh();
   }, [router]);

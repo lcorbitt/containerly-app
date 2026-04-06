@@ -6,11 +6,17 @@ import { CustomerAccessPanel } from "@/components/customer-access-panel";
 import { CustomMenuSelect, CustomSelect, type CustomSelectOption } from "@/components/custom-select";
 import { UserAvatar } from "@/components/user-avatar";
 import { createImporterInvite } from "@/lib/supabase/shipment-edge";
-import { createClient } from "@/lib/supabase/client";
+import {
+  deleteShipmentParticipantRow,
+  fetchShipmentAccessTabSnapshot,
+  insertShipmentParticipant,
+  revokeCustomerInviteRow,
+  revokeShipmentCustomerAccessRow,
+  updateShipmentAssignee,
+} from "@/services/shipment-access-browser.service";
+import { getProfileImagePublicUrlBrowser } from "@/services/profile-browser.service";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
-import { profileDisplayName } from "@/lib/author-display-name";
-import { getProfileImagePublicUrl } from "@/lib/profile-image";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -45,8 +51,6 @@ export function ShipmentAccessTabContent({
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
-  const supabaseForAvatarUrls = useMemo(() => createClient(), []);
-
   useEffect(() => {
     setAssigneeUserId(initialAssigneeUserId);
   }, [initialAssigneeUserId, shipmentId]);
@@ -55,91 +59,17 @@ export function ShipmentAccessTabContent({
     if (!selectedOrgId) return;
     setLoading(true);
     try {
-      const supabase = createClient();
-      const [
-        { data: ship },
-        { data: parts },
-        { data: orgMemberRows },
-        { data: accessRows },
-        { data: invRows },
-      ] = await Promise.all([
-        supabase
-          .from("shipments")
-          .select("assignee_user_id")
-          .eq("id", shipmentId)
-          .eq("organization_id", selectedOrgId)
-          .maybeSingle(),
-        supabase
-          .from("shipment_participants")
-          .select("*")
-          .eq("shipment_id", shipmentId)
-          .order("created_at", { ascending: true }),
-        supabase.from("organization_members").select("user_id").eq("organization_id", selectedOrgId),
-        supabase
-          .from("shipment_customer_access")
-          .select("*")
-          .eq("shipment_id", shipmentId)
-          .is("revoked_at", null)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("customer_invites")
-          .select("*")
-          .eq("shipment_id", shipmentId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false }),
-      ]);
-      setAssigneeUserId((ship?.assignee_user_id as string | null) ?? null);
-      setParticipantRows((parts as ShipmentParticipant[]) ?? []);
-      setCustomerAccessRows((accessRows as ShipmentCustomerAccess[]) ?? []);
-      setPendingInvites((invRows as CustomerInvite[]) ?? []);
-
-      const imagePathByUser: Record<string, string | null> = {};
-      const orgUserIds = [...new Set((orgMemberRows ?? []).map((m) => m.user_id as string))];
-      if (orgUserIds.length > 0) {
-        const { data: peerProfs } = await supabase
-          .from("profiles")
-          .select("id, email, full_name, profile_image_path")
-          .in("id", orgUserIds);
-        const peers =
-          (peerProfs ?? []).map((p) => ({
-            id: p.id as string,
-            label: profileDisplayName({
-              full_name: p.full_name as string | null,
-              email: p.email as string | null,
-            }),
-          })) ?? [];
-        peers.sort((a, b) => a.label.localeCompare(b.label));
-        setOrgPeers(peers);
-        for (const p of peerProfs ?? []) {
-          const uid = p.id as string;
-          const path = p.profile_image_path as string | null | undefined;
-          imagePathByUser[uid] = path?.trim() ? path : null;
-        }
-      } else {
-        setOrgPeers([]);
-      }
-      setProfileImagePathByUserId(imagePathByUser);
-
-      const customerIds = (accessRows ?? []).map((a) => (a as ShipmentCustomerAccess).customer_user_id);
-      const participantIds = (parts ?? []).map((p) => (p as ShipmentParticipant).user_id);
-      const assigneeId = (ship?.assignee_user_id as string | null) ?? null;
-      const profileIds = [
-        ...new Set([...customerIds, ...participantIds, ...(assigneeId ? [assigneeId] : [])]),
-      ];
-      const nameByUser: Record<string, string> = {};
-      if (profileIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, email, full_name")
-          .in("id", profileIds);
-        for (const p of profs ?? []) {
-          nameByUser[p.id as string] = profileDisplayName({
-            full_name: p.full_name as string | null,
-            email: p.email as string | null,
-          });
-        }
-      }
-      setMessageAuthorByUserId(nameByUser);
+      const snap = await fetchShipmentAccessTabSnapshot({
+        shipmentId,
+        organizationId: selectedOrgId,
+      });
+      setAssigneeUserId(snap.assigneeUserId);
+      setParticipantRows(snap.participantRows);
+      setCustomerAccessRows(snap.customerAccessRows);
+      setPendingInvites(snap.pendingInvites);
+      setOrgPeers(snap.orgPeers);
+      setProfileImagePathByUserId(snap.profileImagePathByUserId);
+      setMessageAuthorByUserId(snap.messageAuthorByUserId);
     } finally {
       setLoading(false);
     }
@@ -171,24 +101,18 @@ export function ShipmentAccessTabContent({
       ...orgPeers.map((p) => ({
         value: p.id,
         label: p.label,
-        avatarUrl: getProfileImagePublicUrl(
-          supabaseForAvatarUrls,
-          profileImagePathByUserId[p.id] ?? null,
-        ),
+        avatarUrl: getProfileImagePublicUrlBrowser(profileImagePathByUserId[p.id] ?? null),
       })),
     ];
-  }, [orgPeers, profileImagePathByUserId, supabaseForAvatarUrls]);
+  }, [orgPeers, profileImagePathByUserId]);
 
   const participantsMenuOptions = useMemo((): CustomSelectOption[] => {
     return peersAvailableToAdd.map((p) => ({
       value: p.id,
       label: p.label,
-      avatarUrl: getProfileImagePublicUrl(
-        supabaseForAvatarUrls,
-        profileImagePathByUserId[p.id] ?? null,
-      ),
+      avatarUrl: getProfileImagePublicUrlBrowser(profileImagePathByUserId[p.id] ?? null),
     }));
-  }, [peersAvailableToAdd, profileImagePathByUserId, supabaseForAvatarUrls]);
+  }, [peersAvailableToAdd, profileImagePathByUserId]);
 
   const activeAccessWithLabels = useMemo(() => {
     return customerAccessRows.map((access) => {
@@ -205,13 +129,11 @@ export function ShipmentAccessTabContent({
     if (!selectedOrgId) return;
     setAssigneeSaving(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("shipments")
-        .update({ assignee_user_id: userId })
-        .eq("id", shipmentId)
-        .eq("organization_id", selectedOrgId);
-      if (error) throw new Error(error.message);
+      await updateShipmentAssignee({
+        shipmentId,
+        organizationId: selectedOrgId,
+        assigneeUserId: userId,
+      });
       setAssigneeUserId(userId);
       toast("Assignee updated", "success");
       onMetaChanged();
@@ -226,12 +148,7 @@ export function ShipmentAccessTabContent({
     if (!userId) return;
     setParticipantBusy(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("shipment_participants").insert({
-        shipment_id: shipmentId,
-        user_id: userId,
-      });
-      if (error && error.code !== "23505") throw new Error(error.message);
+      await insertShipmentParticipant({ shipmentId, userId });
       toast("Participant added", "success");
       await load();
       onMetaChanged();
@@ -245,9 +162,7 @@ export function ShipmentAccessTabContent({
   async function removeParticipantRow(rowId: string) {
     setRemovingParticipantId(rowId);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("shipment_participants").delete().eq("id", rowId);
-      if (error) throw new Error(error.message);
+      await deleteShipmentParticipantRow(rowId);
       toast("Participant removed", "success");
       await load();
       onMetaChanged();
@@ -289,19 +204,12 @@ export function ShipmentAccessTabContent({
   }
 
   async function revokeInviteRow(id: string): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase.from("customer_invites").update({ status: "revoked" }).eq("id", id);
-    if (error) throw new Error(error.message);
+    await revokeCustomerInviteRow(id);
     await load();
   }
 
   async function revokeAccessRow(id: string): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("shipment_customer_access")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) throw new Error(error.message);
+    await revokeShipmentCustomerAccessRow(id);
     await load();
   }
 
@@ -368,8 +276,7 @@ export function ShipmentAccessTabContent({
                     >
                       <span className="flex min-w-0 flex-1 items-center gap-2">
                         <UserAvatar
-                          imageUrl={getProfileImagePublicUrl(
-                            supabaseForAvatarUrls,
+                          imageUrl={getProfileImagePublicUrlBrowser(
                             profileImagePathByUserId[row.user_id] ?? null,
                           )}
                           label={label}

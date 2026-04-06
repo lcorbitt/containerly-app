@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Bell, Box, Building2, LayoutDashboard, Package, Settings, Shield } from "lucide-react";
-import { NotificationsList } from "@/components/notifications-list";
+import { NotificationsList } from "@/app/(authenticated)/components/NotificationsList";
 import { SubSideNav } from "@/components/sub-side-nav";
 import { WorkspaceQuickSearch } from "@/components/workspace-quick-search";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
@@ -35,6 +35,7 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- close notifications drawer on client-side route change
     setNotificationsOpen(false);
   }, [pathname]);
 

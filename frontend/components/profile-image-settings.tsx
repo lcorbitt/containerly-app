@@ -4,14 +4,13 @@ import { useCallback, useRef, useState } from "react";
 import { Trash2, Upload } from "lucide-react";
 import { useToast } from "@/contexts/toast";
 import { useOptionalSessionAvatar } from "@/contexts/session-avatar";
-import { createClient } from "@/lib/supabase/client";
+import { PROFILE_IMAGE_ACCEPT, assertProfileImageFile } from "@/lib/profile-image";
 import {
-  PROFILE_IMAGES_BUCKET,
-  PROFILE_IMAGE_ACCEPT,
-  assertProfileImageFile,
-  buildProfileImageObjectPath,
-  getProfileImagePublicUrl,
-} from "@/lib/profile-image";
+  getProfileImagePublicUrlBrowser,
+  clearProfileImagePathAndRemoveStorage,
+  fetchProfileImagePath,
+  uploadProfileImageAndSetPath,
+} from "@/services/profile-browser.service";
 
 type Props = {
   userId: string;
@@ -37,22 +36,14 @@ export function ProfileImageSettings({
   const [path, setPath] = useState<string | null>(initialProfileImagePath);
   const [busy, setBusy] = useState(false);
 
-  const supabase = createClient();
-  const publicUrl = getProfileImagePublicUrl(supabase, path);
+  const publicUrl = getProfileImagePublicUrlBrowser(path);
   const initials = (displayLabel.trim().slice(0, 2) || "?").toUpperCase();
 
   const refreshPathFromDb = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("profile_image_path")
-      .eq("id", userId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    const next =
-      (data?.profile_image_path as string | null | undefined) ?? null;
+    const next = await fetchProfileImagePath(userId);
     setPath(next);
     sessionAvatar?.setProfileImagePath(next);
-  }, [supabase, userId, sessionAvatar]);
+  }, [userId, sessionAvatar]);
 
   async function onPickFile(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -66,28 +57,12 @@ export function ProfileImageSettings({
 
     setBusy(true);
     const previousPath = path;
-    const objectPath = buildProfileImageObjectPath(userId, file);
     try {
-      const { error: upErr } = await supabase.storage
-        .from(PROFILE_IMAGES_BUCKET)
-        .upload(objectPath, file, {
-          contentType: file.type || undefined,
-          upsert: false,
-        });
-      if (upErr) throw new Error(upErr.message);
-
-      const { error: dbErr } = await supabase
-        .from("profiles")
-        .update({ profile_image_path: objectPath })
-        .eq("id", userId);
-      if (dbErr) {
-        await supabase.storage.from(PROFILE_IMAGES_BUCKET).remove([objectPath]);
-        throw new Error(dbErr.message);
-      }
-
-      if (previousPath?.trim()) {
-        await supabase.storage.from(PROFILE_IMAGES_BUCKET).remove([previousPath.trim()]);
-      }
+      const objectPath = await uploadProfileImageAndSetPath({
+        userId,
+        file,
+        previousPath,
+      });
 
       setPath(objectPath);
       sessionAvatar?.setProfileImagePath(objectPath);
@@ -105,14 +80,11 @@ export function ProfileImageSettings({
     setBusy(true);
     const toRemove = path.trim();
     try {
-      const { error: dbErr } = await supabase
-        .from("profiles")
-        .update({ profile_image_path: null })
-        .eq("id", userId);
-      if (dbErr) throw new Error(dbErr.message);
-
-      const { error: rmErr } = await supabase.storage.from(PROFILE_IMAGES_BUCKET).remove([toRemove]);
-      if (rmErr) {
+      const { storageRemoved } = await clearProfileImagePathAndRemoveStorage({
+        userId,
+        storagePath: toRemove,
+      });
+      if (!storageRemoved) {
         await refreshPathFromDb();
         toast("Photo removed from profile; storage file may still exist.", "info");
         return;

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { getSessionProfile, isSuperadminRole, type ProfileRole } from "@/lib/auth/profile";
+import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-
-const ALLOWED_ROLES: ProfileRole[] = ["user", "superadmin"];
+import { updateProfileRoleAsSuperadmin } from "@/server/services/profile-role-update.service";
 
 export async function PATCH(
   request: Request,
@@ -32,11 +31,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const role = body.role;
-  if (typeof role !== "string" || !ALLOWED_ROLES.includes(role as ProfileRole)) {
-    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
-  }
-
   let admin;
   try {
     admin = createAdminClient();
@@ -47,20 +41,15 @@ export async function PATCH(
     );
   }
 
-  const { data, error } = await admin
-    .from("profiles")
-    .update({ role })
-    .eq("id", profileId)
-    .select("id, email, full_name, role, created_at")
-    .single();
+  const result = await updateProfileRoleAsSuperadmin({
+    admin,
+    profileId,
+    role: body.role ?? "",
+  });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  if (!data) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ profile: data });
+  return NextResponse.json({ profile: result.profile });
 }

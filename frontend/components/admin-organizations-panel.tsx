@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreateOrgForm } from "@/components/create-org-form";
+import { CreateOrgForm } from "@/app/(authenticated)/admin/organizations/components/CreateOrgForm";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
 export function AdminOrganizationsPanel() {

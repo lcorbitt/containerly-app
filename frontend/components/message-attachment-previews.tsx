@@ -2,8 +2,8 @@
 
 import { Check, FileText, Loader2, Pencil, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { isImageThumbnailCandidate, WORKSPACE_FILES_BUCKET } from "@/lib/workspace-files";
+import { isImageThumbnailCandidate } from "@/lib/workspace-files";
+import { createWorkspaceStorageSignedUrl } from "@/services/workspace-storage.service";
 import type { WorkspaceAttachment } from "@/types/database";
 
 const THUMB_BOX_THREAD = "h-14 w-14 shrink-0 overflow-hidden rounded-md border border-zinc-200/90 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/80";
@@ -89,16 +89,14 @@ export function StoredMessageAttachmentButton({
     if (!tryImage) return;
     let cancelled = false;
     const run = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.storage
-        .from(WORKSPACE_FILES_BUCKET)
-        .createSignedUrl(row.storage_path, 3600);
-      if (cancelled) return;
-      if (error || !data?.signedUrl) {
+      try {
+        const url = await createWorkspaceStorageSignedUrl(row.storage_path, 3600);
+        if (cancelled) return;
+        setThumbUrl(url);
+      } catch {
+        if (cancelled) return;
         setShowImage(false);
-        return;
       }
-      setThumbUrl(data.signedUrl);
     };
     void run();
     return () => {

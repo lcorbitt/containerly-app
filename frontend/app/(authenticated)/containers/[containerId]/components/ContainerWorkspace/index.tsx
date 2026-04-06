@@ -11,14 +11,22 @@ import { DocumentsList } from "@/components/documents-list";
 import { ThreadPanel } from "@/components/workspace-thread-panel";
 import {
   ATTACHMENT_DISPLAY_NAME_MAX_LEN,
-  buildContainerAttachmentPath,
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,
   MAX_ATTACHMENTS_PER_MESSAGE,
-  WORKSPACE_FILES_BUCKET,
 } from "@/lib/workspace-files";
 import { PageLoading } from "@/components/page-loading";
-import { createClient } from "@/lib/supabase/client";
+import { getBrowserAuthUserId } from "@/services/auth-browser.service";
+import {
+  deleteContainerReportMessage,
+  loadContainerWorkspaceData,
+  openContainerWorkspaceAttachmentSignedUrl,
+  postContainerWorkspaceMessage,
+  removeContainerWorkspaceAttachment,
+  renameContainerWorkspaceAttachment,
+  type ContainerWorkspaceSnapshot,
+  uploadContainerWorkspaceDocuments,
+} from "@/services/container-workspace.service";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
@@ -31,76 +39,11 @@ import {
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
 import { computePublicReportInsights, riskInsightBadgeClass } from "@/lib/report-insights";
 import { getShipmentDetailRows, shipperReceiverFromLocation } from "@/lib/jsoncargo-display";
-import { profileDisplayName } from "@/lib/author-display-name";
 import { formatTimestamp } from "@/utils/datetime";
 import { WORKSPACE_TAB_PANEL_HEIGHT_CSS, workspaceTabButtonClass } from "@/lib/workspace-tab-panel";
 import { collectMessageSubtreeIds } from "@/lib/report-message-tree";
 import type { ReportActivity, ReportMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
-
-async function persistContainerAttachmentFile(
-  supabase: ReturnType<typeof createClient>,
-  args: {
-    organizationId: string;
-    containerId: string;
-    userId: string;
-    file: File;
-    reportMessageId: string | null;
-    isInternal: boolean;
-  },
-): Promise<WorkspaceAttachment> {
-  const { organizationId, containerId, userId, file, reportMessageId, isInternal } = args;
-  if (file.size > MAX_ATTACHMENT_FILE_BYTES) {
-    throw new Error(`${file.name} is too large (max ${MAX_ATTACHMENT_SIZE_LABEL})`);
-  }
-  const { path } = buildContainerAttachmentPath(organizationId, containerId, file);
-  const { error: upErr } = await supabase.storage
-    .from(WORKSPACE_FILES_BUCKET)
-    .upload(path, file, {
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-  if (upErr) throw new Error(upErr.message);
-
-  const insertRow: {
-    organization_id: string;
-    container_id: string;
-    shipment_id: null;
-    storage_path: string;
-    file_name: string;
-    content_type: string | null;
-    file_size_bytes: number;
-    uploaded_by: string;
-    is_internal: boolean;
-    report_message_id?: string;
-  } = {
-    organization_id: organizationId,
-    container_id: containerId,
-    shipment_id: null,
-    is_internal: isInternal,
-    storage_path: path,
-    file_name: file.name,
-    content_type: file.type || null,
-    file_size_bytes: file.size,
-    uploaded_by: userId,
-  };
-  if (reportMessageId) insertRow.report_message_id = reportMessageId;
-
-  const { data: inserted, error: insErr } = await supabase
-    .from("workspace_attachments")
-    .insert(insertRow)
-    .select()
-    .single();
-  if (insErr) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([path]);
-    throw new Error(insErr.message);
-  }
-  if (!inserted) {
-    await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([path]);
-    throw new Error("Database did not return the new attachment row (check RLS SELECT on insert).");
-  }
-  return inserted as WorkspaceAttachment;
-}
 
 type MainTab = "timeline" | "thread" | "documents";
 
@@ -115,15 +58,6 @@ function trackingSubviewToggleClass(active: boolean) {
       : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
   }`;
 }
-
-type ContainerSnapshot = {
-  shipment_id: string | null;
-  status: string | null;
-  carrier: string | null;
-  location: Record<string, unknown> | null;
-  last_synced_at: string | null;
-  enrichment: Record<string, unknown> | null;
-};
 
 export function ContainerWorkspace({
   containerId,
@@ -142,7 +76,7 @@ export function ContainerWorkspace({
   const [activity, setActivity] = useState<ReportActivity[]>([]);
   const [timeline, setTimeline] = useState<PublicTimelineEvent[]>([]);
   const timelineOrder = useContainerTimelineOrder(timeline);
-  const [containerRow, setContainerRow] = useState<ContainerSnapshot | null>(null);
+  const [containerRow, setContainerRow] = useState<ContainerWorkspaceSnapshot | null>(null);
   const [bolGroupSiblings, setBolGroupSiblings] = useState<
     { id: string; container_number: string }[]
   >([]);
@@ -241,169 +175,34 @@ export function ContainerWorkspace({
       setLoadError(null);
       if (!quiet) setLoading(true);
       try {
-        const supabase = createClient();
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) {
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setLoadError("Not signed in");
-          return;
-        }
-
-        const { data: cRow, error: cErr } = await supabase
-          .from("containers")
-          .select("id, shipment_id, status, carrier, location, last_synced_at, enrichment")
-          .eq("id", containerId)
-          .eq("organization_id", selectedOrgId)
-          .maybeSingle();
-
-        if (cErr) {
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setLoadError(cErr.message);
-          return;
-        }
-        if (!cRow) {
-          setRequest(null);
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setLoadError("Container not found in this organization.");
-          return;
-        }
-
-        const { data: tr, error: trErr } = await supabase
-          .from("tracking_requests")
-          .select("*")
-          .eq("container_id", containerId)
-          .eq("organization_id", selectedOrgId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (trErr) {
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setLoadError(trErr.message);
-          return;
-        }
-        if (!tr) {
-          setRequest(null);
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setLoadError("No tracking line for this container yet. Create one from Track or a shipment import.");
-          return;
-        }
-
-        setRequest(tr as TrackingRequest);
-        const trRow = tr as TrackingRequest;
-
-        const shipmentIdForSiblings =
-          typeof cRow.shipment_id === "string" ? cRow.shipment_id : null;
-
-        const siblingQuery =
-          shipmentIdForSiblings && selectedOrgId
-            ? supabase
-                .from("containers")
-                .select("id, container_number")
-                .eq("shipment_id", shipmentIdForSiblings)
-                .eq("organization_id", selectedOrgId)
-                .neq("id", containerId)
-                .order("container_number", { ascending: true })
-            : Promise.resolve({ data: [] as { id: string; container_number: string }[], error: null });
-
-        const [{ data: msg }, { data: act }, { data: tev }, attRes, siblingResult] = await Promise.all([
-          supabase
-            .from("report_messages")
-            .select("*")
-            .eq("container_id", containerId)
-            .order("created_at", { ascending: true }),
-          supabase
-            .from("report_activity")
-            .select("*")
-            .eq("container_id", containerId)
-            .order("created_at", { ascending: false })
-            .limit(200),
-          supabase
-            .from("tracking_events")
-            .select(
-              "id, event_type, status, location, occurred_at, created_at, container_id, tracking_request_id, raw_payload",
-            )
-            .eq("container_id", containerId)
-            .order("occurred_at", { ascending: true })
-            .limit(100),
-          supabase
-            .from("workspace_attachments")
-            .select("*")
-            .eq("container_id", containerId)
-            .order("created_at", { ascending: false }),
-          siblingQuery,
-        ]);
-
-        const msgList = (msg as ReportMessage[]) ?? [];
-        setMessages(msgList);
-
-        const attRows: WorkspaceAttachment[] = attRes.error
-          ? []
-          : ((attRes.data as WorkspaceAttachment[]) ?? []);
-
-        const authorIds = [
-          ...new Set(
-            msgList.map((m) => m.author_user_id).filter((id): id is string => Boolean(id)),
-          ),
-        ];
-        const uploaderIds = [...new Set(attRows.map((a) => a.uploaded_by))];
-        const profileIds = [...new Set([...authorIds, ...uploaderIds])];
-
-        const nameByUser: Record<string, string> = {};
-        if (profileIds.length > 0) {
-          const { data: profs } = await supabase
-            .from("profiles")
-            .select("id, email, full_name, profile_image_path")
-            .in("id", profileIds);
-          for (const p of profs ?? []) {
-            const id = p.id as string;
-            nameByUser[id] = profileDisplayName({
-              full_name: p.full_name as string | null,
-              email: p.email as string | null,
-            });
-          }
-        }
-        setMessageAuthorByUserId(nameByUser);
-
-        setActivity((act as ReportActivity[]) ?? []);
-        setTimeline([...(tev as PublicTimelineEvent[] | null) ?? []]);
-        if (attRes.error) {
-          if (!quiet) {
-            toast(`Could not load attachments: ${attRes.error.message}`, "error");
-          }
-        } else {
-          setAttachments(attRows);
-        }
-        setContainerRow({
-          shipment_id: typeof cRow.shipment_id === "string" ? cRow.shipment_id : null,
-          status: (cRow.status as string | null) ?? null,
-          carrier: (cRow.carrier as string | null) ?? null,
-          location: (cRow.location as Record<string, unknown> | null) ?? null,
-          last_synced_at: (cRow.last_synced_at as string | null) ?? null,
-          enrichment:
-            cRow.enrichment && typeof cRow.enrichment === "object"
-              ? (cRow.enrichment as Record<string, unknown>)
-              : null,
+        const result = await loadContainerWorkspaceData({
+          containerId,
+          organizationId: selectedOrgId,
         });
+        if (!result.ok) {
+          setRequest(null);
+          setContainerRow(null);
+          setBolGroupSiblings([]);
+          setMessages([]);
+          setActivity([]);
+          setTimeline([]);
+          setAttachments([]);
+          setMessageAuthorByUserId({});
+          setLoadError(result.error);
+          return;
+        }
 
-        const sib = siblingResult as {
-          data: { id: string; container_number: string }[] | null;
-          error: { message: string } | null;
-        };
-        const srows = sib.data;
-        setBolGroupSiblings(
-          !sib.error && Array.isArray(srows)
-            ? srows.map((r) => ({
-                id: r.id,
-                container_number: r.container_number,
-              }))
-            : [],
-        );
+        setRequest(result.request);
+        setMessages(result.messages);
+        setMessageAuthorByUserId(result.messageAuthorByUserId);
+        setActivity(result.activity);
+        setTimeline(result.timeline);
+        setAttachments(result.attachments);
+        if (result.quietAttachmentWarning && !quiet) {
+          toast(`Could not load attachments: ${result.quietAttachmentWarning}`, "error");
+        }
+        setContainerRow(result.containerRow);
+        setBolGroupSiblings(result.bolGroupSiblings);
       } finally {
         if (!quiet) setLoading(false);
       }
@@ -416,11 +215,7 @@ export function ContainerWorkspace({
   }, [load]);
 
   useEffect(() => {
-    void (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      setCurrentUserId(data.user?.id ?? null);
-    })();
+    void getBrowserAuthUserId().then(setCurrentUserId);
   }, []);
 
   const internalOnlyComposer = messageChannel === "team";
@@ -486,18 +281,7 @@ export function ContainerWorkspace({
     setDeletingMessageId(messageId);
     const idsToRemove = collectMessageSubtreeIds(messages, messageId);
     try {
-      const supabase = createClient();
-      const { data: deletedRows, error } = await supabase
-        .from("report_messages")
-        .delete()
-        .eq("id", messageId)
-        .select("id");
-      if (error) throw new Error(error.message);
-      if (!deletedRows?.length) {
-        throw new Error(
-          "Could not delete this message. It may have already been removed, or you can only delete messages you posted.",
-        );
-      }
+      await deleteContainerReportMessage({ messageId });
       setReplyParentId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
       setMessages((prev) => prev.filter((m) => !idsToRemove.has(m.id)));
       await load({ quiet: true });
@@ -526,49 +310,16 @@ export function ContainerWorkspace({
     }
     setPosting(true);
     try {
-      const supabase = createClient();
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data: selfProf } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", u.user.id)
-        .maybeSingle();
-      const displayName = profileDisplayName({
-        full_name: selfProf?.full_name as string | null,
-        email: (selfProf?.email as string | null) ?? u.user.email,
+      const { attachmentErrors } = await postContainerWorkspaceMessage({
+        containerId,
+        organizationId: selectedOrgId,
+        body: t,
+        internalOnly: internalOnlyComposer,
+        replyParentId,
+        files,
       });
-      const { data: inserted, error } = await supabase
-        .from("report_messages")
-        .insert({
-          container_id: containerId,
-          shipment_id: null,
-          author_user_id: u.user.id,
-          author_kind: "member",
-          author_display_name: displayName,
-          is_internal: internalOnlyComposer,
-          body: t,
-          parent_message_id: replyParentId,
-        })
-        .select()
-        .single();
-      if (error) throw new Error(error.message);
-      if (!inserted) throw new Error("Message was not saved.");
-      const messageId = (inserted as ReportMessage).id;
-
-      for (const file of files) {
-        try {
-          await persistContainerAttachmentFile(supabase, {
-            organizationId: selectedOrgId,
-            containerId,
-            userId: u.user.id,
-            file,
-            reportMessageId: messageId,
-            isInternal: internalOnlyComposer,
-          });
-        } catch (e) {
-          toast(e instanceof Error ? e.message : "Could not upload an attachment", "error");
-        }
+      for (const msg of attachmentErrors) {
+        toast(msg, "error");
       }
 
       setBody("");
@@ -585,15 +336,12 @@ export function ContainerWorkspace({
 
   const openAttachment = useCallback(
     async (row: WorkspaceAttachment) => {
-      const supabase = createClient();
-      const { data, error } = await supabase.storage
-        .from(WORKSPACE_FILES_BUCKET)
-        .createSignedUrl(row.storage_path, 3600);
-      if (error || !data?.signedUrl) {
-        toast(error?.message ?? "Could not open file", "error");
-        return;
+      try {
+        const url = await openContainerWorkspaceAttachmentSignedUrl(row.storage_path);
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not open file", "error");
       }
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     },
     [toast],
   );
@@ -606,27 +354,18 @@ export function ContainerWorkspace({
     setUploadingAttachments(true);
     let uploadedCount = 0;
     try {
-      const supabase = createClient();
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) {
-        toast("Sign in to upload files.", "error");
-        return;
+      const { inserted, errors } = await uploadContainerWorkspaceDocuments({
+        organizationId: selectedOrgId,
+        containerId,
+        files: queue,
+        isInternal: docChannel === "team",
+      });
+      for (const err of errors) {
+        toast(err, "error");
       }
-      for (const file of queue) {
-        try {
-          const inserted = await persistContainerAttachmentFile(supabase, {
-            organizationId: selectedOrgId,
-            containerId,
-            userId: u.user.id,
-            file,
-            reportMessageId: null,
-            isInternal: docChannel === "team",
-          });
-          uploadedCount += 1;
-          setAttachments((prev) => [inserted, ...prev]);
-        } catch (e) {
-          toast(e instanceof Error ? e.message : "Upload failed", "error");
-        }
+      uploadedCount = inserted.length;
+      for (const row of inserted) {
+        setAttachments((prev) => [row, ...prev]);
       }
       if (uploadedCount === 0) {
         toast("No files were uploaded.", "info");
@@ -635,7 +374,12 @@ export function ContainerWorkspace({
       await load({ quiet: true });
       toast(uploadedCount === 1 ? "File uploaded" : `${uploadedCount} files uploaded`, "success");
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Upload failed", "error");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      if (msg === "Not signed in") {
+        toast("Sign in to upload files.", "error");
+      } else {
+        toast(msg, "error");
+      }
     } finally {
       setUploadingAttachments(false);
     }
@@ -661,12 +405,7 @@ export function ContainerWorkspace({
       }
       setRenamingAttachmentId(attachmentId);
       try {
-        const supabase = createClient();
-        const { error } = await supabase
-          .from("workspace_attachments")
-          .update({ file_name: trimmed })
-          .eq("id", attachmentId);
-        if (error) throw new Error(error.message);
+        await renameContainerWorkspaceAttachment({ attachmentId, fileName: trimmed });
         setAttachments((prev) =>
           prev.map((a) => (a.id === attachmentId ? { ...a, file_name: trimmed } : a)),
         );
@@ -698,16 +437,11 @@ export function ContainerWorkspace({
     if (!ok) return;
     setRemovingAttachmentId(attachmentId);
     try {
-      const supabase = createClient();
-      const { error: dbErr } = await supabase
-        .from("workspace_attachments")
-        .delete()
-        .eq("id", attachmentId);
-      if (dbErr) throw new Error(dbErr.message);
-      const { error: stErr } = await supabase.storage
-        .from(WORKSPACE_FILES_BUCKET)
-        .remove([row.storage_path]);
-      if (stErr) {
+      const { storageCleanupIncomplete } = await removeContainerWorkspaceAttachment({
+        attachmentId,
+        storagePath: row.storage_path,
+      });
+      if (storageCleanupIncomplete) {
         toast("File removed from the list; storage cleanup may be incomplete.", "info");
       }
       setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));

@@ -1,16 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Trash2, Upload } from "lucide-react";
 import { useToast } from "@/contexts/toast";
-import { createClient } from "@/lib/supabase/client";
+import { ORG_IMAGE_ACCEPT, assertOrgImageFile } from "@/lib/org-image";
 import {
-  ORG_IMAGES_BUCKET,
-  ORG_IMAGE_ACCEPT,
-  assertOrgImageFile,
-  buildOrgImageObjectPath,
-  getOrgImagePublicUrl,
-} from "@/lib/org-image";
+  getOrgImagePublicUrlBrowser,
+  clearOrganizationImagePathAndRemoveStorage,
+  fetchOrganizationImagePath,
+  uploadOrganizationImageAndSetPath,
+} from "@/services/organization-image-browser.service";
 
 type Props = {
   organizationId: string;
@@ -30,21 +29,14 @@ export function OrganizationImageSettings({
   const [path, setPath] = useState<string | null>(initialOrgImagePath);
   const [busy, setBusy] = useState(false);
 
-  const supabase = useMemo(() => createClient(), []);
-  const publicUrl = getOrgImagePublicUrl(supabase, path);
+  const publicUrl = getOrgImagePublicUrlBrowser(path);
   const initials = (organizationName.trim().slice(0, 2) || "?").toUpperCase();
 
   const refreshPathFromDb = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("organizations")
-      .select("org_image_path")
-      .eq("id", organizationId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    const next = (data?.org_image_path as string | null | undefined) ?? null;
+    const next = await fetchOrganizationImagePath(organizationId);
     setPath(next);
     onPathUpdated?.(next);
-  }, [supabase, organizationId, onPathUpdated]);
+  }, [organizationId, onPathUpdated]);
 
   async function onPickFile(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -58,28 +50,12 @@ export function OrganizationImageSettings({
 
     setBusy(true);
     const previousPath = path;
-    const objectPath = buildOrgImageObjectPath(organizationId, file);
     try {
-      const { error: upErr } = await supabase.storage
-        .from(ORG_IMAGES_BUCKET)
-        .upload(objectPath, file, {
-          contentType: file.type || undefined,
-          upsert: false,
-        });
-      if (upErr) throw new Error(upErr.message);
-
-      const { error: dbErr } = await supabase
-        .from("organizations")
-        .update({ org_image_path: objectPath })
-        .eq("id", organizationId);
-      if (dbErr) {
-        await supabase.storage.from(ORG_IMAGES_BUCKET).remove([objectPath]);
-        throw new Error(dbErr.message);
-      }
-
-      if (previousPath?.trim()) {
-        await supabase.storage.from(ORG_IMAGES_BUCKET).remove([previousPath.trim()]);
-      }
+      const objectPath = await uploadOrganizationImageAndSetPath({
+        organizationId,
+        file,
+        previousPath,
+      });
 
       setPath(objectPath);
       onPathUpdated?.(objectPath);
@@ -97,14 +73,11 @@ export function OrganizationImageSettings({
     setBusy(true);
     const toRemove = path.trim();
     try {
-      const { error: dbErr } = await supabase
-        .from("organizations")
-        .update({ org_image_path: null })
-        .eq("id", organizationId);
-      if (dbErr) throw new Error(dbErr.message);
-
-      const { error: rmErr } = await supabase.storage.from(ORG_IMAGES_BUCKET).remove([toRemove]);
-      if (rmErr) {
+      const { storageRemoved } = await clearOrganizationImagePathAndRemoveStorage({
+        organizationId,
+        storagePath: toRemove,
+      });
+      if (!storageRemoved) {
         await refreshPathFromDb();
         toast("Logo removed from organization; storage file may still exist.", "info");
         return;

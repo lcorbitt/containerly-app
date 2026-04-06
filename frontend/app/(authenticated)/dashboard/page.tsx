@@ -1,4 +1,4 @@
-import { TrackingDashboard } from "@/components/tracking-dashboard";
+import { TrackingDashboard } from "./components/TrackingDashboard";
 
 export const dynamic = "force-dynamic";
 

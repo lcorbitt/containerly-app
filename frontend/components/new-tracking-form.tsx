@@ -3,16 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createTrackingRequestAction } from "@/app/actions/edge-functions";
 import { CustomSelect, type CustomSelectOption } from "@/components/custom-select";
-import { createClient } from "@/lib/supabase/client";
+import { fetchOrganizationShipmentsForTrackingPick } from "@/services/shipments-lists.service";
 
 const JSONCARGO_CONTAINER_DOCS =
   "https://jsoncargo.com/documentation-api/";
-
-type ShipmentPickRow = {
-  id: string;
-  reference: string;
-  created_at: string;
-};
 
 export function NewTrackingForm({
   organizationId,
@@ -35,7 +29,9 @@ export function NewTrackingForm({
   const [shipmentMode, setShipmentMode] = useState<"new" | "existing">("new");
   const [shipmentReference, setShipmentReference] = useState("");
   const [existingShipmentId, setExistingShipmentId] = useState("");
-  const [shipments, setShipments] = useState<ShipmentPickRow[]>([]);
+  const [shipments, setShipments] = useState<
+    { id: string; reference: string; created_at: string }[]
+  >([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
   const [shipmentsError, setShipmentsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,15 +48,7 @@ export function NewTrackingForm({
     setShipmentsLoading(true);
     setShipmentsError(null);
     try {
-      const supabase = createClient();
-      const { data, error: qErr } = await supabase
-        .from("shipments")
-        .select("id, reference, created_at")
-        .eq("organization_id", organizationId)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (qErr) throw new Error(qErr.message);
-      const rows = (data as ShipmentPickRow[]) ?? [];
+      const rows = await fetchOrganizationShipmentsForTrackingPick(organizationId);
       setShipments(rows);
       setExistingShipmentId((prev) => {
         if (prev && rows.some((r) => r.id === prev)) return prev;

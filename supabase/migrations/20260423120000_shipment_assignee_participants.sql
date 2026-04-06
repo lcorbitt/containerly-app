@@ -141,6 +141,10 @@ drop policy if exists "tracking_request_participants_delete" on public.tracking_
 
 drop table if exists public.tracking_request_participants;
 
+-- Policies tr_insert / tr_update reference assignee_user_id; drop them before dropping the column.
+drop policy if exists "tr_insert" on public.tracking_requests;
+drop policy if exists "tr_update" on public.tracking_requests;
+
 drop index if exists public.idx_tracking_requests_assignee;
 
 alter table public.tracking_requests
@@ -149,7 +153,6 @@ alter table public.tracking_requests
 comment on table public.tracking_requests is
   'Per-container carrier sync / polling row; audit via created_by. Assignment and collaboration are shipment-scoped.';
 
-drop policy if exists "tr_insert" on public.tracking_requests;
 create policy "tr_insert"
   on public.tracking_requests for insert
   with check (
@@ -157,7 +160,6 @@ create policy "tr_insert"
     and created_by = auth.uid()
   );
 
-drop policy if exists "tr_update" on public.tracking_requests;
 create policy "tr_update"
   on public.tracking_requests for update
   using (public.is_org_member(organization_id))

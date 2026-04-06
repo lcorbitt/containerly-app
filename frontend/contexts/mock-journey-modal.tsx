@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { DialogCloseButton } from "@/components/dialog-close-button";
 import { MockJourneySimulator } from "@/components/mock-journey-simulator";
-import { createClient } from "@/lib/supabase/client";
+import { fetchRecentTrackingRequestsForOrganization } from "@/services/tracking-requests-browser.service";
 import { emitTrackingCreated } from "@/lib/tracking-created-event";
 import type { TrackingRequest } from "@/types/database";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
@@ -48,14 +48,8 @@ export function MockJourneyModalProvider({ children }: { children: React.ReactNo
     }
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data: tr } = await supabase
-        .from("tracking_requests")
-        .select("*")
-        .eq("organization_id", selectedOrgId)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setRequests((tr as TrackingRequest[]) ?? []);
+      const rows = await fetchRecentTrackingRequestsForOrganization(selectedOrgId);
+      setRequests(rows);
     } finally {
       setLoading(false);
     }

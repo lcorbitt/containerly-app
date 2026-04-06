@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/toast";
-import { createClient } from "@/lib/supabase/client";
+import { updateProfileFullName } from "@/services/profile-browser.service";
 
 const MAX_LEN = 200;
 
@@ -36,12 +36,7 @@ export function SettingsDisplayName({
 
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ full_name: trimmed.length > 0 ? trimmed : null })
-        .eq("id", userId);
-      if (error) throw new Error(error.message);
+      await updateProfileFullName(userId, trimmed.length > 0 ? trimmed : null);
       toast("Name updated", "success");
       router.refresh();
     } catch (e) {

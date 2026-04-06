@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import {
   ADMIN_TABLE_HEAD_ROW,
   ADMIN_TABLE_ROW,
@@ -9,109 +8,23 @@ import {
   AdminTableSection,
 } from "@/components/admin-table-section";
 import type { Profile } from "@/types/database";
+import {
+  PAGE_SIZE_OPTIONS,
+  ROLE_OPTIONS,
+  useAdminProfilesTable,
+} from "./hooks/useAdminProfilesTable";
+import type { AdminProfileRow } from "./utils/admin-profiles-table";
 
-type Row = Pick<Profile, "id" | "email" | "full_name" | "role" | "created_at"> & {
-  /** Comma-separated organization names from organization_members, or "—" if none */
-  organizations_label: string;
-};
-
-const ROLE_OPTIONS: Profile["role"][] = ["user", "superadmin"];
-const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
-
-function matchesSearch(row: Row, q: string): boolean {
-  if (!q.trim()) return true;
-  const s = q.trim().toLowerCase();
-  return (
-    (row.email?.toLowerCase().includes(s) ?? false) ||
-    (row.full_name?.toLowerCase().includes(s) ?? false) ||
-    row.id.toLowerCase().includes(s) ||
-    row.organizations_label.toLowerCase().includes(s)
-  );
-}
+export type { AdminProfileRow };
 
 export function AdminProfilesTable({
   initialProfiles,
   currentUserId,
 }: {
-  initialProfiles: Row[];
+  initialProfiles: AdminProfileRow[];
   currentUserId: string;
 }) {
-  const [profiles, setProfiles] = useState<Row[]>(initialProfiles);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(50);
-
-  useEffect(() => {
-    setProfiles(initialProfiles);
-  }, [initialProfiles]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, pageSize]);
-
-  async function updateRole(profileId: string, role: Profile["role"]) {
-    setError(null);
-    setPendingId(profileId);
-    try {
-      const res = await fetch(`/api/profiles/${profileId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      });
-      const payload = (await res.json()) as {
-        profile?: Pick<Profile, "id" | "email" | "full_name" | "role" | "created_at">;
-        error?: string;
-      };
-      if (!res.ok) {
-        throw new Error(payload.error ?? res.statusText);
-      }
-      if (payload.profile) {
-        const nextRole = payload.profile.role;
-        setProfiles((prev) =>
-          prev.map((p) => (p.id === profileId ? { ...p, role: nextRole } : p)),
-        );
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed");
-    } finally {
-      setPendingId(null);
-    }
-  }
-
-  const sorted = useMemo(
-    () =>
-      [...profiles].sort((a, b) =>
-        (a.full_name?.trim() || a.email || a.id).localeCompare(b.full_name?.trim() || b.email || b.id),
-      ),
-    [profiles],
-  );
-
-  const filtered = useMemo(() => sorted.filter((row) => matchesSearch(row, search)), [sorted, search]);
-
-  useEffect(() => {
-    const tp = Math.max(1, Math.ceil(filtered.length / pageSize));
-    setPage((p) => Math.min(p, tp));
-  }, [filtered.length, pageSize]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageStart = (safePage - 1) * pageSize;
-  const pageRows = useMemo(
-    () => filtered.slice(pageStart, pageStart + pageSize),
-    [filtered, pageStart, pageSize],
-  );
-
-  const summaryLine =
-    filtered.length === sorted.length
-      ? `${sorted.length.toLocaleString()} account${sorted.length === 1 ? "" : "s"}`
-      : `${filtered.length.toLocaleString()} of ${sorted.length.toLocaleString()} accounts`;
-
-  const pageRange =
-    filtered.length === 0
-      ? "0–0"
-      : `${(pageStart + 1).toLocaleString()}–${Math.min(pageStart + pageSize, filtered.length).toLocaleString()}`;
+  const t = useAdminProfilesTable(initialProfiles, currentUserId);
 
   const toolbar = (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -120,8 +33,8 @@ export function AdminProfilesTable({
           Search
           <input
             type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={t.search}
+            onChange={(e) => t.setSearch(e.target.value)}
             placeholder="Name, email, user ID, or organization…"
             className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
@@ -129,8 +42,10 @@ export function AdminProfilesTable({
         <label className="flex w-full min-w-[6rem] max-w-[8rem] flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:w-28">
           Page size
           <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])}
+            value={t.pageSize}
+            onChange={(e) =>
+              t.setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])
+            }
             className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           >
             {PAGE_SIZE_OPTIONS.map((n) => (
@@ -141,33 +56,33 @@ export function AdminProfilesTable({
           </select>
         </label>
       </div>
-      <p className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{summaryLine}</p>
+      <p className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{t.summaryLine}</p>
     </div>
   );
 
   const pagination =
-    filtered.length > 0 ? (
+    t.filtered.length > 0 ? (
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="tabular-nums text-zinc-600 dark:text-zinc-400">
-          Rows <span className="font-medium text-zinc-800 dark:text-zinc-200">{pageRange}</span> of{" "}
-          {filtered.length.toLocaleString()}
+          Rows <span className="font-medium text-zinc-800 dark:text-zinc-200">{t.pageRange}</span> of{" "}
+          {t.filtered.length.toLocaleString()}
         </p>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled={safePage <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={t.safePage <= 1}
+            onClick={() => t.setPage((p) => Math.max(1, p - 1))}
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-zinc-700"
           >
             Previous
           </button>
           <span className="min-w-[5rem] text-center text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-            {safePage} / {totalPages}
+            {t.safePage} / {t.totalPages}
           </span>
           <button
             type="button"
-            disabled={safePage >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={t.safePage >= t.totalPages}
+            onClick={() => t.setPage((p) => Math.min(t.totalPages, p + 1))}
             className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium disabled:opacity-40 dark:border-zinc-700"
           >
             Next
@@ -196,11 +111,11 @@ export function AdminProfilesTable({
         </>
       }
     >
-      {error ? (
-        <p className="p-4 text-sm text-red-600 dark:text-red-400">{error}</p>
-      ) : profiles.length === 0 ? (
+      {t.patchError ? (
+        <p className="p-4 text-sm text-red-600 dark:text-red-400">{t.patchError}</p>
+      ) : t.profiles.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No profiles yet.</p>
-      ) : filtered.length === 0 ? (
+      ) : t.filtered.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No rows match your search.</p>
       ) : (
         <table className="w-full min-w-[64rem] table-fixed border-collapse text-left">
@@ -223,9 +138,9 @@ export function AdminProfilesTable({
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((row) => {
-              const isSelf = row.id === currentUserId;
-              const busy = pendingId === row.id;
+            {t.pageRows.map((row) => {
+              const isSelf = row.id === t.currentUserId;
+              const busy = t.pendingId === row.id;
               return (
                 <tr key={row.id} className={ADMIN_TABLE_ROW}>
                   <td className={`${ADMIN_TABLE_TD} text-zinc-900 dark:text-zinc-100`}>
@@ -263,7 +178,7 @@ export function AdminProfilesTable({
                       onChange={(e) => {
                         const next = e.target.value as Profile["role"];
                         if (next === row.role) return;
-                        void updateRole(row.id, next);
+                        void t.updateRole(row.id, next);
                       }}
                     >
                       {ROLE_OPTIONS.map((r) => (
