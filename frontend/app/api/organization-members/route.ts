@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { OrganizationMemberRole } from "@/types/database";
-import { inviteOrAddOrganizationMember } from "@/server/services/organization-member-invite.service";
+import { inviteOrAddOrganizationMember } from "@/server/services/organization.service";
 
 export async function POST(request: Request) {
   const supabase = await createClient();

@@ -1,4 +1,4 @@
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { corsHeaders, jsonResponse } from "../_shared/infra/cors.ts";
 
 /** Legacy anonymous endpoint — disabled; customers use authenticated shipment access. */
 Deno.serve(async (req) => {

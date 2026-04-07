@@ -5,20 +5,20 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { PageLoading } from "@/components/page-loading";
+import { PageLoading } from "@/components/PageLoading";
 import { ShipmentWorkspaceScopePanel } from "../ShipmentWorkspaceScopePanel";
 import { ContainerWorkspace } from "@/app/(authenticated)/containers/[containerId]/components/ContainerWorkspace";
 import {
   pickTrackingRowsExported,
   type ShipmentOverviewRow,
   type ShipmentOverviewTrackingRow,
-} from "@/lib/operator-shipments-overview-query";
+} from "@/services/shipment.service";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { TrackingWorkflowStatusPill } from "@/components/status-pills";
+import { TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import {
   shipmentWorkspaceRowQueryKeyRoot,
   useShipmentWorkspaceRowQuery,
-} from "@/hooks/queries/use-shipment-workspace-row";
+} from "@/hooks/queries/useShipment";
 
 type WorkspaceMode = "shipment" | "container";
 

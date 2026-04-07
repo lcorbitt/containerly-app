@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
+import { getSessionProfile } from "@/services/auth-server.service";
+import { isSuperadminRole } from "@/utils/profile-role";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminSectionLayout({

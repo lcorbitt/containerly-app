@@ -2,21 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { OperatorShipmentsOverview } from "@/components/operator-shipments-overview";
-import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
-import { TablePagination } from "@/components/table-pagination";
+import { OperatorShipmentsOverview } from "./components/OperatorShipmentsOverview";
+import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { TablePagination } from "@/components/TablePagination";
 import {
+  loadImporterGrantedShipmentsPageBrowser,
   normalizeImporterGrantedShipmentSortColumn,
   type ImporterGrantedShipmentRow,
   type ImporterGrantedShipmentSortColumn,
   type NestedContainer,
   type SortDirection,
-} from "@/lib/importer-shipments-query";
+} from "@/services/shipment.service";
 import { formatTimestamp } from "@/utils/datetime";
-import { shipperReceiverFromLocation } from "@/lib/jsoncargo-display";
+import { shipperReceiverFromLocation } from "@/utils/jsoncargo-display";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { loadImporterGrantedShipmentsPageBrowser } from "@/services/shipments-lists.service";
 
 function pickSingle<T>(v: T | T[] | null | undefined): T | null {
   if (v == null) return null;

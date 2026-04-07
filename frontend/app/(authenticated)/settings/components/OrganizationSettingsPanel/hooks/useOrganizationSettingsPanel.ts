@@ -1,18 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getBrowserAuthUserId } from "@/services/auth-browser.service";
+import { getBrowserAuthUserId } from "@/services/auth.service";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { canManageOrganizationSettings } from "@/lib/org-role";
+import { canManageOrganizationSettings } from "@/utils/org-role";
 import { useToast } from "@/contexts/toast";
 import type { OrganizationMemberRole } from "@/types/database";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
-import { useOrganizationMetricsQuery } from "@/hooks/queries/use-organization-metrics";
-import { useOrganizationMembersQuery } from "@/hooks/queries/use-organization-members";
-import { usePatchOrganizationMemberRoleMutation } from "@/hooks/mutations/use-organization-member-role";
-import { useInviteOrganizationMemberMutation } from "@/hooks/mutations/use-invite-organization-member";
-import { useUpdateOrganizationDetailsMutation } from "@/hooks/mutations/use-update-organization-details";
-import { useDeleteOrganizationMemberMutation } from "@/hooks/mutations/use-delete-organization-member";
+import {
+  useOrganizationMetricsQuery,
+  useOrganizationMembersQuery,
+} from "@/hooks/queries/useOrganization";
+import {
+  usePatchOrganizationMemberRoleMutation,
+  useInviteOrganizationMemberMutation,
+  useUpdateOrganizationDetailsMutation,
+  useDeleteOrganizationMemberMutation,
+} from "@/hooks/mutations/useOrganization";
 
 const ROLE_OPTIONS: OrganizationMemberRole[] = ["admin", "member"];
 

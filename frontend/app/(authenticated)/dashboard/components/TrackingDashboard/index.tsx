@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { startTransition, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DashboardPersonalOverview } from "@/components/dashboard-personal-overview";
-import { DashboardTriage } from "@/components/dashboard-triage";
+import { DashboardPersonalOverview } from "../DashboardPersonalOverview";
+import { DashboardTriage } from "../DashboardTriage";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { TRACKING_CREATED_EVENT } from "@/lib/tracking-created-event";
+import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import {
   trackingDashboardQueryKeyRoot,
   useTrackingDashboardQuery,
-} from "@/hooks/queries/use-tracking-dashboard";
+} from "@/hooks/queries/useTracking";
 
 export function TrackingDashboard() {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();

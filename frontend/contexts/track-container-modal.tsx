@@ -11,11 +11,11 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { BolImportDialog } from "@/components/bol-import-dialog";
-import { DialogCloseButton } from "@/components/dialog-close-button";
-import { NewTrackingForm } from "@/components/new-tracking-form";
+import { BolImportDialog } from "@/components/BolImportDialog";
+import { DialogCloseButton } from "@/components/DialogCloseButton";
+import { NewTrackingForm } from "@/components/NewTrackingForm";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { emitTrackingCreated } from "@/lib/tracking-created-event";
+import { emitTrackingCreated } from "@/utils/tracking-created-event";
 
 type TrackContainerModalContextValue = {
   openTrackContainerModal: () => void;

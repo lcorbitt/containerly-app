@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useUpdateProfilePlatformRoleMutation } from "@/hooks/mutations/use-update-profile-role";
+import { useUpdateProfilePlatformRoleMutation } from "@/hooks/mutations/useProfile";
 import type { Profile } from "@/types/database";
 import {
   matchesAdminProfileSearch,
   sortAdminProfileRows,
   type AdminProfileRow,
-} from "../utils/admin-profiles-table";
+} from "../utils";
 
 export const ROLE_OPTIONS: Profile["role"][] = ["user", "superadmin"];
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;

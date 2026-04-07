@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Fustat, Geist_Mono } from "next/font/google";
-import { AppProviders } from "@/components/app-providers";
+import { AppProviders } from "@/components/AppProviders";
 import "./globals.css";
 
 const fustat = Fustat({

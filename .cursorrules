@@ -14,6 +14,91 @@
 
 ---
 
+## Frontend Architecture: Route-Based Colocation
+
+### Core Principle
+All frontend code must follow **route-based colocation**, with a single dedicated location for shared components.
+
+---
+
+### 1. Route-Based Component Placement
+- Components tied to a specific route MUST live inside that route’s directory.
+
+Example:
+- Route: /containers/[containerId]
+- Path: frontend/app/(authenticated)/containers/[containerId]/ContainerDetails/
+
+---
+
+### 2. Shared Components Location
+All route-agnostic, reusable components MUST live in:
+
+    frontend/components/
+
+Examples:
+- TopNav
+- Sidebar
+- Button
+- Modal
+
+Rules:
+- Must be reusable across multiple routes
+- Must NOT contain route-specific logic
+
+---
+
+### 3. Component Folder Structure
+Every component must follow this structure:
+
+    ComponentName/
+      index.tsx
+      hooks/
+      utils/
+      types.ts (optional)
+
+Definitions:
+- index.tsx → main component entry
+- hooks/ → component-specific hooks only
+- utils/ → pure helper functions (no React state)
+- types.ts → local types/interfaces if needed
+
+---
+
+### 4. Colocation Rules
+- If a component is ONLY used within a route → colocate it in that route directory
+- If a component is reused across routes → move it to frontend/components/
+- Do NOT duplicate components across routes
+
+---
+
+### 5. Hooks & Utils Separation
+- Hooks = React/stateful logic
+- Utils = pure functions (no hooks, no state)
+- Do NOT mix utils inside hooks files
+
+---
+
+### 6. Import Hygiene
+- Prefer relative imports within a route scope
+- Shared components should be imported from frontend/components/
+- Avoid deep cross-directory imports
+
+---
+
+### Anti-Patterns (Avoid)
+- Route-specific components inside frontend/components/
+- Global "components" folders outside frontend/components/
+- Hooks and utils mixed together
+- Components living far from where they are used
+
+---
+
+### Desired Outcome
+- Predictable, route-driven structure
+- Clear separation between route-specific and shared code
+- Improved readability and maintainability
+- Easier onboarding and scaling
+
 ## Layer rules (apply in order of dependency)
 
 ### 1. Component layer

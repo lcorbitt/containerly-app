@@ -6,7 +6,7 @@ import {
   ADMIN_TABLE_TD,
   ADMIN_TABLE_TH,
   AdminTableSection,
-} from "@/components/admin-table-section";
+} from "@/components/AdminTableSection";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
   PAGE_SIZE_OPTIONS,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, use } from "react";
-import { PageLoading } from "@/components/page-loading";
+import { PageLoading } from "@/components/PageLoading";
 import { ShipmentWorkspace } from "./components/ShipmentWorkspace";
 
 export default function AuthenticatedShipmentPortalPage({

@@ -6,14 +6,14 @@ import {
   ADMIN_TABLE_TD,
   ADMIN_TABLE_TH,
   AdminTableSection,
-} from "@/components/admin-table-section";
+} from "@/components/AdminTableSection";
 import type { Profile } from "@/types/database";
 import {
   PAGE_SIZE_OPTIONS,
   ROLE_OPTIONS,
   useAdminProfilesTable,
 } from "./hooks/useAdminProfilesTable";
-import type { AdminProfileRow } from "./utils/admin-profiles-table";
+import type { AdminProfileRow } from "./utils";
 
 export type { AdminProfileRow };
 

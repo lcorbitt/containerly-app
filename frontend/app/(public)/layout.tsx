@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PublicTopNav } from "@/components/top-nav";
+import { PublicTopNav } from "@/components/TopNav";
 
 export const metadata: Metadata = {
   title: "Containerly — Logistics visibility, engineered",

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { acceptImporterInvite } from "@/lib/supabase/shipment-edge";
-import { getBrowserAuthSession } from "@/services/auth-browser.service";
-import { PageLoading } from "@/components/page-loading";
+import { acceptImporterInvite } from "@/services/shipment.service";
+import { getBrowserAuthSession } from "@/services/auth.service";
+import { PageLoading } from "@/components/PageLoading";
 
 function InviteAcceptInner() {
   const router = useRouter();

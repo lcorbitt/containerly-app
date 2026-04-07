@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { DialogCloseButton } from "@/components/dialog-close-button";
+import { DialogCloseButton } from "@/components/DialogCloseButton";
 
 export type ConfirmVariant = "default" | "danger";
 

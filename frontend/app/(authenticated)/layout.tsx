@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
 import type { OrgMembershipRow } from "@/types/organization-workspace";
 import { SessionAvatarProvider } from "@/contexts/session-avatar";
-import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
+import { getSessionProfile } from "@/services/auth-server.service";
+import { isSuperadminRole } from "@/utils/profile-role";
 import { createClient } from "@/lib/supabase/server";
-import { AuthenticatedTopNav } from "@/components/top-nav";
+import { AuthenticatedTopNav } from "@/components/TopNav";
 import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
 import { TrackContainerModalProvider } from "@/contexts/track-container-modal";
-import { SideNav } from "./components/side-nav";
+import { SideNav } from "./components/SideNav";
 
 export default async function AuthenticatedLayout({
   children,

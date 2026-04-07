@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCreateOrganizationMutation } from "@/hooks/mutations/use-create-organization";
+import { useCreateOrganizationMutation } from "@/hooks/mutations/useOrganization";
 
 export function useCreateOrgForm(onCreated: (orgId: string) => void) {
   const [name, setName] = useState("");

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { patchOrganizationMemberRoleForUser } from "@/server/services/organization-member-patch.service";
+import { patchOrganizationMemberRoleForUser } from "@/server/services/organization.service";
 
 export async function PATCH(
   request: Request,

@@ -3,7 +3,7 @@ import { Building2 } from "lucide-react";
 import { AdminOrgMembersTable } from "@/app/(authenticated)/admin/components/AdminOrgMembersTable";
 import { AdminProfilesTable } from "@/app/(authenticated)/admin/components/AdminProfilesTable";
 import { createClient } from "@/lib/supabase/server";
-import { loadAdminProfilesWithOrgLabels } from "@/server/services/admin-directory.service";
+import { loadAdminProfilesWithOrgLabels } from "@/server/services/admin.service";
 
 export const dynamic = "force-dynamic";
 

@@ -2,54 +2,21 @@
 
 import Link from "next/link";
 import { ArrowUpRight, ArrowRight, FileText, Map as MapIcon, MapPin, MessageSquare, Route } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ReportActivityList } from "@/components/report-activity-list";
-import { ContainerDetailsModal } from "@/components/container-details-modal";
-import { VesselEnrichmentCard } from "@/components/vessel-enrichment-card";
-import { ShipmentTrackingMapPanel } from "@/components/shipment-tracking-map";
-import { DocumentsList } from "@/components/documents-list";
-import { ThreadPanel } from "@/components/workspace-thread-panel";
-import {
-  ATTACHMENT_DISPLAY_NAME_MAX_LEN,
-  MAX_ATTACHMENT_FILE_BYTES,
-  MAX_ATTACHMENT_SIZE_LABEL,
-  MAX_ATTACHMENTS_PER_MESSAGE,
-} from "@/lib/workspace-files";
-import { PageLoading } from "@/components/page-loading";
-import { getBrowserAuthUserId } from "@/services/auth-browser.service";
-import {
-  deleteContainerReportMessage,
-  loadContainerWorkspaceData,
-  openContainerWorkspaceAttachmentSignedUrl,
-  postContainerWorkspaceMessage,
-  removeContainerWorkspaceAttachment,
-  renameContainerWorkspaceAttachment,
-  type ContainerWorkspaceSnapshot,
-  uploadContainerWorkspaceDocuments,
-} from "@/services/container-workspace.service";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { ReportActivityList } from "../ReportActivityList";
+import { ContainerDetailsModal } from "../ContainerDetailsModal";
+import { VesselEnrichmentCard } from "@/components/VesselEnrichmentCard";
+import { ShipmentTrackingMapPanel } from "@/components/ShipmentTrackingMap";
+import { DocumentsList } from "@/components/DocumentsList";
+import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
+import { PageLoading } from "@/components/PageLoading";
 import {
   ContainerTimelineView,
-  formatTimelineWhen,
   TimelineOrderToggle,
-  useContainerTimelineOrder,
-} from "@/components/container-timeline";
-import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/status-pills";
-import { computePublicReportInsights, riskInsightBadgeClass } from "@/lib/report-insights";
-import { getShipmentDetailRows, shipperReceiverFromLocation } from "@/lib/jsoncargo-display";
-import { formatTimestamp } from "@/utils/datetime";
-import { WORKSPACE_TAB_PANEL_HEIGHT_CSS, workspaceTabButtonClass } from "@/lib/workspace-tab-panel";
-import { collectMessageSubtreeIds } from "@/lib/report-message-tree";
-import type { ReportActivity, ReportMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
-import type { PublicTimelineEvent } from "@/types/public-report";
-
-type MainTab = "timeline" | "thread" | "documents";
-
-type MessageChannel = "team" | "customer";
-
-type TrackingSubview = "timeline" | "map";
+} from "@/components/ContainerTimeline";
+import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
+import { riskInsightBadgeClass } from "@/utils/report-insights";
+import { WORKSPACE_TAB_PANEL_HEIGHT_CSS, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
+import { useContainerWorkspace } from "./hooks/useContainerWorkspace";
 
 function trackingSubviewToggleClass(active: boolean) {
   return `inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -67,391 +34,65 @@ export function ContainerWorkspace({
   /** When set, sibling lines on this shipment switch via callback (shipment page) instead of `/containers/…`. */
   shipmentEmbed?: { onSelectContainer: (containerId: string) => void };
 }) {
-  const { toast } = useToast();
-  const { confirm } = useConfirm();
-  const { selectedOrgId } = useOrganizationWorkspace();
-  const [request, setRequest] = useState<TrackingRequest | null>(null);
-  const [messages, setMessages] = useState<ReportMessage[]>([]);
-  const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
-  const [activity, setActivity] = useState<ReportActivity[]>([]);
-  const [timeline, setTimeline] = useState<PublicTimelineEvent[]>([]);
-  const timelineOrder = useContainerTimelineOrder(timeline);
-  const [containerRow, setContainerRow] = useState<ContainerWorkspaceSnapshot | null>(null);
-  const [bolGroupSiblings, setBolGroupSiblings] = useState<
-    { id: string; container_number: string }[]
-  >([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [body, setBody] = useState("");
-  const [messageChannel, setMessageChannel] = useState<MessageChannel>("team");
-  const [docChannel, setDocChannel] = useState<MessageChannel>("team");
-  const [replyParentId, setReplyParentId] = useState<string | null>(null);
-  const [posting, setPosting] = useState(false);
-  const [mainTab, setMainTab] = useState<MainTab>("timeline");
-  const [trackingSubview, setTrackingSubview] = useState<TrackingSubview>("timeline");
-  const [containerDetailsModalOpen, setContainerDetailsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<WorkspaceAttachment[]>([]);
-  const [uploadingAttachments, setUploadingAttachments] = useState(false);
-  const [removingAttachmentId, setRemovingAttachmentId] = useState<string | null>(null);
-  const [renamingAttachmentId, setRenamingAttachmentId] = useState<string | null>(null);
-  const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
+  const {
+    selectedOrgId,
+    loading,
+    loadError,
 
-  const attachmentsByMessageId = useMemo(() => {
-    const m = new Map<string, WorkspaceAttachment[]>();
-    for (const a of attachments) {
-      const mid = a.report_message_id;
-      if (!mid) continue;
-      const cur = m.get(mid) ?? [];
-      cur.push(a);
-      m.set(mid, cur);
-    }
-    for (const list of m.values()) {
-      list.sort((x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime());
-    }
-    return m;
-  }, [attachments]);
+    request,
+    containerRow,
+    bolGroupSiblings,
+    timeline,
+    timelineOrder,
+    activity,
+    shipmentLoc,
 
-  const onComposerPickFiles = useCallback(
-    (files: FileList | null) => {
-      const raw = files ? Array.from(files) : [];
-      if (!raw.length) return;
+    mainTab,
+    setMainTab,
+    trackingSubview,
+    setTrackingSubview,
 
-      setComposerPendingFiles((prev) => {
-        const room = Math.max(0, MAX_ATTACHMENTS_PER_MESSAGE - prev.length);
-        if (room === 0) {
-          queueMicrotask(() =>
-            toast(`You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`, "info"),
-          );
-          return prev;
-        }
+    messageChannel,
+    setMessageChannel,
+    filteredThreadMessages,
+    messageAuthorByUserId,
+    attachmentsByMessageId,
+    body,
+    setBody,
+    internalOnlyComposer,
+    posting,
+    replyParentId,
+    setReplyParentId,
+    currentUserId,
+    deletingMessageId,
+    composerPendingFiles,
+    onComposerPickFiles,
+    onRemoveComposerPendingFile,
+    postMessage,
+    deleteMessage,
 
-        const accepted: File[] = [];
-        let oversized = 0;
-        for (const f of raw) {
-          if (f.size > MAX_ATTACHMENT_FILE_BYTES) {
-            oversized += 1;
-            continue;
-          }
-          if (accepted.length < room) accepted.push(f);
-        }
+    docChannel,
+    setDocChannel,
+    attachmentsNewestFirst,
+    uploadingAttachments,
+    removingAttachmentId,
+    renamingAttachmentId,
+    openAttachment,
+    pickAttachmentFiles,
+    renameAttachment,
+    removeAttachment,
 
-        const eligible = raw.filter((f) => f.size <= MAX_ATTACHMENT_FILE_BYTES);
-        const skippedForCap = eligible.length - accepted.length;
+    containerDetailsModalOpen,
+    setContainerDetailsModalOpen,
 
-        queueMicrotask(() => {
-          if (oversized > 0) {
-            toast(
-              oversized === 1
-                ? `That file exceeds the ${MAX_ATTACHMENT_SIZE_LABEL} size limit.`
-                : `${oversized} files exceed the ${MAX_ATTACHMENT_SIZE_LABEL} size limit.`,
-              "error",
-            );
-          }
-          if (skippedForCap > 0) {
-            toast(
-              `Only ${MAX_ATTACHMENTS_PER_MESSAGE} files per message. ${skippedForCap} file(s) were not added.`,
-              "info",
-            );
-          }
-        });
-
-        if (accepted.length === 0) return prev;
-        return [...prev, ...accepted];
-      });
-    },
-    [toast],
-  );
-
-  const onRemoveComposerPendingFile = useCallback((index: number) => {
-    setComposerPendingFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const load = useCallback(
-    async (opts?: { quiet?: boolean }) => {
-      const quiet = opts?.quiet ?? false;
-      if (!selectedOrgId) return;
-      setLoadError(null);
-      if (!quiet) setLoading(true);
-      try {
-        const result = await loadContainerWorkspaceData({
-          containerId,
-          organizationId: selectedOrgId,
-        });
-        if (!result.ok) {
-          setRequest(null);
-          setContainerRow(null);
-          setBolGroupSiblings([]);
-          setMessages([]);
-          setActivity([]);
-          setTimeline([]);
-          setAttachments([]);
-          setMessageAuthorByUserId({});
-          setLoadError(result.error);
-          return;
-        }
-
-        setRequest(result.request);
-        setMessages(result.messages);
-        setMessageAuthorByUserId(result.messageAuthorByUserId);
-        setActivity(result.activity);
-        setTimeline(result.timeline);
-        setAttachments(result.attachments);
-        if (result.quietAttachmentWarning && !quiet) {
-          toast(`Could not load attachments: ${result.quietAttachmentWarning}`, "error");
-        }
-        setContainerRow(result.containerRow);
-        setBolGroupSiblings(result.bolGroupSiblings);
-      } finally {
-        if (!quiet) setLoading(false);
-      }
-    },
-    [containerId, selectedOrgId, toast],
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    void getBrowserAuthUserId().then(setCurrentUserId);
-  }, []);
-
-  const internalOnlyComposer = messageChannel === "team";
-
-  const filteredThreadMessages = useMemo(
-    () => messages.filter((m) => (messageChannel === "team" ? m.is_internal : !m.is_internal)),
-    [messages, messageChannel],
-  );
-
-  useEffect(() => {
-    if (!replyParentId) return;
-    const ok = filteredThreadMessages.some((m) => m.id === replyParentId);
-    if (!ok) setReplyParentId(null);
-  }, [filteredThreadMessages, replyParentId]);
-
-  const shipmentLoc = (containerRow?.location as Record<string, unknown> | null) ?? null;
-  const carrierDetailRows = useMemo(() => getShipmentDetailRows(shipmentLoc), [shipmentLoc]);
-  const shipperReceiver = useMemo(() => shipperReceiverFromLocation(shipmentLoc), [shipmentLoc]);
-  const billOfLading = useMemo(() => {
-    if (!shipmentLoc || typeof shipmentLoc !== "object") return "";
-    const v = (shipmentLoc as Record<string, unknown>).bill_of_lading;
-    return typeof v === "string" ? v.trim() : v != null ? String(v).trim() : "";
-  }, [shipmentLoc]);
-
-  /** Newest uploads first (matches `.order("created_at", { ascending: false })` from load). */
-  const attachmentsNewestFirst = useMemo(() => {
-    const scope = attachments.filter((a) => (docChannel === "team" ? a.is_internal : !a.is_internal));
-    return scope.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-  }, [attachments, docChannel]);
-
-  const requestSummaryData = useMemo(() => {
-    if (!request) return null;
-    const carrierReportedStatus = containerRow?.status ?? request.status;
-    const lastSyncedAt = containerRow?.last_synced_at ?? request.last_sync_at;
-    const insights = computePublicReportInsights({ carrierReportedStatus, lastSyncedAt });
-    const loc = containerRow?.location;
-    const lastKnown =
-      loc && typeof loc === "object"
-        ? ((loc as Record<string, unknown>).last_location ??
-            (loc as Record<string, unknown>).discharging_port ??
-            (loc as Record<string, unknown>).loading_port ??
-            null)
-        : null;
-    const freshText =
-      insights.freshness_minutes != null
-        ? insights.freshness_minutes < 120
-          ? `${insights.freshness_minutes} min ago`
-          : `${Math.round(insights.freshness_minutes / 60)} h ago`
-        : "unknown";
-    return { insights, lastKnown, freshText, carrier: containerRow?.carrier ?? null };
-  }, [request, containerRow]);
-
-  async function deleteMessage(messageId: string) {
-    const ok = await confirm({
-      title: "Delete?",
-      description:
-        "This permanently removes the message. Any replies nested under it will be removed as well.",
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "danger",
-    });
-    if (!ok) return;
-    setDeletingMessageId(messageId);
-    const idsToRemove = collectMessageSubtreeIds(messages, messageId);
-    try {
-      await deleteContainerReportMessage({ messageId });
-      setReplyParentId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
-      setMessages((prev) => prev.filter((m) => !idsToRemove.has(m.id)));
-      await load({ quiet: true });
-      toast("Message deleted", "success");
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not delete message", "error");
-    } finally {
-      setDeletingMessageId(null);
-    }
-  }
-
-  async function postMessage() {
-    const t = body.trim();
-    const files = [...composerPendingFiles];
-    if (!t && files.length === 0) return;
-    if (!selectedOrgId) return;
-    if (files.length > MAX_ATTACHMENTS_PER_MESSAGE) {
-      toast(`You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`, "info");
-      return;
-    }
-    for (const f of files) {
-      if (f.size > MAX_ATTACHMENT_FILE_BYTES) {
-        toast(`“${f.name}” exceeds the ${MAX_ATTACHMENT_SIZE_LABEL} size limit.`, "error");
-        return;
-      }
-    }
-    setPosting(true);
-    try {
-      const { attachmentErrors } = await postContainerWorkspaceMessage({
-        containerId,
-        organizationId: selectedOrgId,
-        body: t,
-        internalOnly: internalOnlyComposer,
-        replyParentId,
-        files,
-      });
-      for (const msg of attachmentErrors) {
-        toast(msg, "error");
-      }
-
-      setBody("");
-      setComposerPendingFiles([]);
-      setReplyParentId(null);
-      await load({ quiet: true });
-      toast(internalOnlyComposer ? "Internal note posted" : "Message posted", "success");
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not post message", "error");
-    } finally {
-      setPosting(false);
-    }
-  }
-
-  const openAttachment = useCallback(
-    async (row: WorkspaceAttachment) => {
-      try {
-        const url = await openContainerWorkspaceAttachmentSignedUrl(row.storage_path);
-        window.open(url, "_blank", "noopener,noreferrer");
-      } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not open file", "error");
-      }
-    },
-    [toast],
-  );
-
-  async function pickAttachmentFiles(files: FileList | null) {
-    // Snapshot immediately: DocumentsList clears the input (`value=""`) right after onChange,
-    // which empties the FileList before any await — so we must copy File refs synchronously.
-    const queue = files ? Array.from(files) : [];
-    if (!queue.length || !selectedOrgId) return;
-    setUploadingAttachments(true);
-    let uploadedCount = 0;
-    try {
-      const { inserted, errors } = await uploadContainerWorkspaceDocuments({
-        organizationId: selectedOrgId,
-        containerId,
-        files: queue,
-        isInternal: docChannel === "team",
-      });
-      for (const err of errors) {
-        toast(err, "error");
-      }
-      uploadedCount = inserted.length;
-      for (const row of inserted) {
-        setAttachments((prev) => [row, ...prev]);
-      }
-      if (uploadedCount === 0) {
-        toast("No files were uploaded.", "info");
-        return;
-      }
-      await load({ quiet: true });
-      toast(uploadedCount === 1 ? "File uploaded" : `${uploadedCount} files uploaded`, "success");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Upload failed";
-      if (msg === "Not signed in") {
-        toast("Sign in to upload files.", "error");
-      } else {
-        toast(msg, "error");
-      }
-    } finally {
-      setUploadingAttachments(false);
-    }
-  }
-
-  const renameAttachment = useCallback(
-    async (attachmentId: string, rawName: string) => {
-      const trimmed = rawName.trim();
-      if (!trimmed) {
-        toast("Enter a file name.", "error");
-        throw new Error("empty name");
-      }
-      if (trimmed.length > ATTACHMENT_DISPLAY_NAME_MAX_LEN) {
-        toast(`File name is too long (max ${ATTACHMENT_DISPLAY_NAME_MAX_LEN} characters).`, "error");
-        throw new Error("name too long");
-      }
-      const row = attachments.find((a) => a.id === attachmentId);
-      if (!row) {
-        throw new Error("Attachment not found");
-      }
-      if (row.file_name === trimmed) {
-        return;
-      }
-      setRenamingAttachmentId(attachmentId);
-      try {
-        await renameContainerWorkspaceAttachment({ attachmentId, fileName: trimmed });
-        setAttachments((prev) =>
-          prev.map((a) => (a.id === attachmentId ? { ...a, file_name: trimmed } : a)),
-        );
-        toast("File name updated", "success");
-      } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not rename file", "error");
-        throw e;
-      } finally {
-        setRenamingAttachmentId(null);
-      }
-    },
-    [attachments, toast],
-  );
-
-  async function removeAttachment(attachmentId: string) {
-    const row = attachments.find((a) => a.id === attachmentId);
-    if (!row) return;
-    if (currentUserId && row.uploaded_by !== currentUserId) {
-      toast("Only the person who uploaded the file can remove it.", "error");
-      return;
-    }
-    const ok = await confirm({
-      title: "Remove file?",
-      description: `Permanently delete “${row.file_name}” from this request?`,
-      confirmLabel: "Remove",
-      cancelLabel: "Cancel",
-      variant: "danger",
-    });
-    if (!ok) return;
-    setRemovingAttachmentId(attachmentId);
-    try {
-      const { storageCleanupIncomplete } = await removeContainerWorkspaceAttachment({
-        attachmentId,
-        storagePath: row.storage_path,
-      });
-      if (storageCleanupIncomplete) {
-        toast("File removed from the list; storage cleanup may be incomplete.", "info");
-      }
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-      toast("File removed", "success");
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not remove file", "error");
-    } finally {
-      setRemovingAttachmentId(null);
-    }
-  }
+    requestSummaryData,
+    shipperReceiver,
+    carrierDetailRows,
+    billOfLading,
+    lastSyncLabel,
+    carrierLastSyncedDisplay,
+    carrierLastKnownDisplay,
+  } = useContainerWorkspace({ containerId });
 
   if (!selectedOrgId) {
     return (
@@ -485,23 +126,6 @@ export function ContainerWorkspace({
   if (!request) {
     return null;
   }
-
-  const lastSyncLabel =
-    request.last_sync_at != null
-      ? formatTimelineWhen(request.last_sync_at)
-      : containerRow?.last_synced_at != null
-        ? formatTimelineWhen(containerRow.last_synced_at)
-        : null;
-
-  const carrierLastSyncedDisplay =
-    containerRow?.last_synced_at != null
-      ? formatTimestamp(containerRow.last_synced_at)
-      : request.last_sync_at != null
-        ? formatTimestamp(request.last_sync_at)
-        : null;
-
-  const carrierLastKnownDisplay =
-    requestSummaryData?.lastKnown != null ? String(requestSummaryData.lastKnown) : null;
 
   return (
     <div className="mx-auto box-border flex w-full max-w-6xl flex-col p-6">

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import { PublicContainerReport } from "@/components/public-container-report";
-import { PageLoading } from "@/components/page-loading";
-import { fetchShipment } from "@/lib/supabase/shipment-edge";
+import { PublicContainerReport } from "@/components/PublicContainerReport";
+import { PageLoading } from "@/components/PageLoading";
+import { fetchShipment } from "@/services/shipment.service";
 import type { PublicReportPayload } from "@/types/public-report";
 
 export default function SharedShipmentTrackingPage({

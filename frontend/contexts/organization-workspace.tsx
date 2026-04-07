@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { OrgMembershipRow } from "@/types/organization-workspace";
-import { fetchOrganizationMembershipRows } from "@/services/organization-membership.service";
+import { fetchOrganizationMembershipRows } from "@/services/organization.service";
 
 export type { OrgMembershipRow };
 

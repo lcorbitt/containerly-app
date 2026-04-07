@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { getSessionProfile, isSuperadminRole } from "@/lib/auth/profile";
+import { getSessionProfile } from "@/services/auth-server.service";
+import { isSuperadminRole } from "@/utils/profile-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createOrganizationWithInitialAdmin } from "@/server/services/organization-create.service";
+import { createOrganizationWithInitialAdmin } from "@/server/services/organization.service";
 
 export async function POST(request: Request) {
   const supabase = await createClient();

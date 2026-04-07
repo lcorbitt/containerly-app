@@ -1,15 +1,15 @@
 "use client";
 
 import type { OrganizationMemberRole } from "@/types/database";
-import { OrganizationImageSettings } from "@/components/organization-image-settings";
+import { OrganizationImageSettings } from "../OrganizationImageSettings";
 import {
   ADMIN_TABLE_HEAD_ROW,
   ADMIN_TABLE_ROW,
   ADMIN_TABLE_TD,
   ADMIN_TABLE_TH,
-} from "@/components/admin-table-section";
+} from "@/components/AdminTableSection";
 import { useOrganizationSettingsPanel } from "./hooks/useOrganizationSettingsPanel";
-import { formatMemberJoinedDate } from "./utils/organization-settings-panel";
+import { formatMemberJoinedDate } from "./utils";
 
 export type OrganizationSettingsPanelProps = {
   /** When true, omit top margin (used inside Settings tabs). */

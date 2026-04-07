@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { formatTimestamp } from "@/utils/datetime";
 import type { Alert } from "@/types/database";
-import { alertTypeIconConfig } from "./utils/notifications-list";
+import { alertTypeIconConfig } from "./utils";
 
 function AlertRowBody({ alert: a }: { alert: Alert }) {
   const { Icon, className: iconColor } = alertTypeIconConfig(a.alert_type);

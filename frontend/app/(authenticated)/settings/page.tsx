@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SettingsPageTabs } from "@/components/settings-page-tabs";
+import { SettingsPageTabs } from "./components/SettingsPageTabs";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

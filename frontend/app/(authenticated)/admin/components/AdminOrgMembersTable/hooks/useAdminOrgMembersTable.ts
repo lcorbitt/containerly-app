@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAdminOrgMembersQuery } from "@/hooks/queries/use-admin-org-members";
-import { usePatchOrganizationMemberRoleMutation } from "@/hooks/mutations/use-organization-member-role";
+import { useAdminOrgMembersQuery } from "@/hooks/queries/useOrganization";
+import { usePatchOrganizationMemberRoleMutation } from "@/hooks/mutations/useOrganization";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
   buildOrgOptionsFromRows,
   matchesAdminOrgMemberSearch,
   sortAdminOrgMemberRows,
-} from "../utils/admin-org-members-table";
+} from "../utils";
 
 export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
 export const ROLE_OPTIONS: OrganizationMemberRole[] = ["admin", "member"];

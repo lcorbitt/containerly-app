@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdminOrganizationsPanel } from "@/components/admin-organizations-panel";
+import { AdminOrganizationsPanel } from "./components/AdminOrganizationsPanel";
 
 export const dynamic = "force-dynamic";
 

@@ -11,10 +11,10 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { DialogCloseButton } from "@/components/dialog-close-button";
-import { MockJourneySimulator } from "@/components/mock-journey-simulator";
-import { fetchRecentTrackingRequestsForOrganization } from "@/services/tracking-requests-browser.service";
-import { emitTrackingCreated } from "@/lib/tracking-created-event";
+import { DialogCloseButton } from "@/components/DialogCloseButton";
+import { MockJourneySimulator } from "@/components/MockJourneySimulator";
+import { fetchRecentTrackingRequestsForOrganization } from "@/services/tracking.service";
+import { emitTrackingCreated } from "@/utils/tracking-created-event";
 import type { TrackingRequest } from "@/types/database";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
