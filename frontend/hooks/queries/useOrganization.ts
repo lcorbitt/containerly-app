@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchAdminOrgMemberDirectoryRows,
-  fetchOrganizationMetricsBrowser,
   fetchOrganizationMemberRowsBrowser,
+  fetchOrganizationMetricsBrowser,
 } from "@/services/organization.service";
 
 export const adminOrgMembersQueryKey = ["admin-org-members"] as const;

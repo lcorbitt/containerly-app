@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
-import { loadWorkspaceQuickSearchBrowser } from "@/services/shipment.service";
-import type { WorkspaceQuickSearchRow } from "@/services/workspace.service";
+import {
+  fetchWorkspaceQuickSearchBrowser,
+  type WorkspaceQuickSearchRow,
+} from "@/services/workspace.service";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DEBOUNCE_MS, MIN_CHARS } from "../constants";
 
@@ -75,7 +77,7 @@ export function useWorkspaceQuickSearch() {
       setLoading(true);
       setError(null);
       try {
-        const rows = await loadWorkspaceQuickSearchBrowser({
+        const rows = await fetchWorkspaceQuickSearchBrowser({
           organizationId: selectedOrgId,
           query: debounced,
           limit: 10,

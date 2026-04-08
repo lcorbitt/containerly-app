@@ -1,4 +1,4 @@
--- Default assignee = creator when they have organization_members (set by create-tracking-request).
+-- Default assignee = creator when they have organization_members (set by create-tracking-request Edge).
 -- Any org member may update the row. Assignee must be null or a user in organization_members for that org.
 
 comment on column public.tracking_requests.assignee_user_id is

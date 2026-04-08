@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchShipmentWorkspaceRow } from "@/services/shipment.service";
+import { fetchShipmentWorkspaceRowForBrowser } from "@/services/shipment.service";
 import { loadShipmentScopeThread } from "@/services/workspace.service";
 
 export const shipmentWorkspaceRowQueryKeyRoot = ["shipment-workspace-row"] as const;
@@ -16,7 +16,7 @@ export function useShipmentWorkspaceRowQuery(input: {
     queryKey: [...shipmentWorkspaceRowQueryKeyRoot, input.shipmentId, input.organizationId],
     queryFn: async () => {
       if (!input.organizationId) throw new Error("organizationId required");
-      return fetchShipmentWorkspaceRow({
+      return fetchShipmentWorkspaceRowForBrowser({
         shipmentId: input.shipmentId,
         organizationId: input.organizationId,
       });

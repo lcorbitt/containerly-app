@@ -7,13 +7,7 @@ import { updateProfileFullName } from "@/services/profile.service";
 
 export const DISPLAY_NAME_MAX_LEN = 200;
 
-export function useSettingsDisplayName({
-  userId,
-  initialFullName,
-}: {
-  userId: string;
-  initialFullName: string;
-}) {
+export function useSettingsDisplayName({ initialFullName }: { initialFullName: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [value, setValue] = useState(initialFullName);
@@ -35,7 +29,7 @@ export function useSettingsDisplayName({
 
     setSaving(true);
     try {
-      await updateProfileFullName(userId, trimmed.length > 0 ? trimmed : null);
+      await updateProfileFullName(trimmed.length > 0 ? trimmed : null);
       toast("Name updated", "success");
       router.refresh();
     } catch (e) {

@@ -1,3 +1,4 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProfileRole } from "@/types/database";
 import { isSuperadminRole } from "@/utils/profile-role";

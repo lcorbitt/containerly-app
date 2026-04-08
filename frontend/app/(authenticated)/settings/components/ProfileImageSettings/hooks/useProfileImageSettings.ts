@@ -12,11 +12,9 @@ import {
 } from "@/services/profile.service";
 
 export function useProfileImageSettings({
-  userId,
   initialProfileImagePath,
   displayLabel,
 }: {
-  userId: string;
   initialProfileImagePath: string | null;
   displayLabel: string;
 }) {
@@ -30,10 +28,10 @@ export function useProfileImageSettings({
   const initials = (displayLabel.trim().slice(0, 2) || "?").toUpperCase();
 
   const refreshPathFromDb = useCallback(async () => {
-    const next = await fetchProfileImagePath(userId);
+    const next = await fetchProfileImagePath();
     setPath(next);
     sessionAvatar?.setProfileImagePath(next);
-  }, [userId, sessionAvatar]);
+  }, [sessionAvatar]);
 
   const onPickFile = useCallback(
     async (fileList: FileList | null) => {
@@ -50,7 +48,6 @@ export function useProfileImageSettings({
       const previousPath = path;
       try {
         const objectPath = await uploadProfileImageAndSetPath({
-          userId,
           file,
           previousPath,
         });
@@ -65,7 +62,7 @@ export function useProfileImageSettings({
         if (inputRef.current) inputRef.current.value = "";
       }
     },
-    [path, userId, sessionAvatar, toast],
+    [path, sessionAvatar, toast],
   );
 
   const removePhoto = useCallback(async () => {
@@ -74,7 +71,6 @@ export function useProfileImageSettings({
     const toRemove = path.trim();
     try {
       const { storageRemoved } = await clearProfileImagePathAndRemoveStorage({
-        userId,
         storagePath: toRemove,
       });
       if (!storageRemoved) {
@@ -91,7 +87,7 @@ export function useProfileImageSettings({
     } finally {
       setBusy(false);
     }
-  }, [path, userId, sessionAvatar, refreshPathFromDb, toast]);
+  }, [path, sessionAvatar, refreshPathFromDb, toast]);
 
   const triggerFilePicker = useCallback(() => {
     inputRef.current?.click();

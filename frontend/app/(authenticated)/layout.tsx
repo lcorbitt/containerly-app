@@ -5,6 +5,7 @@ import { SessionAvatarProvider } from "@/contexts/session-avatar";
 import { getSessionProfile } from "@/services/auth-server.service";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { createClient } from "@/lib/supabase/server";
+import { fetchOrgMembershipRows } from "@/services/organization.server";
 import { AuthenticatedTopNav } from "@/components/TopNav";
 import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
 import { TrackContainerModalProvider } from "@/contexts/track-container-modal";
@@ -27,28 +28,7 @@ export default async function AuthenticatedLayout({
   const profile = await getSessionProfile(supabase, user.id);
   const isSuperAdmin = isSuperadminRole(profile?.role);
 
-  let initialOrgs: OrgMembershipRow[];
-  if (isSuperAdmin) {
-    const { data: allOrgs } = await supabase
-      .from("organizations")
-      .select("id, name, slug, org_image_path, created_at, updated_at")
-      .order("name");
-    initialOrgs = (allOrgs ?? []).map((o) => ({
-      role: "platform",
-      organizations: o,
-    }));
-  } else {
-    const { data: memberships } = await supabase
-      .from("organization_members")
-      .select("role, organizations(id, name, slug, org_image_path, created_at, updated_at)")
-      .eq("user_id", user.id);
-
-    initialOrgs = (memberships ?? []).map((row) => {
-      const o = row.organizations;
-      const org = Array.isArray(o) ? o[0] : o;
-      return { role: row.role as string, organizations: org ?? null };
-    });
-  }
+  const initialOrgs = await fetchOrgMembershipRows(supabase, user.id, isSuperAdmin);
 
   return (
     <OrganizationWorkspaceProvider

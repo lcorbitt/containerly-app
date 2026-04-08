@@ -11,7 +11,6 @@ import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 type TabId = "personal" | "organization";
 
 export type SettingsPageTabsProps = {
-  userId: string;
   email: string;
   fullName: string;
   displayLabel: string;
@@ -19,7 +18,6 @@ export type SettingsPageTabsProps = {
 };
 
 export function SettingsPageTabs({
-  userId,
   email,
   fullName,
   displayLabel,
@@ -50,7 +48,6 @@ export function SettingsPageTabs({
       </h2>
       <div className="mt-6 flex flex-col gap-8 sm:flex-row sm:gap-10">
         <ProfileImageSettings
-          userId={userId}
           initialProfileImagePath={profileImagePath}
           displayLabel={displayLabel}
           accountColumn
@@ -60,7 +57,7 @@ export function SettingsPageTabs({
             <p className="text-zinc-500 dark:text-zinc-500">Email</p>
             <p className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{email || "—"}</p>
           </div>
-          <SettingsDisplayName userId={userId} initialFullName={fullName} />
+          <SettingsDisplayName initialFullName={fullName} />
         </div>
       </div>
     </section>

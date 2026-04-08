@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createImporterInvite,
   deleteShipmentParticipantRow,
-  fetchShipmentAccessTabSnapshot,
+  fetchShipmentAccessTabSnapshotForBrowser,
   insertShipmentParticipant,
   revokeCustomerInviteRow,
   revokeShipmentCustomerAccessRow,
@@ -56,7 +56,7 @@ export function useShipmentAccessTabContent({
     if (!selectedOrgId) return;
     setLoading(true);
     try {
-      const snap = await fetchShipmentAccessTabSnapshot({
+      const snap = await fetchShipmentAccessTabSnapshotForBrowser({
         shipmentId,
         organizationId: selectedOrgId,
       });
@@ -142,10 +142,14 @@ export function useShipmentAccessTabContent({
   }
 
   async function addParticipantUser(userId: string) {
-    if (!userId) return;
+    if (!userId || !selectedOrgId) return;
     setParticipantBusy(true);
     try {
-      await insertShipmentParticipant({ shipmentId, userId });
+      await insertShipmentParticipant({
+        organizationId: selectedOrgId,
+        shipmentId,
+        userId,
+      });
       toast("Participant added", "success");
       await load();
       onMetaChanged();

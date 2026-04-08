@@ -12,7 +12,7 @@ project_id = "containerly-app"
 #
 # Sign-up: with enable_confirmations = false (below), new users can sign in immediately without a
 # confirmation email; Mailpit stays quiet for sign-up only. Invites and password reset still appear
-# in Mailpit. Set enable_confirmations = true to test confirmation links, then `supabase stop && supabase start`.
+# in Mailpit. Set enable_confirmations = true to test confirmation links; then `supabase stop && supabase start`.
 
 [auth]
 # Base URL for links in Auth emails; must match where you run the Next app.
@@ -50,13 +50,13 @@ verify_jwt = false
 [functions.sync-container]
 verify_jwt = false
 
-[functions.sync-stale-requests]
+[functions.sync-stale-tracking-requests]
 verify_jwt = false
 
 [functions.get-public-report]
 verify_jwt = false
 
-[functions.post-public-report-message]
+[functions.post-report-message]
 verify_jwt = false
 
 [functions.get-shipment]

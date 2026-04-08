@@ -5,15 +5,8 @@ import {
   DISPLAY_NAME_MAX_LEN,
 } from "./hooks/useSettingsDisplayName";
 
-export function SettingsDisplayName({
-  userId,
-  initialFullName,
-}: {
-  userId: string;
-  initialFullName: string;
-}) {
+export function SettingsDisplayName({ initialFullName }: { initialFullName: string }) {
   const { value, setValue, saving, unchanged, save } = useSettingsDisplayName({
-    userId,
     initialFullName,
   });
 

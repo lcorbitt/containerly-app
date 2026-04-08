@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createOrganization,
+  deleteOrganizationMemberByIdBrowser,
   inviteOrganizationMember,
   patchOrganizationMemberRole,
   updateOrganizationNameAndSlugBrowser,
-  deleteOrganizationMemberByIdBrowser,
 } from "@/services/organization.service";
 import type { OrganizationMemberRole } from "@/types/database";
 import {

@@ -20,8 +20,7 @@ import {
 import {
   createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
-  insertShipmentScopeReportMessage,
-  persistShipmentScopeAttachment,
+  postShipmentScopeMessageWithAttachments,
   removeWorkspaceAttachmentRow,
   renameWorkspaceAttachmentDisplayName,
   uploadShipmentScopeStandaloneFiles,
@@ -185,27 +184,16 @@ export function useShipmentWorkspaceScopePanel({
     }
     setPosting(true);
     try {
-      const messageId = await insertShipmentScopeReportMessage({
+      const { attachmentErrors } = await postShipmentScopeMessageWithAttachments({
+        organizationId: selectedOrgId,
         shipmentId,
         body: t,
         internalOnly: internalOnlyComposer,
         replyParentId,
+        files,
       });
-      const uid = currentUserId;
-      if (!uid) return;
-      for (const file of files) {
-        try {
-          await persistShipmentScopeAttachment({
-            organizationId: selectedOrgId,
-            shipmentId,
-            userId: uid,
-            file,
-            reportMessageId: messageId,
-            isInternal: internalOnlyComposer,
-          });
-        } catch (e) {
-          toast(e instanceof Error ? e.message : "Could not upload an attachment", "error");
-        }
+      for (const msg of attachmentErrors) {
+        toast(msg, "error");
       }
       setBody("");
       setComposerPendingFiles([]);
@@ -217,7 +205,7 @@ export function useShipmentWorkspaceScopePanel({
     } finally {
       setPosting(false);
     }
-  }, [body, composerPendingFiles, selectedOrgId, shipmentId, internalOnlyComposer, replyParentId, currentUserId, invalidateThread, toast]);
+  }, [body, composerPendingFiles, selectedOrgId, shipmentId, internalOnlyComposer, replyParentId, invalidateThread, toast]);
 
   const openAttachment = useCallback(
     async (row: WorkspaceAttachment) => {

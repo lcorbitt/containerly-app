@@ -5,7 +5,6 @@ import { PROFILE_IMAGE_ACCEPT } from "@/utils/profile-image";
 import { useProfileImageSettings } from "./hooks/useProfileImageSettings";
 
 type Props = {
-  userId: string;
   initialProfileImagePath: string | null;
   /** For placeholder initials when no photo */
   displayLabel: string;
@@ -17,7 +16,6 @@ type Props = {
 };
 
 export function ProfileImageSettings({
-  userId,
   initialProfileImagePath,
   displayLabel,
   accountColumn = false,
@@ -31,7 +29,7 @@ export function ProfileImageSettings({
     onPickFile,
     removePhoto,
     triggerFilePicker,
-  } = useProfileImageSettings({ userId, initialProfileImagePath, displayLabel });
+  } = useProfileImageSettings({ initialProfileImagePath, displayLabel });
 
   const controls = (
     <>

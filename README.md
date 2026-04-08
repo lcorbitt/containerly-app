@@ -6,7 +6,7 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
 
 - `frontend/` — Next.js + Tailwind + Geist (via `next/font`)
 - `supabase/migrations/` — schema, indexes, RLS, `profiles` (global roles), `organization_members` (org roles)
-- `supabase/functions/` — Edge Functions (`create-tracking-request`, `get-container-details`, `search-containers`, `sync-container`, `sync-stale-requests`)
+- `supabase/functions/` — Edge Functions (flat deploy slugs; **verb-first** HTTP-style names, e.g. `create-tracking-request`, `sync-container`, `get-shipment`, `create-customer-invite`). See `frontend/lib/supabase/edge-function-slugs.ts`.
 
 ## Quick start
 
@@ -20,11 +20,13 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
 
 2. Deploy Edge Functions and set secrets (service role is injected automatically; add these in the dashboard or CLI):
 
-   - `CRON_SECRET` — shared secret header `x-cron-secret` for `sync-stale-requests`
+   - `CRON_SECRET` — shared secret header `x-cron-secret` for `sync-stale-tracking-requests`
    - Optional: `EXTERNAL_TRACKING_API_URL`, `EXTERNAL_TRACKING_API_KEY` for a real JSONCargo-style API
    - Optional: `CONTAINER_STALE_MS` (default 15 minutes), `SYNC_BATCH_LIMIT` (default 25)
 
-3. Schedule `sync-stale-requests` (Supabase Dashboard → Edge Functions → Cron) with a request that includes header `x-cron-secret: <CRON_SECRET>`.
+3. Schedule `sync-stale-tracking-requests` (Supabase Dashboard → Edge Functions → Cron) with a request that includes header `x-cron-secret: <CRON_SECRET>`.
+
+**Renaming functions on an existing Supabase project:** deploy the new slugs and update callers (this repo uses `EDGE_FUNCTION_SLUGS`). Old URLs such as `/functions/v1/shipments-get` stop working once folders are renamed — remove deprecated functions in the dashboard after cutover.
 
 4. Frontend env:
 

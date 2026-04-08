@@ -3,7 +3,7 @@ import { getSessionProfile } from "@/services/auth-server.service";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { updateProfileRoleAsSuperadmin } from "@/server/services/profile.service";
+import { updateProfileRoleAsSuperadmin } from "@/services/profile.server";
 
 export async function PATCH(
   request: Request,

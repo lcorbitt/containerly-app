@@ -1,16 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
+import { apiJson } from "@/utils/api-client";
 import type { Alert } from "@/types/database";
 
 export async function fetchOrgAlertsPage(organizationId: string, limit = 50): Promise<Alert[]> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("alerts")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error(error.message);
-  return (data as Alert[]) ?? [];
+  const params = new URLSearchParams({ limit: String(limit) });
+  const { alerts } = await apiJson<{ alerts: Alert[] }>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/alerts?${params}`,
+  );
+  return alerts ?? [];
 }
 
 export type RealtimeAlertsSubscription = {

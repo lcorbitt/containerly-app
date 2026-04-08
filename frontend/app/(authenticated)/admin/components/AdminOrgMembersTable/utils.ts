@@ -1,4 +1,4 @@
-import type { AdminOrgMemberRow } from "@/services/organization.service";
+import type { AdminOrgMemberRow } from "@/types/organization-directory";
 
 export function matchesAdminOrgMemberSearch(row: AdminOrgMemberRow, q: string): boolean {
   if (!q.trim()) return true;

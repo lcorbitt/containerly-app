@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SettingsPageTabs } from "./components/SettingsPageTabs";
 import { createClient } from "@/lib/supabase/server";
+import { fetchSettingsPageProfileQuery } from "@/services/profile.server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,30 +15,26 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("full_name, email, profile_image_path")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
+  let profile: Awaited<ReturnType<typeof fetchSettingsPageProfileQuery>>;
+  try {
+    profile = await fetchSettingsPageProfileQuery(supabase, user.id);
+  } catch (e) {
     return (
       <div className="mx-auto w-full max-w-4xl px-4 py-10">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Settings
         </h1>
         <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-          Could not load your profile: {error.message}
+          Could not load your profile: {e instanceof Error ? e.message : "Unknown error"}
         </p>
       </div>
     );
   }
 
-  const email = profile?.email ?? user.email ?? "";
-  const fullName = profile?.full_name?.trim() || "";
+  const email = profile.email ?? user.email ?? "";
+  const fullName = profile.fullName?.trim() || "";
   const displayLabel = fullName || email || "You";
-  const profileImagePath =
-    typeof profile?.profile_image_path === "string" ? profile.profile_image_path : null;
+  const profileImagePath = profile.profileImagePath;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10">
@@ -49,7 +46,6 @@ export default async function SettingsPage() {
       </p>
 
       <SettingsPageTabs
-        userId={user.id}
         email={email}
         fullName={fullName}
         displayLabel={displayLabel}

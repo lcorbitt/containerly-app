@@ -1,0 +1,98 @@
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+
+/** `shipments` — id + org for access checks. */
+export async function fetchShipmentIdAndOrganization(
+  client: SupabaseClient,
+  shipmentId: string,
+) {
+  return client.from("shipments").select("id, organization_id").eq("id", shipmentId).maybeSingle();
+}
+
+/** `shipments` — portal operator path (membership / superadmin). */
+export async function fetchShipmentPortalOperatorRow(
+  client: SupabaseClient,
+  shipmentId: string,
+) {
+  return client.from("shipments").select("id, organization_id, created_at").eq("id", shipmentId).maybeSingle();
+}
+
+/** `shipments` — preview path. */
+export async function fetchShipmentIdOrgForPreview(
+  client: SupabaseClient,
+  shipmentId: string,
+) {
+  return client.from("shipments").select("id, organization_id").eq("id", shipmentId).maybeSingle();
+}
+
+/** `shipments` — portal payload header. */
+export async function fetchShipmentPortalHeader(client: SupabaseClient, shipmentId: string) {
+  return client
+    .from("shipments")
+    .select("id, organization_id, reference, bill_of_lading, shipping_line, status")
+    .eq("id", shipmentId)
+    .maybeSingle();
+}
+
+/** `shipments` — find existing BOL batch shipment. */
+export async function fetchShipmentIdByGroupId(
+  client: SupabaseClient,
+  organizationId: string,
+  shipmentGroupId: string,
+) {
+  return client
+    .from("shipments")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("shipment_group_id", shipmentGroupId)
+    .maybeSingle();
+}
+
+export async function updateShipmentShippingLine(
+  client: SupabaseClient,
+  shipmentId: string,
+  shippingLine: string,
+) {
+  return client.from("shipments").update({ shipping_line: shippingLine }).eq("id", shipmentId);
+}
+
+type ShipmentInsert = Record<string, unknown>;
+
+export async function insertShipment(client: SupabaseClient, row: ShipmentInsert) {
+  return client.from("shipments").insert(row).select("id").single();
+}
+
+/** `shipments` — attach tracking to existing shipment in org. */
+export async function fetchShipmentInOrganization(
+  client: SupabaseClient,
+  shipmentId: string,
+  organizationId: string,
+) {
+  return client
+    .from("shipments")
+    .select("id")
+    .eq("id", shipmentId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+}
+
+export async function fetchShipmentAssignee(
+  client: SupabaseClient,
+  shipmentId: string,
+) {
+  return client.from("shipments").select("assignee_user_id").eq("id", shipmentId).maybeSingle();
+}
+
+export async function updateShipmentAssigneeIfUnset(
+  client: SupabaseClient,
+  shipmentId: string,
+  assigneeUserId: string,
+) {
+  return client.from("shipments").update({ assignee_user_id: assigneeUserId }).eq("id", shipmentId);
+}
+
+export async function fetchShipmentShippingLine(
+  client: SupabaseClient,
+  shipmentId: string,
+) {
+  return client.from("shipments").select("shipping_line").eq("id", shipmentId).maybeSingle();
+}
