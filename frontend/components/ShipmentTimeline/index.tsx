@@ -344,14 +344,12 @@ export function TimelineOrderToggle({
 export function ShipmentTimelineView({
   order,
   interactiveDetail = true,
-  hideHeader = false,
-  showOrderToggle = true,
   className: classNameProp,
   emptyMessage = "No events recorded yet",
   emptyHint = "Shipment milestones and carrier updates will appear here.",
   autoScrollToLatest = true,
 }: ShipmentTimelineViewProps) {
-  const { displayEvents, orderFadeOut, newestFirst, handleOrderToggle } = order;
+  const { displayEvents, orderFadeOut } = order;
   const [detailEvent, setDetailEvent] = useState<ShipmentTimelineDisplayEvent | null>(null);
   const eventCount = displayEvents.length;
   const timelineEndRef = useRef<HTMLDivElement>(null);
@@ -367,11 +365,11 @@ export function ShipmentTimelineView({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     requestAnimationFrame(() => {
       timelineEndRef.current?.scrollIntoView({
-        block: newestFirst ? "start" : "end",
+        block: order.newestFirst ? "start" : "end",
         behavior: reduced ? "auto" : "smooth",
       });
     });
-  }, [autoScrollToLatest, eventCount, newestFirst, orderFadeOut]);
+  }, [autoScrollToLatest, eventCount, order.newestFirst, orderFadeOut]);
 
   return (
     <section
@@ -382,24 +380,7 @@ export function ShipmentTimelineView({
         <TimelineEventDetailModal event={detailEvent} onClose={() => setDetailEvent(null)} />
       ) : null}
 
-      {hideHeader ? null : (
-        <div className="border-b border-zinc-100 bg-transparent px-4 py-3.5 dark:border-zinc-800">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {eventCount > 0 && showOrderToggle ? (
-                <TimelineOrderToggle newestFirst={newestFirst} onToggle={handleOrderToggle} />
-              ) : null}
-              {eventCount > 0 ? (
-                <span className="rounded-full border border-zinc-200/80 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
-                  {eventCount} event{eventCount !== 1 ? "s" : ""}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className={`p-3 sm:p-4 ${hideHeader ? "pt-3 sm:pt-4" : ""}`}>
+      <div className="p-3 sm:p-4">
         {eventCount === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/30">
             <MapPin className="h-8 w-8 text-zinc-300 dark:text-zinc-600" strokeWidth={1.25} aria-hidden />

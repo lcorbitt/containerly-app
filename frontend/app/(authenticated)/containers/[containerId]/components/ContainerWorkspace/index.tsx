@@ -310,8 +310,6 @@ export function ContainerWorkspace({
                     <ShipmentTimelineView
                       events={timeline}
                       order={timelineOrder}
-                      hideHeader
-                      showOrderToggle={false}
                       className="shadow-none!"
                     />
                   </div>

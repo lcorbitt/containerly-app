@@ -43,7 +43,7 @@ export function ShipmentCarrierTrackingPanel({
             type="text"
             disabled
             value=""
-            placeholder="Available after document approval..."
+            placeholder="Available after draft documents approval..."
             className={SHIPMENT_CARRIER_TRACKING_INPUT_CLASS}
           />
         </label>

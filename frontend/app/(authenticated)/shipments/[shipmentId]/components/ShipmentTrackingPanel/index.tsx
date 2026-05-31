@@ -38,7 +38,6 @@ export function ShipmentTrackingPanel({
 
       <ShipmentTimeline
         activityEvents={activityEvents}
-        hideHeader={false}
         className={SHIPMENT_TRACKING_TIMELINE_CLASS}
         emptyHint="Document uploads, approvals, and carrier updates will appear here."
       />
