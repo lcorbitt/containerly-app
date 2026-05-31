@@ -33,8 +33,11 @@ const HEADER_ALIASES: Record<string, keyof ShipmentImportDraft> = {
   order_no: "orderNumber",
   order: "orderNumber",
   carrier_booking_number: "carrierBookingNumber",
+  carrier_booking_no: "carrierBookingNumber",
   booking_number: "carrierBookingNumber",
+  booking_no: "carrierBookingNumber",
   container_number: "containerNumber",
+  container_no: "containerNumber",
   container: "containerNumber",
   customer_name: "customerName",
   customer: "customerName",
@@ -44,9 +47,11 @@ const HEADER_ALIASES: Record<string, keyof ShipmentImportDraft> = {
   port_of_destination: "portOfDestination",
   pod: "portOfDestination",
   estimated_departure_at: "etd",
+  est_date_of_departure: "etd",
   etd: "etd",
   departure: "etd",
   estimated_arrival_at: "eta",
+  est_date_of_arrival: "eta",
   eta: "eta",
   arrival: "eta",
   freight_booking_carrier: "carrier",
@@ -393,14 +398,44 @@ PO-44202-A,BK-SE602W,MSKU1234568,Walmart Inc,US,Santos BR,Oakland US,2026-06-20,
 PO-44203-A,BK-MO701E,TGHU9876543,Target Corp,US,Paranagua BR,Seattle US,2026-06-22,2026-07-18,MAERSK,MAERSK Ohio,MO701E,HC-BR-2026-0144,FOB
 `;
 
-export function downloadShipmentImportTemplate() {
-  const blob = new Blob([SHIPMENT_IMPORT_CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "shipment-import-template.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+export const SHIPMENT_IMPORT_FILE_ACCEPT =
+  ".xlsx,.xls,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/json";
+
+export function isShipmentImportFileName(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  return (
+    lower.endsWith(".csv") ||
+    lower.endsWith(".json") ||
+    lower.endsWith(".xlsx") ||
+    lower.endsWith(".xls")
+  );
+}
+
+export function downloadShipmentImportTemplate(format: "csv" | "xlsx" = "csv") {
+  if (format === "csv") {
+    const blob = new Blob([SHIPMENT_IMPORT_CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "shipment-import-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  void writeShipmentImportTemplateXlsx(SHIPMENT_IMPORT_CSV_TEMPLATE, "shipment-import-template.xlsx", "Shipment");
+}
+
+async function writeShipmentImportTemplateXlsx(
+  csvTemplate: string,
+  downloadName: string,
+  sheetName: string,
+): Promise<void> {
+  const XLSX = await import("xlsx");
+  const sheetRows = parseCsvRows(csvTemplate);
+  const sheet = XLSX.utils.aoa_to_sheet(sheetRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+  XLSX.writeFile(wb, downloadName);
 }
 
 export async function downloadShipmentBulkImportTemplate(format: "csv" | "xlsx" = "xlsx") {
@@ -414,10 +449,9 @@ export async function downloadShipmentBulkImportTemplate(format: "csv" | "xlsx" 
     URL.revokeObjectURL(url);
     return;
   }
-  const XLSX = await import("xlsx");
-  const sheetRows = parseCsvRows(SHIPMENT_BULK_IMPORT_CSV_TEMPLATE);
-  const sheet = XLSX.utils.aoa_to_sheet(sheetRows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, sheet, "Shipments");
-  XLSX.writeFile(wb, "shipment-bulk-import-template.xlsx");
+  await writeShipmentImportTemplateXlsx(
+    SHIPMENT_BULK_IMPORT_CSV_TEMPLATE,
+    "shipment-bulk-import-template.xlsx",
+    "Shipments",
+  );
 }

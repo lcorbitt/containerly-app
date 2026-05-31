@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
+import { isSuperadminRole } from "@/utils/profile-role";
 import { normalizeShipmentTagList } from "@/utils/shipment-tags";
 import type {
   CustomerInvite,
@@ -581,6 +582,47 @@ export async function deleteShipmentParticipantQuery(
 ): Promise<void> {
   const { error } = await supabase.from("shipment_participants").delete().eq("id", participantRowId);
   if (error) throw new Error(error.message);
+}
+
+export async function deleteShipmentForOrganizationQuery(
+  supabase: SupabaseClient,
+  input: { organizationId: string; shipmentId: string; userId: string },
+): Promise<void> {
+  const { data: existing, error: existingErr } = await supabase
+    .from("shipments")
+    .select("id")
+    .eq("id", input.shipmentId)
+    .eq("organization_id", input.organizationId)
+    .maybeSingle();
+  if (existingErr) throw new Error(existingErr.message);
+  if (!existing?.id) throw new Error("Shipment not found");
+
+  const { data: profile, error: profileErr } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", input.userId)
+    .maybeSingle();
+  if (profileErr) throw new Error(profileErr.message);
+
+  if (!isSuperadminRole(profile?.role)) {
+    const { data: membership, error: memErr } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", input.organizationId)
+      .eq("user_id", input.userId)
+      .maybeSingle();
+    if (memErr) throw new Error(memErr.message);
+    if (membership?.role !== "admin") {
+      throw new Error("Only organization admins can delete shipments");
+    }
+  }
+
+  const { error: delErr } = await supabase
+    .from("shipments")
+    .delete()
+    .eq("id", input.shipmentId)
+    .eq("organization_id", input.organizationId);
+  if (delErr) throw new Error(delErr.message);
 }
 
 export async function revokeCustomerInviteQuery(

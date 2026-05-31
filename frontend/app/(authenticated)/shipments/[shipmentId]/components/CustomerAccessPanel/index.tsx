@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GrantAccessSettingsEditor } from "../GrantAccessSettings";
+import { TextInput } from "@/components/TextInput";
 import { WorkspacePostSpinner } from "@/components/WorkspacePostSpinner";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { formatTimestamp } from "@/utils/datetime";
@@ -93,11 +94,12 @@ export function CustomerAccessPanel({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="min-w-0 flex-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
             Customer emails
-            <input
+            <TextInput
               type="text"
               value={inviteEmail}
               onChange={(e) => onInviteEmailChange(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+              containerClassName="mt-1"
+              className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-950"
               placeholder="Email or group, separated by commas"
               autoComplete="off"
             />

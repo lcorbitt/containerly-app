@@ -11,13 +11,7 @@ export default function AuthenticatedShipmentPortalPage({
 }) {
   const { shipmentId } = use(params);
   return (
-    <Suspense
-      fallback={
-        <div className="mx-auto box-border flex min-h-0 w-full max-w-6xl flex-1 flex-col p-6">
-          <PageLoading loadingText="Loading shipment…" />
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoading loadingText="Loading shipment…" />}>
       <ShipmentWorkspace shipmentId={shipmentId} />
     </Suspense>
   );

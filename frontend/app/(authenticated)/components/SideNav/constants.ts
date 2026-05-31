@@ -1,15 +1,19 @@
-import { Box, Building2, LayoutDashboard, Package, Settings, Shield } from "lucide-react";
+import { Building2, CircleHelp, LayoutDashboard, Package, Settings, Shield } from "lucide-react";
+
+export const howItWorksNavItem = {
+  href: "/container-details",
+  label: "How it works",
+  icon: CircleHelp,
+} as const;
 
 export const freightNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/shipments", label: "Shipments", icon: Package },
-  { href: "/container-details", label: "How it works", icon: Box },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export const importerNavItems = [
   { href: "/shipments", label: "Shipments", icon: Package },
-  { href: "/container-details", label: "How it works", icon: Box },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

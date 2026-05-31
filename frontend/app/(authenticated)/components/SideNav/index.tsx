@@ -6,7 +6,7 @@ import { NotificationsList } from "@/app/(authenticated)/components/Notification
 import { SubSideNav } from "@/components/SubSideNav";
 import { WorkspaceQuickSearch } from "@/components/WorkspaceQuickSearch";
 import { useSideNav } from "./hooks/useSideNav";
-import { adminNavItems } from "./constants";
+import { adminNavItems, howItWorksNavItem } from "./constants";
 
 function linkClass(active: boolean) {
   return `flex min-h-0 items-center gap-4 rounded-md p-4 text-xs font-medium leading-tight transition-colors ${
@@ -27,6 +27,10 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     toggleNotifications,
     closeNotifications,
   } = useSideNav(isSuperAdmin);
+
+  const howItWorksActive =
+    pathname === howItWorksNavItem.href || pathname.startsWith(`${howItWorksNavItem.href}/`);
+  const HowItWorksIcon = howItWorksNavItem.icon;
 
   return (
     <aside className="box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -76,6 +80,15 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 ) : null}
               </button>
             ) : null}
+
+            <Link
+              href={howItWorksNavItem.href}
+              className={linkClass(howItWorksActive)}
+              aria-current={howItWorksActive ? "page" : undefined}
+            >
+              <HowItWorksIcon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+              <span className="min-w-0 wrap-break-word">{howItWorksNavItem.label}</span>
+            </Link>
           </div>
 
           {isSuperAdmin ? (

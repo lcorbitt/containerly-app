@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CheckCircle2, FileUp, Loader2, Upload } from "lucide-react";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
+import { Reveal } from "@/components/Reveal";
 import {
   bulkCreateCommercialShipments,
   type BulkImportResult,
@@ -11,11 +13,19 @@ import {
 import {
   downloadShipmentBulkImportTemplate,
   downloadShipmentImportTemplate,
+  isShipmentImportFileName,
   parseShipmentBulkImportFile,
   parseShipmentImportFileAsync,
+  SHIPMENT_IMPORT_FILE_ACCEPT,
   type ShipmentBulkImportParseResult,
   type ShipmentImportDraft,
 } from "@/utils/shipment-import";
+import {
+  SHIPMENT_DATA_IMPORT_MODAL_BACKDROP_CLASS,
+  SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS,
+  SHIPMENT_DATA_IMPORT_MODAL_REVEAL_CLASS,
+  SHIPMENT_DATA_IMPORT_MODAL_SHELL_CLASS,
+} from "./constants";
 
 /** `single` pre-fills the new shipment form; `bulk` creates one shipment per spreadsheet row. */
 export type ShipmentImportVariant = "single" | "bulk";
@@ -25,8 +35,8 @@ type ShipmentDataImportModalProps = {
   onClose: () => void;
   organizationId: string;
   variant: ShipmentImportVariant;
-  /** Pre-fill the new shipment form (`variant="single"` only). */
-  onApply?: (draft: ShipmentImportDraft) => void;
+  /** Pre-fill the new shipment form (`variant="single"` only). Called automatically after a successful parse. */
+  onApply?: (draft: ShipmentImportDraft, meta: { fileName: string }) => void;
   /** Called after bulk create finishes (`variant="bulk"` only). */
   onBulkComplete?: (result: BulkImportResult) => void;
 };
@@ -45,7 +55,6 @@ export function ShipmentDataImportModal({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [fileName, setFileName] = useState<string | null>(null);
-  const [singleDraft, setSingleDraft] = useState<ShipmentImportDraft | null>(null);
   const [bulkParse, setBulkParse] = useState<ShipmentBulkImportParseResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +62,15 @@ export function ShipmentDataImportModal({
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!open) {
       setFileName(null);
-      setSingleDraft(null);
       setBulkParse(null);
       setDragOver(false);
       setError(null);
@@ -88,7 +101,6 @@ export function ShipmentDataImportModal({
 
   const parseFile = useCallback(async (file: File) => {
     setError(null);
-    setSingleDraft(null);
     setBulkParse(null);
     setBulkResult(null);
     setParsing(true);
@@ -100,7 +112,8 @@ export function ShipmentDataImportModal({
         setBulkParse(parsed);
       } else {
         const draft = await parseShipmentImportFileAsync(file);
-        setSingleDraft(draft);
+        onApply?.(draft, { fileName: file.name });
+        onClose();
       }
     } catch (e) {
       setFileName(null);
@@ -108,39 +121,22 @@ export function ShipmentDataImportModal({
     } finally {
       setParsing(false);
     }
-  }, [isBulk]);
+  }, [isBulk, onApply, onClose]);
 
   const readFile = useCallback(
     (file: File) => {
-      const lower = file.name.toLowerCase();
-      const allowed = isBulk
-        ? lower.endsWith(".csv") ||
-          lower.endsWith(".json") ||
-          lower.endsWith(".xlsx") ||
-          lower.endsWith(".xls")
-        : lower.endsWith(".csv") || lower.endsWith(".json");
-      if (!allowed) {
-        setError(isBulk ? "Use a .xlsx, .csv, or .json file." : "Use a .csv or .json file.");
+      if (!isShipmentImportFileName(file.name)) {
+        setError("Use a .xlsx, .csv, or .json file.");
         return;
       }
       void parseFile(file);
     },
-    [isBulk, parseFile],
+    [parseFile],
   );
 
   function handleFiles(list: FileList | null) {
     const file = list?.[0];
     if (file) readFile(file);
-  }
-
-  function handleApplySingle() {
-    if (!singleDraft) {
-      setError("Upload a file first.");
-      return;
-    }
-    if (!onApply) return;
-    onApply(singleDraft);
-    onClose();
   }
 
   async function handleBulkCreate() {
@@ -169,29 +165,30 @@ export function ShipmentDataImportModal({
     }
   }
 
-  if (!open) return null;
-
   const showBulkResults = Boolean(bulkResult);
   const bulkCount = bulkParse?.rows.length ?? 0;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto sm:items-center sm:p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        className="fixed inset-0 bg-zinc-950/60 backdrop-blur-[2px] dark:bg-black/70"
-        onClick={() => {
-          if (!creating) onClose();
-        }}
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        className="relative z-[101] m-0 w-full max-w-lg border-0 bg-white shadow-2xl outline-none dark:bg-zinc-950 sm:rounded-2xl sm:border sm:border-zinc-200 dark:sm:border-zinc-700"
-      >
+  const modal =
+    portalReady && typeof document !== "undefined"
+      ? createPortal(
+          <Reveal show={open} className={SHIPMENT_DATA_IMPORT_MODAL_REVEAL_CLASS}>
+            <div className={SHIPMENT_DATA_IMPORT_MODAL_SHELL_CLASS}>
+              <button
+                type="button"
+                aria-label="Close dialog"
+                className={SHIPMENT_DATA_IMPORT_MODAL_BACKDROP_CLASS}
+                onClick={() => {
+                  if (!creating) onClose();
+                }}
+              />
+              <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                tabIndex={-1}
+                className={SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS}
+              >
         <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <div>
             <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
@@ -200,7 +197,7 @@ export function ShipmentDataImportModal({
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {isBulk
                 ? "Upload a spreadsheet — each row creates a new shipment with its own workspace page."
-                : "Upload a CSV or JSON file to pre-fill the new shipment form before you create it."}
+                : "Upload a spreadsheet, CSV, or JSON file — on success the new shipment form opens with fields pre-filled."}
             </p>
           </div>
           <DialogCloseButton
@@ -234,10 +231,18 @@ export function ShipmentDataImportModal({
               <>
                 <button
                   type="button"
-                  onClick={downloadShipmentImportTemplate}
+                  onClick={() => downloadShipmentImportTemplate("xlsx")}
                   className="font-medium text-sky-800 underline dark:text-sky-300"
                 >
-                  Download CSV template
+                  Download .xlsx template
+                </button>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => downloadShipmentImportTemplate("csv")}
+                  className="font-medium text-sky-800 underline dark:text-sky-300"
+                >
+                  CSV template
                 </button>
                 {" · "}
                 For many shipments at once, use <strong className="font-medium">Bulk import</strong> in the top nav.
@@ -275,9 +280,7 @@ export function ShipmentDataImportModal({
                 >
                   <Upload className="h-8 w-8 text-zinc-400 dark:text-zinc-500" strokeWidth={1.75} aria-hidden />
                   <p className="mt-3 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                    {isBulk
-                      ? "Drag and drop a .xlsx, .csv, or .json file"
-                      : "Drag and drop a .csv or .json file"}
+                    Drag and drop a .xlsx, .csv, or .json file
                   </p>
                   <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">or</p>
                   <button
@@ -291,11 +294,7 @@ export function ShipmentDataImportModal({
                   <input
                     ref={inputRef}
                     type="file"
-                    accept={
-                      isBulk
-                        ? ".xlsx,.xls,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/json"
-                        : ".csv,.json,text/csv,application/json"
-                    }
+                    accept={SHIPMENT_IMPORT_FILE_ACCEPT}
                     className="sr-only"
                     aria-label="Select import file"
                     onChange={(e) => {
@@ -339,12 +338,6 @@ export function ShipmentDataImportModal({
                     ) : null}
                   </ul>
                 </div>
-              ) : null}
-
-              {!isBulk && singleDraft ? (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  Ready to pre-fill order <span className="font-medium">{singleDraft.orderNumber}</span>.
-                </p>
               ) : null}
 
               {progress ? (
@@ -437,20 +430,16 @@ export function ShipmentDataImportModal({
                     "Create shipments"
                   )}
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled={parsing}
-                  onClick={handleApplySingle}
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-                >
-                  Apply to form
-                </button>
-              )}
+              ) : null}
             </>
           )}
         </div>
-      </div>
-    </div>
-  );
+              </div>
+            </div>
+          </Reveal>,
+          document.body,
+        )
+      : null;
+
+  return modal;
 }

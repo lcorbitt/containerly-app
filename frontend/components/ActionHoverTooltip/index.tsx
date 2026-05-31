@@ -7,10 +7,14 @@ import { useHoverTooltip } from "./hooks/useHoverTooltip";
 
 type Props = {
   label: string;
+  /** Optional classes for multi-line/wide tooltip copy. */
+  labelClassName?: string;
+  /** Optional classes on the hover wrapper (e.g. flex-1 for equal-width tab slots). */
+  wrapperClassName?: string;
   children: ReactElement<{ "aria-describedby"?: string }>;
 };
 
-export function ActionHoverTooltip({ label, children }: Props) {
+export function ActionHoverTooltip({ label, labelClassName, wrapperClassName, children }: Props) {
   const { visible, coords, entered, triggerRef, show, hide, onFocus, onBlur, tooltipId } =
     useHoverTooltip();
 
@@ -43,7 +47,9 @@ export function ActionHoverTooltip({ label, children }: Props) {
             entered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
           }`}
         >
-          <div className="rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-zinc-700">
+          <div
+            className={`rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-zinc-700${labelClassName ? ` ${labelClassName}` : ""}`}
+          >
             {label}
           </div>
           <div
@@ -58,7 +64,7 @@ export function ActionHoverTooltip({ label, children }: Props) {
   return (
     <span
       ref={triggerRef}
-      className="relative inline-flex shrink-0"
+      className={`relative inline-flex shrink-0${wrapperClassName ? ` ${wrapperClassName}` : ""}`}
       onPointerEnter={show}
       onPointerLeave={hide}
       onFocus={onFocus}

@@ -17,7 +17,7 @@ export const ShipmentNotificationsSection = memo(function ShipmentNotificationsS
   });
 
   return (
-    <section className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+    <section className="py-3 last:pb-0">
       <ShipmentNotificationsPanel state={notificationsState} />
     </section>
   );

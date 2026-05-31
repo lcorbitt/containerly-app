@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, User } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { OrganizationSettingsPanel } from "../OrganizationSettingsPanel";
 import { ProfileImageSettings } from "../ProfileImageSettings";
 import { SettingsDisplayName } from "../SettingsDisplayName";
@@ -35,11 +35,8 @@ export function SettingsPageTabs({
 
   const [tab, setTab] = useState<TabId>("personal");
 
-  useEffect(() => {
-    if (!showOrganizationTab && tab === "organization") {
-      setTab("personal");
-    }
-  }, [showOrganizationTab, tab]);
+  const activeTab: TabId =
+    !showOrganizationTab && tab === "organization" ? "personal" : tab;
 
   const personalSection = (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -77,12 +74,12 @@ export function SettingsPageTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={tab === "personal"}
+          aria-selected={activeTab === "personal"}
           id="settings-tab-personal"
           aria-controls="settings-panel-personal"
           onClick={() => setTab("personal")}
           className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-            tab === "personal"
+            activeTab === "personal"
               ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
               : "text-zinc-600 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-100"
           }`}
@@ -93,12 +90,12 @@ export function SettingsPageTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={tab === "organization"}
+          aria-selected={activeTab === "organization"}
           id="settings-tab-organization"
           aria-controls="settings-panel-organization"
           onClick={() => setTab("organization")}
           className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-            tab === "organization"
+            activeTab === "organization"
               ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
               : "text-zinc-600 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-100"
           }`}
@@ -108,7 +105,7 @@ export function SettingsPageTabs({
         </button>
       </div>
 
-      {tab === "personal" ? (
+      {activeTab === "personal" ? (
         <div
           role="tabpanel"
           id="settings-panel-personal"

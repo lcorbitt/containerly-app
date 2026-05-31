@@ -10,13 +10,10 @@ import type { ShipmentAccessTabContentState } from "./hooks/useShipmentAccessTab
 export function ShipmentAccessTabContent({
   variant = "panel",
   state,
-  shipmentId,
-  onMetaChanged,
 }: {
-  /** `sidebar` — right column on shipment header; `header` kept for legacy two-column in-panel layout. */
-  variant?: "panel" | "header" | "sidebar";
+  /** `header` — legacy two-column in-panel layout. */
+  variant?: "panel" | "header";
   state: ShipmentAccessTabContentState;
-  shipmentId?: string;
 }) {
   const {
     selectedOrgId,
@@ -59,33 +56,26 @@ export function ShipmentAccessTabContent({
   }
 
   const isHeader = variant === "header";
-  const isSidebar = variant === "sidebar";
 
   if (loading) {
     return (
-      <p className="text-sm text-zinc-500">
-        {isSidebar ? "Loading…" : "Loading team and importer access…"}
-      </p>
+      <p className="text-sm text-zinc-500">Loading team and importer access…</p>
     );
   }
 
   return (
     <div
       className={
-        isSidebar
-          ? "flex flex-col gap-4"
-          : isHeader
-            ? "grid gap-4 lg:grid-cols-2"
-            : "flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 sm:p-5"
+        isHeader
+          ? "grid gap-4 lg:grid-cols-2"
+          : "flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 sm:p-5"
       }
     >
       <section
         className={
-          isSidebar
-            ? undefined
-            : isHeader
-              ? "rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
-              : "rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+          isHeader
+            ? "rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
+            : "rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
         }
       >
         <div className="space-y-5">
@@ -163,34 +153,32 @@ export function ShipmentAccessTabContent({
         </div>
       </section>
 
-      {!isSidebar ? (
-        <section
-          className={
-            isHeader
-              ? "min-h-0 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
-              : "min-h-0 flex-1 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
-          }
-        >
-          <CustomerAccessPanel
-            variant="panel"
-            inviteEmail={inviteEmail}
-            onInviteEmailChange={setInviteEmail}
-            deliveryMode={inviteDeliveryMode}
-            onDeliveryModeChange={setInviteDeliveryMode}
-            creating={inviteCreating}
-            onCreateInvite={() => void createInvite()}
-            lastInviteUrl={lastInviteUrl}
-            onClearLastInviteUrl={() => setLastInviteUrl(null)}
-            pendingInvites={pendingInvites}
-            activeAccess={activeAccessWithLabels}
-            origin={origin}
-            onRevokeInvite={revokeInviteRow}
-            onRevokeAccess={revokeAccessRow}
-            onToast={toast}
-            onReloadAccess={() => load()}
-          />
-        </section>
-      ) : null}
+      <section
+        className={
+          isHeader
+            ? "min-h-0 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
+            : "min-h-0 flex-1 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+        }
+      >
+        <CustomerAccessPanel
+          variant="panel"
+          inviteEmail={inviteEmail}
+          onInviteEmailChange={setInviteEmail}
+          deliveryMode={inviteDeliveryMode}
+          onDeliveryModeChange={setInviteDeliveryMode}
+          creating={inviteCreating}
+          onCreateInvite={() => void createInvite()}
+          lastInviteUrl={lastInviteUrl}
+          onClearLastInviteUrl={() => setLastInviteUrl(null)}
+          pendingInvites={pendingInvites}
+          activeAccess={activeAccessWithLabels}
+          origin={origin}
+          onRevokeInvite={revokeInviteRow}
+          onRevokeAccess={revokeAccessRow}
+          onToast={toast}
+          onReloadAccess={() => load()}
+        />
+      </section>
     </div>
   );
 }

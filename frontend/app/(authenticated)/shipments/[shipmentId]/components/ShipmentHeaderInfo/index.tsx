@@ -3,7 +3,7 @@ import { SHIPMENT_DETAIL_GRID_FIELDS, SHIPMENT_DETAIL_LABEL_CLASS, SHIPMENT_DETA
 
 export function ShipmentHeaderInfo({ row }: { row: ShipmentWorkspaceRow }) {
   return (
-    <section className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+    <section className="">
       <dl className="grid gap-x-6 gap-y-6 sm:grid-cols-3">
         {SHIPMENT_DETAIL_GRID_FIELDS.map((field) => {
           const raw = row[field.key as keyof ShipmentWorkspaceRow];

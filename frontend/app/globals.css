@@ -175,3 +175,12 @@ input[type="reset"]:disabled {
     transition-duration: 0ms;
   }
 }
+
+/* WebKit paints search clear/results controls in accent blue — hide native UI; app uses TextInput clear. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}

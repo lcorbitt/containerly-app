@@ -2,6 +2,8 @@ import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
 import type {
   CreateShipmentBody,
   CreateShipmentResponse,
+  DeleteShipmentBody,
+  DeleteShipmentResponse,
   ReviewShipmentDocumentBody,
   ReviewShipmentDocumentResponse,
   UpdateShipmentBody,
@@ -387,8 +389,12 @@ export async function fetchShipment(shipmentId: string): Promise<
       /* leave */
     }
     if (!r.res.ok) {
-      const err = body as { error?: string };
-      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
+      const err = body as { error?: string; message?: string };
+      return {
+        ok: false,
+        status: r.res.status,
+        error: err?.error ?? err?.message ?? r.res.statusText,
+      };
     }
     return { ok: true, data: body as ShipmentPortalPayload };
   } catch (e) {
@@ -754,6 +760,24 @@ export async function updateCommercialShipment(
     return { ok: true, data: parsed as UpdateShipmentResponse };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function deleteCommercialShipment(
+  body: DeleteShipmentBody,
+): Promise<{ ok: true; data: DeleteShipmentResponse } | { ok: false; status: number; error: string }> {
+  try {
+    const data = await apiJson<DeleteShipmentResponse>(
+      `/api/organizations/${encodeURIComponent(body.organization_id)}/shipments/${encodeURIComponent(body.shipment_id)}`,
+      { method: "DELETE" },
+    );
+    return { ok: true, data };
+  } catch (e) {
+    return {
+      ok: false,
+      status: 400,
+      error: e instanceof Error ? e.message : "Could not delete shipment",
+    };
   }
 }
 

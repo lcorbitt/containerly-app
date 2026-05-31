@@ -53,14 +53,11 @@ export function ContainerWorkspace({
     trackingSubview,
     setTrackingSubview,
 
-    messageChannel,
-    setMessageChannel,
-    filteredThreadMessages,
+    threadMessages,
     messageAuthorByUserId,
     attachmentsByMessageId,
     body,
     setBody,
-    internalOnlyComposer,
     posting,
     replyParentId,
     setReplyParentId,
@@ -117,11 +114,7 @@ export function ContainerWorkspace({
   }
 
   if (loading) {
-    return (
-      <div className="mx-auto box-border flex min-h-0 w-full max-w-6xl flex-1 flex-col p-6">
-        <PageLoading loadingText="Loading request…" />
-      </div>
-    );
+    return <PageLoading loadingText="Loading request…" />;
   }
 
   if (!request) {
@@ -331,32 +324,8 @@ export function ContainerWorkspace({
             ) : null}
             {mainTab === "thread" ? (
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                <div
-                  className="flex shrink-0 flex-wrap gap-2 border-b border-zinc-200 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
-                  role="tablist"
-                  aria-label="Message audience"
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={messageChannel === "team"}
-                    className={trackingSubviewToggleClass(messageChannel === "team")}
-                    onClick={() => setMessageChannel("team")}
-                  >
-                    Team only
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={messageChannel === "customer"}
-                    className={trackingSubviewToggleClass(messageChannel === "customer")}
-                    onClick={() => setMessageChannel("customer")}
-                  >
-                    Customer portal
-                  </button>
-                </div>
                 <ThreadPanel
-                  messages={filteredThreadMessages}
+                  messages={threadMessages}
                   authorNameByUserId={messageAuthorByUserId}
                   uploaderDisplayByUserId={messageAuthorByUserId}
                   attachmentsByMessageId={attachmentsByMessageId}
@@ -368,9 +337,10 @@ export function ContainerWorkspace({
                   onRemoveComposerPendingFile={onRemoveComposerPendingFile}
                   body={body}
                   onBodyChange={setBody}
-                  internalOnly={internalOnlyComposer}
+                  internalOnly={false}
                   onInternalOnlyChange={() => {}}
                   showInternalComposerToggle={false}
+                  publicThreadMode
                   posting={posting}
                   onPostMessage={() => void postMessage()}
                   replyParentId={replyParentId}
@@ -385,11 +355,9 @@ export function ContainerWorkspace({
                       : ""
                   }
                   emptyStateText={
-                    messageChannel === "team"
-                      ? shipmentEmbed
-                        ? "No team messages on this container yet."
-                        : "No team messages yet."
-                      : "No customer-visible messages on this container yet."
+                    shipmentEmbed
+                      ? "No messages on this container yet."
+                      : "No messages yet."
                   }
                 />
               </div>

@@ -39,6 +39,7 @@ function ThreadMessageItem({
   onOpenAttachment,
   onRenameAttachment,
   renamingAttachmentId,
+  publicThreadMode = false,
 }: {
   node: ThreadNode<ReportMessage>;
   depth: number;
@@ -54,11 +55,14 @@ function ThreadMessageItem({
   onOpenAttachment: (row: WorkspaceAttachment) => void;
   onRenameAttachment: (attachmentId: string, newName: string) => Promise<void>;
   renamingAttachmentId: string | null;
+  publicThreadMode?: boolean;
 }) {
   const messageAttachments = attachmentsByMessageId.get(node.id) ?? [];
   const parent = node.parent_message_id ? messageById.get(node.parent_message_id) : undefined;
   const isReplyTarget = replyParentId === node.id;
   const isRoot = depth === 0;
+  const isInternal = !publicThreadMode && node.is_internal;
+  const parentInternal = !publicThreadMode && Boolean(parent?.is_internal);
   const isOwnMessage =
     Boolean(currentUserId && node.author_user_id && node.author_user_id === currentUserId);
   const isDeleting = deletingMessageId === node.id;
@@ -66,17 +70,17 @@ function ThreadMessageItem({
 
   const shell = isRoot
     ? `group/card rounded-2xl px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${
-        node.is_internal
+        isInternal
           ? "bg-emerald-50/85 dark:bg-emerald-950/30"
           : "bg-sky-50/90 dark:bg-sky-950/28"
       }`
     : `group/card rounded-xl px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.18)] ${
-        node.is_internal
+        isInternal
           ? "bg-emerald-50/55 dark:bg-emerald-950/22"
           : "bg-sky-50/55 dark:bg-sky-950/20"
       }`;
 
-  const replyTargetRing = node.is_internal
+  const replyTargetRing = isInternal
     ? "ring-2 ring-emerald-400/45 ring-offset-2 ring-offset-emerald-50 dark:ring-emerald-500/35 dark:ring-offset-emerald-950"
     : "ring-2 ring-sky-400/45 ring-offset-2 ring-offset-sky-50 dark:ring-sky-500/35 dark:ring-offset-sky-950";
 
@@ -89,7 +93,7 @@ function ThreadMessageItem({
         {parent ? (
           <div
             className={`mb-3 border-l-[3px] pl-3 pr-25 ${
-              parent.is_internal
+              parentInternal
                 ? "border-emerald-400/90 bg-emerald-100/35 py-1.5 dark:border-emerald-500/70 dark:bg-emerald-950/35"
                 : "border-sky-400/90 bg-sky-100/40 py-1.5 dark:border-sky-500/70 dark:bg-sky-950/35"
             } rounded-r-md`}
@@ -108,7 +112,7 @@ function ThreadMessageItem({
               {threadMessageAuthorName(node, authorNameByUserId)}
             </span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              {node.is_internal ? (
+              {isInternal ? (
                 <>
                   Internal note{" · "}
                 </>
@@ -197,6 +201,7 @@ function ThreadMessageItem({
               onOpenAttachment={onOpenAttachment}
               onRenameAttachment={onRenameAttachment}
               renamingAttachmentId={renamingAttachmentId}
+              publicThreadMode={publicThreadMode}
             />
           ))}
         </ul>
@@ -232,6 +237,8 @@ export function ThreadPanel({
   emptyStateText = "No messages yet.",
   /** When false, composer visibility is fixed by `internalOnly` (hide the internal/customer checkbox). */
   showInternalComposerToggle = true,
+  /** Single public thread — no internal note labels, audience hints, or team/customer chrome. */
+  publicThreadMode = false,
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
@@ -259,6 +266,7 @@ export function ThreadPanel({
   /** Shown when there are no messages (e.g. scope hint). */
   emptyStateText?: string;
   showInternalComposerToggle?: boolean;
+  publicThreadMode?: boolean;
 }) {
   const tree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
@@ -318,6 +326,7 @@ export function ThreadPanel({
                 onOpenAttachment={onOpenAttachment}
                 onRenameAttachment={onRenameAttachment}
                 renamingAttachmentId={renamingAttachmentId}
+                publicThreadMode={publicThreadMode}
               />
             ))}
           </ul>
@@ -344,14 +353,14 @@ export function ThreadPanel({
           </div>
         ) : null}
         <div className={`text-sm ${composerShell}`}>
-          {composerAuthorLabel.trim() || internalOnly ? (
+          {composerAuthorLabel.trim() || (!publicThreadMode && internalOnly) ? (
             <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               {composerAuthorLabel.trim() ? (
                 <span className="font-semibold text-zinc-900 dark:text-zinc-50">
                   {composerAuthorLabel}
                 </span>
               ) : null}
-              {internalOnly ? (
+              {!publicThreadMode && internalOnly ? (
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">Internal note</span>
               ) : null}
             </div>
@@ -420,7 +429,7 @@ export function ThreadPanel({
               />
               Internal note (hidden from importers)
             </label>
-          ) : (
+          ) : publicThreadMode ? null : (
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {internalOnly
                 ? "Team-only thread (not visible to importers)."

@@ -7,6 +7,7 @@ import {
   ADMIN_TABLE_TH,
   AdminTableSection,
 } from "@/components/AdminTableSection";
+import { TextInput } from "@/components/TextInput";
 import type { Profile } from "@/types/database";
 import {
   PAGE_SIZE_OPTIONS,
@@ -31,7 +32,7 @@ export function AdminProfilesTable({
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
         <label className="flex min-w-0 max-w-md flex-1 flex-col gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
           Search
-          <input
+          <TextInput
             type="search"
             value={t.search}
             onChange={(e) => t.setSearch(e.target.value)}

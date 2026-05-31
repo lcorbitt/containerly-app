@@ -6,14 +6,14 @@ import { REVEAL_DURATION_MS } from "./constants";
 export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
   const [mounted, setMounted] = useState(show);
   const [visible, setVisible] = useState(false);
-  const mountedRef = useRef(mounted);
-  mountedRef.current = mounted;
+  const wasMountedRef = useRef(show);
 
   useEffect(() => {
     const generation = Symbol("reveal-phase");
     let activeGeneration: symbol | null = generation;
     let enterOuterFrame = 0;
     let enterInnerFrame = 0;
+    let exitFrame = 0;
     let exitTimer = 0;
 
     const isActive = () => activeGeneration === generation;
@@ -26,6 +26,7 @@ export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
     };
 
     const clearExit = () => {
+      cancelAnimationFrame(exitFrame);
       if (exitTimer) {
         window.clearTimeout(exitTimer);
         exitTimer = 0;
@@ -40,10 +41,13 @@ export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
 
     if (show) {
       clearExit();
-      setMounted(true);
-      setVisible(false);
+      wasMountedRef.current = true;
 
       enterOuterFrame = requestAnimationFrame(() => {
+        if (!isActive()) return;
+        setMounted(true);
+        setVisible(false);
+
         enterInnerFrame = requestAnimationFrame(() => {
           if (!isActive()) return;
           setVisible(true);
@@ -54,16 +58,21 @@ export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
     }
 
     clearEnter();
-    setVisible(false);
 
-    if (!mountedRef.current) {
-      return cancelAll;
-    }
-
-    exitTimer = window.setTimeout(() => {
+    exitFrame = requestAnimationFrame(() => {
       if (!isActive()) return;
-      setMounted(false);
-    }, durationMs);
+      setVisible(false);
+
+      if (!wasMountedRef.current) {
+        return;
+      }
+
+      exitTimer = window.setTimeout(() => {
+        if (!isActive()) return;
+        wasMountedRef.current = false;
+        setMounted(false);
+      }, durationMs);
+    });
 
     return cancelAll;
   }, [show, durationMs]);

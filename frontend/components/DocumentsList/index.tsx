@@ -1,94 +1,18 @@
 "use client";
 
 import { Check, FileText, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { isImageThumbnailCandidate } from "@/utils/workspace-files";
+import { useRef, useState } from "react";
+import { StoredFileThumbnail } from "@/components/StoredFileThumbnail";
+import { TextInput } from "@/components/TextInput";
 import { attachmentUploaderKindLabel } from "@shared/dto/attachment.dto";
-import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
+import {
+  DOCUMENT_GROUP_PILL_CLASS,
+  DOCUMENT_TYPE_PILL_CLASS,
+} from "./constants";
 import type { DocumentsListProps } from "./types";
+import { formatDocumentGroupLabel, hasDocumentMetadata } from "./utils";
 
 export type { DocumentsListStoredFile, DocumentsListProps } from "./types";
-
-const THUMB_BOX_DOCS =
-  "h-12 w-12 shrink-0 overflow-hidden rounded-md border border-zinc-200/90 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800/80";
-
-function FileIconPlaceholder({ className }: { className?: string }) {
-  return (
-    <div className={`flex items-center justify-center ${className ?? ""}`}>
-      <FileText className="h-5 w-5 text-zinc-400" strokeWidth={2} aria-hidden />
-    </div>
-  );
-}
-
-/** Image preview: signed URL from storage, or direct `href` when it points at an image. */
-function DocumentsStoredFileThumbnail({
-  name,
-  contentType,
-  storagePath,
-  href,
-}: {
-  name: string;
-  contentType?: string | null;
-  storagePath?: string | null;
-  href?: string;
-}) {
-  const tryImage = isImageThumbnailCandidate(contentType ?? null, name);
-  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
-  const [showImage, setShowImage] = useState(tryImage);
-
-  useEffect(() => {
-    setShowImage(tryImage);
-  }, [tryImage]);
-
-  useEffect(() => {
-    if (!tryImage) {
-      setThumbUrl(null);
-      return;
-    }
-    const path = storagePath?.trim();
-    const direct = href?.trim();
-    if (direct && !path) {
-      setThumbUrl(direct);
-      return;
-    }
-    if (!path) {
-      setThumbUrl(null);
-      return;
-    }
-    let cancelled = false;
-    const run = async () => {
-      try {
-        const url = await createWorkspaceStorageSignedUrl(path, 3600);
-        if (cancelled) return;
-        setThumbUrl(url);
-      } catch {
-        if (cancelled) return;
-        setShowImage(false);
-        setThumbUrl(null);
-      }
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [tryImage, storagePath, href]);
-
-  return (
-    <div className={THUMB_BOX_DOCS}>
-      {showImage && thumbUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
-        <img
-          src={thumbUrl}
-          alt=""
-          className="h-full w-full object-cover"
-          onError={() => setShowImage(false)}
-        />
-      ) : (
-        <FileIconPlaceholder className="h-full w-full" />
-      )}
-    </div>
-  );
-}
 
 export function DocumentsList({
   billOfLading,
@@ -103,6 +27,7 @@ export function DocumentsList({
   renamingFileId,
   variant = "card",
   hideHeader = false,
+  naturalHeight = false,
 }: DocumentsListProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
@@ -124,7 +49,9 @@ export function DocumentsList({
   const hasAny = Boolean(bol) || hasStored;
   const shell =
     variant === "embedded"
-      ? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none dark:bg-transparent"
+      ? naturalHeight
+        ? "flex flex-col rounded-none border-0 bg-transparent shadow-none dark:bg-transparent"
+        : "flex min-h-0 flex-1 flex-col overflow-hidden rounded-none border-0 bg-transparent shadow-none dark:bg-transparent"
       : "flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 lg:max-h-[min(320px,calc(100dvh-14rem))]";
 
   return (
@@ -193,7 +120,13 @@ export function DocumentsList({
           </button>
         </div>
       ) : null}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
+      <div
+        className={
+          variant === "embedded" && naturalHeight
+            ? "px-2 py-2"
+            : "min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2"
+        }
+      >
         {hasAny ? (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {storedFiles?.map((f) => {
@@ -214,16 +147,30 @@ export function DocumentsList({
               return (
                 <li key={f.id}>
                   <div className="flex items-start gap-1 rounded-md py-0.5 pr-1 pl-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditing) void open();
+                      }}
+                      disabled={busy || isEditing}
+                      tabIndex={isEditing ? -1 : undefined}
+                      aria-hidden={isEditing ? true : undefined}
+                      className={`shrink-0 rounded-md p-1.5 transition-colors disabled:cursor-default ${
+                        isEditing
+                          ? "pointer-events-none"
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-900/60"
+                      }`}
+                    >
+                      <StoredFileThumbnail
+                        name={f.name}
+                        contentType={f.contentType}
+                        storagePath={f.storagePath}
+                        href={f.href}
+                      />
+                    </button>
                     {isEditing ? (
-                      <div className="flex min-w-0 flex-1 items-start gap-2 px-1.5 py-2">
-                        <DocumentsStoredFileThumbnail
-                          name={f.name}
-                          contentType={f.contentType}
-                          storagePath={f.storagePath}
-                          href={f.href}
-                        />
-                        <div className="flex min-w-0 flex-1 flex-col gap-2">
-                        <input
+                      <div className="flex min-w-0 flex-1 flex-col gap-2 px-0.5 py-2">
+                        <TextInput
                           type="text"
                           value={editDraft}
                           onChange={(e) => setEditDraft(e.target.value)}
@@ -269,7 +216,6 @@ export function DocumentsList({
                             Cancel
                           </button>
                         </div>
-                        </div>
                       </div>
                     ) : (
                       <button
@@ -278,16 +224,24 @@ export function DocumentsList({
                         disabled={busy}
                         className="flex min-w-0 flex-1 items-start gap-2 rounded-md px-1.5 py-2 text-left text-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed dark:hover:bg-zinc-900/60"
                       >
-                        <DocumentsStoredFileThumbnail
-                          name={f.name}
-                          contentType={f.contentType}
-                          storagePath={f.storagePath}
-                          href={f.href}
-                        />
                         <span className="min-w-0 pt-0.5">
                           <span className="block font-medium wrap-break-word text-zinc-800 dark:text-zinc-200">
                             {f.name}
                           </span>
+                          {hasDocumentMetadata(f.documentType, f.documentGroup) ? (
+                            <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                              {f.documentType?.trim() ? (
+                                <span className={DOCUMENT_TYPE_PILL_CLASS} title="Document type">
+                                  {f.documentType.trim()}
+                                </span>
+                              ) : null}
+                              {formatDocumentGroupLabel(f.documentGroup) ? (
+                                <span className={DOCUMENT_GROUP_PILL_CLASS} title="Document group">
+                                  {formatDocumentGroupLabel(f.documentGroup)}
+                                </span>
+                              ) : null}
+                            </span>
+                          ) : null}
                           {f.uploadedByLabel?.trim() || f.uploadedByKind ? (
                             <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                               {f.uploadedByKind ? (

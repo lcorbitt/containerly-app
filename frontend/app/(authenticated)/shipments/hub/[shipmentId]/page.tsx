@@ -50,11 +50,7 @@ export default function SharedShipmentTrackingPage({
   }, [shipmentId, router]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[min(420px,55dvh)] flex-col px-4 py-8">
-        <PageLoading loadingText="Loading shared tracking…" />
-      </div>
-    );
+    return <PageLoading loadingText="Loading shared tracking…" />;
   }
 
   if (err || !data) {

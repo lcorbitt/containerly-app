@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Loader2, Package, Search, Ship } from "lucide-react";
+import { TextInput } from "@/components/TextInput";
 import { useWorkspaceQuickSearch } from "./hooks/useWorkspaceQuickSearch";
 import { MIN_CHARS } from "./constants";
 
@@ -103,11 +104,11 @@ export function WorkspaceQuickSearch() {
         }`}
       >
         <Search className="h-3.5 w-3.5 shrink-0 text-zinc-400" strokeWidth={2} aria-hidden />
-        <input
+        <TextInput
           ref={inputRef}
           id={inputId}
           role="combobox"
-          type="text"
+          type="search"
           inputMode="search"
           enterKeyHint="search"
           autoComplete="off"
@@ -125,7 +126,8 @@ export function WorkspaceQuickSearch() {
             showPanel && results[highlight] ? `${listboxId}-opt-${highlight}` : undefined
           }
           aria-autocomplete="list"
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-xs text-zinc-900 placeholder:text-zinc-400 outline-none disabled:cursor-not-allowed dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          containerClassName="min-w-0 flex-1"
+          className="min-w-0 w-full border-0 bg-transparent p-0 text-xs text-zinc-900 placeholder:text-zinc-400 outline-none disabled:cursor-not-allowed dark:text-zinc-100 dark:placeholder:text-zinc-500"
         />
         {loading ? (
           <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-zinc-400" aria-hidden />

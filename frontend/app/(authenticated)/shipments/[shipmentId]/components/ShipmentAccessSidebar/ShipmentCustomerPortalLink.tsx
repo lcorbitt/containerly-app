@@ -12,7 +12,12 @@ export function ShipmentCustomerPortalLink({
   className?: string;
 }) {
   return (
-    <Link href={`/shipments/hub/${shipmentId}`} className={`${linkClass} ${className ?? ""}`.trim()}>
+    <Link
+      href={`/shipments/hub/${shipmentId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`${linkClass} ${className ?? ""}`.trim()}
+    >
       <ExternalLink className="h-4 w-4 opacity-70" aria-hidden />
       Customer Portal
     </Link>

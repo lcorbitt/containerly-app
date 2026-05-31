@@ -1,15 +1,32 @@
 "use client";
 
+import { FileText, Loader2 } from "lucide-react";
 import { DocumentsList } from "@/components/DocumentsList";
-import { DocumentUploadModal } from "./DocumentUploadModal";
 import { ShipmentDocumentUploadZone } from "./ShipmentDocumentUploadZone";
 import {
-  SHIPMENT_DOCUMENTS_PANEL_HEIGHT,
+  SHIPMENT_DOCUMENTS_HEADER_CLASS,
+  SHIPMENT_DOCUMENTS_HEADER_ICON_CLASS,
+  SHIPMENT_DOCUMENTS_HEADER_TITLE,
+  SHIPMENT_DOCUMENTS_HEADER_TITLE_CLASS,
+  SHIPMENT_DOCUMENTS_HEADER_TITLE_ROW_CLASS,
+  SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS,
+  SHIPMENT_DOCUMENTS_LOADING_CONTENT_CLASS,
+  SHIPMENT_DOCUMENTS_LOADING_SHELL_CLASS,
+  SHIPMENT_DOCUMENTS_LOADING_SPINNER_CLASS,
+  SHIPMENT_DOCUMENTS_LOADING_TEXT,
+  SHIPMENT_DOCUMENTS_LOADING_TEXT_CLASS,
   SHIPMENT_DOCUMENTS_SECTION_CLASS,
 } from "./constants";
 import { useShipmentWorkspaceScopePanel } from "./hooks/useShipmentWorkspaceScopePanel";
 
-export function ShipmentWorkspaceScopePanel({ shipmentId }: { shipmentId: string }) {
+export function ShipmentWorkspaceScopePanel({
+  shipmentId,
+  variant = "section",
+}: {
+  shipmentId: string;
+  /** `tab` — embedded under Details/Documents tabs without duplicate chrome. */
+  variant?: "section" | "tab";
+}) {
   const {
     selectedOrgId,
     loading,
@@ -24,10 +41,6 @@ export function ShipmentWorkspaceScopePanel({ shipmentId }: { shipmentId: string
     currentUserId,
 
     openAttachment,
-    uploadModalOpen,
-    closeUploadModal,
-    openUploadModalWithFiles,
-    uploadModalInitialFiles,
     uploadAttachmentFiles,
     uploadingAttachments,
     renameAttachment,
@@ -47,64 +60,80 @@ export function ShipmentWorkspaceScopePanel({ shipmentId }: { shipmentId: string
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500">Loading shipment documents…</p>;
+    return (
+      <div
+        className={SHIPMENT_DOCUMENTS_LOADING_SHELL_CLASS}
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div className={SHIPMENT_DOCUMENTS_LOADING_CONTENT_CLASS}>
+          <Loader2 className={SHIPMENT_DOCUMENTS_LOADING_SPINNER_CLASS} aria-hidden />
+          <p className={SHIPMENT_DOCUMENTS_LOADING_TEXT_CLASS}>{SHIPMENT_DOCUMENTS_LOADING_TEXT}</p>
+        </div>
+      </div>
+    );
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>;
+    return <p className="p-4 text-sm text-red-600 dark:text-red-400 sm:p-5">{loadError}</p>;
   }
 
+  const isTab = variant === "tab";
+
   return (
-    <section aria-label="Shipment documents" className={SHIPMENT_DOCUMENTS_SECTION_CLASS}>
-      <div className="flex shrink-0 flex-col gap-1 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Documents</h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          All files are visible to the customer. Operator and customer uploads are labeled below.
-        </p>
-      </div>
+    <section
+      aria-label="Shipment documents"
+      className={isTab ? "flex min-w-0 flex-col" : SHIPMENT_DOCUMENTS_SECTION_CLASS}
+    >
+      {!isTab ? (
+        <div className={SHIPMENT_DOCUMENTS_HEADER_CLASS}>
+          <div className={SHIPMENT_DOCUMENTS_HEADER_TITLE_ROW_CLASS}>
+            <FileText
+              className={SHIPMENT_DOCUMENTS_HEADER_ICON_CLASS}
+              strokeWidth={2}
+              aria-hidden
+            />
+            <h2 className={SHIPMENT_DOCUMENTS_HEADER_TITLE_CLASS}>{SHIPMENT_DOCUMENTS_HEADER_TITLE}</h2>
+          </div>
+        </div>
+      ) : null}
 
-      <div
-        className="flex min-h-0 flex-col overflow-hidden"
-        style={{ height: SHIPMENT_DOCUMENTS_PANEL_HEIGHT }}
-      >
+      <div className={isTab ? "flex flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5" : "flex flex-col"}>
         <ShipmentDocumentUploadZone
-          disabled={uploadingAttachments}
-          onFilesSelected={openUploadModalWithFiles}
-        />
-        <DocumentsList
-          variant="embedded"
-          hideHeader
-          currentUserId={currentUserId}
-          storedFiles={attachmentsNewestFirst.map((a) => ({
-            id: a.id,
-            name: a.file_name,
-            contentType: a.content_type,
-            storagePath: a.storage_path,
-            uploadedByUserId: a.uploaded_by,
-            uploadedByLabel: messageAuthorByUserId[a.uploaded_by]?.trim() || "Unknown user",
-            uploadedByKind: a.uploaded_by_kind ?? "operator",
-            onOpen: () => void openAttachment(a),
-          }))}
+          documentType={documentType}
+          onDocumentTypeChange={setDocumentType}
+          documentGroup={documentGroup}
+          onDocumentGroupChange={setDocumentGroup}
           uploading={uploadingAttachments}
-          onRemoveFile={(id) => void removeAttachment(id)}
-          removingFileId={removingAttachmentId}
-          onRenameFile={(id, name) => renameAttachment(id, name)}
-          renamingFileId={renamingAttachmentId}
+          onUpload={uploadAttachmentFiles}
         />
+        <div className={isTab ? "min-w-0" : SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS}>
+          <DocumentsList
+            variant="embedded"
+            naturalHeight
+            hideHeader
+            currentUserId={currentUserId}
+            storedFiles={attachmentsNewestFirst.map((a) => ({
+              id: a.id,
+              name: a.file_name,
+              contentType: a.content_type,
+              storagePath: a.storage_path,
+              uploadedByUserId: a.uploaded_by,
+              uploadedByLabel: messageAuthorByUserId[a.uploaded_by]?.trim() || "Unknown user",
+              uploadedByKind: a.uploaded_by_kind ?? "operator",
+              documentType: a.document_type,
+              documentGroup: a.document_group,
+              onOpen: () => void openAttachment(a),
+            }))}
+            uploading={uploadingAttachments}
+            onRemoveFile={(id) => void removeAttachment(id)}
+            removingFileId={removingAttachmentId}
+            onRenameFile={(id, name) => renameAttachment(id, name)}
+            renamingFileId={renamingAttachmentId}
+          />
+        </div>
       </div>
-
-      <DocumentUploadModal
-        open={uploadModalOpen}
-        onClose={() => closeUploadModal()}
-        initialFiles={uploadModalInitialFiles}
-        showDocumentMetadata
-        documentType={documentType}
-        onDocumentTypeChange={setDocumentType}
-        documentGroup={documentGroup}
-        onDocumentGroupChange={setDocumentGroup}
-        uploading={uploadingAttachments}
-        onUpload={uploadAttachmentFiles}
-      />
     </section>
   );
 }

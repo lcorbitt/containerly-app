@@ -7,6 +7,9 @@ export type DocumentsListStoredFile = {
   uploadedByLabel?: string;
   /** Operator vs customer upload source. */
   uploadedByKind?: "operator" | "customer" | null;
+  /** Shipment document classification (when set on upload). */
+  documentType?: string | null;
+  documentGroup?: string | null;
   /** For image thumbnails via signed URL (`workspace-files` bucket). */
   contentType?: string | null;
   storagePath?: string | null;
@@ -35,4 +38,6 @@ export type DocumentsListProps = {
   variant?: "card" | "embedded";
   /** When true, omits the built-in title/upload header (parent provides chrome). */
   hideHeader?: boolean;
+  /** With `embedded`, grow with content instead of filling a fixed-height parent. */
+  naturalHeight?: boolean;
 };

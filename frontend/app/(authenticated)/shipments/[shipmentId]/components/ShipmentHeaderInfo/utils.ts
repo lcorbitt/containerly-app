@@ -24,7 +24,11 @@ export const SHIPMENT_DETAIL_LABEL_CLASS = SHIPMENT_COMMERCIAL_LABEL_CLASS;
 export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-1 text-sm text-zinc-900 dark:text-zinc-100";
 
 export const SHIPMENT_TITLE_VALUE_CLASS =
-  "mt-1 text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
+  "mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
+
+export const SHIPMENT_TITLE_GRID_CLASS = "grid w-full min-w-0 grid-cols-3 gap-x-6";
+
+export const SHIPMENT_TITLE_CELL_CLASS = "min-w-0";
 
 export const SHIPMENT_DETAIL_FIELDS = [
   { key: "customer_name", label: "Customer", format: displayValue },
@@ -42,6 +46,8 @@ export const SHIPMENT_DETAIL_FIELDS = [
   { key: "health_certificate_no", label: "Health Certificate No", format: displayValue },
   { key: "trade_terms", label: "Trade Terms", format: displayValue },
 ] as const;
+
+export const SHIPMENT_DOCUMENTS_STATUS_LABEL = "Documents status";
 
 export const SHIPMENT_TITLE_FIELD_KEYS = ["customer_name", "order_number"] as const;
 

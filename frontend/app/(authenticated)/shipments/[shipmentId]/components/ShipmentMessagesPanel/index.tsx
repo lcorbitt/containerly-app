@@ -1,0 +1,107 @@
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
+import {
+  SHIPMENT_MESSAGES_LOADING_CONTENT_CLASS,
+  SHIPMENT_MESSAGES_LOADING_SHELL_CLASS,
+  SHIPMENT_MESSAGES_LOADING_SPINNER_CLASS,
+  SHIPMENT_MESSAGES_LOADING_TEXT,
+  SHIPMENT_MESSAGES_LOADING_TEXT_CLASS,
+  SHIPMENT_MESSAGES_PANEL_SHELL_CLASS,
+  SHIPMENT_MESSAGES_THREAD_SHELL_CLASS,
+} from "./constants";
+import { useShipmentMessagesPanel } from "./useShipmentMessagesPanel";
+
+export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
+  const {
+    selectedOrgId,
+    loading,
+    loadError,
+    threadMessages,
+    messageAuthorByUserId,
+    currentUserId,
+    attachmentsByMessageId,
+    openAttachment,
+    renameAttachment,
+    renamingAttachmentId,
+    composerPendingFiles,
+    onComposerPickFiles,
+    onRemoveComposerPendingFile,
+    body,
+    setBody,
+    posting,
+    postMessage,
+    replyParentId,
+    setReplyParentId,
+    deleteMessage,
+    deletingMessageId,
+  } = useShipmentMessagesPanel({ shipmentId });
+
+  if (!selectedOrgId) {
+    return (
+      <p className="p-6 text-sm text-zinc-600 dark:text-zinc-400">
+        Select an organization in the header to view shipment messages.
+      </p>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div
+        className={SHIPMENT_MESSAGES_LOADING_SHELL_CLASS}
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div className={SHIPMENT_MESSAGES_LOADING_CONTENT_CLASS}>
+          <Loader2 className={SHIPMENT_MESSAGES_LOADING_SPINNER_CLASS} aria-hidden />
+          <p className={SHIPMENT_MESSAGES_LOADING_TEXT_CLASS}>{SHIPMENT_MESSAGES_LOADING_TEXT}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return <p className="p-4 text-sm text-red-600 dark:text-red-400 sm:p-5">{loadError}</p>;
+  }
+
+  return (
+    <section aria-label="Shipment messages" className={SHIPMENT_MESSAGES_PANEL_SHELL_CLASS}>
+      <div className={SHIPMENT_MESSAGES_THREAD_SHELL_CLASS}>
+        <ThreadPanel
+          messages={threadMessages}
+          authorNameByUserId={messageAuthorByUserId}
+          uploaderDisplayByUserId={messageAuthorByUserId}
+          attachmentsByMessageId={attachmentsByMessageId}
+          onOpenAttachment={(row) => void openAttachment(row)}
+          onRenameAttachment={(id, name) => renameAttachment(id, name)}
+          renamingAttachmentId={renamingAttachmentId}
+          composerPendingFiles={composerPendingFiles}
+          onComposerPickFiles={onComposerPickFiles}
+          onRemoveComposerPendingFile={onRemoveComposerPendingFile}
+          body={body}
+          onBodyChange={setBody}
+          internalOnly={false}
+          onInternalOnlyChange={() => {}}
+          showInternalComposerToggle={false}
+          publicThreadMode
+          posting={posting}
+          onPostMessage={() => void postMessage()}
+          replyParentId={replyParentId}
+          onReplyParent={setReplyParentId}
+          onClearReplyParent={() => setReplyParentId(null)}
+          currentUserId={currentUserId}
+          onDeleteMessage={(id) => void deleteMessage(id)}
+          deletingMessageId={deletingMessageId}
+          composerAuthorLabel={
+            currentUserId && messageAuthorByUserId[currentUserId]
+              ? messageAuthorByUserId[currentUserId]!
+              : ""
+          }
+          emptyStateText="No messages on this shipment yet."
+        />
+      </div>
+    </section>
+  );
+}

@@ -2,37 +2,34 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatTimestamp } from "@/utils/datetime";
+import { Loader2, Trash2 } from "lucide-react";
 import {
+  deleteCommercialShipment,
   loadOperatorShipmentsOverviewPageBrowser,
-  maxLastSyncIso,
   normalizeOperatorShipmentSortColumn,
-  pickTrackingRowsExported,
   type OperatorShipmentScope,
   type OperatorShipmentSortColumn,
   type ShipmentOverviewRow,
-  type ShipmentOverviewTrackingRow,
 } from "@/services/shipment.service";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useConfirm } from "@/contexts/confirm-dialog";
+import { useToast } from "@/contexts/toast";
 import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import { fetchProfileDisplayNameMap } from "@/services/profile.service";
+import { canManageOrganizationSettings } from "@/utils/org-role";
 import type { DataTableColumn } from "@/components/DataTable";
-import { ShipmentWorkflowStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
+import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
+import {
+  SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
+  SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
+  SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS,
+} from "../constants";
 import { displayOverviewText, formatOverviewDate } from "../utils";
-
-function worstStatusForPill(
-  trs: ShipmentOverviewTrackingRow[],
-): ShipmentOverviewTrackingRow["status"] | null {
-  if (trs.length === 0) return null;
-  const order = ["failed", "syncing", "pending", "active", "completed"] as const;
-  for (const s of order) {
-    if (trs.some((t) => t.status === s)) return s;
-  }
-  return trs[0]!.status;
-}
 
 export function useOperatorShipmentsOverview() {
   const router = useRouter();
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
 
   const [rows, setRows] = useState<ShipmentOverviewRow[]>([]);
@@ -47,6 +44,10 @@ export function useOperatorShipmentsOverview() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [deletingShipmentId, setDeletingShipmentId] = useState<string | null>(null);
+
+  const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
+  const canDeleteShipments = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -124,8 +125,43 @@ export function useOperatorShipmentsOverview() {
     [sortColumn],
   );
 
+  const handleDeleteShipment = useCallback(
+    async (row: ShipmentOverviewRow) => {
+      if (!selectedOrgId || !canDeleteShipments) return;
+      const label = row.order_number?.trim() || row.customer_name?.trim() || "this shipment";
+      const ok = await confirm({
+        title: "Delete shipment?",
+        description: `Permanently delete ${label}? This removes documents, messages, and tracking linked to the shipment.`,
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+        variant: "danger",
+      });
+      if (!ok) return;
+
+      setDeletingShipmentId(row.id);
+      try {
+        const result = await deleteCommercialShipment({
+          organization_id: selectedOrgId,
+          shipment_id: row.id,
+        });
+        if (!result.ok) {
+          toast(result.error, "error");
+          return;
+        }
+        toast("Shipment deleted", "success");
+        await load();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not delete shipment", "error");
+      } finally {
+        setDeletingShipmentId(null);
+      }
+    },
+    [canDeleteShipments, confirm, load, selectedOrgId, toast],
+  );
+
   const columns: DataTableColumn<ShipmentOverviewRow>[] = useMemo(
-    () => [
+    () => {
+      const base: DataTableColumn<ShipmentOverviewRow>[] = [
       {
         id: "order_number",
         header: "Order no.",
@@ -189,8 +225,38 @@ export function useOperatorShipmentsOverview() {
           </span>
         ),
       },
-    ],
-    [peopleLabels],
+      ];
+
+      if (canDeleteShipments) {
+        base.push({
+          id: "actions",
+          header: "Actions",
+          headerClassName: SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
+          className: SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
+          cell: (r) => (
+            <button
+              type="button"
+              aria-label={`Delete shipment ${r.order_number}`}
+              disabled={deletingShipmentId === r.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDeleteShipment(r);
+              }}
+              className={SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS}
+            >
+              {deletingShipmentId === r.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+              )}
+            </button>
+          ),
+        });
+      }
+
+      return base;
+    },
+    [canDeleteShipments, deletingShipmentId, handleDeleteShipment, peopleLabels],
   );
 
   const navigateToShipment = useCallback(

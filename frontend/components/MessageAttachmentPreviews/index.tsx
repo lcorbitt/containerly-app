@@ -2,6 +2,7 @@
 
 import { Check, FileText, Loader2, Pencil, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { TextInput } from "@/components/TextInput";
 import { isImageThumbnailCandidate } from "@/utils/workspace-files";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
 import type { WorkspaceAttachment } from "@/types/database";
@@ -115,7 +116,7 @@ export function StoredMessageAttachmentButton({
     return (
       <li className="rounded-lg border border-zinc-200/90 bg-white/80 p-2 dark:border-zinc-600/90 dark:bg-zinc-900/50">
         <div className="flex flex-col gap-2">
-          <input
+          <TextInput
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

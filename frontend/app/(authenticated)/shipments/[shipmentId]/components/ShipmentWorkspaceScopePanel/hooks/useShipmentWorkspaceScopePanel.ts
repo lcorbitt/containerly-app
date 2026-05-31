@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ATTACHMENT_DISPLAY_NAME_MAX_LEN } from "@/utils/workspace-files";
-import { SHIPMENT_DOCUMENT_TYPES } from "@shared/dto/logistics.dto";
+import { ATTACHMENT_DISPLAY_NAME_MAX_LEN, MAX_ATTACHMENTS_PER_MESSAGE } from "@/utils/workspace-files";
+import { DOCUMENT_TYPE_NONE_VALUE } from "../ShipmentDocumentUploadZone/utils";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
@@ -30,21 +30,9 @@ export function useShipmentWorkspaceScopePanel({
   const { selectedOrgId } = useOrganizationWorkspace();
   const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
 
-  const [documentType, setDocumentType] = useState<string>(SHIPMENT_DOCUMENT_TYPES[0]);
+  const [documentType, setDocumentType] = useState<string>(DOCUMENT_TYPE_NONE_VALUE);
   const [documentGroup, setDocumentGroup] = useState<"draft" | "revision" | "original">("draft");
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [uploadModalInitialFiles, setUploadModalInitialFiles] = useState<File[]>([]);
-
-  const closeUploadModal = useCallback(() => {
-    setUploadModalOpen(false);
-    setUploadModalInitialFiles([]);
-  }, []);
-
-  const openUploadModalWithFiles = useCallback((files: File[]) => {
-    setUploadModalInitialFiles(files);
-    setUploadModalOpen(true);
-  }, []);
   const [removingAttachmentId, setRemovingAttachmentId] = useState<string | null>(null);
   const [renamingAttachmentId, setRenamingAttachmentId] = useState<string | null>(null);
 
@@ -87,15 +75,18 @@ export function useShipmentWorkspaceScopePanel({
 
   const uploadAttachmentFiles = useCallback(
     async (files: File[]) => {
-      const queue = files.filter(Boolean);
+      const queue = files.filter(Boolean).slice(0, MAX_ATTACHMENTS_PER_MESSAGE);
       if (!queue.length || !selectedOrgId) return;
+      if (files.filter(Boolean).length > MAX_ATTACHMENTS_PER_MESSAGE) {
+        toast(`Only the first ${MAX_ATTACHMENTS_PER_MESSAGE} files were included.`, "info");
+      }
       setUploadingAttachments(true);
       try {
         const uploaded = await uploadShipmentScopeStandaloneFiles({
           organizationId: selectedOrgId,
           shipmentId,
           files: queue,
-          documentType,
+          documentType: documentType.trim() || null,
           documentGroup,
         });
         if (uploaded.length === 0) {
@@ -104,15 +95,13 @@ export function useShipmentWorkspaceScopePanel({
         }
         invalidateThread();
         toast(uploaded.length === 1 ? "File uploaded" : `${uploaded.length} files uploaded`, "success");
-        closeUploadModal();
       } catch (e) {
         toast(e instanceof Error ? e.message : "Upload failed", "error");
-        throw e;
       } finally {
         setUploadingAttachments(false);
       }
     },
-    [selectedOrgId, shipmentId, documentType, documentGroup, invalidateThread, toast, closeUploadModal],
+    [selectedOrgId, shipmentId, documentType, documentGroup, invalidateThread, toast],
   );
 
   const renameAttachment = useCallback(
@@ -188,10 +177,6 @@ export function useShipmentWorkspaceScopePanel({
     currentUserId,
 
     openAttachment,
-    uploadModalOpen,
-    closeUploadModal,
-    openUploadModalWithFiles,
-    uploadModalInitialFiles,
     uploadAttachmentFiles,
     uploadingAttachments,
     renameAttachment,

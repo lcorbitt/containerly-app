@@ -2,19 +2,19 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { RefreshCw } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { TablePagination } from "@/components/TablePagination";
+import { TextInput } from "@/components/TextInput";
+import {
+  SHIPMENT_OVERVIEW_FILTERS_CLASS,
+  SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS,
+  SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS,
+  SHIPMENT_OVERVIEW_TOOLBAR_CLASS,
+  SHIPMENT_OVERVIEW_REFRESH_BUTTON_CLASS,
+  shipmentOverviewFilterButtonClass,
+} from "./constants";
 import { useOperatorShipmentsOverview } from "./hooks/useOperatorShipmentsOverview";
-
-const SEARCH_INPUT_CLASS =
-  "w-full max-w-md rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500";
-
-const filterButtonClass = (active: boolean) =>
-  `rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-    active
-      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-  }`;
 
 export function OperatorShipmentsOverview({
   pageTitle = "Shipments",
@@ -69,51 +69,57 @@ export function OperatorShipmentsOverview({
         </div>
       ) : (
         <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">All shipments</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Scope</span>
-              {(
-                [
-                  ["all", "All"],
-                  ["mine", "My shipments"],
-                  ["unassigned", "Unassigned"],
-                  ["participating", "Participating"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={filterButtonClass(listFilter === id)}
-                  onClick={() => setListFilter(id)}
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => void load()}
-                className="ml-1 text-xs font-medium text-zinc-600 underline dark:text-zinc-400"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
-
           {selectedOrgId ? (
             <>
-              <label className="sr-only" htmlFor="shipments-overview-search">
-                Search shipments and containers
-              </label>
-              <input
-                id="shipments-overview-search"
-                type="search"
-                placeholder="Search order no., customer, or container…"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                disabled={loading}
-                className={`mb-4 ${SEARCH_INPUT_CLASS}`}
-              />
+              <div className={SHIPMENT_OVERVIEW_TOOLBAR_CLASS}>
+                <label className="sr-only" htmlFor="shipments-overview-search">
+                  Search shipments and containers
+                </label>
+                <TextInput
+                  id="shipments-overview-search"
+                  type="search"
+                  placeholder="Search order no., customer, container, etc…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  disabled={loading}
+                  containerClassName={SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS}
+                  className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
+                />
+                <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Scope</span>
+                  {(
+                    [
+                      ["all", "All"],
+                      ["mine", "My Shipments"],
+                      ["unassigned", "Unassigned"],
+                      ["participating", "Participating"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={shipmentOverviewFilterButtonClass(listFilter === id)}
+                      onClick={() => setListFilter(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    aria-label="Refresh shipments"
+                    title="Refresh"
+                    disabled={loading}
+                    onClick={() => void load()}
+                    className={SHIPMENT_OVERVIEW_REFRESH_BUTTON_CLASS}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4${loading ? " animate-spin" : ""}`}
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  </button>
+                </div>
+              </div>
 
               {error ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 

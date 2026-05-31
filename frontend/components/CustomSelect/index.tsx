@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 import { UserAvatar } from "@/components/UserAvatar";
-import { listClassDefault, optionClass, triggerClass } from "./constants";
+import { listPanelClass, listRevealClass, optionClass, triggerClass } from "./constants";
 import type { CustomSelectOption } from "./types";
 
 export type { CustomSelectOption };
@@ -136,8 +137,8 @@ export function CustomSelect({
         }
         onClick={() => !disabled && setOpen((o) => !o)}
       />
-      {open ? (
-        <ul id={listId} role="listbox" className={listClassDefault}>
+      <Reveal show={open} className={listRevealClass}>
+        <ul id={listId} role="listbox" className={listPanelClass}>
           {options.map((o) => {
             const isSelected = value === o.value;
             const showOptAvatar = showAvatars && Boolean(o.value);
@@ -164,7 +165,7 @@ export function CustomSelect({
             );
           })}
         </ul>
-      ) : null}
+      </Reveal>
     </div>
   );
 }
@@ -226,8 +227,8 @@ export function CustomMenuSelect({
         labelText={label}
         onClick={() => !isDisabled && setOpen((o) => !o)}
       />
-      {open && !empty ? (
-        <ul id={listId} role="listbox" className={listClassDefault}>
+      <Reveal show={open && !empty} className={listRevealClass}>
+        <ul id={listId} role="listbox" className={listPanelClass}>
           {options.map((o) => (
             <li key={o.value} role="none">
               <button
@@ -248,7 +249,7 @@ export function CustomMenuSelect({
             </li>
           ))}
         </ul>
-      ) : null}
+      </Reveal>
     </div>
   );
 }

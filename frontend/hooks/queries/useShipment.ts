@@ -21,7 +21,7 @@ export function useShipmentWorkspaceRowQuery(input: {
         organizationId: input.organizationId,
       });
     },
-    enabled: Boolean(input.organizationId),
+    enabled: Boolean(input.organizationId && input.shipmentId),
   });
 }
 

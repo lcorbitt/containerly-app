@@ -57,7 +57,6 @@ export function useContainerWorkspace({
   >([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [body, setBody] = useState("");
-  const [messageChannel, setMessageChannel] = useState<MessageChannel>("team");
   const [docChannel, setDocChannel] = useState<MessageChannel>("team");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
@@ -90,11 +89,9 @@ export function useContainerWorkspace({
     return m;
   }, [attachments]);
 
-  const internalOnlyComposer = messageChannel === "team";
-
-  const filteredThreadMessages = useMemo(
-    () => messages.filter((m) => (messageChannel === "team" ? m.is_internal : !m.is_internal)),
-    [messages, messageChannel],
+  const threadMessages = useMemo(
+    () => messages.filter((m) => !m.is_internal),
+    [messages],
   );
 
   const shipmentLoc = (containerRow?.location as Record<string, unknown> | null) ?? null;
@@ -316,7 +313,7 @@ export function useContainerWorkspace({
         containerId,
         organizationId: selectedOrgId,
         body: t,
-        internalOnly: internalOnlyComposer,
+        internalOnly: false,
         replyParentId,
         files,
       });
@@ -328,13 +325,13 @@ export function useContainerWorkspace({
       setComposerPendingFiles([]);
       setReplyParentId(null);
       await load({ quiet: true });
-      toast(internalOnlyComposer ? "Internal note posted" : "Message posted", "success");
+      toast("Message posted", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not post message", "error");
     } finally {
       setPosting(false);
     }
-  }, [body, composerPendingFiles, selectedOrgId, containerId, internalOnlyComposer, replyParentId, load, toast]);
+  }, [body, composerPendingFiles, selectedOrgId, containerId, replyParentId, load, toast]);
 
   // --- Attachment actions ---
 
@@ -479,14 +476,11 @@ export function useContainerWorkspace({
     trackingSubview,
     setTrackingSubview,
 
-    messageChannel,
-    setMessageChannel,
-    filteredThreadMessages,
+    threadMessages,
     messageAuthorByUserId,
     attachmentsByMessageId,
     body,
     setBody,
-    internalOnlyComposer,
     posting,
     replyParentId,
     setReplyParentId,

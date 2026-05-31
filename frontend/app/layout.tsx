@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fustat, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/AppProviders";
+import { rootSiteMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 
 const fustat = Fustat({
@@ -14,11 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Containerly — Customer portal & export documentation",
-  description:
-    "Documentation-first logistics portal for operators and importers. Optional carrier container tracking after export approval.",
-};
+export const metadata: Metadata = rootSiteMetadata;
 
 export default function RootLayout({
   children,

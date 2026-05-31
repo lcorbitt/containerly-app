@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { isShipmentPostApproval } from "@/utils/shipment-workflow-status";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
 import { updateCommercialShipment } from "@/services/shipment.service";
 
 export function ShipmentMailTrackingPanel({
   shipmentId,
-  workflowStatus,
   initialTrackingNumber,
   onSaved,
 }: {
   shipmentId: string;
-  workflowStatus: string | null | undefined;
   initialTrackingNumber: string | null | undefined;
   onSaved?: () => void;
 }) {
@@ -21,16 +18,6 @@ export function ShipmentMailTrackingPanel({
   const { toast } = useToast();
   const [trackingNumber, setTrackingNumber] = useState(initialTrackingNumber ?? "");
   const [saving, setSaving] = useState(false);
-
-  const canAdd = isShipmentPostApproval(workflowStatus) || Boolean(initialTrackingNumber);
-
-  if (!canAdd) {
-    return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-        Physical mail tracking unlocks after the customer approves all draft documents.
-      </div>
-    );
-  }
 
   async function save() {
     if (!selectedOrgId) return;

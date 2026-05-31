@@ -6,6 +6,7 @@ import { OperatorShipmentsOverview } from "./components/OperatorShipmentsOvervie
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { TablePagination } from "@/components/TablePagination";
+import { TextInput } from "@/components/TextInput";
 import {
   loadImporterGrantedShipmentsPageBrowser,
   normalizeImporterGrantedShipmentSortColumn,
@@ -46,7 +47,7 @@ function destinationLabel(cont: NestedContainer | null): string {
 }
 
 const SEARCH_INPUT_CLASS =
-  "w-full max-w-md rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500";
+  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500";
 
 function useFreightOperator() {
   const { orgs, isSuperAdmin } = useOrganizationWorkspace();
@@ -196,14 +197,15 @@ function ImporterGrantedShipmentsList() {
         <label className="sr-only" htmlFor="shipments-search">
           Search by container or order no.
         </label>
-        <input
+        <TextInput
           id="shipments-search"
           type="search"
           placeholder="Search container, BOL, or order no.…"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           disabled={loading}
-          className={`mb-4 ${SEARCH_INPUT_CLASS}`}
+          containerClassName="mb-4 max-w-md"
+          className={SEARCH_INPUT_CLASS}
         />
 
         <DataTable

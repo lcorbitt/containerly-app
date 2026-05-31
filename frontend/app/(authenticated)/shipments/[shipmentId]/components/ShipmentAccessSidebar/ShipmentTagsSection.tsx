@@ -1,7 +1,9 @@
 "use client";
 
 import { memo, useCallback } from "react";
-import { ShipmentTagsPanel } from "./ShipmentTagsPanel";
+import { ShipmentSidebarSettingsRow } from "./ShipmentSidebarSettingsRow";
+import { ShipmentTagsEditor } from "./ShipmentTagsPanel/ShipmentTagsEditor";
+import { ShipmentTagsSummary } from "./ShipmentTagsPanel/ShipmentTagsSummary";
 import { useShipmentTagsPanel } from "./ShipmentTagsPanel/useShipmentTagsPanel";
 
 export const ShipmentTagsSection = memo(function ShipmentTagsSection({
@@ -30,8 +32,11 @@ export const ShipmentTagsSection = memo(function ShipmentTagsSection({
   });
 
   return (
-    <section className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-      <ShipmentTagsPanel state={tagsState} />
-    </section>
+    <ShipmentSidebarSettingsRow
+      label="Tags"
+      summary={<ShipmentTagsSummary tags={tagsState.tags} />}
+    >
+      <ShipmentTagsEditor state={tagsState} />
+    </ShipmentSidebarSettingsRow>
   );
 });

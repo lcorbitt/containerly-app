@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useOrgAlerts } from "@/hooks/queries/useAlert";
@@ -9,7 +9,7 @@ import { freightNavItems, importerNavItems } from "../constants";
 export function useSideNav(isSuperAdmin: boolean) {
   const pathname = usePathname();
   const { orgs, selectedOrgId } = useOrganizationWorkspace();
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsOpenPath, setNotificationsOpenPath] = useState<string | null>(null);
   const alerts = useOrgAlerts(selectedOrgId);
 
   const unackedCount = useMemo(
@@ -17,17 +17,16 @@ export function useSideNav(isSuperAdmin: boolean) {
     [alerts],
   );
 
-  useEffect(() => {
-    setNotificationsOpen(false);
-  }, [pathname]);
+  const notificationsOpen = notificationsOpenPath === pathname;
 
   const isFreight =
     isSuperAdmin || orgs.some((r) => r.organizations != null && r.organizations.id != null);
 
   const mainNavItems = isFreight ? freightNavItems : importerNavItems;
 
-  const toggleNotifications = () => setNotificationsOpen((o) => !o);
-  const closeNotifications = () => setNotificationsOpen(false);
+  const toggleNotifications = () =>
+    setNotificationsOpenPath((openPath) => (openPath === pathname ? null : pathname));
+  const closeNotifications = () => setNotificationsOpenPath(null);
 
   return {
     pathname,

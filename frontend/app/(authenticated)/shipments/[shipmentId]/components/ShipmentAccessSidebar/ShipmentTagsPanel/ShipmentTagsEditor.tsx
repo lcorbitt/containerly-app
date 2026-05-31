@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { TextInput } from "@/components/TextInput";
 import {
   SHIPMENT_TAG_CHIP_CLASS,
   SHIPMENT_TAG_INPUT_CLASS,
@@ -9,9 +10,10 @@ import {
   SHIPMENT_TAG_SUGGESTIONS_LIST_ID,
   SHIPMENT_TAG_SUGGESTIONS_MAX,
 } from "./constants";
+import { SIDEBAR_SETTINGS_POPOVER_HINT_CLASS } from "../ShipmentSidebarSettingsRow/constants";
 import type { ShipmentTagsPanelState } from "./useShipmentTagsPanel";
 
-export function ShipmentTagsPanel({ state }: { state: ShipmentTagsPanelState }) {
+export function ShipmentTagsEditor({ state }: { state: ShipmentTagsPanelState }) {
   const {
     tags,
     draft,
@@ -30,12 +32,10 @@ export function ShipmentTagsPanel({ state }: { state: ShipmentTagsPanelState }) 
   const suggestionsId = SHIPMENT_TAG_SUGGESTIONS_LIST_ID;
 
   return (
-    <section aria-label="Shipment tags">
-      <h3 className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-        Tags
-      </h3>
+    <div aria-label="Edit shipment tags">
+      <p className={SIDEBAR_SETTINGS_POPOVER_HINT_CLASS}>Add labels to organize and filter shipments.</p>
       {tags.length > 0 ? (
-        <ul className="mt-2.5 flex flex-wrap gap-1.5">
+        <ul className="flex flex-wrap gap-1.5">
           {tags.map((tag) => (
             <li key={tag}>
               <span className={SHIPMENT_TAG_CHIP_CLASS} title={tag}>
@@ -53,16 +53,15 @@ export function ShipmentTagsPanel({ state }: { state: ShipmentTagsPanelState }) 
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">No tags yet.</p>
-      )}
+      ) : null}
 
-      <div ref={containerRef} className="relative mt-2">
+      <div ref={containerRef} className={tags.length > 0 ? "relative mt-2" : "relative"}>
         <label className="sr-only" htmlFor="shipment-tag-input">
           Add tag
         </label>
-        <input
+        <TextInput
           id="shipment-tag-input"
+          data-sidebar-popover-focus
           value={draft}
           disabled={saving}
           onChange={(e) => handleInputChange(e.target.value)}
@@ -89,6 +88,7 @@ export function ShipmentTagsPanel({ state }: { state: ShipmentTagsPanelState }) 
                 <button
                   type="button"
                   role="option"
+                  aria-selected={false}
                   className={SHIPMENT_TAG_SUGGESTION_CLASS}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => void addTag(tag)}
@@ -100,6 +100,6 @@ export function ShipmentTagsPanel({ state }: { state: ShipmentTagsPanelState }) 
           </ul>
         ) : null}
       </div>
-    </section>
+    </div>
   );
 }

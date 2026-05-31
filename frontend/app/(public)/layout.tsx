@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { PublicTopNav } from "@/components/TopNav";
+import { SITE_DESCRIPTION, SITE_LANDING_TITLE, SITE_LOGO_PATH } from "@/lib/site-metadata";
 
 export const metadata: Metadata = {
-  title: "Containerly — Customer portal for logistics teams",
-  description:
-    "Export documentation workflows and branded customer portals for logistics operators. Optional live carrier tracking when you need it.",
+  title: SITE_LANDING_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_LANDING_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [SITE_LOGO_PATH],
+  },
+  twitter: {
+    title: SITE_LANDING_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [SITE_LOGO_PATH],
+  },
 };
 
 export default function PublicLayout({

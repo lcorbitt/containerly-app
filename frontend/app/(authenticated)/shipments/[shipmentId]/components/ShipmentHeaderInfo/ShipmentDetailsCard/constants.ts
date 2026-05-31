@@ -4,7 +4,7 @@ export const SHIPMENT_DETAILS_CARD_CLASS =
 export const SHIPMENT_DETAILS_CARD_CREATED_BANNER_CLASS =
   "border-b border-zinc-900/10 bg-zinc-800/85 px-4 py-1.5 text-[11px] font-medium tracking-wide text-zinc-300/95 dark:border-zinc-950/40 dark:bg-zinc-900/80 dark:text-zinc-400";
 
-export const SHIPMENT_DETAILS_CARD_BODY_CLASS = "p-4 sm:p-5";
+export const SHIPMENT_DETAILS_CARD_BODY_CLASS = "min-w-0";
 
 export const SHIPMENT_DETAILS_CARD_EDIT_ANCHOR_CLASS =
   "pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-5";

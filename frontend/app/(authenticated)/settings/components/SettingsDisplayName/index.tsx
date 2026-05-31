@@ -1,5 +1,6 @@
 "use client";
 
+import { TextInput } from "@/components/TextInput";
 import {
   useSettingsDisplayName,
   DISPLAY_NAME_MAX_LEN,
@@ -16,7 +17,7 @@ export function SettingsDisplayName({ initialFullName }: { initialFullName: stri
         Name
       </label>
       <div className="mt-0.5 flex max-w-md flex-col gap-2 sm:flex-row sm:items-center">
-        <input
+        <TextInput
           id="settings-display-name"
           type="text"
           value={value}
@@ -31,7 +32,8 @@ export function SettingsDisplayName({ initialFullName }: { initialFullName: stri
           autoComplete="name"
           placeholder="Your name"
           disabled={saving}
-          className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 outline-none ring-zinc-400/30 placeholder:text-zinc-400 focus:ring-2 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          containerClassName="min-w-0 flex-1"
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 outline-none ring-zinc-400/30 placeholder:text-zinc-400 focus:ring-2 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
         />
         <button
           type="button"

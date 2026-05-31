@@ -1,10 +1,10 @@
 "use client";
 
-import { ShipmentAccessTabContent } from "../ShipmentAccessTabContent";
 import { useShipmentAccessTabContent } from "../ShipmentAccessTabContent/hooks/useShipmentAccessTabContent";
 import { ShipmentCustomerPortalLink } from "./ShipmentCustomerPortalLink";
 import { ShipmentNotificationsSection } from "./ShipmentNotificationsSection";
 import { ShipmentTagsSection } from "./ShipmentTagsSection";
+import { ShipmentTeamFields } from "./ShipmentTeamFields";
 
 export function ShipmentAccessSidebar({
   shipmentId,
@@ -25,9 +25,11 @@ export function ShipmentAccessSidebar({
       <div className="border-b border-zinc-200 pb-4 dark:border-zinc-800">
         <ShipmentCustomerPortalLink shipmentId={shipmentId} className="w-full" />
       </div>
-      <ShipmentAccessTabContent variant="sidebar" state={accessState} shipmentId={shipmentId} />
-      {!accessState.loading ? (
-        <>
+      {accessState.loading ? (
+        <p className="text-sm text-zinc-500">Loading…</p>
+      ) : (
+        <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ShipmentTeamFields state={accessState} />
           <ShipmentTagsSection
             shipmentId={shipmentId}
             initialTags={accessState.tags}
@@ -38,8 +40,8 @@ export function ShipmentAccessSidebar({
             shipmentId={shipmentId}
             initialSubscribed={accessState.emailNotificationsSubscribed}
           />
-        </>
-      ) : null}
+        </div>
+      )}
     </section>
   );
 }

@@ -16,12 +16,15 @@ export function ShipmentDetailsCard({
   creatorName,
   onEdit,
   editModal,
+  showEditActions = true,
   children,
 }: {
   createdAt: string;
   creatorName?: string | null;
   onEdit: () => void;
   editModal: ReactNode;
+  /** When false, the hover edit control is hidden (e.g. Documents tab). */
+  showEditActions?: boolean;
   children: ReactNode;
 }) {
   const [hovered, setHovered] = useState(false);
@@ -44,7 +47,7 @@ export function ShipmentDetailsCard({
         {editModal}
       </div>
       <div className={SHIPMENT_DETAILS_CARD_EDIT_ANCHOR_CLASS}>
-        <Reveal show={hovered}>
+        <Reveal show={hovered && showEditActions}>
           <div className={SHIPMENT_DETAILS_CARD_EDIT_INNER_CLASS}>
             <ShipmentHeaderActions onEdit={onEdit} />
           </div>

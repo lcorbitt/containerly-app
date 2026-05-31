@@ -11,6 +11,8 @@ export {
   parseShipmentImportFileAsync,
   SHIPMENT_IMPORT_CSV_TEMPLATE,
   SHIPMENT_BULK_IMPORT_CSV_TEMPLATE,
+  SHIPMENT_IMPORT_FILE_ACCEPT,
+  isShipmentImportFileName,
   downloadShipmentImportTemplate,
   downloadShipmentBulkImportTemplate,
 } from "@/utils/shipment-import";

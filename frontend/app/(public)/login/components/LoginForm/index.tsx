@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { TextInput } from "@/components/TextInput";
 import { useLoginForm } from "./hooks/useLoginForm";
 
 export function LoginForm() {
@@ -27,9 +28,10 @@ export function LoginForm() {
         aria-busy={loading}
       >
         {mode === "signup" ? (
-          <input
+          <TextInput
             type="text"
             autoComplete="name"
+            clearable={false}
             className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
             placeholder="Full name"
             value={fullName}
@@ -38,9 +40,10 @@ export function LoginForm() {
             disabled={loading}
           />
         ) : null}
-        <input
+        <TextInput
           type="email"
           autoComplete="email"
+          clearable={false}
           className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Email"
           value={email}
@@ -51,7 +54,7 @@ export function LoginForm() {
         <input
           type="password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

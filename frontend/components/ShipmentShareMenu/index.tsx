@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { ChevronDown, Globe, Link2 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { TextInput } from "@/components/TextInput";
 import { Reveal } from "@/components/Reveal";
 import { WorkspacePostSpinner } from "@/components/WorkspacePostSpinner";
 import {
@@ -50,13 +51,14 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "portal" }: Shi
 
                 <div className="space-y-4 p-4">
                   <div className="flex items-center gap-2">
-                    <input
+                    <TextInput
                       type="text"
                       value={state.inviteEmail}
                       onChange={(e) => state.setInviteEmail(e.target.value)}
                       placeholder="Email or group, separated by commas"
                       autoComplete="off"
-                      className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                      containerClassName="min-w-0 flex-1"
+                      className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
