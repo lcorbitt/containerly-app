@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
-import type { ShipmentWorkspaceRow } from "@/services/shipment.service";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 
-export type ShipmentDetailsTabId = "details" | "documents" | "messages" | "tracking";
+export type ShipmentDetailsTabId = "tracking" | "documents" | "messages";
 
 export interface ShipmentDetailsTabsProps {
   shipmentId: string;
   organizationId: string;
   workflowStatus: string | null | undefined;
   physicalMailTrackingNumber?: string | null;
-  row: Pick<ShipmentWorkspaceRow, "customer_name" | "order_number">;
-  detailsContent: ReactNode;
+  activityEvents?: ShipmentActivityEvent[];
+  detailsContent?: ReactNode;
   onActiveTabChange?: (tab: ShipmentDetailsTabId) => void;
   onTrackingEnabled?: () => void;
 }

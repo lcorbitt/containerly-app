@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ATTACHMENT_DISPLAY_NAME_MAX_LEN, MAX_ATTACHMENTS_PER_MESSAGE } from "@/utils/workspace-files";
+import { ATTACHMENT_DISPLAY_NAME_MAX_LEN, MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
 import { DOCUMENT_TYPE_NONE_VALUE } from "../ShipmentDocumentUploadZone/utils";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
@@ -10,6 +10,7 @@ import { useToast } from "@/contexts/toast";
 import type { WorkspaceAttachment } from "@/types/database";
 import {
   shipmentScopeThreadQueryKey,
+  shipmentWorkspaceRowQueryKeyRoot,
   useShipmentScopeThreadQuery,
 } from "@/hooks/queries/useShipment";
 import {
@@ -40,6 +41,9 @@ export function useShipmentWorkspaceScopePanel({
     if (selectedOrgId) {
       void qc.invalidateQueries({
         queryKey: shipmentScopeThreadQueryKey(selectedOrgId, shipmentId),
+      });
+      void qc.invalidateQueries({
+        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId, selectedOrgId],
       });
     }
   }, [qc, selectedOrgId, shipmentId]);
@@ -74,11 +78,11 @@ export function useShipmentWorkspaceScopePanel({
   );
 
   const uploadAttachmentFiles = useCallback(
-    async (files: File[]) => {
-      const queue = files.filter(Boolean).slice(0, MAX_ATTACHMENTS_PER_MESSAGE);
-      if (!queue.length || !selectedOrgId) return;
-      if (files.filter(Boolean).length > MAX_ATTACHMENTS_PER_MESSAGE) {
-        toast(`Only the first ${MAX_ATTACHMENTS_PER_MESSAGE} files were included.`, "info");
+    async (files: File[]): Promise<boolean> => {
+      const queue = files.filter(Boolean).slice(0, MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH);
+      if (!queue.length || !selectedOrgId) return false;
+      if (files.filter(Boolean).length > MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH) {
+        toast(`Only the first ${MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH} files were included.`, "info");
       }
       setUploadingAttachments(true);
       try {
@@ -91,12 +95,14 @@ export function useShipmentWorkspaceScopePanel({
         });
         if (uploaded.length === 0) {
           toast("No files were uploaded.", "info");
-          return;
+          return false;
         }
         invalidateThread();
         toast(uploaded.length === 1 ? "File uploaded" : `${uploaded.length} files uploaded`, "success");
+        return true;
       } catch (e) {
         toast(e instanceof Error ? e.message : "Upload failed", "error");
+        return false;
       } finally {
         setUploadingAttachments(false);
       }

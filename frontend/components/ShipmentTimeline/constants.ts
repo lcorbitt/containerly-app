@@ -85,6 +85,17 @@ export const TONE_STYLES: Record<
       "bg-violet-500/20 text-violet-200 ring-2 ring-violet-400/50 shadow-[0_0_28px_-6px_rgba(139,92,246,0.5)]",
     modalChip: "border border-violet-500/40 bg-violet-500/10 text-violet-100",
   },
+  document: {
+    node: "bg-sky-50 text-sky-800 ring-sky-50 dark:bg-sky-950 dark:text-sky-200 dark:ring-zinc-950",
+    connector: "bg-sky-400/50 dark:bg-sky-500/38",
+    cardBorder: "border-sky-200/55 dark:border-sky-900/40",
+    cardBg: "bg-sky-50/50 dark:bg-sky-950/18",
+    chip: "bg-sky-100/90 text-sky-900 dark:bg-sky-950/80 dark:text-sky-100",
+    iconGlow: "shadow-[0_0_20px_-4px_rgba(14,165,233,0.28)] dark:shadow-[0_0_24px_-6px_rgba(56,189,248,0.2)]",
+    modalStatusIcon:
+      "bg-sky-500/20 text-sky-200 ring-2 ring-sky-400/50 shadow-[0_0_28px_-6px_rgba(14,165,233,0.5)]",
+    modalChip: "border border-sky-500/40 bg-sky-500/10 text-sky-100",
+  },
 };
 
 export const STEP_CARD_BASE =

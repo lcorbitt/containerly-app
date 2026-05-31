@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { normalizeShipmentTagList } from "@/utils/shipment-tags";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -692,6 +693,7 @@ export type ShipmentWorkspaceRow = {
   workflow_status: string | null;
   physical_mail_tracking_number: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
+  activity_events: ShipmentActivityEvent[];
 };
 
 export async function fetchShipmentWorkspaceRow(
@@ -806,6 +808,13 @@ export async function fetchShipmentWorkspaceRow(
     }
   }
 
+  const { data: activityRows, error: activityErr } = await supabase
+    .from("shipment_activity_events")
+    .select("id, event_type, body, actor_kind, occurred_at, metadata")
+    .eq("shipment_id", input.shipmentId)
+    .order("occurred_at", { ascending: true });
+  if (activityErr) return { ok: false, error: activityErr.message };
+
   return {
     ok: true,
     row: {
@@ -835,6 +844,14 @@ export async function fetchShipmentWorkspaceRow(
       workflow_status: raw.workflow_status,
       physical_mail_tracking_number: raw.physical_mail_tracking_number,
       tracking_requests: lines,
+      activity_events: (activityRows ?? []).map((row) => ({
+        id: row.id as string,
+        event_type: row.event_type as string,
+        body: row.body as string,
+        actor_kind: row.actor_kind as string,
+        occurred_at: row.occurred_at as string,
+        metadata: (row.metadata as Record<string, unknown>) ?? {},
+      })),
     },
   };
 }

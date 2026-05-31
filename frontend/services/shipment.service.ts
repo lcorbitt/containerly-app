@@ -1,4 +1,4 @@
-import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
+import type { ShipmentActivityEvent, ShipmentPortalPayload } from "@shared/dto/shipment.dto";
 import type {
   CreateShipmentBody,
   CreateShipmentResponse,
@@ -355,6 +355,7 @@ export type ShipmentWorkspaceRow = {
   workflow_status: string | null;
   physical_mail_tracking_number: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
+  activity_events: ShipmentActivityEvent[];
 };
 
 export async function fetchShipmentWorkspaceRowForBrowser(input: {

@@ -1,12 +1,14 @@
 export const SHIPMENT_OVERVIEW_PANEL_CLASS =
   "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
 
-export const SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS = "w-12 px-2";
+export const SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS = "w-12 !px-2 text-center align-middle";
 
-export const SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS = "w-12 px-2 text-right";
+export const SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS = "w-12 !px-2 align-middle";
+
+export const SHIPMENT_OVERVIEW_ACTIONS_CELL_INNER_CLASS = "flex items-center justify-center";
 
 export const SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS =
-  "inline-flex rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400";
+  "inline-flex items-center justify-center rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400";
 
 export const SHIPMENT_OVERVIEW_TOOLBAR_CLASS =
   "mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";

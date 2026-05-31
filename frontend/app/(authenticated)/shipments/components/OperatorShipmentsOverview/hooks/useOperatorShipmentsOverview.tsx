@@ -21,6 +21,7 @@ import type { DataTableColumn } from "@/components/DataTable";
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
 import {
   SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
+  SHIPMENT_OVERVIEW_ACTIONS_CELL_INNER_CLASS,
   SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
   SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS,
 } from "../constants";
@@ -234,22 +235,24 @@ export function useOperatorShipmentsOverview() {
           headerClassName: SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
           className: SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
           cell: (r) => (
-            <button
-              type="button"
-              aria-label={`Delete shipment ${r.order_number}`}
-              disabled={deletingShipmentId === r.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                void handleDeleteShipment(r);
-              }}
-              className={SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS}
-            >
-              {deletingShipmentId === r.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-              )}
-            </button>
+            <div className={SHIPMENT_OVERVIEW_ACTIONS_CELL_INNER_CLASS}>
+              <button
+                type="button"
+                aria-label={`Delete shipment ${r.order_number}`}
+                disabled={deletingShipmentId === r.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleDeleteShipment(r);
+                }}
+                className={SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS}
+              >
+                {deletingShipmentId === r.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                )}
+              </button>
+            </div>
           ),
         });
       }

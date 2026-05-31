@@ -6,6 +6,10 @@ import { BolImportDialog } from "@/components/BolImportDialog";
 import { NewTrackingForm } from "@/components/NewTrackingForm";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { emitTrackingCreated } from "@/utils/tracking-created-event";
+import {
+  SHIPMENT_CARRIER_TRACKING_INPUT_CLASS,
+  SHIPMENT_CARRIER_TRACKING_PANEL_CLASS,
+} from "./constants";
 
 export function ShipmentCarrierTrackingPanel({
   shipmentId,
@@ -24,31 +28,35 @@ export function ShipmentCarrierTrackingPanel({
 
   const canEnable = isShipmentPostApproval(workflowStatus);
 
-  if (!canEnable) {
-    return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-        <p className="font-medium text-zinc-800 dark:text-zinc-200">Carrier tracking (premium)</p>
-        <p className="mt-1 text-xs leading-relaxed">
-          Live container sync unlocks after the customer approves export documents. Until then, manage everything
-          through documents, activity, and the customer portal.
-        </p>
-      </div>
-    );
-  }
-
   function handleEnabled() {
     emitTrackingCreated();
     onEnabled?.();
     setExpanded(false);
   }
 
+  if (!canEnable) {
+    return (
+      <div className={SHIPMENT_CARRIER_TRACKING_PANEL_CLASS}>
+        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          Tracking number
+          <input
+            type="text"
+            disabled
+            value=""
+            placeholder="Available after document approval..."
+            className={SHIPMENT_CARRIER_TRACKING_INPUT_CLASS}
+          />
+        </label>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-950">
+      <div className={SHIPMENT_CARRIER_TRACKING_PANEL_CLASS}>
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Carrier tracking (premium)</p>
         <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          Optional live milestones from a carrier API once container numbers are published. Most teams complete the
-          documentation workflow first.
+          Optional live milestones from a carrier API once container numbers are published.
         </p>
         {!expanded ? (
           <button

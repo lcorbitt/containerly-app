@@ -1,6 +1,7 @@
 "use client";
 
-import { FileDown, PackagePlus, Route } from "lucide-react";
+import { FileDown, PackagePlus } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 import { NavBrand } from "../NavBrand";
 import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
@@ -13,6 +14,7 @@ import {
   AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_MENU_CLASS,
   AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS,
+  AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS,
 } from "./constants";
 import { useAuthenticatedTopNav } from "./useAuthenticatedTopNav";
 import type { AuthenticatedTopNavProps } from "./types";
@@ -91,7 +93,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
             )}
           </button>
 
-          {open ? (
+          <Reveal show={open} className={AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS}>
             <div role="menu" className={AUTHENTICATED_TOP_NAV_MENU_CLASS}>
               <div className="border-b border-zinc-100 p-4 dark:border-zinc-800">
                 <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
@@ -112,7 +114,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
                 Log out
               </button>
             </div>
-          ) : null}
+          </Reveal>
         </div>
       </div>
     </TopNavShell>

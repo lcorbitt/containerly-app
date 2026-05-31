@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Reply } from "lucide-react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
-import { ContainerTimeline } from "@/components/ContainerTimeline";
+import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import { formatTimestamp } from "@/utils/datetime";
 import { ShipmentDetailsPanel } from "@/components/ShipmentDetailsPanel";
 import { ShipmentCommercialPanel } from "@/components/ShipmentCommercialPanel";
@@ -400,7 +400,7 @@ export function PublicContainerReport({
               ) : null}
 
               <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <ContainerTimeline
+                <ShipmentTimeline
                   events={timeline}
                   interactiveDetail={false}
                   className="rounded-none border-0 shadow-none"

@@ -1,4 +1,5 @@
-export const UPLOAD_ZONE_WRAPPER_CLASS = "mt-4 shrink-0 rounded-xl border border-zinc-200 dark:border-zinc-700";
+export const UPLOAD_ZONE_BODY_CLASS =
+  "overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700";
 
 export const UPLOAD_ZONE_METADATA_CLASS =
   "grid gap-3 border-b border-zinc-200 px-4 py-3 sm:grid-cols-2 dark:border-zinc-800";
@@ -7,7 +8,7 @@ export const UPLOAD_ZONE_SELECT_SHELL_CLASS =
   "mt-1 rounded-md border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950";
 
 export const UPLOAD_ZONE_DROP_CLASS =
-  "flex min-h-[140px] flex-col items-center justify-center px-4 py-8 text-center transition-colors";
+  "flex min-h-[220px] flex-col items-center justify-center px-4 py-10 text-center transition-colors";
 
 export const UPLOAD_ZONE_IDLE_CLASS = "bg-zinc-50/60 dark:bg-zinc-900/30";
 

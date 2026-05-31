@@ -4,8 +4,8 @@ import { Loader2, Upload } from "lucide-react";
 import { useCallback, useId, useRef, useState } from "react";
 import { CustomSelect } from "@/components/CustomSelect";
 import {
-  MAX_ATTACHMENTS_PER_MESSAGE,
   MAX_ATTACHMENT_SIZE_LABEL,
+  MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH,
 } from "@/utils/workspace-files";
 import {
   UPLOAD_ZONE_BUTTON_CLASS,
@@ -14,7 +14,7 @@ import {
   UPLOAD_ZONE_IDLE_CLASS,
   UPLOAD_ZONE_METADATA_CLASS,
   UPLOAD_ZONE_SELECT_SHELL_CLASS,
-  UPLOAD_ZONE_WRAPPER_CLASS,
+  UPLOAD_ZONE_BODY_CLASS,
 } from "./constants";
 import type { ShipmentDocumentUploadZoneProps } from "./types";
 import { DOCUMENT_GROUP_SELECT_OPTIONS, DOCUMENT_TYPE_SELECT_OPTIONS } from "./utils";
@@ -43,7 +43,7 @@ export function ShipmentDocumentUploadZone({
   );
 
   return (
-    <div className={UPLOAD_ZONE_WRAPPER_CLASS}>
+    <div className={UPLOAD_ZONE_BODY_CLASS}>
       <div className={UPLOAD_ZONE_METADATA_CLASS}>
         <div>
           <span
@@ -125,7 +125,7 @@ export function ShipmentDocumentUploadZone({
           Upload or drag and drop files here
         </p>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Up to {MAX_ATTACHMENTS_PER_MESSAGE} files, {MAX_ATTACHMENT_SIZE_LABEL} each
+          Up to {MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH} files, {MAX_ATTACHMENT_SIZE_LABEL} each
         </p>
         <button
           type="button"

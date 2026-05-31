@@ -495,6 +495,68 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
     });
     out.push(inserted);
   }
+
+  if (out.length > 0 && input.documentGroup) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", userId)
+      .maybeSingle();
+    const operatorName = profileDisplayName({
+      full_name: profile?.full_name as string | null,
+      email: profile?.email as string | null,
+    });
+
+    const group = input.documentGroup.trim().toLowerCase();
+    const groupLabel =
+      group === "original" ? "Original document" : group === "revision" ? "Revision document" : "Draft document";
+    const groupPlural =
+      group === "original"
+        ? "Original documents"
+        : group === "revision"
+          ? "Revision documents"
+          : "Draft documents";
+    const body =
+      out.length === 1
+        ? `${groupLabel} uploaded by ${operatorName}`
+        : `${out.length} ${groupPlural.toLowerCase()} uploaded by ${operatorName}`;
+
+    const sharedDocumentType = input.documentType?.trim() || null;
+    const documents = out.map((inserted) => ({
+      attachment_id: inserted.id,
+      file_name: inserted.file_name,
+      document_type: inserted.document_type ?? sharedDocumentType,
+      document_group: inserted.document_group ?? input.documentGroup,
+      approval_status: inserted.approval_status ?? "pending",
+    }));
+
+    const metadata: Record<string, unknown> = {
+      file_count: out.length,
+      attachment_ids: out.map((row) => row.id),
+      document_type: sharedDocumentType,
+      document_group: input.documentGroup,
+      approval_status: "pending",
+      documents,
+    };
+
+    if (out.length === 1) {
+      metadata.file_name = out[0]!.file_name;
+      metadata.attachment_id = out[0]!.id;
+    }
+
+    const { error: activityErr } = await supabase.from("shipment_activity_events").insert({
+      shipment_id: input.shipmentId,
+      event_type: "drafts_attached",
+      body,
+      actor_kind: "operator",
+      actor_user_id: userId,
+      metadata,
+    });
+    if (activityErr) {
+      throw new Error(activityErr.message);
+    }
+  }
+
   return out;
 }
 

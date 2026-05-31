@@ -1,7 +1,5 @@
-export const SHIPMENT_DETAILS_TAB_TITLE_CLASS = "px-4 pt-4 pb-4 sm:px-6 border-b border-zinc-200 dark:border-zinc-800 mb-6";
-
 export const SHIPMENT_DETAILS_TAB_LIST_CLASS =
-  "flex shrink-0 overflow-x-auto border-b border-zinc-200 mx-4 sm:mx-6 dark:border-zinc-800";
+  "flex shrink-0 overflow-x-auto border-b border-zinc-200 px-4 sm:px-6 dark:border-zinc-800";
 
 export const SHIPMENT_DETAILS_TAB_PANEL_CLASS = "min-w-0";
 
@@ -14,7 +12,7 @@ export const SHIPMENT_DETAILS_TAB_MESSAGES_PANEL_CLASS =
   "flex min-h-0 min-w-0 flex-col";
 
 export const SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS =
-  "flex min-h-0 min-w-0 flex-col px-4 pb-4 pt-3 sm:px-6";
+  "flex min-h-0 min-w-0 flex-col px-4 p-4 sm:px-6";
 
 export const SHIPMENT_TRACKING_TAB_DISABLED_TOOLTIP =
   "Tracking unlocks after the customer approves all draft documents.";

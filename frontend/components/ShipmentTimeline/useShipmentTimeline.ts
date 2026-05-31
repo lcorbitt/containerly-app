@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PublicTimelineEvent } from "@/types/public-report";
-import type { ContainerTimelineOrder } from "../types";
-import { TIMELINE_ORDER_FADE_MS } from "../constants";
+import type { ShipmentTimelineDisplayEvent, ShipmentTimelineOrder } from "./types";
+import { TIMELINE_ORDER_FADE_MS } from "./constants";
 
-export function useContainerTimelineOrder(events: PublicTimelineEvent[]): ContainerTimelineOrder {
+export function useShipmentTimelineOrder(events: ShipmentTimelineDisplayEvent[]): ShipmentTimelineOrder {
   const [newestFirst, setNewestFirst] = useState(false);
   const [listNewestFirst, setListNewestFirst] = useState(false);
   const [orderFadeOut, setOrderFadeOut] = useState(false);
@@ -33,3 +32,6 @@ export function useContainerTimelineOrder(events: PublicTimelineEvent[]): Contai
 
   return { newestFirst, displayEvents, orderFadeOut, handleOrderToggle };
 }
+
+/** @deprecated Use useShipmentTimelineOrder */
+export const useContainerTimelineOrder = useShipmentTimelineOrder;

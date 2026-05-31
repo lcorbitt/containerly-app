@@ -23,8 +23,8 @@ import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
 import {
   formatTimelineWhen,
-  useContainerTimelineOrder,
-} from "@/components/ContainerTimeline";
+  useShipmentTimelineOrder,
+} from "@/components/ShipmentTimeline";
 import { computePublicReportInsights } from "@/utils/report-insights";
 import { getShipmentDetailRows, shipperReceiverFromLocation } from "@/utils/jsoncargo-display";
 import { formatTimestamp } from "@/utils/datetime";
@@ -50,7 +50,7 @@ export function useContainerWorkspace({
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
   const [activity, setActivity] = useState<ReportActivity[]>([]);
   const [timeline, setTimeline] = useState<PublicTimelineEvent[]>([]);
-  const timelineOrder = useContainerTimelineOrder(timeline);
+  const timelineOrder = useShipmentTimelineOrder(timeline);
   const [containerRow, setContainerRow] = useState<ContainerWorkspaceSnapshot | null>(null);
   const [bolGroupSiblings, setBolGroupSiblings] = useState<
     { id: string; container_number: string }[]

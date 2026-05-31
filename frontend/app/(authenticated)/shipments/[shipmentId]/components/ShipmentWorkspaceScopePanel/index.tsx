@@ -1,8 +1,9 @@
 "use client";
 
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Upload } from "lucide-react";
+import { useCallback, useState } from "react";
 import { DocumentsList } from "@/components/DocumentsList";
-import { ShipmentDocumentUploadZone } from "./ShipmentDocumentUploadZone";
+import { ShipmentDocumentUploadModal } from "./ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
 import {
   SHIPMENT_DOCUMENTS_HEADER_CLASS,
   SHIPMENT_DOCUMENTS_HEADER_ICON_CLASS,
@@ -16,6 +17,8 @@ import {
   SHIPMENT_DOCUMENTS_LOADING_TEXT,
   SHIPMENT_DOCUMENTS_LOADING_TEXT_CLASS,
   SHIPMENT_DOCUMENTS_SECTION_CLASS,
+  SHIPMENT_DOCUMENTS_TOOLBAR_CLASS,
+  SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS,
 } from "./constants";
 import { useShipmentWorkspaceScopePanel } from "./hooks/useShipmentWorkspaceScopePanel";
 
@@ -27,6 +30,8 @@ export function ShipmentWorkspaceScopePanel({
   /** `tab` — embedded under Details/Documents tabs without duplicate chrome. */
   variant?: "section" | "tab";
 }) {
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
   const {
     selectedOrgId,
     loading,
@@ -50,6 +55,14 @@ export function ShipmentWorkspaceScopePanel({
 
     attachmentsNewestFirst,
   } = useShipmentWorkspaceScopePanel({ shipmentId });
+
+  const handleUpload = useCallback(
+    async (files: File[]) => {
+      const ok = await uploadAttachmentFiles(files);
+      if (ok) setUploadModalOpen(false);
+    },
+    [uploadAttachmentFiles],
+  );
 
   if (!selectedOrgId) {
     return (
@@ -81,6 +94,17 @@ export function ShipmentWorkspaceScopePanel({
 
   const isTab = variant === "tab";
 
+  const uploadButton = (
+    <button
+      type="button"
+      onClick={() => setUploadModalOpen(true)}
+      className={SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS}
+    >
+      <Upload className="h-4 w-4" strokeWidth={2} aria-hidden />
+      Upload
+    </button>
+  );
+
   return (
     <section
       aria-label="Shipment documents"
@@ -88,27 +112,23 @@ export function ShipmentWorkspaceScopePanel({
     >
       {!isTab ? (
         <div className={SHIPMENT_DOCUMENTS_HEADER_CLASS}>
-          <div className={SHIPMENT_DOCUMENTS_HEADER_TITLE_ROW_CLASS}>
-            <FileText
-              className={SHIPMENT_DOCUMENTS_HEADER_ICON_CLASS}
-              strokeWidth={2}
-              aria-hidden
-            />
-            <h2 className={SHIPMENT_DOCUMENTS_HEADER_TITLE_CLASS}>{SHIPMENT_DOCUMENTS_HEADER_TITLE}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <div className={SHIPMENT_DOCUMENTS_HEADER_TITLE_ROW_CLASS}>
+              <FileText
+                className={SHIPMENT_DOCUMENTS_HEADER_ICON_CLASS}
+                strokeWidth={2}
+                aria-hidden
+              />
+              <h2 className={SHIPMENT_DOCUMENTS_HEADER_TITLE_CLASS}>{SHIPMENT_DOCUMENTS_HEADER_TITLE}</h2>
+            </div>
+            {uploadButton}
           </div>
         </div>
       ) : null}
 
       <div className={isTab ? "flex flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5" : "flex flex-col"}>
-        <ShipmentDocumentUploadZone
-          documentType={documentType}
-          onDocumentTypeChange={setDocumentType}
-          documentGroup={documentGroup}
-          onDocumentGroupChange={setDocumentGroup}
-          uploading={uploadingAttachments}
-          onUpload={uploadAttachmentFiles}
-        />
-        <div className={isTab ? "min-w-0" : SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS}>
+        {isTab ? <div className={SHIPMENT_DOCUMENTS_TOOLBAR_CLASS}>{uploadButton}</div> : null}
+        <div className={SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS}>
           <DocumentsList
             variant="embedded"
             naturalHeight
@@ -134,6 +154,17 @@ export function ShipmentWorkspaceScopePanel({
           />
         </div>
       </div>
+
+      <ShipmentDocumentUploadModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        documentType={documentType}
+        onDocumentTypeChange={setDocumentType}
+        documentGroup={documentGroup}
+        onDocumentGroupChange={setDocumentGroup}
+        uploading={uploadingAttachments}
+        onUpload={handleUpload}
+      />
     </section>
   );
 }

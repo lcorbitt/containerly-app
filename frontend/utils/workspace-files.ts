@@ -9,6 +9,9 @@ export const MAX_ATTACHMENT_FILE_BYTES = 25 * 1024 * 1024;
 /** Max files attached to a single message (composer). */
 export const MAX_ATTACHMENTS_PER_MESSAGE = 8;
 
+/** Max files in one shipment document upload action (timeline = one batch event). */
+export const MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH = 40;
+
 /** Human-readable max size for UI copy. */
 export const MAX_ATTACHMENT_SIZE_LABEL = "25 MB";
 

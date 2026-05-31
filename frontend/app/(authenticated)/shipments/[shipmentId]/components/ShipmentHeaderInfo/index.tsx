@@ -1,10 +1,15 @@
 import type { ShipmentWorkspaceRow } from "@/services/shipment.service";
-import { SHIPMENT_DETAIL_GRID_FIELDS, SHIPMENT_DETAIL_LABEL_CLASS, SHIPMENT_DETAIL_VALUE_CLASS } from "./utils";
+import {
+  SHIPMENT_DETAIL_GRID_FIELDS,
+  SHIPMENT_DETAIL_LABEL_CLASS,
+  SHIPMENT_DETAIL_VALUE_CLASS,
+  SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS,
+} from "./utils";
 
 export function ShipmentHeaderInfo({ row }: { row: ShipmentWorkspaceRow }) {
   return (
-    <section className="">
-      <dl className="grid gap-x-6 gap-y-6 sm:grid-cols-3">
+    <section>
+      <dl className={SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS}>
         {SHIPMENT_DETAIL_GRID_FIELDS.map((field) => {
           const raw = row[field.key as keyof ShipmentWorkspaceRow];
           const value = field.format(typeof raw === "string" ? raw : raw == null ? null : String(raw));

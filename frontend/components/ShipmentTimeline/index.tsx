@@ -8,16 +8,18 @@ import {
   Route,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type {
-  ContainerTimelineProps,
-  ContainerTimelineOrder,
-  ContainerTimelineViewProps,
+  ShipmentTimelineDisplayEvent,
+  ShipmentTimelineProps,
+  ShipmentTimelineOrder,
+  ShipmentTimelineViewProps,
 } from "./types";
 import { TONE_STYLES, STEP_CARD_BASE, STEP_CARD_INTERACTIVE } from "./constants";
 import {
+  buildShipmentTimelineEvents,
   formatTimelineWhen,
   formatIsoUtc,
   formatRelativeWhen,
@@ -28,12 +30,20 @@ import {
   formatValueForDisplay,
   formatLocationSnippet,
 } from "./utils";
-import { useContainerTimelineOrder } from "./hooks/useContainerTimeline";
+import { useShipmentTimelineOrder } from "./useShipmentTimeline";
+import { TimelineDocumentMeta } from "./TimelineDocumentMeta";
 
-export type { ContainerTimelineProps, ContainerTimelineOrder, ContainerTimelineViewProps } from "./types";
+export type {
+  ShipmentTimelineProps,
+  ShipmentTimelineOrder,
+  ShipmentTimelineViewProps,
+  ContainerTimelineProps,
+  ContainerTimelineOrder,
+  ContainerTimelineViewProps,
+} from "./types";
 export type { TimelineTone } from "./types";
-export { formatTimelineWhen } from "./utils";
-export { useContainerTimelineOrder } from "./hooks/useContainerTimeline";
+export { formatTimelineWhen, buildShipmentTimelineEvents } from "./utils";
+export { useShipmentTimelineOrder, useContainerTimelineOrder } from "./useShipmentTimeline";
 
 function LocationDetails({
   location,
@@ -89,7 +99,7 @@ function TimelineEventDetailModal({
   event,
   onClose,
 }: {
-  event: PublicTimelineEvent;
+  event: ShipmentTimelineDisplayEvent;
   onClose: () => void;
 }) {
   const titleId = useId();
@@ -214,6 +224,13 @@ function TimelineEventDetailModal({
               <LocationDetails compact location={event.location} />
             </div>
 
+            {event.documentMeta ? (
+              <div className="py-2.5">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Document</p>
+                <TimelineDocumentMeta meta={event.documentMeta} compact={false} />
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-2 py-2.5 sm:grid-cols-2">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Event ID</p>
@@ -324,16 +341,37 @@ export function TimelineOrderToggle({
   );
 }
 
-export function ContainerTimelineView({
-  events,
+export function ShipmentTimelineView({
   order,
   interactiveDetail = true,
   hideHeader = false,
   showOrderToggle = true,
   className: classNameProp,
-}: ContainerTimelineViewProps) {
+  emptyMessage = "No events recorded yet",
+  emptyHint = "Shipment milestones and carrier updates will appear here.",
+  autoScrollToLatest = true,
+}: ShipmentTimelineViewProps) {
   const { displayEvents, orderFadeOut, newestFirst, handleOrderToggle } = order;
-  const [detailEvent, setDetailEvent] = useState<PublicTimelineEvent | null>(null);
+  const [detailEvent, setDetailEvent] = useState<ShipmentTimelineDisplayEvent | null>(null);
+  const eventCount = displayEvents.length;
+  const timelineEndRef = useRef<HTMLDivElement>(null);
+  const hasAutoScrolledRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoScrollToLatest || hasAutoScrolledRef.current || eventCount === 0 || orderFadeOut) {
+      return;
+    }
+    hasAutoScrolledRef.current = true;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => {
+      timelineEndRef.current?.scrollIntoView({
+        block: newestFirst ? "start" : "end",
+        behavior: reduced ? "auto" : "smooth",
+      });
+    });
+  }, [autoScrollToLatest, eventCount, newestFirst, orderFadeOut]);
 
   return (
     <section
@@ -347,18 +385,13 @@ export function ContainerTimelineView({
       {hideHeader ? null : (
         <div className="border-b border-zinc-100 bg-transparent px-4 py-3.5 dark:border-zinc-800">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-400/70 bg-transparent text-zinc-600 dark:border-zinc-500 dark:text-zinc-400">
-                <Route className="h-4 w-4" strokeWidth={2} aria-hidden />
-              </span>
-            </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              {events.length > 0 && showOrderToggle ? (
+              {eventCount > 0 && showOrderToggle ? (
                 <TimelineOrderToggle newestFirst={newestFirst} onToggle={handleOrderToggle} />
               ) : null}
-              {events.length > 0 ? (
+              {eventCount > 0 ? (
                 <span className="rounded-full border border-zinc-200/80 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
-                  {events.length} event{events.length !== 1 ? "s" : ""}
+                  {eventCount} event{eventCount !== 1 ? "s" : ""}
                 </span>
               ) : null}
             </div>
@@ -367,13 +400,11 @@ export function ContainerTimelineView({
       )}
 
       <div className={`p-3 sm:p-4 ${hideHeader ? "pt-3 sm:pt-4" : ""}`}>
-        {events.length === 0 ? (
+        {eventCount === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/30">
             <MapPin className="h-8 w-8 text-zinc-300 dark:text-zinc-600" strokeWidth={1.25} aria-hidden />
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">No events recorded yet</p>
-            <p className="max-w-xs text-xs text-zinc-500 dark:text-zinc-500">
-              Synced carrier updates will appear here as your shipment moves.
-            </p>
+            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{emptyMessage}</p>
+            <p className="max-w-xs text-xs text-zinc-500 dark:text-zinc-500">{emptyHint}</p>
           </div>
         ) : (
           <div className="relative">
@@ -441,6 +472,7 @@ export function ContainerTimelineView({
                             {subtitle}
                           </p>
                         ) : null}
+                        {ev.documentMeta ? <TimelineDocumentMeta meta={ev.documentMeta} /> : null}
                         <p className="mt-1 font-mono text-[10px] leading-tight text-zinc-500 dark:text-zinc-500">
                           {formatTimelineWhen(ev.occurred_at)}
                         </p>
@@ -469,6 +501,7 @@ export function ContainerTimelineView({
                 );
               })}
             </ol>
+            <div ref={timelineEndRef} aria-hidden className="h-px w-full shrink-0" />
             </div>
           </div>
         )}
@@ -477,7 +510,16 @@ export function ContainerTimelineView({
   );
 }
 
-export function ContainerTimeline(props: ContainerTimelineProps) {
-  const order = useContainerTimelineOrder(props.events);
-  return <ContainerTimelineView {...props} order={order} />;
+export function ShipmentTimeline(props: ShipmentTimelineProps) {
+  const mergedEvents = buildShipmentTimelineEvents({
+    carrierEvents: props.events ?? [],
+    activityEvents: props.activityEvents ?? [],
+  });
+  const order = useShipmentTimelineOrder(mergedEvents);
+  return <ShipmentTimelineView {...props} order={order} />;
 }
+
+/** @deprecated Use ShipmentTimeline */
+export const ContainerTimeline = ShipmentTimeline;
+/** @deprecated Use ShipmentTimelineView */
+export const ContainerTimelineView = ShipmentTimelineView;

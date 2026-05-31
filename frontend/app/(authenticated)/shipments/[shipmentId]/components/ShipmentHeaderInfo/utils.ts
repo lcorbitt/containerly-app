@@ -21,7 +21,9 @@ export function displayValue(value: string | null | undefined): string {
 
 export const SHIPMENT_DETAIL_LABEL_CLASS = SHIPMENT_COMMERCIAL_LABEL_CLASS;
 
-export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-1 text-sm text-zinc-900 dark:text-zinc-100";
+export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-0.5 text-sm text-zinc-900 dark:text-zinc-100";
+
+export const SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS = "grid gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4";
 
 export const SHIPMENT_TITLE_VALUE_CLASS =
   "mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
