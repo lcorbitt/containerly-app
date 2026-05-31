@@ -192,16 +192,11 @@ export function ShipmentDataImportModal({
                 tabIndex={-1}
                 className={SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS}
               >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <div>
-            <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 id={titleId} className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
               {isBulk ? "Bulk Import Shipments" : "Import Shipment Data"}
             </h2>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              {isBulk
-                ? "Upload a spreadsheet — each row creates a new shipment with its own workspace page."
-                : "Upload a spreadsheet, CSV, or JSON file — on success the new shipment form opens with fields pre-filled."}
-            </p>
           </div>
           <DialogCloseButton
             onClick={() => {
@@ -442,7 +437,7 @@ export function ShipmentDataImportModal({
                   ) : bulkCount > 0 ? (
                     `Create ${bulkCount} shipment${bulkCount === 1 ? "" : "s"}`
                   ) : (
-                    "Create shipments"
+                    "Create Shipments"
                   )}
                 </button>
               ) : null}

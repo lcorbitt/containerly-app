@@ -10,10 +10,10 @@ export const NEW_SHIPMENT_MODAL_PANEL_CLASS =
   "relative z-[101] m-0 mt-0 w-full max-w-4xl border-0 border-zinc-200 bg-white shadow-2xl outline-none dark:border-zinc-700 dark:bg-zinc-950 sm:rounded-2xl sm:border sm:shadow-xl";
 
 export const NEW_SHIPMENT_MODAL_HEADER_CLASS =
-  "flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800";
+  "flex justify-between items-center gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800";
 
 export const NEW_SHIPMENT_MODAL_TITLE_CLASS =
-  "text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50";
+  "text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50";
 
 export const NEW_SHIPMENT_MODAL_HEADER_ACTIONS_CLASS = "flex shrink-0 items-center gap-2";
 

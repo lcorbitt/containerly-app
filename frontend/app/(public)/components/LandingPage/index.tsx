@@ -102,7 +102,7 @@ const steps = [
   },
   {
     n: "02",
-    title: "Create shipments",
+    title: "Create Shipments",
     body: "Enter commercial details and order lines first; add container tracking when the carrier publishes a number.",
   },
   {

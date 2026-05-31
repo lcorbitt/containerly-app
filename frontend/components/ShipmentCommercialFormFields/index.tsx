@@ -28,7 +28,7 @@ export function ShipmentCommercialFormFields({
             <label
               key={field.key}
               className={
-                isCustomer ? "block min-w-0 flex-1" : isOrderNumber ? "block shrink-0" : "block min-w-0"
+                isOrderNumber ? "block min-w-0 flex-[2]" : isCustomer ? "block min-w-0 flex-1" : "block min-w-0"
               }
             >
               <span className={SHIPMENT_COMMERCIAL_LABEL_CLASS}>
@@ -38,7 +38,7 @@ export function ShipmentCommercialFormFields({
               <input
                 value={value}
                 onChange={(e) => onChange({ [field.key]: e.target.value })}
-                className={`${fieldClass}${isOrderNumber ? " whitespace-nowrap" : ""}`}
+                className={fieldClass}
                 required={"required" in field && field.required}
               />
             </label>

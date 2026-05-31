@@ -9,8 +9,8 @@ export const SHIPMENT_COMMERCIAL_FIELD_CLASS =
   "mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950";
 
 export const SHIPMENT_COMMERCIAL_TITLE_FIELD_DEFS = [
-  { key: "customerName" as const, label: "Customer" },
   { key: "orderNumber" as const, label: "Order No", required: true },
+  { key: "customerName" as const, label: "Customer" },
 ];
 
 export const SHIPMENT_COMMERCIAL_GRID_FIELD_DEFS = [
