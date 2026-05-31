@@ -37,6 +37,8 @@ type ShipmentDataImportModalProps = {
   variant: ShipmentImportVariant;
   /** Pre-fill the new shipment form (`variant="single"` only). Called automatically after a successful parse. */
   onApply?: (draft: ShipmentImportDraft, meta: { fileName: string }) => void;
+  /** Close single import and open bulk import (`variant="single"` only). */
+  onSwitchToBulkImport?: () => void;
   /** Called after bulk create finishes (`variant="bulk"` only). */
   onBulkComplete?: (result: BulkImportResult) => void;
 };
@@ -47,6 +49,7 @@ export function ShipmentDataImportModal({
   organizationId,
   variant,
   onApply,
+  onSwitchToBulkImport,
   onBulkComplete,
 }: ShipmentDataImportModalProps) {
   const isBulk = variant === "bulk";
@@ -192,7 +195,7 @@ export function ShipmentDataImportModal({
         <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <div>
             <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              {isBulk ? "Bulk import shipments" : "Import shipment data"}
+              {isBulk ? "Bulk Import Shipments" : "Import Shipment Data"}
             </h2>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {isBulk
@@ -245,7 +248,19 @@ export function ShipmentDataImportModal({
                   CSV template
                 </button>
                 {" · "}
-                For many shipments at once, use <strong className="font-medium">Bulk import</strong> in the top nav.
+                For many shipments at once, use{" "}
+                {onSwitchToBulkImport ? (
+                  <button
+                    type="button"
+                    onClick={onSwitchToBulkImport}
+                    className="font-semibold text-sky-800 underline dark:text-sky-300"
+                  >
+                    Bulk import
+                  </button>
+                ) : (
+                  <strong className="font-semibold">Bulk import</strong>
+                )}
+                .
               </>
             )}
           </p>

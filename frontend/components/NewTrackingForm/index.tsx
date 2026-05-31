@@ -231,7 +231,7 @@ export function NewTrackingForm({
                 Choose shipment
               </span>
               {shipmentsLoading ? (
-                <p className="text-xs text-zinc-500">Loading shipments…</p>
+                <p className="text-xs text-zinc-500">Loading Shipments…</p>
               ) : shipmentsError ? (
                 <p className="text-xs text-red-600 dark:text-red-400">{shipmentsError}</p>
               ) : shipments.length === 0 ? (

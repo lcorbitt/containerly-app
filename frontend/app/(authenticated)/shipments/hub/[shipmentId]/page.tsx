@@ -50,7 +50,7 @@ export default function SharedShipmentTrackingPage({
   }, [shipmentId, router]);
 
   if (loading) {
-    return <PageLoading loadingText="Loading shared tracking…" />;
+    return <PageLoading loadingText="Loading Customer Portal…" />;
   }
 
   if (err || !data) {

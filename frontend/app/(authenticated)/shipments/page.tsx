@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { OperatorShipmentsOverview } from "./components/OperatorShipmentsOverview";
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { Reveal } from "@/components/Reveal";
 import { TablePagination } from "@/components/TablePagination";
 import { TextInput } from "@/components/TextInput";
 import {
@@ -48,6 +49,9 @@ function destinationLabel(cont: NestedContainer | null): string {
 
 const SEARCH_INPUT_CLASS =
   "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500";
+
+const IMPORTER_SHIPMENTS_PANEL_CLASS =
+  "mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
 
 function useFreightOperator() {
   const { orgs, isSuperAdmin } = useOrganizationWorkspace();
@@ -183,6 +187,8 @@ function ImporterGrantedShipmentsList() {
     [],
   );
 
+  const showPanel = !loading || rows.length > 0;
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
       <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Shipments shared with me</h1>
@@ -193,42 +199,44 @@ function ImporterGrantedShipmentsList() {
 
       {error ? <p className="mt-6 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 
-      <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <label className="sr-only" htmlFor="shipments-search">
-          Search by container or order no.
-        </label>
-        <TextInput
-          id="shipments-search"
-          type="search"
-          placeholder="Search container, BOL, or order no.…"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          disabled={loading}
-          containerClassName="mb-4 max-w-md"
-          className={SEARCH_INPUT_CLASS}
-        />
+      <Reveal show={showPanel}>
+        <section className={IMPORTER_SHIPMENTS_PANEL_CLASS}>
+          <label className="sr-only" htmlFor="shipments-search">
+            Search by container or order no.
+          </label>
+          <TextInput
+            id="shipments-search"
+            type="search"
+            placeholder="Search container, BOL, or order no.…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            disabled={loading}
+            containerClassName="mb-4 max-w-md"
+            className={SEARCH_INPUT_CLASS}
+          />
 
-        <DataTable
-          columns={columns}
-          rows={rows}
-          getRowId={(r) => r.id}
-          loading={loading}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-          emptyMessage="Nothing shared with you yet. When a partner sends an invite link, open it and sign in to accept access."
-          onRowClick={(r) => router.push(`/shipments/hub/${r.id}`)}
-        />
+          <DataTable
+            columns={columns}
+            rows={rows}
+            getRowId={(r) => r.id}
+            loading={loading}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            emptyMessage="Nothing shared with you yet. When a partner sends an invite link, open it and sign in to accept access."
+            onRowClick={(r) => router.push(`/shipments/hub/${r.id}`)}
+          />
 
-        <TablePagination
-          page={page}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          disabled={loading}
-        />
-      </section>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            disabled={loading}
+          />
+        </section>
+      </Reveal>
     </div>
   );
 }

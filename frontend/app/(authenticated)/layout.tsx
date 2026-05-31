@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchOrgMembershipRows } from "@/services/organization.server";
 import { AuthenticatedTopNav } from "@/components/TopNav";
 import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
-import { TrackContainerModalProvider } from "@/contexts/track-container-modal";
+import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
 import { SideNav } from "./components/SideNav";
 
 export default async function AuthenticatedLayout({
@@ -39,7 +39,7 @@ export default async function AuthenticatedLayout({
       <SessionAvatarProvider
         initialProfileImagePath={profile?.profile_image_path ?? null}
       >
-        <TrackContainerModalProvider>
+        <NewShipmentModalProvider>
           <MockJourneyModalProvider>
             <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
               <AuthenticatedTopNav
@@ -54,7 +54,7 @@ export default async function AuthenticatedLayout({
               </div>
             </div>
           </MockJourneyModalProvider>
-        </TrackContainerModalProvider>
+        </NewShipmentModalProvider>
       </SessionAvatarProvider>
     </OrganizationWorkspaceProvider>
   );

@@ -11,7 +11,7 @@ export default function AuthenticatedShipmentPortalPage({
 }) {
   const { shipmentId } = use(params);
   return (
-    <Suspense fallback={<PageLoading loadingText="Loading shipment…" />}>
+    <Suspense fallback={<PageLoading loadingText="Loading Shipment…" />}>
       <ShipmentWorkspace shipmentId={shipmentId} />
     </Suspense>
   );

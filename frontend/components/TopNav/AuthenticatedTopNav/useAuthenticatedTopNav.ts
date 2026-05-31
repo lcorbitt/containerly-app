@@ -7,7 +7,7 @@ import { shouldShowMockJourneyPanel } from "@/components/MockJourneySimulator";
 import { useMockJourneyModal } from "@/contexts/mock-journey-modal";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useSessionAvatar } from "@/contexts/session-avatar";
-import { useTrackContainerModal } from "@/contexts/track-container-modal";
+import { useNewShipmentModal } from "@/components/NewShipmentModal";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { signOutBrowser } from "@/services/auth.service";
 import { fetchShipment } from "@/services/shipment.service";
@@ -30,7 +30,7 @@ export function useAuthenticatedTopNav({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { openTrackContainerModal, openBulkImportModal } = useTrackContainerModal();
+  const { openNewShipmentModal, openBulkImportModal } = useNewShipmentModal();
   const { openMockJourneyModal } = useMockJourneyModal();
   const showMockJourney = shouldShowMockJourneyPanel();
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
@@ -138,7 +138,7 @@ export function useAuthenticatedTopNav({
     accountPrimaryLabel,
     accountSecondaryLabel,
     showMockJourney,
-    openTrackContainerModal,
+    openNewShipmentModal,
     openBulkImportModal,
     openMockJourneyModal,
     toggleMenu,

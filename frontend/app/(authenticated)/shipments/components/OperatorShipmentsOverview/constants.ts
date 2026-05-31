@@ -1,3 +1,6 @@
+export const SHIPMENT_OVERVIEW_PANEL_CLASS =
+  "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
+
 export const SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS = "w-12 px-2";
 
 export const SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS = "w-12 px-2 text-right";

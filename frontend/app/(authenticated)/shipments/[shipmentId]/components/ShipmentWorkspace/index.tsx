@@ -123,7 +123,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   }
 
   if (loading) {
-    return <PageLoading loadingText="Loading shipment…" />;
+    return <PageLoading loadingText="Loading Shipment…" />;
   }
 
   if (error || !row) {

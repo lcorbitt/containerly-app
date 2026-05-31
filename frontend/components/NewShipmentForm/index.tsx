@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileDown } from "lucide-react";
+import { FileDown, Loader2 } from "lucide-react";
 import { ShipmentCommercialFormFields } from "@/components/ShipmentCommercialFormFields";
 import {
   emptyFormValues,
@@ -15,6 +15,7 @@ import type { ShipmentCommercialFormValues } from "@/components/ShipmentCommerci
 import { createCommercialShipment } from "@/services/shipment.service";
 import { useToast } from "@/contexts/toast";
 import { ShipmentDataImportModal } from "./ShipmentDataImportModal";
+import { NEW_SHIPMENT_SUBMIT_BUTTON_CLASS } from "./constants";
 import type { ShipmentImportDraft } from "./utils";
 
 export function NewShipmentForm({
@@ -24,13 +25,17 @@ export function NewShipmentForm({
   className: formClassName,
   importOpen: importOpenProp,
   onImportOpenChange,
+  onSwitchToBulkImport,
+  onCreatingChange,
 }: {
   organizationId: string;
-  onCreated?: (shipmentId: string) => void;
+  onCreated?: (shipmentId: string) => void | Promise<void>;
   showChrome?: boolean;
   className?: string;
   importOpen?: boolean;
   onImportOpenChange?: (open: boolean) => void;
+  onSwitchToBulkImport?: () => void;
+  onCreatingChange?: (creating: boolean) => void;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -43,6 +48,10 @@ export function NewShipmentForm({
   const setImportOpen = importControlled
     ? (open: boolean) => onImportOpenChange!(open)
     : setImportOpenInternal;
+
+  useEffect(() => {
+    onCreatingChange?.(loading);
+  }, [loading, onCreatingChange]);
 
   const formSurfaceClass =
     showChrome === false
@@ -82,9 +91,19 @@ export function NewShipmentForm({
         setError(r.error);
         return;
       }
-      onCreated?.(r.data.shipment_id);
-      router.push(`/shipments/${r.data.shipment_id}`);
-      router.refresh();
+
+      const shipmentId = r.data.shipment_id?.trim();
+      if (!shipmentId) {
+        setError("Shipment created but no id was returned.");
+        return;
+      }
+
+      if (onCreated) {
+        await onCreated(shipmentId);
+      } else {
+        await router.push(`/shipments/${shipmentId}`);
+        router.refresh();
+      }
     } finally {
       setLoading(false);
     }
@@ -96,7 +115,7 @@ export function NewShipmentForm({
         {showChrome ? (
           <div className="mb-1 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">New shipment</h2>
+              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">New Shipment</h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Enter details manually or import from a spreadsheet, CSV, or JSON. Upload documents and invite customers from the workspace
                 after creation.
@@ -123,9 +142,16 @@ export function NewShipmentForm({
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+          className={NEW_SHIPMENT_SUBMIT_BUTTON_CLASS}
         >
-          {loading ? "Creating…" : "Create Shipment"}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Creating…
+            </>
+          ) : (
+            "Create Shipment"
+          )}
         </button>
       </form>
 
@@ -135,6 +161,7 @@ export function NewShipmentForm({
         organizationId={organizationId}
         variant="single"
         onApply={applyImport}
+        onSwitchToBulkImport={onSwitchToBulkImport}
       />
     </>
   );

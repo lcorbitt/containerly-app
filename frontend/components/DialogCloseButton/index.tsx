@@ -11,6 +11,7 @@ type DialogCloseButtonProps = {
   onClick: () => void;
   tone?: DialogCloseButtonTone;
   className?: string;
+  disabled?: boolean;
   "aria-label"?: string;
 };
 
@@ -21,13 +22,15 @@ export function DialogCloseButton({
   onClick,
   tone = "default",
   className = "",
+  disabled = false,
   "aria-label": ariaLabel = "Close",
 }: DialogCloseButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:focus-visible:ring-zinc-500/40 ${toneStyles[tone]} ${className}`.trim()}
+      disabled={disabled}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-zinc-500/40 ${toneStyles[tone]} ${className}`.trim()}
       aria-label={ariaLabel}
     >
       <X className="h-5 w-5" strokeWidth={2} aria-hidden />

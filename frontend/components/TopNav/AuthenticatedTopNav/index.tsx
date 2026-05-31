@@ -27,7 +27,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
     initials,
     avatarUrl,
     accountPrimaryLabel,
-    openTrackContainerModal,
+    openNewShipmentModal,
     openBulkImportModal,
     openMockJourneyModal,
     toggleMenu,
@@ -56,7 +56,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
         ) : null} */}
         <button
           type="button"
-          onClick={() => openTrackContainerModal()}
+          onClick={() => openNewShipmentModal()}
           className={AUTHENTICATED_TOP_NAV_ACTION_CLASS}
           title="Create a new shipment"
           aria-haspopup="dialog"
