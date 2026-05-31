@@ -1,11 +1,34 @@
-import { pillBase, trackingWorkflowPillClass, workflowLabel } from "./utils";
+import {
+  pillBase,
+  pillCompactBase,
+  shipmentWorkflowDisplayLabel,
+  shipmentWorkflowPillClass,
+  trackingWorkflowPillClass,
+  workflowLabel,
+} from "./utils";
 
-export { trackingWorkflowPillClass } from "./utils";
+export { shipmentWorkflowPillClass, trackingWorkflowPillClass } from "./utils";
 
 export function TrackingWorkflowStatusPill({ status }: { status: string }) {
   return (
     <span className={`${pillBase} ${trackingWorkflowPillClass(status)}`} title={status}>
       {workflowLabel(status)}
+    </span>
+  );
+}
+
+export function ShipmentWorkflowStatusPill({
+  status,
+  compact = false,
+}: {
+  status: string;
+  compact?: boolean;
+}) {
+  const label = shipmentWorkflowDisplayLabel(status);
+  const base = compact ? pillCompactBase : pillBase;
+  return (
+    <span className={`${base} ${shipmentWorkflowPillClass(status)}`} title={label}>
+      {label}
     </span>
   );
 }

@@ -18,6 +18,7 @@ export async function GET(
   const snapshot = await fetchShipmentAccessTabSnapshot(supabase, {
     shipmentId,
     organizationId: orgId,
+    currentUserId: user.id,
   });
   return NextResponse.json({ snapshot });
 }

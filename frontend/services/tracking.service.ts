@@ -141,8 +141,8 @@ export async function createTrackingRequest(
   if (args.shipping_line?.trim()) body.shipping_line = args.shipping_line.trim();
   if (args.shipment_id != null && args.shipment_id !== "")
     body.shipment_id = args.shipment_id.trim();
-  if (args.shipment_reference?.trim())
-    body.shipment_reference = args.shipment_reference.trim();
+  if (args.shipment_order_number?.trim())
+    body.shipment_order_number = args.shipment_order_number.trim();
 
   const raw = (await callEdgeFunction(EDGE_FUNCTION_SLUGS.tracking.createRequest, body)) as CreateTrackingRequestResponse;
   if (raw?.sync_error) throw new Error(raw.sync_error);

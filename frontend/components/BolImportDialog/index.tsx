@@ -55,12 +55,12 @@ export function BolImportDialog({
       <div className="max-h-[min(90vh,640px)] w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-950">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Import from bill of lading</h2>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              Bulk carrier import (premium)
+            </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              Matches carrier data: one BOL lists many container numbers. We create{" "}
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">one shipment</strong> with a{" "}
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">container line</strong> per number,
-              then sync each line the same way as tracking a single container (carrier container API per unit).
+              Optional after document approval: one BOL can list many container numbers. We create one shipment with a
+              carrier sync line per unit — use only when live API tracking is enabled for the move.
             </p>
           </div>
           <DialogCloseButton onClick={handleClose} />

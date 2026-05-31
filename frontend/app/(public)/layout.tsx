@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PublicTopNav } from "@/components/TopNav";
 
 export const metadata: Metadata = {
-  title: "Containerly — Logistics visibility, engineered",
+  title: "Containerly — Customer portal for logistics teams",
   description:
-    "Multi-tenant container tracking with Postgres RLS, Edge Function sync, cached state, and alerts on exceptions.",
+    "Export documentation workflows and branded customer portals for logistics operators. Optional live carrier tracking when you need it.",
 };
 
 export default function PublicLayout({

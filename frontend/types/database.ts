@@ -41,8 +41,10 @@ export type Shipment = {
   organization_id: string;
   /** Org member who owns this shipment (containers and tracking lines are grouped under it). */
   created_by?: string | null;
-  /** Human title; often primary container number or BOL label. */
-  reference: string;
+  /** Primary commercial identifier (PO / order no.). */
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
   status: string | null;
   metadata: Record<string, unknown> | null;
   /** Carrier BOL; JSONCargo `/containers/bol/{bill_of_lading_number}`. */
@@ -53,6 +55,46 @@ export type Shipment = {
   shipment_group_id?: string | null;
   /** Primary operator for triage (defaults to `created_by` on insert). */
   assignee_user_id?: string | null;
+  customer_name?: string | null;
+  country?: string | null;
+  port_of_loading?: string | null;
+  port_of_destination?: string | null;
+  estimated_departure_at?: string | null;
+  estimated_arrival_at?: string | null;
+  freight_booking_carrier?: string | null;
+  vessel?: string | null;
+  voyage?: string | null;
+  health_certificate_no?: string | null;
+  trade_terms?: string | null;
+  physical_mail_tracking_number?: string | null;
+  physical_mail_sent_at?: string | null;
+  workflow_status?: string | null;
+  /** Operator labels for triage and filtering. */
+  tags?: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ShipmentLine = {
+  id: string;
+  shipment_id: string;
+  organization_id: string;
+  container_id: string | null;
+  container_number: string | null;
+  order_number: string | null;
+  carrier_booking_number: string | null;
+  customer_name: string | null;
+  country: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  estimated_departure_at: string | null;
+  estimated_arrival_at: string | null;
+  freight_booking_carrier: string | null;
+  vessel: string | null;
+  voyage: string | null;
+  health_certificate_no: string | null;
+  trade_terms: string | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -106,6 +148,7 @@ export type Alert = {
   organization_id: string;
   tracking_request_id: string | null;
   container_id: string | null;
+  shipment_id: string | null;
   alert_type: string;
   severity: string;
   message: string;
@@ -142,6 +185,7 @@ export type CustomerInvite = {
   accepted_at: string | null;
   accepted_by_user_id: string | null;
   visibility_settings: Record<string, unknown>;
+  delivery_mode?: "email_invite" | "allowlist_only";
   created_at: string;
 };
 
@@ -195,6 +239,8 @@ export type WorkspaceAttachment = {
   shipment_id: string | null;
   /** When true, hidden from customer portal and customer storage policies. */
   is_internal: boolean;
+  /** Who uploaded: org operator vs customer importer. */
+  uploaded_by_kind?: "operator" | "customer" | null;
   storage_path: string;
   file_name: string;
   content_type: string | null;
@@ -202,6 +248,12 @@ export type WorkspaceAttachment = {
   uploaded_by: string;
   /** When set, file was posted with this thread message (still listed in Documents). */
   report_message_id: string | null;
+  document_type?: string | null;
+  document_group?: string | null;
+  approval_status?: string | null;
+  rejection_reason?: string | null;
+  reviewed_at?: string | null;
+  shipment_line_id?: string | null;
   created_at: string;
 };
 

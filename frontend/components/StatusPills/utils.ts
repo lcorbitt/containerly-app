@@ -1,6 +1,15 @@
+import {
+  normalizeShipmentWorkflowStatus,
+  shipmentWorkflowDisplayLabel,
+} from "@/utils/shipment-workflow-status";
+
 /** Shared shell: uniform size, weight, and uppercase labels for scanability */
 export const pillBase =
   "inline-flex max-w-full items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset";
+
+/** Tighter pill for data tables — sentence case, smaller type */
+export const pillCompactBase =
+  "inline-flex max-w-full items-center rounded-md px-1.5 py-0.5 text-[10.5px] font-medium leading-snug ring-1 ring-inset whitespace-nowrap";
 
 function titleCaseWords(s: string): string {
   return s
@@ -30,6 +39,26 @@ export function trackingWorkflowPillClass(status: string): string {
   }
 }
 
+export function shipmentWorkflowPillClass(status: string): string {
+  const s = normalizeShipmentWorkflowStatus(status) ?? status.toLowerCase().trim();
+  switch (s) {
+    case "pending_drafts":
+      return "bg-zinc-100 text-zinc-800 ring-zinc-300/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-600/50";
+    case "awaiting_review":
+      return "bg-amber-50 text-amber-950 ring-amber-200/90 dark:bg-amber-950/45 dark:text-amber-100 dark:ring-amber-800/50";
+    case "rejected":
+      return "bg-red-50 text-red-950 ring-red-200/90 dark:bg-red-950/50 dark:text-red-100 dark:ring-red-800/45";
+    case "approved":
+      return "bg-emerald-50 text-emerald-950 ring-emerald-200/90 dark:bg-emerald-950/50 dark:text-emerald-100 dark:ring-emerald-800/45";
+    case "originals_sent":
+      return "bg-sky-50 text-sky-950 ring-sky-200/90 dark:bg-sky-950/50 dark:text-sky-100 dark:ring-sky-800/45";
+    default:
+      return "bg-zinc-100 text-zinc-800 ring-zinc-300/80 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-600/50";
+  }
+}
+
 export function workflowLabel(raw: string): string {
   return titleCaseWords(raw.replace(/_/g, " "));
 }
+
+export { shipmentWorkflowDisplayLabel };

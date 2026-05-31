@@ -4,15 +4,19 @@ import {
   BadgeCheck,
   Bell,
   Building2,
+  CheckCircle2,
   Clock,
   FileUp,
   Info,
   Mail,
+  MailOpen,
   MessageSquareReply,
   RefreshCw,
   ScrollText,
+  Send,
   UserCheck,
   Users,
+  XCircle,
 } from "lucide-react";
 
 export type IconConfig = { Icon: LucideIcon; className: string };
@@ -35,6 +39,14 @@ export function alertTypeIconConfig(alertType: string): IconConfig {
       return { Icon: MessageSquareReply, className: "text-cyan-600 dark:text-cyan-400" };
     case "DOCUMENT_UPLOADED":
       return { Icon: FileUp, className: "text-emerald-600 dark:text-emerald-400" };
+    case "DOCUMENT_REJECTED":
+      return { Icon: XCircle, className: "text-red-600 dark:text-red-400" };
+    case "DOCUMENTS_APPROVED":
+      return { Icon: CheckCircle2, className: "text-green-600 dark:text-green-400" };
+    case "DOCUMENTS_MAILED":
+      return { Icon: MailOpen, className: "text-violet-600 dark:text-violet-400" };
+    case "CUSTOMER_INVITE_SENT":
+      return { Icon: Send, className: "text-sky-600 dark:text-sky-400" };
     case "ORG_INVITE_ACCEPTED":
       return { Icon: BadgeCheck, className: "text-green-600 dark:text-green-400" };
     case "CUSTOMER_JOINED_ORG":

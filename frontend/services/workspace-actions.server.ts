@@ -286,6 +286,32 @@ export async function loadShipmentScopeThreadForUser(
   };
 }
 
+async function resolveShipmentAttachmentUploaderKind(
+  supabase: SupabaseClient,
+  organizationId: string,
+  shipmentId: string,
+  userId: string,
+): Promise<"operator" | "customer"> {
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (member) return "operator";
+
+  const { data: access } = await supabase
+    .from("shipment_customer_access")
+    .select("id")
+    .eq("shipment_id", shipmentId)
+    .eq("customer_user_id", userId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (access) return "customer";
+
+  return "operator";
+}
+
 async function persistShipmentAttachmentFileServer(
   supabase: SupabaseClient,
   args: {
@@ -294,10 +320,17 @@ async function persistShipmentAttachmentFileServer(
     userId: string;
     file: File;
     reportMessageId: string | null;
-    isInternal: boolean;
+    documentType?: string | null;
+    documentGroup?: string | null;
   },
 ): Promise<WorkspaceAttachment> {
-  const { organizationId, shipmentId, userId, file, reportMessageId, isInternal } = args;
+  const { organizationId, shipmentId, userId, file, reportMessageId, documentType, documentGroup } = args;
+  const uploadedByKind = await resolveShipmentAttachmentUploaderKind(
+    supabase,
+    organizationId,
+    shipmentId,
+    userId,
+  );
   if (file.size > MAX_ATTACHMENT_FILE_BYTES) {
     throw new Error(`${file.name} is too large (max ${MAX_ATTACHMENT_SIZE_LABEL})`);
   }
@@ -320,12 +353,17 @@ async function persistShipmentAttachmentFileServer(
     file_size_bytes: number;
     uploaded_by: string;
     is_internal: boolean;
+    uploaded_by_kind: "operator" | "customer";
     report_message_id?: string;
+    document_type?: string | null;
+    document_group?: string | null;
+    approval_status?: string | null;
   } = {
     organization_id: organizationId,
     shipment_id: shipmentId,
     container_id: null,
-    is_internal: isInternal,
+    is_internal: false,
+    uploaded_by_kind: uploadedByKind,
     storage_path: path,
     file_name: file.name,
     content_type: file.type || null,
@@ -333,6 +371,13 @@ async function persistShipmentAttachmentFileServer(
     uploaded_by: userId,
   };
   if (reportMessageId) insertRow.report_message_id = reportMessageId;
+  if (documentType) insertRow.document_type = documentType;
+  if (documentGroup) {
+    insertRow.document_group = documentGroup;
+    if (documentGroup === "draft" || documentGroup === "revision") {
+      insertRow.approval_status = "pending";
+    }
+  }
 
   const { data: inserted, error: insErr } = await supabase
     .from("workspace_attachments")
@@ -418,7 +463,6 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
         userId,
         file,
         reportMessageId: messageId,
-        isInternal: input.internalOnly,
       });
     } catch (e) {
       attachmentErrors.push(e instanceof Error ? e.message : "Could not upload an attachment");
@@ -430,7 +474,13 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
 export async function uploadShipmentScopeStandaloneFilesForUser(
   supabase: SupabaseClient,
   userId: string,
-  input: { organizationId: string; shipmentId: string; files: File[]; isInternal: boolean },
+  input: {
+    organizationId: string;
+    shipmentId: string;
+    files: File[];
+    documentType?: string | null;
+    documentGroup?: string | null;
+  },
 ): Promise<WorkspaceAttachment[]> {
   const out: WorkspaceAttachment[] = [];
   for (const file of input.files) {
@@ -440,7 +490,8 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
       userId,
       file,
       reportMessageId: null,
-      isInternal: input.isInternal,
+      documentType: input.documentType,
+      documentGroup: input.documentGroup,
     });
     out.push(inserted);
   }

@@ -5,6 +5,8 @@ export type DocumentsListStoredFile = {
   uploadedByUserId?: string;
   /** Shown under the file name (e.g. uploader). */
   uploadedByLabel?: string;
+  /** Operator vs customer upload source. */
+  uploadedByKind?: "operator" | "customer" | null;
   /** For image thumbnails via signed URL (`workspace-files` bucket). */
   contentType?: string | null;
   storagePath?: string | null;
@@ -18,8 +20,10 @@ export type DocumentsListProps = {
   billOfLading?: string;
   /** Object-storage files from tracking request attachments. */
   storedFiles?: DocumentsListStoredFile[];
-  /** When set, shows upload control in the header. */
+  /** When set, shows upload control in the header (opens native file picker). */
   onPickFiles?: (files: FileList | null) => void;
+  /** When set, Upload opens this handler instead of the native file picker. */
+  onUploadClick?: () => void;
   uploading?: boolean;
   onRemoveFile?: (id: string) => void;
   removingFileId?: string | null;
@@ -29,4 +33,6 @@ export type DocumentsListProps = {
   renamingFileId?: string | null;
   /** `embedded`: fill a parent tab/panel (no outer card chrome or max-height cap). */
   variant?: "card" | "embedded";
+  /** When true, omits the built-in title/upload header (parent provides chrome). */
+  hideHeader?: boolean;
 };

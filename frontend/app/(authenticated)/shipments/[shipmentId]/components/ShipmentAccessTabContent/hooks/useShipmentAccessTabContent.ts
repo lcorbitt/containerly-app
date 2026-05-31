@@ -19,6 +19,7 @@ import type {
   ShipmentParticipant,
 } from "@/types/database";
 import type { CustomSelectOption } from "@/components/CustomSelect";
+import { parseCustomerInviteRecipients } from "@/utils/customer-invite-recipients";
 
 export function useShipmentAccessTabContent({
   shipmentId,
@@ -45,7 +46,11 @@ export function useShipmentAccessTabContent({
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteCreating, setInviteCreating] = useState(false);
+  const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">("email_invite");
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
+  const [tags, setTags] = useState<string[]>([]);
+  const [orgTagSuggestions, setOrgTagSuggestions] = useState<string[]>([]);
+  const [emailNotificationsSubscribed, setEmailNotificationsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,10 +72,22 @@ export function useShipmentAccessTabContent({
       setOrgPeers(snap.orgPeers);
       setProfileImagePathByUserId(snap.profileImagePathByUserId);
       setMessageAuthorByUserId(snap.messageAuthorByUserId);
+      setTags(snap.tags);
+      setOrgTagSuggestions(snap.orgTagSuggestions);
+      setEmailNotificationsSubscribed(snap.emailNotificationsSubscribed);
     } finally {
       setLoading(false);
     }
   }, [selectedOrgId, shipmentId]);
+
+  const applySavedTags = useCallback((savedTags: string[]) => {
+    setTags(savedTags);
+    setOrgTagSuggestions((prev) => {
+      const merged = new Set(prev);
+      for (const tag of savedTags) merged.add(tag);
+      return [...merged].sort((a, b) => a.localeCompare(b));
+    });
+  }, []);
 
   useEffect(() => {
     void load();
@@ -176,27 +193,88 @@ export function useShipmentAccessTabContent({
 
   async function createInvite() {
     if (!selectedOrgId) return;
-    const email = inviteEmail.trim().toLowerCase();
-    if (!email.includes("@")) {
-      toast("Enter the importer's email address.", "error");
+
+    const { emails, invalidTokens } = parseCustomerInviteRecipients(inviteEmail);
+    if (invalidTokens.length > 0) {
+      toast(
+        `Enter valid email addresses (including group lists like team@company.com). Invalid: ${invalidTokens.join(", ")}`,
+        "error",
+      );
       return;
     }
+    if (emails.length === 0) {
+      toast("Enter at least one customer email address.", "error");
+      return;
+    }
+
     setInviteCreating(true);
     try {
-      const r = await createImporterInvite({
-        organizationId: selectedOrgId,
-        shipmentId,
-        invitedEmail: email,
-      });
-      if (!r.ok) {
-        toast(r.error, "error");
+      const portalUrl = `${origin}/shipments/hub/${shipmentId}`;
+      let successCount = 0;
+      let singleInviteUrl: string | null = null;
+      const failures: string[] = [];
+
+      for (const email of emails) {
+        const r = await createImporterInvite({
+          organizationId: selectedOrgId,
+          shipmentId,
+          invitedEmail: email,
+          deliveryMode: inviteDeliveryMode,
+        });
+        if (!r.ok) {
+          failures.push(`${email}: ${r.error}`);
+          continue;
+        }
+
+        successCount += 1;
+        singleInviteUrl =
+          inviteDeliveryMode === "allowlist_only"
+            ? portalUrl
+            : r.invite_url.startsWith("http")
+              ? r.invite_url
+              : `${origin}${r.invite_url}`;
+      }
+
+      if (successCount === 0) {
+        toast(failures[0] ?? "Could not create invites.", "error");
         return;
       }
-      const fullUrl = r.invite_url.startsWith("http") ? r.invite_url : `${origin}${r.invite_url}`;
-      setLastInviteUrl(fullUrl);
+
       setInviteEmail("");
       await load();
-      toast("Invite created — copy the link below for your importer.", "success");
+
+      if (successCount === 1 && singleInviteUrl) {
+        setLastInviteUrl(singleInviteUrl);
+      } else if (inviteDeliveryMode === "allowlist_only") {
+        setLastInviteUrl(portalUrl);
+      } else {
+        setLastInviteUrl(null);
+      }
+
+      if (failures.length > 0) {
+        toast(
+          `${successCount} invite${successCount === 1 ? "" : "s"} sent. ${failures.length} failed.`,
+          "info",
+        );
+        return;
+      }
+
+      if (successCount > 1) {
+        toast(
+          inviteDeliveryMode === "allowlist_only"
+            ? `${successCount} emails allowlisted — share the portal link with your importers.`
+            : `${successCount} invite emails sent.`,
+          "success",
+        );
+        return;
+      }
+
+      toast(
+        inviteDeliveryMode === "allowlist_only"
+          ? "Email allowlisted — share the portal link with your importer."
+          : "Invite email sent — copy the link below if needed.",
+        "success",
+      );
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not create invite", "error");
     } finally {
@@ -235,6 +313,8 @@ export function useShipmentAccessTabContent({
 
     inviteEmail,
     setInviteEmail,
+    inviteDeliveryMode,
+    setInviteDeliveryMode,
     inviteCreating,
     lastInviteUrl,
     setLastInviteUrl,
@@ -246,5 +326,12 @@ export function useShipmentAccessTabContent({
     revokeAccessRow,
     load,
     toast,
+
+    tags,
+    orgTagSuggestions,
+    applySavedTags,
+    emailNotificationsSubscribed,
   } as const;
 }
+
+export type ShipmentAccessTabContentState = ReturnType<typeof useShipmentAccessTabContent>;

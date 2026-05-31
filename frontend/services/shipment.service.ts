@@ -1,4 +1,13 @@
 import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
+import type {
+  CreateShipmentBody,
+  CreateShipmentResponse,
+  ReviewShipmentDocumentBody,
+  ReviewShipmentDocumentResponse,
+  UpdateShipmentBody,
+  UpdateShipmentResponse,
+} from "@shared/dto/logistics.dto";
+import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import type { AcceptCustomerInviteResponse } from "@shared/dto/customer-access.dto";
 import type { ServiceResult } from "@shared/dto/common.dto";
 import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto";
@@ -65,7 +74,7 @@ export type OperatorShipmentScope = "all" | "mine" | "unassigned" | "participati
 export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
   "last_sync_at",
   "created_at",
-  "reference",
+  "order_number",
   "bill_of_lading",
 ] as const;
 
@@ -75,7 +84,7 @@ export function normalizeOperatorShipmentSortColumn(raw: string | null): Operato
   if (raw && (OPERATOR_SHIPMENT_SORT_COLUMNS as readonly string[]).includes(raw)) {
     return raw as OperatorShipmentSortColumn;
   }
-  return "last_sync_at";
+  return "created_at";
 }
 
 export type ShipmentOverviewTrackingRow = Pick<
@@ -93,10 +102,15 @@ export type ShipmentOverviewTrackingRow = Pick<
 export type ShipmentOverviewRow = {
   id: string;
   organization_id: string;
-  reference: string;
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
+  customer_name: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */
   owner_user_id: string | null;
@@ -135,7 +149,7 @@ export function maxLastSyncIso(row: ShipmentOverviewRow): string | null {
 /* ------------------------------------------------------------------ */
 
 export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
-  "reference",
+  "order_number",
   "created_at",
   "updated_at",
 ] as const;
@@ -169,7 +183,7 @@ export type ImporterGrantedShipmentRow = {
   /** Shipment id — use for `/shipments/hub/[id]` (shared tracking) and `get-shipment`. */
   id: string;
   access_grant_id: string;
-  reference: string;
+  order_number: string;
   container_number: string;
   status: string;
   last_sync_at: string | null;
@@ -190,6 +204,9 @@ export type ShipmentAccessTabSnapshot = {
   customerAccessRows: ShipmentCustomerAccess[];
   pendingInvites: CustomerInvite[];
   messageAuthorByUserId: Record<string, string>;
+  tags: string[];
+  orgTagSuggestions: string[];
+  emailNotificationsSubscribed: boolean;
 };
 
 export async function fetchShipmentAccessTabSnapshotForBrowser(input: {
@@ -215,6 +232,38 @@ export async function updateShipmentAssignee(input: {
       body: JSON.stringify({ assignee_user_id: input.assigneeUserId }),
     },
   );
+}
+
+export async function updateShipmentTags(input: {
+  shipmentId: string;
+  organizationId: string;
+  tags: string[];
+}): Promise<string[]> {
+  const r = await apiJson<{ ok: true; tags: string[] }>(
+    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/tags`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags: input.tags }),
+    },
+  );
+  return r.tags;
+}
+
+export async function updateShipmentNotificationSubscription(input: {
+  shipmentId: string;
+  organizationId: string;
+  subscribed: boolean;
+}): Promise<boolean> {
+  const r = await apiJson<{ ok: true; subscribed: boolean }>(
+    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/notifications`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscribed: input.subscribed }),
+    },
+  );
+  return r.subscribed;
 }
 
 export async function insertShipmentParticipant(input: {
@@ -280,13 +329,29 @@ export async function updateShipmentCustomerAccessSettings(input: {
 export type ShipmentWorkspaceRow = {
   id: string;
   organization_id: string;
-  reference: string;
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
   created_at: string;
   owner_user_id: string | null;
+  creator_display_name: string | null;
   assignee_user_id: string | null;
+  customer_name: string | null;
+  country: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  estimated_departure_at: string | null;
+  estimated_arrival_at: string | null;
+  freight_booking_carrier: string | null;
+  vessel: string | null;
+  voyage: string | null;
+  health_certificate_no: string | null;
+  trade_terms: string | null;
+  workflow_status: string | null;
+  physical_mail_tracking_number: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
 };
 
@@ -431,6 +496,8 @@ export async function createImporterInvite(args: {
   organizationId: string;
   shipmentId: string;
   invitedEmail: string;
+  deliveryMode?: "email_invite" | "allowlist_only";
+  visibilitySettings?: Record<string, unknown>;
 }): Promise<
   | { ok: true; invite_url: string; token?: string; expires_at: string }
   | { ok: false; status: number; error: string }
@@ -443,6 +510,8 @@ export async function createImporterInvite(args: {
         organization_id: args.organizationId,
         shipment_id: args.shipmentId,
         invited_email: args.invitedEmail.trim().toLowerCase(),
+        delivery_mode: args.deliveryMode ?? "email_invite",
+        visibility_settings: args.visibilitySettings,
       }),
     });
     if ("error" in r) {
@@ -621,7 +690,7 @@ export async function loadOperatorTrackingRequestsPageBrowser(args: {
 
 export type ShipmentPickRow = {
   id: string;
-  reference: string;
+  order_number: string;
   created_at: string;
 };
 
@@ -634,4 +703,84 @@ export async function fetchOrganizationShipmentsForTrackingPick(
     `/api/organizations/${encodeURIComponent(organizationId)}/shipments/pick?${params}`,
   );
   return rows ?? [];
+}
+
+export async function createCommercialShipment(
+  body: CreateShipmentBody,
+): Promise<{ ok: true; data: CreateShipmentResponse } | { ok: false; status: number; error: string }> {
+  try {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.create, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if ("error" in r) return { ok: false, status: r.status, error: r.error };
+    let parsed: unknown = r.text;
+    try {
+      parsed = r.text ? JSON.parse(r.text) : null;
+    } catch {
+      /* leave */
+    }
+    if (!r.res.ok) {
+      const err = parsed as { error?: string };
+      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
+    }
+    return { ok: true, data: parsed as CreateShipmentResponse };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function updateCommercialShipment(
+  body: UpdateShipmentBody,
+): Promise<{ ok: true; data: UpdateShipmentResponse } | { ok: false; status: number; error: string }> {
+  try {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.update, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if ("error" in r) return { ok: false, status: r.status, error: r.error };
+    let parsed: unknown = r.text;
+    try {
+      parsed = r.text ? JSON.parse(r.text) : null;
+    } catch {
+      /* leave */
+    }
+    if (!r.res.ok) {
+      const err = parsed as { error?: string };
+      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
+    }
+    return { ok: true, data: parsed as UpdateShipmentResponse };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function reviewShipmentDocument(
+  body: ReviewShipmentDocumentBody,
+): Promise<
+  { ok: true; data: ReviewShipmentDocumentResponse } | { ok: false; status: number; error: string }
+> {
+  try {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.reviewDocument, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if ("error" in r) return { ok: false, status: r.status, error: r.error };
+    let parsed: unknown = r.text;
+    try {
+      parsed = r.text ? JSON.parse(r.text) : null;
+    } catch {
+      /* leave */
+    }
+    if (!r.res.ok) {
+      const err = parsed as { error?: string };
+      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
+    }
+    return { ok: true, data: parsed as ReviewShipmentDocumentResponse };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
 }

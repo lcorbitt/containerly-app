@@ -7,6 +7,7 @@ import { PublicContainerReport } from "@/components/PublicContainerReport";
 import { PageLoading } from "@/components/PageLoading";
 import { fetchShipment } from "@/services/shipment.service";
 import type { PublicReportPayload } from "@/types/public-report";
+import { CustomerPortalShareMenu } from "./components/CustomerPortalShareMenu";
 
 export default function SharedShipmentTrackingPage({
   params,
@@ -71,5 +72,11 @@ export default function SharedShipmentTrackingPage({
     );
   }
 
-  return <PublicContainerReport shipmentId={shipmentId} initial={data} />;
+  return (
+    <PublicContainerReport
+      shipmentId={shipmentId}
+      initial={data}
+      headerActions={data.viewer === "operator" ? <CustomerPortalShareMenu shipmentId={shipmentId} /> : undefined}
+    />
+  );
 }

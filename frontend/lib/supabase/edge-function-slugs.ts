@@ -17,6 +17,10 @@ export const EDGE_FUNCTION_SLUGS = {
   },
   shipments: {
     get: "get-shipment",
+    create: "create-shipment",
+    update: "update-shipment",
+    reviewDocument: "review-shipment-document",
+    claimAccess: "claim-shipment-access",
     postCustomerMessage: "post-customer-shipment-message",
     previewCustomer: "preview-customer-shipment",
   },

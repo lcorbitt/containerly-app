@@ -65,7 +65,7 @@ function ImporterGrantedShipmentsList() {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
-  const [sortColumn, setSortColumn] = useState<ImporterGrantedShipmentSortColumn>("reference");
+  const [sortColumn, setSortColumn] = useState<ImporterGrantedShipmentSortColumn>("order_number");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -194,12 +194,12 @@ function ImporterGrantedShipmentsList() {
 
       <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
         <label className="sr-only" htmlFor="shipments-search">
-          Search by container or reference
+          Search by container or order no.
         </label>
         <input
           id="shipments-search"
           type="search"
-          placeholder="Search container, BOL, or reference…"
+          placeholder="Search container, BOL, or order no.…"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           disabled={loading}

@@ -5,16 +5,18 @@ import { CustomerAccessPanel } from "../CustomerAccessPanel";
 import { CustomMenuSelect, CustomSelect } from "@/components/CustomSelect";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
-import { useShipmentAccessTabContent } from "./hooks/useShipmentAccessTabContent";
+import type { ShipmentAccessTabContentState } from "./hooks/useShipmentAccessTabContent";
 
 export function ShipmentAccessTabContent({
+  variant = "panel",
+  state,
   shipmentId,
-  initialAssigneeUserId,
   onMetaChanged,
 }: {
-  shipmentId: string;
-  initialAssigneeUserId: string | null;
-  onMetaChanged: () => void;
+  /** `sidebar` — right column on shipment header; `header` kept for legacy two-column in-panel layout. */
+  variant?: "panel" | "header" | "sidebar";
+  state: ShipmentAccessTabContentState;
+  shipmentId?: string;
 }) {
   const {
     selectedOrgId,
@@ -37,6 +39,8 @@ export function ShipmentAccessTabContent({
 
     inviteEmail,
     setInviteEmail,
+    inviteDeliveryMode,
+    setInviteDeliveryMode,
     inviteCreating,
     lastInviteUrl,
     setLastInviteUrl,
@@ -48,24 +52,43 @@ export function ShipmentAccessTabContent({
     revokeAccessRow,
     load,
     toast,
-  } = useShipmentAccessTabContent({ shipmentId, initialAssigneeUserId, onMetaChanged });
+  } = state;
 
   if (!selectedOrgId) {
     return <p className="p-4 text-sm text-zinc-500">Select an organization.</p>;
   }
 
+  const isHeader = variant === "header";
+  const isSidebar = variant === "sidebar";
+
   if (loading) {
-    return <p className="p-4 text-sm text-zinc-500">Loading access…</p>;
+    return (
+      <p className="text-sm text-zinc-500">
+        {isSidebar ? "Loading…" : "Loading team and importer access…"}
+      </p>
+    );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 sm:p-5">
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Shipment team</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Assignee and participants apply to the whole shipment (all container lines).
-        </p>
-        <div className="mt-4 space-y-5">
+    <div
+      className={
+        isSidebar
+          ? "flex flex-col gap-4"
+          : isHeader
+            ? "grid gap-4 lg:grid-cols-2"
+            : "flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 sm:p-5"
+      }
+    >
+      <section
+        className={
+          isSidebar
+            ? undefined
+            : isHeader
+              ? "rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
+              : "rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+        }
+      >
+        <div className="space-y-5">
           <div>
             <label
               id="shipment-assignee-label"
@@ -140,23 +163,34 @@ export function ShipmentAccessTabContent({
         </div>
       </section>
 
-      <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <CustomerAccessPanel
-          inviteEmail={inviteEmail}
-          onInviteEmailChange={setInviteEmail}
-          creating={inviteCreating}
-          onCreateInvite={() => void createInvite()}
-          lastInviteUrl={lastInviteUrl}
-          onClearLastInviteUrl={() => setLastInviteUrl(null)}
-          pendingInvites={pendingInvites}
-          activeAccess={activeAccessWithLabels}
-          origin={origin}
-          onRevokeInvite={revokeInviteRow}
-          onRevokeAccess={revokeAccessRow}
-          onToast={toast}
-          onReloadAccess={() => load()}
-        />
-      </section>
+      {!isSidebar ? (
+        <section
+          className={
+            isHeader
+              ? "min-h-0 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30"
+              : "min-h-0 flex-1 overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+          }
+        >
+          <CustomerAccessPanel
+            variant="panel"
+            inviteEmail={inviteEmail}
+            onInviteEmailChange={setInviteEmail}
+            deliveryMode={inviteDeliveryMode}
+            onDeliveryModeChange={setInviteDeliveryMode}
+            creating={inviteCreating}
+            onCreateInvite={() => void createInvite()}
+            lastInviteUrl={lastInviteUrl}
+            onClearLastInviteUrl={() => setLastInviteUrl(null)}
+            pendingInvites={pendingInvites}
+            activeAccess={activeAccessWithLabels}
+            origin={origin}
+            onRevokeInvite={revokeInviteRow}
+            onRevokeAccess={revokeAccessRow}
+            onToast={toast}
+            onReloadAccess={() => load()}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }

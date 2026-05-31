@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CreateOrgForm } from "@/app/(authenticated)/admin/organizations/components/CreateOrgForm";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 
@@ -47,12 +46,6 @@ export function AdminOrganizationsPanel() {
           void refreshOrgs().then(() => setSelectedOrgId(id));
         }}
       />
-
-      <p className="text-xs text-zinc-400">
-        <Link href="/dashboard" className="underline">
-          Back to dashboard
-        </Link>
-      </p>
     </div>
   );
 }

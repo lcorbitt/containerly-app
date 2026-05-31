@@ -8,29 +8,41 @@ import type { CustomSelectOption } from "@/components/CustomSelect";
 interface UseNewTrackingFormParams {
   organizationId: string;
   onCreated: () => void;
+  /** When set, attach sync to this shipment and hide shipment picker. */
+  fixedShipmentId?: string;
 }
 
 export function useNewTrackingForm({
   organizationId,
   onCreated,
+  fixedShipmentId,
 }: UseNewTrackingFormParams) {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingLine, setShippingLine] = useState("");
-  const [shipmentMode, setShipmentMode] = useState<"new" | "existing">("new");
-  const [shipmentReference, setShipmentReference] = useState("");
-  const [existingShipmentId, setExistingShipmentId] = useState("");
+  const [shipmentMode, setShipmentMode] = useState<"new" | "existing">(
+    fixedShipmentId ? "existing" : "existing",
+  );
+  const [orderNumber, setOrderNumber] = useState("");
+  const [existingShipmentId, setExistingShipmentId] = useState(fixedShipmentId ?? "");
   const [shipments, setShipments] = useState<
-    { id: string; reference: string; created_at: string }[]
+    { id: string; order_number: string; created_at: string }[]
   >([]);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
   const [shipmentsError, setShipmentsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (fixedShipmentId) {
+      setExistingShipmentId(fixedShipmentId);
+      setShipmentMode("existing");
+    }
+  }, [fixedShipmentId]);
+
   const shipmentSelectOptions = useMemo((): CustomSelectOption[] => {
     return shipments.map((s) => ({
       value: s.id,
-      label: `${s.reference} · ${new Date(s.created_at).toLocaleDateString()}`,
+      label: `${s.order_number} · ${new Date(s.created_at).toLocaleDateString()}`,
     }));
   }, [shipments]);
 
@@ -42,6 +54,7 @@ export function useNewTrackingForm({
         await fetchOrganizationShipmentsForTrackingPick(organizationId);
       setShipments(rows);
       setExistingShipmentId((prev) => {
+        if (fixedShipmentId) return fixedShipmentId;
         if (prev && rows.some((r) => r.id === prev)) return prev;
         return rows[0]?.id ?? "";
       });
@@ -53,23 +66,25 @@ export function useNewTrackingForm({
     } finally {
       setShipmentsLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, fixedShipmentId]);
 
   useEffect(() => {
+    if (fixedShipmentId) return;
     if (shipmentMode !== "existing") return;
     void loadShipments();
-  }, [shipmentMode, loadShipments]);
+  }, [shipmentMode, loadShipments, fixedShipmentId]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const trimmed = trackingNumber.trim();
     if (!trimmed) {
-      setError("Enter a tracking number.");
+      setError("Enter a container number.");
       return;
     }
-    if (shipmentMode === "existing" && !existingShipmentId) {
-      setError("Choose a shipment, or switch to \u201cNew shipment\u201d.");
+    const shipmentId = fixedShipmentId ?? existingShipmentId;
+    if (shipmentMode === "existing" && !shipmentId) {
+      setError("Choose a shipment first.");
       return;
     }
 
@@ -83,15 +98,15 @@ export function useNewTrackingForm({
           ? { shipping_line: shippingLine.trim() }
           : {}),
         ...(shipmentMode === "existing"
-          ? { shipment_id: existingShipmentId }
-          : shipmentReference.trim()
-            ? { shipment_reference: shipmentReference.trim() }
+          ? { shipment_id: shipmentId }
+          : orderNumber.trim()
+            ? { shipment_order_number: orderNumber.trim() }
             : {}),
       });
 
       setTrackingNumber("");
       setShippingLine("");
-      setShipmentReference("");
+      setOrderNumber("");
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
@@ -102,7 +117,8 @@ export function useNewTrackingForm({
 
   const submitDisabled =
     loading ||
-    (shipmentMode === "existing" &&
+    (!fixedShipmentId &&
+      shipmentMode === "existing" &&
       (shipmentsLoading || shipments.length === 0));
 
   return {
@@ -112,8 +128,8 @@ export function useNewTrackingForm({
     setShippingLine,
     shipmentMode,
     setShipmentMode,
-    shipmentReference,
-    setShipmentReference,
+    orderNumber,
+    setOrderNumber,
     existingShipmentId,
     setExistingShipmentId,
     shipmentSelectOptions,
@@ -124,5 +140,6 @@ export function useNewTrackingForm({
     loading,
     submitDisabled,
     submit,
+    fixedShipmentId,
   };
 }

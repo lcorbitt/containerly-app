@@ -7,12 +7,16 @@ import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { ContainerTimeline } from "@/components/ContainerTimeline";
 import { formatTimestamp } from "@/utils/datetime";
 import { ShipmentDetailsPanel } from "@/components/ShipmentDetailsPanel";
-import { ShipmentTrackingMapPanel } from "@/components/ShipmentTrackingMap";
-import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
+import { ShipmentCommercialPanel } from "@/components/ShipmentCommercialPanel";
+import { ShipmentActivityPanel } from "@/components/ShipmentActivityPanel";
+import { createClient } from "@/lib/supabase/client";
+import { getOrgImagePublicUrl } from "@/utils/org-image";
+import { CarrierReportedStatusPill, ShipmentWorkflowStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { truncatedReplyPreview, type ThreadNode } from "@/utils/report-message-tree";
 import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
 import { VesselEnrichmentCard } from "@/components/VesselEnrichmentCard";
+import { attachmentUploaderKindLabel } from "@shared/dto/attachment.dto";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { publicThreadAuthorName } from "./utils";
 
@@ -121,10 +125,12 @@ export function PublicContainerReport({
   shipmentId,
   initial,
   readOnlyMessaging = false,
+  headerActions,
 }: {
   shipmentId: string;
   initial: PublicReportPayload;
   readOnlyMessaging?: boolean;
+  headerActions?: React.ReactNode;
 }) {
   const {
     payload,
@@ -170,47 +176,74 @@ export function PublicContainerReport({
     onSubmit,
     handleSetupDismiss,
     handleDocumentOpen,
+    commercialDetails,
+    activityEvents,
+    hasTracking,
+    reviewBusyId,
+    rejectReasonById,
+    setRejectReasonById,
+    handleDocumentReview,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
+
+  const orgLogoUrl = organization?.org_image_path
+    ? getOrgImagePublicUrl(createClient(), organization.org_image_path)
+    : null;
 
   return (
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
         <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
           <div className="border-b border-zinc-100 bg-linear-to-br from-white via-zinc-50/80 to-sky-50/30 px-5 py-6 sm:px-8 sm:py-8 dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-950 dark:to-sky-950/20">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 flex-1 items-start gap-4">
+              {orgLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={orgLogoUrl}
+                  alt=""
+                  className="h-12 w-12 shrink-0 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700"
+                />
+              ) : null}
+              <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
               {organization?.name ?? "Shipment report"}
             </p>
             <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50">
               {report.title?.trim() ||
-                (summary.shipment_reference?.trim()
-                  ? summary.shipment_reference.trim()
+                (summary.order_number?.trim()
+                  ? summary.order_number.trim()
                   : `Container ${summary.container_number}`)}
             </h1>
             {payload.viewer === "operator" ? (
-              <p className="mt-3">
+              <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                Use <span className="font-medium text-zinc-700 dark:text-zinc-300">Share</span> to invite importers.{" "}
                 <Link
                   href={
                     payload.primary_container_id
                       ? `/containers/${payload.primary_container_id}`
                       : `/shipments/${shipmentId}`
                   }
-                  className="text-sm font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40"
+                  className="font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40"
                 >
                   Open operator workspace
-                </Link>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {" "}
-                  for invites, attachments, assignee, and team messages.
-                </span>
+                </Link>{" "}
+                for team messages and documents.
               </p>
             ) : null}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
-              >
-                {insights.risk_level.toUpperCase()} risk
-              </span>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
+              {commercialDetails?.workflow_status ? (
+                <ShipmentWorkflowStatusPill status={commercialDetails.workflow_status} compact />
+              ) : null}
+              {hasTracking ? (
+                <>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
+                  >
+                    {insights.risk_level.toUpperCase()} risk
+                  </span>
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
+                </>
+              ) : null}
             </div>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
               {insights.headline}
@@ -255,6 +288,10 @@ export function PublicContainerReport({
                 </button>
               </div>
             ) : null}
+              </div>
+              </div>
+              {headerActions ? <div className="flex shrink-0 items-start pt-0.5">{headerActions}</div> : null}
+            </div>
           </div>
 
           <div className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
@@ -405,30 +442,6 @@ export function PublicContainerReport({
                   ) : null}
                 </section>
               ) : null}
-            </div>
-          ) : null}
-
-          {dashboardTab === "map" ? (
-            <div
-              role="tabpanel"
-              id="report-panel-map"
-              aria-labelledby="report-tab-map"
-              className="flex flex-col gap-4"
-            >
-              <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5">
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100" id="public-report-map-heading">
-                  Shipment map
-                </h2>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  Carrier-reported places and coordinates from this report (same data as shipment details).
-                </p>
-                <div className="mt-4">
-                  <ShipmentTrackingMapPanel
-                    location={summary.shipment_context}
-                    headingId="public-report-map-heading"
-                  />
-                </div>
-              </div>
             </div>
           ) : null}
 
@@ -583,6 +596,14 @@ export function PublicContainerReport({
             </div>
           ) : null}
 
+          {dashboardTab === "activity" ? (
+            <ShipmentActivityPanel activityEvents={activityEvents} trackingEvents={timeline} />
+          ) : null}
+
+          {dashboardTab === "details" ? (
+            <ShipmentCommercialPanel details={commercialDetails} />
+          ) : null}
+
           {dashboardTab === "documents" ? (
             <div
               role="tabpanel"
@@ -599,25 +620,37 @@ export function PublicContainerReport({
                   No documents yet.
                 </p>
               ) : (
-                <ul className="mt-4 flex flex-col gap-2">
-                  {attachments.map((a) => (
+                <ul className="mt-4 flex flex-col gap-3">
+                  {attachments.map((a) => {
+                    const reviewable =
+                      !threadReadOnly &&
+                      payload.viewer === "importer" &&
+                      (a.document_group === "draft" || a.document_group === "revision") &&
+                      a.approval_status !== "approved";
+                    return (
                     <li
                       key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
+                      className="rounded-lg border border-zinc-100 px-3 py-3 dark:border-zinc-800"
                     >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{a.file_name}</p>
                         <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                          {a.container_number ? (
-                            <span className="font-mono">{a.container_number}</span>
-                          ) : null}
-                          {a.container_number ? " · " : null}
-                          {a.file_size_bytes != null && a.file_size_bytes > 0
-                            ? `${Math.round(a.file_size_bytes / 1024)} KB`
-                            : a.file_size_bytes === 0
-                              ? "0 KB"
-                              : ""}
+                          {[
+                            a.uploaded_by_kind
+                              ? attachmentUploaderKindLabel(a.uploaded_by_kind)
+                              : null,
+                            a.document_type,
+                            a.document_group,
+                            a.approval_status,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                          {a.container_number ? ` · ${a.container_number}` : ""}
                         </p>
+                        {a.rejection_reason ? (
+                          <p className="mt-1 text-xs text-red-600 dark:text-red-400">Rejected: {a.rejection_reason}</p>
+                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -626,8 +659,40 @@ export function PublicContainerReport({
                       >
                         Open
                       </button>
+                      </div>
+                      {reviewable ? (
+                        <div className="mt-3 flex flex-col gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                          <input
+                            placeholder="Rejection reason (required to reject)"
+                            value={rejectReasonById[a.id] ?? ""}
+                            onChange={(e) =>
+                              setRejectReasonById((prev) => ({ ...prev, [a.id]: e.target.value }))
+                            }
+                            className="w-full rounded-md border border-zinc-200 px-2 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              disabled={reviewBusyId === a.id}
+                              onClick={() => handleDocumentReview(a.id, "approve")}
+                              className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={reviewBusyId === a.id}
+                              onClick={() => handleDocumentReview(a.id, "reject")}
+                              className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 dark:border-red-800 dark:text-red-300 disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </div>

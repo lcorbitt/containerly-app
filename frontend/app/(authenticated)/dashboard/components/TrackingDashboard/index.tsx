@@ -48,10 +48,10 @@ export function TrackingDashboard() {
           Dashboard
         </h1>
         <p className="max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-          Your workload and triage for shipments you own, lines assigned to you, or lines you collaborate on. Start
-          tracking from{" "}
-          <span className="font-medium text-zinc-800 dark:text-zinc-200">Track</span> in the header; browse every
-          shipment under <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">Shipments</Link>.
+          Your workload and triage for shipments you own or collaborate on. Create commercial shipments from{" "}
+          <span className="font-medium text-zinc-800 dark:text-zinc-200">New Shipment</span>, upload documents, and
+          invite customers — carrier sync is optional after approval. Browse every shipment under{" "}
+          <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">Shipments</Link>.
           {process.env.NODE_ENV === "development" ? (
             <>
               {" "}

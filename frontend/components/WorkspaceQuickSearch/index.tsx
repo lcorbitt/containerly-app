@@ -93,7 +93,7 @@ export function WorkspaceQuickSearch() {
   return (
     <div ref={wrapRef} className="relative">
       <label htmlFor={inputId} className="sr-only">
-        Quick find shipment or container
+        Quick find shipment, container, or tag
       </label>
       <div
         className={`flex items-center gap-2 rounded-md border bg-white px-2.5 py-1.5 dark:bg-zinc-950 ${
@@ -114,7 +114,7 @@ export function WorkspaceQuickSearch() {
           autoCorrect="off"
           spellCheck={false}
           disabled={disabled}
-          placeholder={disabled ? "Select organization…" : "Shipment or container…"}
+          placeholder={disabled ? "Select organization…" : "Search..."}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           onFocus={onFocus}

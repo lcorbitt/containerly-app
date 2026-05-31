@@ -9,6 +9,7 @@ export { isSuperadminRole };
 export type SessionProfile = {
   id: string;
   email: string | null;
+  full_name: string | null;
   role: ProfileRole;
   profile_image_path: string | null;
 };
@@ -19,16 +20,18 @@ export async function getSessionProfile(
 ): Promise<SessionProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, role, profile_image_path")
+    .select("id, email, full_name, role, profile_image_path")
     .eq("id", userId)
     .maybeSingle();
 
   if (error || !data) return null;
 
   const role = data.role === "superadmin" ? "superadmin" : "user";
+  const fullName = ((data.full_name as string | null | undefined) ?? null)?.trim() || null;
   return {
     id: data.id,
     email: data.email ?? null,
+    full_name: fullName,
     role,
     profile_image_path: data.profile_image_path ?? null,
   };

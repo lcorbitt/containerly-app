@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   Bell,
   GitBranch,
-  Layers,
   Lock,
   Radar,
   ShieldCheck,
@@ -44,9 +43,9 @@ const featureCards = [
     body: "Shared access and history so operations, planning, and leadership reference the same shipments and decisions.",
   },
   {
-    icon: Layers,
-    title: "Purpose built",
-    body: "We invest in what improves alignment and execution, not in features that add noise to the workflow.",
+    icon: ShieldCheck,
+    title: "Document approval workflow",
+    body: "Upload export drafts, route them for customer sign-off, and track originals through mail and carrier milestones.",
   },
 ] as const;
 
@@ -61,7 +60,7 @@ const portalSteps = [
   {
     n: "01",
     title: "Extend your workspace",
-    body: "Share a branded portal experience so customers see milestones, documents, and context alongside live tracking.",
+    body: "Share a branded portal so customers review documents, approve exports, and follow activity — with optional carrier tracking when you enable it.",
   },
   {
     n: "02",
@@ -103,8 +102,8 @@ const steps = [
   },
   {
     n: "02",
-    title: "Track what matters",
-    body: "Enter container, booking, or reference numbers and watch a clear timeline take shape from the carriers you monitor.",
+    title: "Create shipments",
+    body: "Enter commercial details and order lines first; add container tracking when the carrier publishes a number.",
   },
   {
     n: "03",
@@ -133,8 +132,8 @@ export function LandingPage() {
             <span className="text-primary-orange">your team and your customers</span>.
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-400 md:text-lg">
-            Containerly is the logistics customer portal that pairs live container tracking with the context operators
-            already curate, so status inquiries route to a single source instead of email threads and phone tags.
+            Containerly is the logistics customer portal that pairs export documentation workflows with optional live
+            container tracking, so status inquiries route to a single source instead of email threads and phone tags.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link href="/login" className={accentBtn}>
@@ -192,7 +191,7 @@ export function LandingPage() {
           <div className="max-w-xl">
             <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">Platform capabilities</h2>
             <p className="mt-3 text-zinc-400">
-              Everything you need to run container programs with less noise and more confidence.
+              Everything you need to run export documentation and customer portal programs with less noise.
             </p>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -351,11 +350,11 @@ export function LandingPage() {
       <section className="border-t border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-4xl rounded-3xl border border-primary-orange/25 bg-gradient-to-br from-primary-orange/10 via-transparent to-transparent px-8 py-14 text-center md:px-16">
           <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
-            Elevate how you communicate container status
+            Launch your documentation portal first
           </h2>
           <p className="mx-auto mt-3 max-w-md text-zinc-400">
-            Launch internal tracking in minutes, then roll out the customer portal when your stakeholders are ready for
-            a higher standard of transparency.
+            Create commercial shipments, route export documents for customer approval, and open a branded portal. Add
+            premium carrier tracking only when documents are signed off and numbers are published.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/login" className={accentBtn}>

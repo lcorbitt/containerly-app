@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Containerly — Logistics tracking",
-  description: "Supabase-backed container and shipment tracking with Edge Functions and RLS.",
+  title: "Containerly — Customer portal & export documentation",
+  description:
+    "Documentation-first logistics portal for operators and importers. Optional carrier container tracking after export approval.",
 };
 
 export default function RootLayout({

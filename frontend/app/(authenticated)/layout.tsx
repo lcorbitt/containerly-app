@@ -42,7 +42,10 @@ export default async function AuthenticatedLayout({
         <TrackContainerModalProvider>
           <MockJourneyModalProvider>
             <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-              <AuthenticatedTopNav email={user.email ?? ""} />
+              <AuthenticatedTopNav
+                email={user.email ?? ""}
+                fullName={profile?.full_name ?? null}
+              />
               <div className="flex min-h-0 overflow-hidden">
                 <SideNav isSuperAdmin={isSuperAdmin} />
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

@@ -6,65 +6,58 @@ export default function ContainerDetailsPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-        How tracking fits together
+        How Containerly works
       </h1>
       <div className="mt-6 space-y-4 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         <p>
-          In ocean freight, a bill of lading (BOL) is the carrier&apos;s document for a booking. It often lists
-          several containers on the same voyage. A booking reference is another common identifier and can also span
-          multiple units.
+          Containerly is built for <strong className="font-medium">documentation-first export shipments</strong>.
+          Operators enter commercial details manually, upload export documents, and invite importers to a branded
+          portal. Carrier container tracking is an optional premium step after customers approve the paperwork.
         </p>
+        <ol className="list-decimal space-y-3 pl-5">
+          <li>
+            <strong className="font-medium">Create a shipment</strong> — commercial header (customer, ports, vessel,
+            health certificate, etc.) plus order/booking lines. Use <strong className="font-medium">New Shipment</strong>{" "}
+            in the header.
+          </li>
+          <li>
+            <strong className="font-medium">Upload documents</strong> — attach drafts from the shipment workspace,
+            classify document type, and send them for customer review on the portal.
+          </li>
+          <li>
+            <strong className="font-medium">Customer portal</strong> — importers approve or reject documents, follow
+            the activity feed, and message your team. Physical mail tracking can be added after approval.
+          </li>
+          <li>
+            <strong className="font-medium">Optional carrier tracking (premium)</strong> — once export documents are
+            approved and container numbers are published, enable live carrier sync from the shipment workspace. This
+            pulls milestones into the same portal timeline.
+          </li>
+        </ol>
         <p>
-          In the product, a <strong className="font-medium">shipment</strong> is the commercial move: the BOL or booking
-          you are managing. Each shipment owns one or more <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers</code>{" "}
-          rows (<code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers.shipment_id</code>
-          ). Each unit usually has a <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">tracking_requests</code>{" "}
-          row for operator workflow, sync scheduling, sharing, and timeline—the latest carrier snapshot lives on{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers</code>. That matches how
-          carrier APIs work: JSONCargo’s bill-of-lading endpoint returns{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">associated_container_numbers</code>
-          , and each number is polled separately via their{" "}
-          <a
-            href="https://jsoncargo.com/documentation-api/"
-            className="font-medium text-zinc-900 underline dark:text-zinc-100"
-            target="_blank"
-            rel="noreferrer"
-          >
-            container details API
-          </a>
-          .
+          In the data model, a <strong className="font-medium">shipment</strong> is the commercial move you manage.
+          <code className="mx-1 rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">shipment_lines</code>
+          hold order/booking rows. When you enable carrier sync, each container number gets a{" "}
+          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">tracking_requests</code> row
+          and carrier snapshots land on{" "}
+          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers</code>.
         </p>
+        <details className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/40">
+          <summary className="cursor-pointer font-medium text-zinc-800 dark:text-zinc-200">
+            Advanced: carrier API &amp; BOL bulk import
+          </summary>
+          <p className="mt-2">
+            For teams with premium carrier sync enabled, Containerly can poll external container APIs (JSONCargo-style)
+            per container number. A bill-of-lading bulk import creates multiple container lines on one shipment when the
+            carrier publishes many units on a single document — this is optional and lives behind{" "}
+            <strong className="font-medium">Enable carrier sync</strong> in the shipment workspace, not the primary
+            onboarding path.
+          </p>
+        </details>
         <p>
-          The <strong className="font-medium">Shipments</strong> screen lists shipment rows (grouped BOL imports stay on
-          one row; a single-container move is a one-line shipment). Open a shipment to see every container, then open a{" "}
-          <strong className="font-medium">workspace</strong> for collaboration, invites, and attachments on that
-          container line.
-        </p>
-        <p>
-          The <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers</code> table stores
-          the latest carrier snapshot (status, location JSON, enrichment) per organization and container number—aligned
-          with JSONCargo’s container payload fields such as{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">container_status</code>,{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">last_location</code>, and vessel
-          names. You can have several <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">tracking_requests</code>{" "}
-          rows pointing at the same container (extra sync/workflow lines); the shared container row reflects whoever
-          synced most recently.
-        </p>
-        <p>
-          The <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">shipments</code> table is the
-          parent record (reference, optional BOL and carrier line) and stores{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">created_by</code>—the org member
-          who owns that commercial shipment.{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">tracking_requests.created_by</code>{" "}
-          is kept for audit (who opened the sync line) but is not the product model for ownership.{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">shipment_group_id</code> on
-          tracking requests still marks rows created in the same BOL import batch; they share one parent shipment with
-          sibling <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">containers</code>.
-        </p>
-        <p>
-          Importer accounts (no freight organization) only see Shipments for containers partners invited them to. The
-          shipment API is the same <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">get-shipment</code>{" "}
-          function for both org members and importers; visibility rules differ.
+          Importer accounts (no freight organization) see only shipments partners invited them to. Operators manage
+          everything from <Link href="/shipments" className="font-medium underline">Shipments</Link> and the per-shipment
+          workspace (documents, invites, messages).
         </p>
       </div>
       <p className="mt-8 text-sm">

@@ -33,7 +33,7 @@ export function AdminTableSection({
       <div className="shrink-0 border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 sm:px-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               {title}
             </h2>
             {description ? (

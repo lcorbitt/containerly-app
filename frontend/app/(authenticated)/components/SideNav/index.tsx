@@ -31,11 +31,11 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   return (
     <aside className="box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="flex w-54 min-w-54 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-zinc-200 p-2 dark:border-zinc-800">
+        <div className="shrink-0 p-4">
           <WorkspaceQuickSearch />
         </div>
         <nav
-          className="flex h-full min-h-0 flex-1 flex-col justify-between overflow-hidden p-2"
+          className="flex h-full min-h-0 flex-1 flex-col justify-between overflow-hidden px-4"
           aria-label="Main"
         >
           <div className="flex min-h-0 flex-col gap-2">

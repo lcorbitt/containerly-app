@@ -171,10 +171,12 @@ export async function uploadShipmentScopeStandaloneFiles(input: {
   organizationId: string;
   shipmentId: string;
   files: File[];
-  isInternal: boolean;
+  documentType?: string | null;
+  documentGroup?: string | null;
 }): Promise<WorkspaceAttachment[]> {
   const formData = new FormData();
-  formData.set("isInternal", input.isInternal ? "true" : "false");
+  if (input.documentType) formData.set("documentType", input.documentType);
+  if (input.documentGroup) formData.set("documentGroup", input.documentGroup);
   for (const f of input.files) {
     formData.append("file", f);
   }

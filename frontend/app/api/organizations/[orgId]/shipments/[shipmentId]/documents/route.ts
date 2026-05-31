@@ -22,7 +22,8 @@ export async function POST(
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
-  const isInternal = formData.get("isInternal") === "true";
+  const documentType = String(formData.get("documentType") ?? "").trim() || null;
+  const documentGroup = String(formData.get("documentGroup") ?? "").trim() || null;
   const files = formData.getAll("file").filter((x): x is File => x instanceof File && x.size > 0);
 
   try {
@@ -30,7 +31,8 @@ export async function POST(
       organizationId: orgId,
       shipmentId,
       files,
-      isInternal,
+      documentType,
+      documentGroup,
     });
     return NextResponse.json({ uploaded });
   } catch (e) {

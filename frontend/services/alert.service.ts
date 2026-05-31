@@ -42,3 +42,9 @@ export function subscribeOrgAlerts(
     },
   };
 }
+
+export async function acknowledgeAlert(alertId: string): Promise<void> {
+  await apiJson<{ ok: true }>(`/api/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
+    method: "PATCH",
+  });
+}

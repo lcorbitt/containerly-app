@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, ArrowRight, FileText, Map as MapIcon, MapPin, MessageSquare, Route } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ReportActivityList } from "../ReportActivityList";
 import { ContainerDetailsModal } from "../ContainerDetailsModal";
 import { VesselEnrichmentCard } from "@/components/VesselEnrichmentCard";
@@ -129,22 +130,18 @@ export function ContainerWorkspace({
 
   return (
     <div className="mx-auto box-border flex w-full max-w-6xl flex-col p-6">
+      {containerRow?.shipment_id && !shipmentEmbed ? (
+        <PageBreadcrumb
+          href={`/shipments/${containerRow.shipment_id}`}
+          label="Shipment workspace"
+          suffix="Container line"
+          className="mb-3"
+        />
+      ) : null}
       <header className="mb-6 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
         <div className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              {containerRow?.shipment_id && !shipmentEmbed ? (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  <Link
-                    href={`/shipments/${containerRow.shipment_id}`}
-                    className="font-medium text-emerald-800 underline decoration-emerald-800/40 underline-offset-2 hover:decoration-emerald-800 dark:text-emerald-300 dark:decoration-emerald-300/40"
-                  >
-                    Shipment workspace
-                  </Link>
-                  <span className="text-zinc-400 dark:text-zinc-500"> · </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">container line</span>
-                </p>
-              ) : null}
               {shipmentEmbed ? (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">Container line on this shipment</p>
               ) : null}

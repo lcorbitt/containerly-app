@@ -328,9 +328,9 @@ export function DashboardPersonalOverview({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Your workflow status mix</h3>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Carrier sync status (premium)</h3>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            Count of tracking lines in each state (your scope only).
+            Live carrier lines in each sync state — only shipments with tracking enabled.
           </p>
           <div className="mt-4 space-y-3">
             {metrics.statusOrder.map((key) => {
@@ -361,9 +361,9 @@ export function DashboardPersonalOverview({
         </section>
 
         <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">New lines (last 14 days)</h3>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">New carrier lines (14 days)</h3>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            When container lines entered your scope (new sync rows in the org).
+            Premium carrier sync lines added to your scope recently.
           </p>
           <div className="mt-4 flex h-36 items-end gap-1">
             {metrics.createdByDay.map((d) => {

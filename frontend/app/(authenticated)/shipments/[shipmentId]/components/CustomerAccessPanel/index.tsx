@@ -13,6 +13,8 @@ const PRIMARY_BTN =
 export function CustomerAccessPanel({
   inviteEmail,
   onInviteEmailChange,
+  deliveryMode,
+  onDeliveryModeChange,
   creating,
   onCreateInvite,
   lastInviteUrl,
@@ -24,9 +26,12 @@ export function CustomerAccessPanel({
   onRevokeAccess,
   onToast,
   onReloadAccess,
+  variant = "panel",
 }: {
   inviteEmail: string;
   onInviteEmailChange: (v: string) => void;
+  deliveryMode: "email_invite" | "allowlist_only";
+  onDeliveryModeChange: (v: "email_invite" | "allowlist_only") => void;
   creating: boolean;
   onCreateInvite: () => void;
   lastInviteUrl: string | null;
@@ -38,6 +43,8 @@ export function CustomerAccessPanel({
   onRevokeAccess: (id: string) => Promise<void>;
   onToast: (message: string, variant: "success" | "error" | "info") => void;
   onReloadAccess: () => Promise<void>;
+  /** Sidebar layout scrolls with the page; panel layout keeps an internal scroll region. */
+  variant?: "panel" | "sidebar";
 }) {
   const { confirm } = useConfirm();
   const [copyBusy, setCopyBusy] = useState(false);
@@ -54,23 +61,45 @@ export function CustomerAccessPanel({
     }
   }
 
+  const isSidebar = variant === "sidebar";
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="shrink-0 space-y-3 border-b border-zinc-100 p-4 dark:border-zinc-800">
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          Invite an importer by email. They sign in (or create an account), accept once, then see this shipment
-          only while access is active.
-        </p>
+    <div className={isSidebar ? "flex flex-col" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
+      <div className="shrink-0 space-y-3 border-b border-zinc-100 dark:border-zinc-800">
+        <label
+          id="customers-label"
+          className="block text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500"
+        >
+          Customers
+        </label>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <label className="inline-flex items-center gap-1.5">
+            <input
+              type="radio"
+              checked={deliveryMode === "email_invite"}
+              onChange={() => onDeliveryModeChange("email_invite")}
+            />
+            Send invite email
+          </label>
+          <label className="inline-flex items-center gap-1.5">
+            <input
+              type="radio"
+              checked={deliveryMode === "allowlist_only"}
+              onChange={() => onDeliveryModeChange("allowlist_only")}
+            />
+            Allowlist only
+          </label>
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="min-w-0 flex-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Importer email
+            Customer emails
             <input
-              type="email"
+              type="text"
               value={inviteEmail}
               onChange={(e) => onInviteEmailChange(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              placeholder="consignee@company.com"
-              autoComplete="email"
+              className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+              placeholder="Email or group, separated by commas"
+              autoComplete="off"
             />
           </label>
           <button
@@ -85,7 +114,7 @@ export function CustomerAccessPanel({
                 <span>Sending…</span>
               </>
             ) : (
-              <span>Send invite</span>
+              <span>{inviteEmail.includes(",") ? "Send invites" : "Send invite"}</span>
             )}
           </button>
         </div>
@@ -119,7 +148,7 @@ export function CustomerAccessPanel({
           </div>
         ) : null}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+      <div className={isSidebar ? "pt-4" : "min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"}>
         {pendingInvites.length > 0 ? (
           <div className="mb-4">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Pending invites</p>

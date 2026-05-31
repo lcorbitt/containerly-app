@@ -2,19 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Map as MapIcon, MessageSquare, Route } from "lucide-react";
+import { Activity, ClipboardList, FileText, MessageSquare, Route } from "lucide-react";
 import { useToast } from "@/contexts/toast";
 import {
   completeImporterPortalSetup,
   fetchShipment,
   postShipmentThreadMessage,
+  reviewShipmentDocument,
 } from "@/services/shipment.service";
 import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
 import type { PublicReportPayload } from "@/types/public-report";
 import { publicThreadAuthorName, formatFreshness } from "../utils";
 
-export type DashboardTab = "tracking" | "map" | "documents" | "messages";
+export type DashboardTab = "documents" | "activity" | "details" | "tracking" | "messages";
 
 export interface TabDef {
   id: DashboardTab;
@@ -42,7 +43,9 @@ export function usePublicContainerReport({
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [rawOpen, setRawOpen] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<DashboardTab>("tracking");
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>("documents");
+  const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
+  const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
   const [messageContainerId, setMessageContainerId] = useState(
     () => initial.primary_container_id ?? initial.container_lines?.[0]?.id ?? "",
@@ -54,7 +57,9 @@ export function usePublicContainerReport({
   const containerLines = payload.container_lines ?? [];
   const logisticsHints = payload.logistics_hints;
   const threadReadOnly = readOnlyMessaging || payload.viewer === "operator";
-  const enrichmentBlock = payload.enrichment;
+  const commercialDetails = payload.commercial_details;
+  const activityEvents = payload.activity_events ?? [];
+  const hasTracking = containerLines.length > 0 && timeline.length > 0;
 
   // Sync messageContainerId when payload changes
   useEffect(() => {
@@ -126,6 +131,32 @@ export function usePublicContainerReport({
     }
   }
 
+  async function handleDocumentReview(attachmentId: string, action: "approve" | "reject") {
+    if (action === "reject" && !rejectReasonById[attachmentId]?.trim()) {
+      toast("Please enter a reason for rejection.", "error");
+      return;
+    }
+    setReviewBusyId(attachmentId);
+    try {
+      const r = await reviewShipmentDocument({
+        attachment_id: attachmentId,
+        shipment_id: shipmentId,
+        action,
+        rejection_reason: rejectReasonById[attachmentId],
+      });
+      if (!r.ok) {
+        toast(r.error, "error");
+        return;
+      }
+      await refresh();
+      toast(action === "approve" ? "Document approved" : "Document rejected", "success");
+    } finally {
+      setReviewBusyId(null);
+    }
+  }
+
+  const enrichmentBlock = payload.enrichment;
+
   const messageTree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
@@ -171,15 +202,18 @@ export function usePublicContainerReport({
 
   const fresh = formatFreshness(summary.freshness_minutes);
 
-  const tabDefs: TabDef[] = useMemo(
-    () => [
-      { id: "tracking", label: "Tracking", shortLabel: "Tracking", icon: Route },
-      { id: "map", label: "Map", shortLabel: "Map", icon: MapIcon },
+  const tabDefs: TabDef[] = useMemo(() => {
+    const defs: TabDef[] = [
+      { id: "documents", label: "Documents", shortLabel: "Docs", icon: FileText, count: attachments.length },
+      { id: "activity", label: "Activity", shortLabel: "Activity", icon: Activity, count: activityEvents.length },
+      { id: "details", label: "Details", shortLabel: "Details", icon: ClipboardList },
       { id: "messages", label: "Messages", shortLabel: "Messages", icon: MessageSquare, count: messages.length },
-      { id: "documents", label: "Documents", shortLabel: "Documents", icon: FileText, count: attachments.length },
-    ],
-    [messages.length, attachments.length],
-  );
+    ];
+    if (hasTracking) {
+      defs.push({ id: "tracking", label: "Carrier tracking", shortLabel: "Tracking", icon: Route });
+    }
+    return defs;
+  }, [messages.length, attachments.length, activityEvents.length, hasTracking]);
 
   return {
     // Payload slices
@@ -226,9 +260,17 @@ export function usePublicContainerReport({
     // Refs
     updatesEndRef,
 
+    commercialDetails,
+    activityEvents,
+    hasTracking,
+    reviewBusyId,
+    rejectReasonById,
+    setRejectReasonById,
+
     // Handlers
     onSubmit,
     handleSetupDismiss,
     handleDocumentOpen,
+    handleDocumentReview,
   };
 }

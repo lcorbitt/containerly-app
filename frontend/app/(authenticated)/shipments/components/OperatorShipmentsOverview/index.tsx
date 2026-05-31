@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BolImportDialog } from "@/components/BolImportDialog";
 import { DataTable } from "@/components/DataTable";
 import { TablePagination } from "@/components/TablePagination";
 import { useOperatorShipmentsOverview } from "./hooks/useOperatorShipmentsOverview";
@@ -42,8 +41,6 @@ export function OperatorShipmentsOverview({
     sortDirection,
     searchInput,
     setSearchInput,
-    bolImportOpen,
-    setBolImportOpen,
     load,
     handleSortChange,
     columns,
@@ -52,38 +49,6 @@ export function OperatorShipmentsOverview({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{pageTitle}</h1>
-        {description ?? (
-          <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <p>
-              Each row is one <strong className="font-medium text-zinc-800 dark:text-zinc-200">shipment</strong> you or
-              a teammate owns (<strong className="font-medium text-zinc-800 dark:text-zinc-200">Owner</strong> column).
-              Under it, every{" "}
-              <strong className="font-medium text-zinc-800 dark:text-zinc-200">container line</strong> is synced like
-              JSONCargo's{" "}
-              <a
-                href="https://jsoncargo.com/documentation-api/"
-                className="font-medium text-zinc-900 underline dark:text-zinc-100"
-                target="_blank"
-                rel="noreferrer"
-              >
-                container details API
-              </a>{" "}
-              (one tracked unit per container number). A bill of lading can list many containers; we group those lines
-              on the same shipment when you import from BOL.
-            </p>
-            <p>
-              Open a shipment for an overview of all containers, then jump into a{" "}
-              <Link href="/dashboard" className="font-medium text-zinc-900 underline dark:text-zinc-100">
-                container workspace
-              </Link>{" "}
-              for collaboration, invites, and attachments.
-            </p>
-          </div>
-        )}
-      </header>
-
       {orgs.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -107,7 +72,7 @@ export function OperatorShipmentsOverview({
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">All shipments</h2>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Containers</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Scope</span>
               {(
                 [
                   ["all", "All"],
@@ -143,7 +108,7 @@ export function OperatorShipmentsOverview({
               <input
                 id="shipments-overview-search"
                 type="search"
-                placeholder="Search reference, BOL, carrier, or container…"
+                placeholder="Search order no., customer, or container…"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 disabled={loading}
@@ -162,7 +127,7 @@ export function OperatorShipmentsOverview({
                 onSortChange={handleSortChange}
                 emptyMessage={
                   listFilter === "all"
-                    ? "No shipments yet. Create tracking from the dashboard."
+                    ? "No shipments yet. Create one from New Shipment — you'll upload documents and invite customers before optional carrier tracking."
                     : "No shipments match this filter."
                 }
                 onRowClick={navigateToShipment}
@@ -182,15 +147,6 @@ export function OperatorShipmentsOverview({
           )}
         </section>
       )}
-
-      {selectedOrgId ? (
-        <BolImportDialog
-          open={bolImportOpen}
-          onClose={() => setBolImportOpen(false)}
-          organizationId={selectedOrgId}
-          onImported={() => void load()}
-        />
-      ) : null}
     </div>
   );
 }

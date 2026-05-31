@@ -3,6 +3,7 @@
 import { Check, FileText, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { isImageThumbnailCandidate } from "@/utils/workspace-files";
+import { attachmentUploaderKindLabel } from "@shared/dto/attachment.dto";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
 import type { DocumentsListProps } from "./types";
 
@@ -93,6 +94,7 @@ export function DocumentsList({
   billOfLading,
   storedFiles,
   onPickFiles,
+  onUploadClick,
   uploading,
   onRemoveFile,
   removingFileId,
@@ -100,6 +102,7 @@ export function DocumentsList({
   onRenameFile,
   renamingFileId,
   variant = "card",
+  hideHeader = false,
 }: DocumentsListProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
@@ -126,25 +129,28 @@ export function DocumentsList({
 
   return (
     <div className={shell}>
+      {!hideHeader ? (
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Documents</h2>
-        {onPickFiles ? (
+        {onUploadClick || onPickFiles ? (
           <>
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              className="sr-only"
-              aria-label="Upload files"
-              onChange={(e) => {
-                onPickFiles(e.target.files);
-                e.target.value = "";
-              }}
-            />
+            {onPickFiles && !onUploadClick ? (
+              <input
+                ref={inputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                aria-label="Upload files"
+                onChange={(e) => {
+                  onPickFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            ) : null}
             <button
               type="button"
               disabled={uploading}
-              onClick={() => inputRef.current?.click()}
+              onClick={() => (onUploadClick ? onUploadClick() : inputRef.current?.click())}
               className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
             >
               {uploading ? (
@@ -157,6 +163,36 @@ export function DocumentsList({
           </>
         ) : null}
       </div>
+      ) : onUploadClick || onPickFiles ? (
+        <div className="flex shrink-0 justify-end border-b border-zinc-100 px-4 py-2 dark:border-zinc-800">
+          {onPickFiles && !onUploadClick ? (
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              className="sr-only"
+              aria-label="Upload files"
+              onChange={(e) => {
+                onPickFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          ) : null}
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => (onUploadClick ? onUploadClick() : inputRef.current?.click())}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+          >
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Upload className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            )}
+            Upload
+          </button>
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
         {hasAny ? (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -252,9 +288,24 @@ export function DocumentsList({
                           <span className="block font-medium wrap-break-word text-zinc-800 dark:text-zinc-200">
                             {f.name}
                           </span>
-                          {f.uploadedByLabel?.trim() ? (
-                            <span className="mt-1 block text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400">
-                              Uploaded by: {f.uploadedByLabel.trim()}
+                          {f.uploadedByLabel?.trim() || f.uploadedByKind ? (
+                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {f.uploadedByKind ? (
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                    f.uploadedByKind === "customer"
+                                      ? "bg-sky-100 text-sky-900 dark:bg-sky-950/60 dark:text-sky-200"
+                                      : "bg-zinc-200/80 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                                  }`}
+                                >
+                                  {attachmentUploaderKindLabel(f.uploadedByKind)}
+                                </span>
+                              ) : null}
+                              {f.uploadedByLabel?.trim() ? (
+                                <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                                  {f.uploadedByLabel.trim()}
+                                </span>
+                              ) : null}
                             </span>
                           ) : null}
                         </span>

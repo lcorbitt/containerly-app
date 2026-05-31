@@ -13,6 +13,14 @@
   --color-primary-orange: #ff4e00;
   --font-sans: var(--font-fustat);
   --font-mono: var(--font-geist-mono);
+  --duration-color-fade: 300ms;
+  --ease-color-fade: ease-in-out;
+}
+
+@utility color-fade {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-duration: var(--duration-color-fade);
+  transition-timing-function: var(--ease-color-fade);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,7 +107,15 @@ body {
   );
 }
 
-/* App-wide: interactive buttons show pointer; disabled stays default arrow */
+/* App-wide: buttons and links get smooth color transitions; interactive buttons show pointer. */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+a {
+  @apply color-fade;
+}
+
 button:not(:disabled),
 input[type="button"]:not(:disabled),
 input[type="submit"]:not(:disabled),
@@ -148,5 +164,14 @@ input[type="reset"]:disabled {
   .toast-enter,
   .toast-exit {
     animation-duration: 0.15s;
+  }
+
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  a,
+  .color-fade {
+    transition-duration: 0ms;
   }
 }

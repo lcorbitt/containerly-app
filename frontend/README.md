@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Containerly frontend
 
-## Getting Started
+Next.js App Router UI for the Containerly logistics portal. The browser never talks to Postgres directly for domain data — it goes through **`frontend/services/`** and TanStack Query.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router), React, TypeScript, Tailwind
+- TanStack Query — server state in `hooks/queries/` and `hooks/mutations/`
+- Supabase client — auth session, realtime alerts, storage uploads only
+
+## Run locally
 
 ```bash
+cp .env.local.example .env.local   # if present; otherwise create from repo root README
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEXT_PUBLIC_SITE_URL`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+With local Supabase (`supabase start` from repo root), use credentials from `supabase status`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architecture (short)
 
-## Learn More
+```
+Component → colocated hook → TanStack Query → frontend/services/*.service.ts
+  → fetch /functions/v1/<slug>  (Edge)
+  → fetch /api/...              (privileged Next routes)
+```
 
-To learn more about Next.js, take a look at the following resources:
+- **Route UI** lives under `app/(authenticated)/...` and `app/(public)/...`
+- **Shared components** — `components/` only when reused across routes
+- **Edge slugs** — `lib/supabase/edge-function-slugs.ts` (never hard-code URLs)
+- **Wire types** — `shared/dto/` (import as `@shared/dto/...`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture-frontend-backend.md) and [`.cursorrules`](../.cursorrules).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Product surfaces
 
-## Deploy on Vercel
+| Surface | Route / entry |
+|---------|----------------|
+| Dashboard triage | `/dashboard` |
+| Shipments list | `/shipments` |
+| Operator workspace | `/shipments/[shipmentId]` — commercial details, documents, mail tracking, optional container lines |
+| Customer portal | `/requests/[reportId]` — documents (approve/reject), activity, details, messages; tracking tab only when carrier sync is enabled |
+| New shipment | Header **New Shipment** — manual commercial entry; carrier sync from workspace after document approval |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev      # development server
+npm run build    # production build
+npm run lint     # ESLint
+```

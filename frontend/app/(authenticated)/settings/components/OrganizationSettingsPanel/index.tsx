@@ -71,7 +71,7 @@ export function OrganizationSettingsPanel({ embedded = false }: OrganizationSett
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className={statClass}>
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Tracking requests</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Carrier sync lines</p>
             <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
               {t.metricsLoading ? "…" : t.metrics.trackingRequests ?? "—"}
             </p>

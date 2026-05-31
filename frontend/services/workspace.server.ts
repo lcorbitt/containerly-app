@@ -44,7 +44,7 @@ export async function loadContainerWorkspaceDataForUser(
   if (!tr) {
     return {
       ok: false,
-      error: "No tracking line for this container yet. Create one from Track or a shipment import.",
+      error: "No carrier sync line for this container yet. Enable carrier tracking from the shipment workspace after documents are approved.",
     };
   }
 

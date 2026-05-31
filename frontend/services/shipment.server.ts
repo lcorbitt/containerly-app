@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
+import { normalizeShipmentTagList } from "@/utils/shipment-tags";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -23,7 +24,7 @@ export type OperatorShipmentScope = "all" | "mine" | "unassigned" | "participati
 export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
   "last_sync_at",
   "created_at",
-  "reference",
+  "order_number",
   "bill_of_lading",
 ] as const;
 
@@ -51,10 +52,15 @@ export type ShipmentOverviewTrackingRow = Pick<
 export type ShipmentOverviewRow = {
   id: string;
   organization_id: string;
-  reference: string;
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
+  customer_name: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */
   owner_user_id: string | null;
@@ -67,10 +73,15 @@ type RpcOverviewRow = {
   total_count: number | string;
   id: string;
   organization_id: string;
-  reference: string;
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
+  customer_name: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
   owner_user_id: string | null;
   assignee_user_id: string | null;
@@ -94,10 +105,15 @@ function toOverviewRow(r: RpcOverviewRow): ShipmentOverviewRow {
   return {
     id: r.id,
     organization_id: r.organization_id,
-    reference: r.reference,
+    order_number: r.order_number,
+    carrier_booking_number: r.carrier_booking_number,
+    container_number: r.container_number,
+    customer_name: r.customer_name,
     bill_of_lading: r.bill_of_lading,
     shipping_line: r.shipping_line,
     shipment_group_id: r.shipment_group_id,
+    workflow_status: r.workflow_status,
+    estimated_arrival_at: r.estimated_arrival_at,
     created_at: r.created_at,
     owner_user_id: r.owner_user_id,
     assignee_user_id: r.assignee_user_id,
@@ -158,7 +174,7 @@ export async function fetchOperatorShipmentsOverviewPage(
   return { rows, totalCount: Number.isFinite(totalCount) ? totalCount : 0 };
 }
 export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
-  "reference",
+  "order_number",
   "created_at",
   "updated_at",
 ] as const;
@@ -192,7 +208,7 @@ export type ImporterGrantedShipmentRow = {
   /** Shipment id — use for `/shipments/hub/[id]` (shared tracking) and `get-shipment`. */
   id: string;
   access_grant_id: string;
-  reference: string;
+  order_number: string;
   container_number: string;
   status: string;
   last_sync_at: string | null;
@@ -209,7 +225,7 @@ type AccessShipmentRow = {
   shipments:
     | {
         id: string;
-        reference: string;
+        order_number: string;
         bill_of_lading: string | null;
         shipping_line: string | null;
         updated_at: string;
@@ -217,7 +233,7 @@ type AccessShipmentRow = {
       }
     | {
         id: string;
-        reference: string;
+        order_number: string;
         bill_of_lading: string | null;
         shipping_line: string | null;
         updated_at: string;
@@ -258,7 +274,7 @@ export async function fetchImporterGrantedShipmentsPage(
       shipment_id,
       shipments!inner (
         id,
-        reference,
+        order_number,
         bill_of_lading,
         shipping_line,
         updated_at,
@@ -280,14 +296,14 @@ export async function fetchImporterGrantedShipmentsPage(
   const term = search.trim();
   if (term) {
     const s = sanitizeIlikeTerm(term);
-    q = q.or(`reference.ilike.%${s}%,bill_of_lading.ilike.%${s}%`, {
+    q = q.or(`order_number.ilike.%${s}%,bill_of_lading.ilike.%${s}%`, {
       referencedTable: "shipments",
     });
   }
 
   const sortRef =
-    sortColumn === "reference"
-      ? { column: "reference" as const, foreignTable: "shipments" as const }
+    sortColumn === "order_number"
+      ? { column: "order_number" as const, foreignTable: "shipments" as const }
       : sortColumn === "updated_at"
         ? { column: "updated_at" as const, foreignTable: "shipments" as const }
         : { column: "created_at" as const, foreignTable: undefined };
@@ -327,7 +343,7 @@ export async function fetchImporterGrantedShipmentsPage(
       .filter(Boolean) as string[];
     const label =
       numbers.length === 0
-        ? s.reference.trim() || s.id.slice(0, 8)
+        ? s.order_number.trim() || s.id.slice(0, 8)
         : numbers.length === 1
           ? numbers[0]!
           : `${numbers.length} containers`;
@@ -342,7 +358,7 @@ export async function fetchImporterGrantedShipmentsPage(
     rows.push({
       id: s.id,
       access_grant_id: row.id,
-      reference: s.reference,
+      order_number: s.order_number,
       container_number: label,
       status: trStatus ?? "pending",
       last_sync_at: syncAt,
@@ -362,6 +378,9 @@ export type ShipmentAccessTabSnapshot = {
   customerAccessRows: ShipmentCustomerAccess[];
   pendingInvites: CustomerInvite[];
   messageAuthorByUserId: Record<string, string>;
+  tags: string[];
+  orgTagSuggestions: string[];
+  emailNotificationsSubscribed: boolean;
 };
 
 export async function fetchShipmentAccessTabSnapshot(
@@ -369,6 +388,7 @@ export async function fetchShipmentAccessTabSnapshot(
   input: {
     shipmentId: string;
     organizationId: string;
+    currentUserId: string;
   },
 ): Promise<ShipmentAccessTabSnapshot> {
   const [
@@ -377,10 +397,12 @@ export async function fetchShipmentAccessTabSnapshot(
     { data: orgMemberRows },
     { data: accessRows },
     { data: invRows },
+    { data: orgTagRows },
+    { data: notificationSub },
   ] = await Promise.all([
     supabase
       .from("shipments")
-      .select("assignee_user_id")
+      .select("assignee_user_id, tags")
       .eq("id", input.shipmentId)
       .eq("organization_id", input.organizationId)
       .maybeSingle(),
@@ -402,12 +424,30 @@ export async function fetchShipmentAccessTabSnapshot(
       .eq("shipment_id", input.shipmentId)
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
+    supabase.from("shipments").select("tags").eq("organization_id", input.organizationId),
+    supabase
+      .from("shipment_notification_subscriptions")
+      .select("id")
+      .eq("shipment_id", input.shipmentId)
+      .eq("user_id", input.currentUserId)
+      .maybeSingle(),
   ]);
 
   const assigneeUserId = (ship?.assignee_user_id as string | null) ?? null;
+  const tags = normalizeShipmentTagList(((ship?.tags as string[] | null) ?? []) as string[]);
   const participantRows = (parts as ShipmentParticipant[]) ?? [];
   const customerAccessRows = (accessRows as ShipmentCustomerAccess[]) ?? [];
   const pendingInvites = (invRows as CustomerInvite[]) ?? [];
+
+  const orgTagSuggestionSet = new Set<string>();
+  for (const row of orgTagRows ?? []) {
+    for (const tag of (row.tags as string[] | null) ?? []) {
+      const normalized = normalizeShipmentTagList([tag])[0];
+      if (normalized) orgTagSuggestionSet.add(normalized);
+    }
+  }
+  const orgTagSuggestions = [...orgTagSuggestionSet].sort((a, b) => a.localeCompare(b));
+  const emailNotificationsSubscribed = Boolean(notificationSub?.id);
 
   const imagePathByUser: Record<string, string | null> = {};
   const orgUserIds = [...new Set((orgMemberRows ?? []).map((m) => m.user_id as string))];
@@ -459,7 +499,54 @@ export async function fetchShipmentAccessTabSnapshot(
     customerAccessRows,
     pendingInvites,
     messageAuthorByUserId,
+    tags,
+    orgTagSuggestions,
+    emailNotificationsSubscribed,
   };
+}
+export async function updateShipmentNotificationSubscriptionQuery(
+  supabase: SupabaseClient,
+  input: {
+    shipmentId: string;
+    organizationId: string;
+    userId: string;
+    subscribed: boolean;
+  },
+): Promise<boolean> {
+  if (input.subscribed) {
+    const { error } = await supabase.from("shipment_notification_subscriptions").insert({
+      organization_id: input.organizationId,
+      shipment_id: input.shipmentId,
+      user_id: input.userId,
+    });
+    if (error && error.code !== "23505") throw new Error(error.message);
+    return true;
+  }
+
+  const { error } = await supabase
+    .from("shipment_notification_subscriptions")
+    .delete()
+    .eq("shipment_id", input.shipmentId)
+    .eq("user_id", input.userId);
+  if (error) throw new Error(error.message);
+  return false;
+}
+export async function updateShipmentTagsQuery(
+  supabase: SupabaseClient,
+  input: {
+    shipmentId: string;
+    organizationId: string;
+    tags: string[];
+  },
+): Promise<string[]> {
+  const normalized = normalizeShipmentTagList(input.tags);
+  const { error } = await supabase
+    .from("shipments")
+    .update({ tags: normalized })
+    .eq("id", input.shipmentId)
+    .eq("organization_id", input.organizationId);
+  if (error) throw new Error(error.message);
+  return normalized;
 }
 export async function updateShipmentAssigneeQuery(
   supabase: SupabaseClient,
@@ -539,13 +626,29 @@ export async function updateShipmentCustomerAccessSettingsQuery(
 export type ShipmentWorkspaceRow = {
   id: string;
   organization_id: string;
-  reference: string;
+  order_number: string;
+  carrier_booking_number: string;
+  container_number: string;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
   created_at: string;
   owner_user_id: string | null;
+  creator_display_name: string | null;
   assignee_user_id: string | null;
+  customer_name: string | null;
+  country: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  estimated_departure_at: string | null;
+  estimated_arrival_at: string | null;
+  freight_booking_carrier: string | null;
+  vessel: string | null;
+  voyage: string | null;
+  health_certificate_no: string | null;
+  trade_terms: string | null;
+  workflow_status: string | null;
+  physical_mail_tracking_number: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
 };
 
@@ -562,13 +665,28 @@ export async function fetchShipmentWorkspaceRow(
       `
           id,
           organization_id,
-          reference,
+          order_number,
+          carrier_booking_number,
+          container_number,
           bill_of_lading,
           shipping_line,
           shipment_group_id,
           created_at,
           created_by,
           assignee_user_id,
+          customer_name,
+          country,
+          port_of_loading,
+          port_of_destination,
+          estimated_departure_at,
+          estimated_arrival_at,
+          freight_booking_carrier,
+          vessel,
+          voyage,
+          health_certificate_no,
+          trade_terms,
+          workflow_status,
+          physical_mail_tracking_number,
           containers (
             id,
             container_number,
@@ -596,13 +714,28 @@ export async function fetchShipmentWorkspaceRow(
   const raw = data as {
     id: string;
     organization_id: string;
-    reference: string;
+    order_number: string;
+    carrier_booking_number: string;
+    container_number: string;
     bill_of_lading: string | null;
     shipping_line: string | null;
     shipment_group_id: string | null;
     created_at: string;
     created_by: string | null;
     assignee_user_id: string | null;
+    customer_name: string | null;
+    country: string | null;
+    port_of_loading: string | null;
+    port_of_destination: string | null;
+    estimated_departure_at: string | null;
+    estimated_arrival_at: string | null;
+    freight_booking_carrier: string | null;
+    vessel: string | null;
+    voyage: string | null;
+    health_certificate_no: string | null;
+    trade_terms: string | null;
+    workflow_status: string | null;
+    physical_mail_tracking_number: string | null;
     containers?: Array<{
       id: string;
       container_number: string;
@@ -616,18 +749,49 @@ export async function fetchShipmentWorkspaceRow(
     else if (trs) lines.push(trs);
   }
 
+  let creatorDisplayName: string | null = null;
+  if (raw.created_by) {
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", raw.created_by)
+      .maybeSingle();
+    if (creatorProfile) {
+      creatorDisplayName = profileDisplayName({
+        full_name: creatorProfile.full_name as string | null,
+        email: creatorProfile.email as string | null,
+      });
+    }
+  }
+
   return {
     ok: true,
     row: {
       id: raw.id,
       organization_id: raw.organization_id,
-      reference: raw.reference,
+      order_number: raw.order_number,
+      carrier_booking_number: raw.carrier_booking_number,
+      container_number: raw.container_number,
       bill_of_lading: raw.bill_of_lading,
       shipping_line: raw.shipping_line,
       shipment_group_id: raw.shipment_group_id,
       created_at: raw.created_at,
       owner_user_id: raw.created_by,
+      creator_display_name: creatorDisplayName,
       assignee_user_id: raw.assignee_user_id ?? null,
+      customer_name: raw.customer_name,
+      country: raw.country,
+      port_of_loading: raw.port_of_loading,
+      port_of_destination: raw.port_of_destination,
+      estimated_departure_at: raw.estimated_departure_at,
+      estimated_arrival_at: raw.estimated_arrival_at,
+      freight_booking_carrier: raw.freight_booking_carrier,
+      vessel: raw.vessel,
+      voyage: raw.voyage,
+      health_certificate_no: raw.health_certificate_no,
+      trade_terms: raw.trade_terms,
+      workflow_status: raw.workflow_status,
+      physical_mail_tracking_number: raw.physical_mail_tracking_number,
       tracking_requests: lines,
     },
   };
@@ -635,7 +799,7 @@ export async function fetchShipmentWorkspaceRow(
 
 export type ShipmentPickRow = {
   id: string;
-  reference: string;
+  order_number: string;
   created_at: string;
 };
 
@@ -646,7 +810,7 @@ export async function fetchShipmentPickRows(
 ): Promise<ShipmentPickRow[]> {
   const { data, error } = await supabase
     .from("shipments")
-    .select("id, reference, created_at")
+    .select("id, order_number, created_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(limit);
