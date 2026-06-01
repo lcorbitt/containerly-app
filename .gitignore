@@ -4,7 +4,4 @@ frontend/.next
 frontend/node_modules
 supabase/.branches
 supabase/.temp
-supabase/functions/supabase-shared/
-supabase/functions/edge-models/
-supabase/functions/edge-shared/
 docs/

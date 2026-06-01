@@ -18,7 +18,7 @@ export function PortalTrackingPanel({
   onRefresh: () => void | Promise<void>;
 }) {
   const { selectedOrgId } = useOrganizationWorkspace();
-  const readOnly = payload.viewer !== "operator";
+  const readOnly = payload.viewer === "importer";
   const attachmentDisplayNamesById = useMemo(
     () => buildPortalAttachmentDisplayNameMap(payload.attachments ?? []),
     [payload.attachments],

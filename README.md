@@ -7,7 +7,9 @@ Logistics customer portal for operators and importers: **documentation-first shi
 - `frontend/` — Next.js + Tailwind + Geist (via `next/font`); route-based UI, TanStack Query, `frontend/services/` → Edge or `/api`
 - `supabase/migrations/` — schema, indexes, RLS, commercial shipment model, document workflow, alerts
 - `supabase/functions/` — Edge Functions (flat deploy slugs; **verb-first** HTTP-style names). See `frontend/lib/supabase/edge-function-slugs.ts`.
-- `shared/dto/` — HTTP contracts between frontend services and Edge handlers
+- `supabase/functions/_wire/dto/` — HTTP contracts (`@shared/dto/...` in frontend and Edge)
+- `supabase/functions/_lib/` — Edge domain services (`@supabase-shared/...`)
+- `supabase/functions/_models/` — table-scoped DB access (`@models/...`)
 - `docs/architecture-frontend-backend.md` — layer rules, data flow, and feature checklist
 
 ### Key Edge slugs
@@ -82,4 +84,4 @@ Seed includes commercial fields, `shipment_lines`, pending document approvals, a
 
 ## External API
 
-`supabase/functions/_shared/externalProvider.ts` implements a deterministic mock when `EXTERNAL_TRACKING_API_URL` is unset. Point the env vars at your provider and adjust `mapExternalPayload` to match its JSON shape.
+`supabase/functions/_lib/providers/jsoncargo/` implements the container tracking adapter. Point env vars at your provider (or the repo mock server) and adjust mapping in that module to match its JSON shape.

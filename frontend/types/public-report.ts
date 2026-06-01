@@ -1,7 +1,7 @@
 /**
  * Re-export shipment portal DTOs from the shared DTO layer.
  *
- * Canonical types live in `shared/dto/shipment.dto.ts`. This file provides
+ * Canonical types live in `supabase/functions/_wire/dto/shipment.dto.ts`. This file provides
  * backward-compatible aliases so existing frontend code continues to compile
  * without mass-renaming.
  */

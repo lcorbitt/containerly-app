@@ -17,6 +17,7 @@ export type ReportMeta = {
 };
 
 export type ReportOrganization = {
+  id: string;
   name: string;
   slug: string;
   org_image_path?: string | null;
@@ -87,6 +88,7 @@ export type ThreadMessage = {
   id: string;
   body: string;
   author_kind: string;
+  author_user_id?: string | null;
   author_display_name: string | null;
   parent_message_id: string | null;
   created_at: string;
@@ -165,7 +167,8 @@ export type ShipmentPortalPayload = {
   logistics_hints?: LogisticsHints | null;
   tracking_request_id?: string;
   shipment_access?: ShipmentAccessMeta;
-  viewer?: "operator" | "importer";
-  /** True when payload was built for an operator preview (not persisted). */
+  /** `importer` = customer grant; `org_member` = assignee/participant on hub (can message). */
+  viewer?: "importer" | "org_member";
+  /** True when payload was built for an operator preview (read-only messaging). */
   preview?: boolean;
 };

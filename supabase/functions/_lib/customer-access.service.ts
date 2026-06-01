@@ -35,7 +35,7 @@ import {
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsNewCustomerMessage,
 } from "@supabase-shared/notification-workflow.service.ts";
-import { fetchProfileDisplayName } from "../../../shared/notification/in-app.ts";
+import { fetchProfileDisplayName } from "@supabase-shared/in-app-alerts.ts";
 
 // ---------------------------------------------------------------------------
 // Crypto helpers

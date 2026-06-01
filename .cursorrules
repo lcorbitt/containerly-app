@@ -6,13 +6,13 @@
 - **Pure functions** live in colocated **`utils.ts`** (single file beside the component) or in `frontend/utils/` when shared across routes.
 - **Colocated component hooks** (`use<ComponentName>.ts` beside `index.tsx`) only when needed for component-specific orchestration.
 - **Server state** is centralized with **TanStack Query** under `frontend/hooks/` (`queries/`, `mutations/`).
-- **Supabase backend ↔ frontend services:** **`supabase/functions/<slug>/`** is the **Edge HTTP API layer** (slug = folder name = `/functions/v1/<slug>`). **`index.ts`** only starts `Deno.serve` and forwards to **`handler.ts`**; **`handler.ts`** is a **thin HTTP adapter** that delegates to **`@supabase-shared/*`** and **`@models/*`** (see **Supabase Edge: `supabase/functions/`** below). **Rails-like models** = **`supabase/models/<table>.ts`** (one file per Postgres table; **no** nested `models/foo/foo.ts`). **No** pointless re-export-only `<slug>.service.ts` layers under the function folder. Shared: **`@supabase-shared/`** → `supabase/shared/`; **`@models/`** → `supabase/models/` (see `supabase/functions/deno.json`). **`frontend/services/*.service.ts`** calls **`/functions/v1/...`** via **`EDGE_FUNCTION_SLUGS`**. **Runtime:** **Component → hook → TanStack Query → `frontend/services/` → Edge `index` → `handler` → `@supabase-shared` / `@models` → DB.**
-- **Model layer:** All **`.from("<table>")`** access for a given table belongs in **`supabase/models/<table>.ts`**. Edge **`handler.ts`** composes **`@models/*`** + **`@supabase-shared/*`**; add a colocated module under **`functions/<slug>/`** only when that slug has **substantial slug-only** logic (otherwise keep use-cases in **`supabase/shared/`**). **Do not** put non-deployable table code under **`functions/<table>/`** (Supabase would deploy it as a function).
+- **Supabase backend ↔ frontend services:** **`supabase/functions/<slug>/`** is the **Edge HTTP API layer** (slug = folder name = `/functions/v1/<slug>`). **`index.ts`** only starts `Deno.serve` and forwards to **`handler.ts`**; **`handler.ts`** is a **thin HTTP adapter** that delegates to **`@supabase-shared/*`** and **`@models/*`** (see **Supabase Edge: `supabase/functions/`** below). **Rails-like models** = **`supabase/functions/_models/<table>.ts`** (one file per Postgres table; **no** nested `models/foo/foo.ts`). **No** pointless re-export-only `<slug>.service.ts` layers under the function folder. Shared: **`@supabase-shared/`** → `supabase/functions/_lib/`; **`@models/`** → `supabase/functions/_models/`; **`@shared/`** → `supabase/functions/_wire/` (DTOs; see `supabase/functions/deno.json`). No copy/sync step — code lives under `supabase/functions/` so the Edge bundler can read it. **`frontend/services/*.service.ts`** calls **`/functions/v1/...`** via **`EDGE_FUNCTION_SLUGS`**. **Runtime:** **Component → hook → TanStack Query → `frontend/services/` → Edge `index` → `handler` → `@supabase-shared` / `@models` → DB.**
+- **Model layer:** All **`.from("<table>")`** access for a given table belongs in **`supabase/functions/_models/<table>.ts`**. Edge **`handler.ts`** composes **`@models/*`** + **`@supabase-shared/*`**; add a colocated module under **`functions/<slug>/`** only when that slug has **substantial slug-only** logic (otherwise keep use-cases in **`supabase/functions/_lib/`**). **Do not** put non-deployable table code under **`functions/<table>/`** (Supabase would deploy it as a function).
 - **Next server-only DB layer:** **`frontend/services/<domain>.server.ts`** (`import "server-only"`) — **only** from **`app/api/**/route.ts`**. Browser code uses **`frontend/services/<domain>.service.ts`** → `fetch("/api/...")` (or Edge) — **no** PostgREST in browser services for domain data.
 - **Do not** add PostgREST (`.from` / `.rpc`) in `frontend/services/` for domain data — that skips Supabase services. **Exceptions:** Auth session, Realtime, Storage `File` uploads until replaced by a dedicated API.
 - **All browser-side I/O** is centralized in `frontend/services/` — components and colocated hooks do not call `fetch` or create Supabase clients directly.
 - **Frontend organization** follows **App Router routes** (what is on the page), not arbitrary feature folders.
-- Keep table-oriented types in `frontend/types/`; use `shared/dto` for **public Edge API** JSON shapes.
+- Keep table-oriented types in `frontend/types/`; use `supabase/functions/_wire/dto` for **public Edge API** JSON shapes (`@shared/dto/...`).
 
 Wiki-style detail, diagrams, and examples: `docs/architecture-frontend-backend.md`.
 
@@ -205,7 +205,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 **Responsibilities**
 
-- **Talk to Supabase Edge** over HTTP: authenticated **`fetch`** to **`/functions/v1/<function>`** (use **`edgeFunctionFetch`** from `frontend/lib/supabase/edge-functions.ts` where helpful). Edge bundles **`supabase/functions/<slug>/`** with **`supabase/models/**`** and **`supabase/shared/`**.
+- **Talk to Supabase Edge** over HTTP: authenticated **`fetch`** to **`/functions/v1/<function>`** (use **`edgeFunctionFetch`** from `frontend/lib/supabase/edge-functions.ts` where helpful). Edge bundles **`supabase/functions/<slug>/`** with **`_models/**`**, **`_lib/**`**, and **`_wire/**`** (see `deno.json`).
 - **Talk to Next services** via **`fetch("/api/...")`** when privileged.
 - Import **`@shared/dto/*`** for Edge JSON contracts shared with Supabase domain services.
 - **Avoid** Supabase **browser** client for table/RPC data — implement or extend a **Supabase domain service** on Edge instead.
@@ -248,7 +248,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ### 7. Shared DTOs (frontend services ↔ Supabase Edge HTTP)
 
-**Location:** `shared/dto/` (barrel: `shared/dto/index.ts`)
+**Location:** `supabase/functions/_wire/dto/` (barrel: `index.ts`)
 
 **Responsibilities**
 
@@ -264,7 +264,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ### 8. Database / Supabase
 
-**Responsibilities:** Postgres persistence. **Supabase models** (`supabase/models/<table>.ts`), **Edge handlers** (`supabase/functions/<slug>/handler.ts`) calling **`@supabase-shared/`** + **`@models/`**, **shared Edge modules** (`supabase/shared/`), and **Next** `frontend/services/*.server.ts` own orchestration and privileged access. **No** direct PostgREST from `frontend/services/*.service.ts` except **refactor debt** being removed.
+**Responsibilities:** Postgres persistence. **Supabase models** (`supabase/functions/_models/<table>.ts`), **Edge handlers** (`supabase/functions/<slug>/handler.ts`) calling **`@supabase-shared/`** + **`@models/`**, **shared Edge modules** (`supabase/functions/_lib/`), and **Next** `frontend/services/*.server.ts` own orchestration and privileged access. **No** direct PostgREST from `frontend/services/*.service.ts` except **refactor debt** being removed.
 
 **MUST NOT:** duplicate Edge HTTP contracts in `frontend/types/` — use `shared/dto` for Edge wire format; use `frontend/types/database.ts` (and related) for table-aligned app types.
 
@@ -295,7 +295,7 @@ When refactoring, **identify and move**:
 | Server state / fetch / invalidation | `frontend/hooks/` (queries/mutations) |
 | Privileged logic inside `route.ts` | `frontend/services/<domain>.server.ts` |
 | Duplicate Edge request/response shapes | `shared/dto/` (import from Edge + frontend service) |
-| PostgREST in `frontend/services/*.service.ts` | New Edge function + `supabase/models/` / `supabase/shared/` + `shared/dto` + `frontend/services/*.service.ts` caller; or `frontend/services/*.server.ts` + `/api` if privileged |
+| PostgREST in `frontend/services/*.service.ts` | New Edge function + `_models/` / `_lib/` + `@shared/dto` + `frontend/services/*.service.ts` caller; or `frontend/services/*.server.ts` + `/api` if privileged |
 | Pure helpers (component-specific) | Colocated `utils.ts` |
 | Pure helpers (shared across routes) | `frontend/utils/` |
 | Inline constants (classes, labels, config) | Colocated `constants.ts` |
@@ -328,31 +328,14 @@ frontend/services/
 
 frontend/app/api/organization-members/route.ts
 
-supabase/shared/
-  db.ts
-  utils.ts
-  auth.ts
-  logger.ts
-  providers/jsoncargo/...
-  tracking-sync.ts
-  tracking-operations.service.ts
-  tracking-bol-lookup.ts
-  shipment-portal-payload.ts
-  shipment-portal-handlers.ts
-  shipment-insights.ts
-  customer-access.service.ts
-  container-number.ts
-
-supabase/models/
-  <table>.ts                  # one file per Postgres table (ActiveRecord-style)
+supabase/functions/_lib/       # @supabase-shared — Edge services (auth, db, tracking, portal, …)
+supabase/functions/_models/    # @models — one <table>.ts per Postgres table
+supabase/functions/_wire/dto/  # @shared/dto — HTTP contracts (frontend + Edge)
 
 supabase/functions/<slug>/
-  index.ts                    # Deno.serve + CORS; hand off to handler.ts only
-  handler.ts                  # Thin HTTP adapter → @supabase-shared / @models (see search-containers)
+  index.ts                     # Deno.serve + CORS; hand off to handler.ts only
+  handler.ts                   # Thin HTTP adapter → @supabase-shared / @models (see search-containers)
 
-shared/dto/
-  shipment.dto.ts
-  index.ts
 ```
 
 ---
@@ -360,7 +343,7 @@ shared/dto/
 ## Key principles
 
 - Strict separation of concerns per layer.
-- Predictable data flow: UI → Query → **`frontend/services/*.service.ts`** → HTTP → **Supabase** (`supabase/functions/**` + `supabase/models/**` + `supabase/shared/` via Edge), or **`frontend/services/*.server.ts`** via `/api` when privileged.
+- Predictable data flow: UI → Query → **`frontend/services/*.service.ts`** → HTTP → **Supabase** (`supabase/functions/**` including `_lib`, `_models`, `_wire`), or **`frontend/services/*.server.ts`** via `/api` when privileged.
 - No logic leakage into dumb components.
 - Centralized server state (Query + **`frontend/services/`**).
 - **`shared/dto/`** aligns **frontend services** with **Supabase Edge** HTTP contracts.
@@ -371,6 +354,6 @@ shared/dto/
 
 - Dumb, reusable components.
 - Consistent, centralized data fetching and transport.
-- Business logic in **`supabase/shared/`**, **`supabase/models/`**, and **`supabase/functions/<slug>/handler.ts`** only as HTTP glue — not bloated handlers, not in Edge **`index.ts`**, not in UI. **Next:** `frontend/services/*.server.ts` for privileged `/api` work.
+- Business logic in **`supabase/functions/_lib/`**, **`supabase/functions/_models/`**, and **`supabase/functions/<slug>/handler.ts`** only as HTTP glue — not bloated handlers, not in Edge **`index.ts`**, not in UI. **Next:** `frontend/services/*.server.ts` for privileged `/api` work.
 - Typed HTTP contracts via **`shared/dto`**; table-oriented shapes in `frontend/types/` where appropriate.
 - Organized, scalable, maintainable codebase.

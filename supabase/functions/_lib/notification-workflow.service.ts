@@ -19,7 +19,7 @@ import {
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
-} from "../../../shared/notification/in-app.ts";
+} from "@supabase-shared/in-app-alerts.ts";
 import { insertAlert } from "@models/alerts.ts";
 import { fetchProfileEmailByUserId } from "@models/profiles.ts";
 import { listShipmentNotificationSubscriberUserIds } from "@models/shipment_notification_subscriptions.ts";

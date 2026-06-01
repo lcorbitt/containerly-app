@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { notifyOperatorsTrackingSyncFailed } from "@supabase-shared/notification-workflow.service.ts";
-import { notifyShipmentStakeholdersCarrierAlert } from "../../../shared/notification/in-app.ts";
+import { notifyShipmentStakeholdersCarrierAlert } from "@supabase-shared/in-app-alerts.ts";
 import { buildContainerEnrichment } from "@supabase-shared/providers/jsoncargo/enrichment.ts";
 import { getJsoncargoConfig } from "@supabase-shared/providers/jsoncargo/client.ts";
 import { fetchLiveFromProvider, type NormalizedContainer } from "@supabase-shared/providers/jsoncargo/container-tracking.ts";

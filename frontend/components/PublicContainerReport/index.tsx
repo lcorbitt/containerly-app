@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { Reply } from "lucide-react";
-import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
-import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
-import { formatTimestamp } from "@/utils/datetime";
+import { useMemo } from "react";
+import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
+import { SHIPMENT_MESSAGES_THREAD_SHELL_CLASS } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentMessagesPanel/constants";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
-import { truncatedReplyPreview, type ThreadNode } from "@/utils/report-message-tree";
-import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
+import type { PublicReportPayload } from "@/types/public-report";
 import { BrandedHeader } from "@/components/BrandedHeader";
 import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
 import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
@@ -17,114 +14,11 @@ import { PortalDetailsTabs } from "./PortalDetailsTabs";
 import { PortalTrackingPanel } from "./PortalTrackingPanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
-  PORTAL_MESSAGES_SCROLL_CLASS,
   PORTAL_MESSAGES_SHELL_CLASS,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
-import { publicThreadAuthorName } from "./utils";
 import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
-
-function SubmitSpinner() {
-  return (
-    <span
-      className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
-      aria-hidden
-    />
-  );
-}
-
-function PublicThreadItem({
-  node,
-  depth,
-  replyTargetId,
-  onReply,
-  messageById,
-  readOnly,
-  showUnitLabel,
-}: {
-  node: ThreadNode<PublicThreadMessage>;
-  depth: number;
-  replyTargetId: string | null;
-  onReply: (id: string) => void;
-  messageById: Map<string, PublicThreadMessage>;
-  readOnly?: boolean;
-  showUnitLabel?: boolean;
-}) {
-  const parent = node.parent_message_id ? messageById.get(node.parent_message_id) : undefined;
-  const isTarget = replyTargetId === node.id;
-  const isRoot = depth === 0;
-
-  const shell = isRoot
-    ? "rounded-2xl bg-sky-50/90 px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
-    : "rounded-xl bg-sky-50/55 px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:bg-sky-950/20 dark:shadow-[0_1px_2px_rgba(0,0,0,0.18)]";
-
-  return (
-    <li className="list-none">
-      <div
-        className={`text-sm ${shell} ${
-          isTarget
-            ? "ring-2 ring-sky-400/45 ring-offset-2 ring-offset-sky-50 dark:ring-sky-500/35 dark:ring-offset-sky-950"
-            : ""
-        }`}
-      >
-        {parent ? (
-          <div className="mb-4 border-l-[3px] border-sky-400/90 bg-sky-100/40 py-2 pr-2 pl-3 dark:border-sky-500/70 dark:bg-sky-950/35 rounded-r-md">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Replying to {publicThreadAuthorName(parent)}
-            </p>
-            <p className="mt-1 truncate text-[13px] leading-snug text-zinc-600 dark:text-zinc-300">
-              {truncatedReplyPreview(parent.body)}
-            </p>
-          </div>
-        ) : null}
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-            {publicThreadAuthorName(node)}
-          </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatTimestamp(node.created_at)}</span>
-          {showUnitLabel ? (
-            <span className="rounded-full bg-zinc-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-              {node.scope === "shipment" || node.container_id == null
-                ? "Entire shipment"
-                : `Unit · ${node.container_number?.trim() || "—"}`}
-            </span>
-          ) : null}
-        </div>
-        <p className="mt-3 whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200">{node.body}</p>
-        {readOnly ? null : (
-          <ActionHoverTooltip label="Reply">
-            <button
-              type="button"
-              onClick={() => onReply(node.id)}
-              aria-label="Reply to this message"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-            >
-              <Reply className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-              Reply
-            </button>
-          </ActionHoverTooltip>
-        )}
-      </div>
-      {node.children.length > 0 ? (
-        <ul className="relative mt-6 flex flex-col gap-6 border-l-2 border-zinc-300 pl-6 dark:border-zinc-600">
-          {node.children.map((c) => (
-            <PublicThreadItem
-              key={c.id}
-              node={c}
-              depth={depth + 1}
-              replyTargetId={replyTargetId}
-              onReply={onReply}
-              messageById={messageById}
-              readOnly={readOnly}
-              showUnitLabel={showUnitLabel}
-            />
-          ))}
-        </ul>
-      ) : null}
-    </li>
-  );
-}
 
 export function PublicContainerReport({
   shipmentId,
@@ -142,36 +36,27 @@ export function PublicContainerReport({
     organization,
     summary,
     insights,
-    messages,
     attachments,
     containerLines,
     logisticsHints,
 
     fresh,
     threadReadOnly,
-    messageTree,
-    messageById,
-    replyPreview,
-    showMessageScopeLabels,
-
+    threadMessages,
+    shipmentLabel,
     body,
     setBody,
-    name,
-    setName,
     replyParentId,
     setReplyParentId,
     sending,
     dashboardTab,
     setDashboardTab,
     setupDismissBusy,
-    messageContainerId,
-    setMessageContainerId,
-    messageTarget,
-    setMessageTarget,
-
-    updatesEndRef,
-
-    onSubmit,
+    currentUserId,
+    composerAuthorLabel,
+    messageAuthorByUserId,
+    attachmentsByMessageId,
+    postMessage,
     handleSetupDismiss,
     handleDocumentOpen,
     commercialDetails,
@@ -187,6 +72,30 @@ export function PublicContainerReport({
   const orgLogoUrl = organization?.org_image_path
     ? getOrgImagePublicUrl(createClient(), organization.org_image_path)
     : null;
+
+  const threadStartBanner = useMemo(() => {
+    const audience =
+      payload.viewer === "org_member"
+        ? "your customer and logistics team"
+        : "your logistics team";
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          Shipment messages
+          {shipmentLabel ? (
+            <>
+              {" "}
+              · Order <span className="font-mono">{shipmentLabel}</span>
+            </>
+          ) : null}
+        </p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          This thread is shared with {audience}. Everyone sees the same messages with names and
+          timestamps.
+        </p>
+      </div>
+    );
+  }, [payload.viewer, shipmentLabel]);
 
   return (
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
@@ -204,7 +113,7 @@ export function PublicContainerReport({
 
             <div className={PORTAL_STATUS_STRIP_CLASS}>
               {hasTracking ? (
-                <div className={`flex flex-wrap items-center gap-2${payload.viewer === "operator" ? " mt-3" : ""}`}>
+                <div className={`flex flex-wrap items-center gap-2${payload.viewer === "org_member" ? " mt-3" : ""}`}>
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
                   >
@@ -283,142 +192,48 @@ export function PublicContainerReport({
                 />
               }
               messagesPanel={
-                <section aria-label="Shipment messages" className={PORTAL_MESSAGES_SHELL_CLASS}>
-                  <div className={PORTAL_MESSAGES_SCROLL_CLASS}>
-                <ul className="flex flex-col gap-8">
-                  {messages.length === 0 ? (
-                    <li className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-400">
-                      No messages yet.
-                    </li>
-                  ) : (
-                    messageTree.map((n) => (
-                      <PublicThreadItem
-                        key={n.id}
-                        node={n}
-                        depth={0}
-                        replyTargetId={replyParentId}
-                        onReply={setReplyParentId}
-                        messageById={messageById}
-                        readOnly={threadReadOnly}
-                        showUnitLabel={showMessageScopeLabels}
-                      />
-                    ))
-                  )}
-                </ul>
-                    <div ref={updatesEndRef} className="h-1 shrink-0 scroll-mt-4" aria-hidden />
-                    {threadReadOnly ? (
-                      <p className="border-t border-zinc-100 pt-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                        Messaging is read-only in this preview.
-                      </p>
-                    ) : (
-                      <form
-                        onSubmit={onSubmit}
-                        className="flex flex-col gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800"
-                      >
-                  {replyPreview ? (
-                    <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/50">
-                      <div className="min-w-0 border-l-[3px] border-sky-400/90 pl-3 dark:border-sky-500/70">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                          Replying to {replyPreview.label}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-300">
-                          {replyPreview.excerpt}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setReplyParentId(null)}
-                        className="shrink-0 text-zinc-500 underline-offset-2 hover:text-zinc-800 hover:underline dark:hover:text-zinc-200"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                <section
+                  aria-label="Shipment messages"
+                  className={`${PORTAL_MESSAGES_SHELL_CLASS} min-h-[min(28rem,70vh)]`}
+                >
+                  {threadReadOnly ? (
+                    <p className="border-b border-zinc-100 px-5 py-3 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                      Messaging is read-only in this preview.
+                    </p>
                   ) : null}
-                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Your name (optional)
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                      maxLength={120}
-                      placeholder="e.g. Alex"
+                  <div className={SHIPMENT_MESSAGES_THREAD_SHELL_CLASS}>
+                    <ThreadPanel
+                      messages={threadMessages}
+                      authorNameByUserId={messageAuthorByUserId}
+                      uploaderDisplayByUserId={messageAuthorByUserId}
+                      attachmentsByMessageId={attachmentsByMessageId}
+                      onOpenAttachment={(row) => void handleDocumentOpen(row.storage_path)}
+                      onRenameAttachment={async () => {}}
+                      renamingAttachmentId={null}
+                      composerPendingFiles={[]}
+                      onComposerPickFiles={() => {}}
+                      onRemoveComposerPendingFile={() => {}}
+                      body={body}
+                      onBodyChange={setBody}
+                      internalOnly={false}
+                      onInternalOnlyChange={() => {}}
+                      showInternalComposerToggle={false}
+                      posting={sending}
+                      onPostMessage={() => void postMessage()}
+                      replyParentId={replyParentId}
+                      onReplyParent={setReplyParentId}
+                      onClearReplyParent={() => setReplyParentId(null)}
+                      currentUserId={currentUserId}
+                      onDeleteMessage={() => {}}
+                      deletingMessageId={null}
+                      composerAuthorLabel={composerAuthorLabel}
+                      publicThreadMode
+                      allowMessageDelete={false}
+                      composerHidden={threadReadOnly}
+                      allowReply={!threadReadOnly}
+                      emptyStateText="No messages yet. Start the conversation below."
+                      threadStartBanner={threadStartBanner}
                     />
-                  </label>
-                  <fieldset className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    <legend className="sr-only">Message scope</legend>
-                    <p className="mb-2 font-medium">Post to</p>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
-                        <input
-                          type="radio"
-                          name="message-scope"
-                          checked={messageTarget === "shipment"}
-                          onChange={() => setMessageTarget("shipment")}
-                        />
-                        Entire shipment
-                      </label>
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
-                        <input
-                          type="radio"
-                          name="message-scope"
-                          checked={messageTarget === "container"}
-                          onChange={() => setMessageTarget("container")}
-                        />
-                        One container
-                      </label>
-                    </div>
-                  </fieldset>
-                  {messageTarget === "container" ? (
-                    <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                      Container
-                      <select
-                        value={messageContainerId}
-                        onChange={(e) => setMessageContainerId(e.target.value)}
-                        className="mt-1 w-full max-w-md rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-mono dark:border-zinc-700 dark:bg-zinc-950"
-                        aria-label="Select container for this message"
-                      >
-                        {containerLines.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.container_number}
-                            {c.carrier ? ` · ${c.carrier}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Message
-                    <div className="mt-1 rounded-xl bg-sky-50/90 px-5 py-4 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-sky-500/35">
-                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-50">{name.trim() || "You"}</span>
-                      </div>
-                      <AutoGrowTextarea
-                        required
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                        maxLength={4000}
-                        className="mt-3 w-full border-0 bg-transparent p-0 text-sm leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none ring-0 focus:outline-none dark:text-zinc-200 dark:placeholder:text-zinc-500"
-                        placeholder="Ask a question or leave a note for the logistics team."
-                        aria-label="Message"
-                      />
-                    </div>
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={sending}
-                    className="inline-flex h-9 min-w-34 items-center justify-center gap-2 self-start rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-                  >
-                    {sending ? (
-                      <>
-                        <SubmitSpinner />
-                        <span>Sending…</span>
-                      </>
-                    ) : (
-                      <span>Send message</span>
-                    )}
-                      </button>
-                      </form>
-                    )}
                   </div>
                 </section>
               }

@@ -31,7 +31,7 @@ Component → colocated hook → TanStack Query → frontend/services/*.service.
 - **Route UI** lives under `app/(authenticated)/...` and `app/(public)/...`
 - **Shared components** — `components/` only when reused across routes
 - **Edge slugs** — `lib/supabase/edge-function-slugs.ts` (never hard-code URLs)
-- **Wire types** — `shared/dto/` (import as `@shared/dto/...`)
+- **Wire types** — `supabase/functions/_wire/dto/` (import as `@shared/dto/...`)
 
 Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture-frontend-backend.md) and [`.cursorrules`](../.cursorrules).
 

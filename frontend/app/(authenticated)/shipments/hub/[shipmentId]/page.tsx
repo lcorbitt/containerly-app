@@ -76,7 +76,9 @@ export default function SharedShipmentTrackingPage({
     <PublicContainerReport
       shipmentId={shipmentId}
       initial={data}
-      headerActions={data.viewer === "operator" ? <CustomerPortalShareMenu shipmentId={shipmentId} /> : undefined}
+      headerActions={
+        data.viewer === "org_member" ? <CustomerPortalShareMenu shipmentId={shipmentId} /> : undefined
+      }
     />
   );
 }

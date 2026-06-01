@@ -1,7 +1,7 @@
 import { requireAuthUserId } from "@supabase-shared/auth.ts";
 import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
 import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
-import { postCustomerMessage } from "@supabase-shared/customer-access.service.ts";
+import { postPortalShipmentMessage } from "@supabase-shared/shipment-portal-messages.service.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {
@@ -22,7 +22,7 @@ export async function handle(req: Request): Promise<Response> {
     };
 
     const admin = createServiceClient();
-    const result = await postCustomerMessage(userClient, admin, auth.userId, {
+    const result = await postPortalShipmentMessage(userClient, admin, auth.userId, {
       shipment_id: body.shipment_id ?? "",
       container_id: body.container_id,
       body: body.body ?? "",

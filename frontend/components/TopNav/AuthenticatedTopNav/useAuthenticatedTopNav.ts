@@ -119,7 +119,7 @@ export function useAuthenticatedTopNav({
   const hubSubTabHref = useMemo(() => {
     if (!isHubRoute || !subTabRoute || subTabRoute.kind !== "shipment-hub") return null;
     const payload = hubShipmentQuery.data?.ok ? hubShipmentQuery.data.data : null;
-    if (payload?.viewer === "operator") {
+    if (payload?.viewer === "org_member") {
       return `/shipments/${subTabRoute.shipmentId}`;
     }
     return null;

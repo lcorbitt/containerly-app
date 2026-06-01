@@ -1,6 +1,6 @@
 /**
  * Cross-runtime in-app alert helpers (Next server + Supabase Edge).
- * Email delivery stays in `supabase/shared/notification-workflow.service.ts`.
+ * Email delivery stays in `supabase/functions/_lib/notification-workflow.service.ts`.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 

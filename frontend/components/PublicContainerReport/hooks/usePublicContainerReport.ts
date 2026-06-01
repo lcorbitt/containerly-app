@@ -1,19 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/contexts/toast";
+import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
+import { orgReportMessagesRealtimeDedupeKey } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { createClient } from "@/lib/supabase/client";
 import {
   completeImporterPortalSetup,
   fetchShipment,
   postShipmentThreadMessage,
   reviewShipmentDocument,
 } from "@/services/shipment.service";
-import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
+import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
+import { profileDisplayName } from "@/utils/author-display-name";
 import type { PublicReportPayload } from "@/types/public-report";
 import type { PortalDetailsTabId } from "../PortalDetailsTabs";
-import { publicThreadAuthorName, formatFreshness } from "../utils";
+import { formatFreshness } from "../utils";
+import {
+  buildPortalAttachmentsByMessageId,
+  buildPortalMessageAuthorMap,
+  portalThreadMessageToReportMessage,
+} from "../portal-message-utils";
 
 export function usePublicContainerReport({
   shipmentId,
@@ -29,57 +38,101 @@ export function usePublicContainerReport({
 
   const [payload, setPayload] = useState(initial);
   const [body, setBody] = useState("");
-  const [name, setName] = useState("");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("tracking");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
-  const [messageContainerId, setMessageContainerId] = useState(
-    () => initial.primary_container_id ?? initial.container_lines?.[0]?.id ?? "",
-  );
-  const [messageTarget, setMessageTarget] = useState<"shipment" | "container">("container");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [composerAuthorLabel, setComposerAuthorLabel] = useState("");
 
-  const { report, organization, summary, insights, timeline, alerts, messages } = payload;
+  const organizationId = payload.organization?.id ?? null;
+
+  const { organization, summary, insights, timeline, alerts } = payload;
   const attachments = payload.attachments ?? [];
   const containerLines = payload.container_lines ?? [];
   const logisticsHints = payload.logistics_hints;
-  const threadReadOnly = readOnlyMessaging || payload.viewer === "operator";
   const commercialDetails = payload.commercial_details;
   const hasTracking = containerLines.length > 0 && timeline.length > 0;
 
-  // Sync messageContainerId when payload changes
-  useEffect(() => {
-    const fallback =
-      payload.primary_container_id ?? payload.container_lines?.[0]?.id ?? "";
-    setMessageContainerId((prev) => {
-      if (prev && payload.container_lines?.some((c) => c.id === prev)) return prev;
-      return fallback;
-    });
-  }, [payload.primary_container_id, payload.container_lines]);
+  const threadReadOnly = readOnlyMessaging || payload.preview === true;
 
-  async function refresh() {
+  const visibleMessages = useMemo(() => {
+    const list = payload.messages ?? [];
+    if (payload.viewer === "org_member") return list;
+    return list.filter((m) => !m.is_internal);
+  }, [payload.messages, payload.viewer]);
+
+  const threadMessages = useMemo(
+    () => visibleMessages.map(portalThreadMessageToReportMessage),
+    [visibleMessages],
+  );
+
+  const messageAuthorByUserId = useMemo(
+    () => buildPortalMessageAuthorMap(visibleMessages),
+    [visibleMessages],
+  );
+
+  const attachmentsByMessageId = useMemo(
+    () => buildPortalAttachmentsByMessageId(attachments),
+    [attachments],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void createClient()
+      .auth.getUser()
+      .then(async ({ data }) => {
+        if (cancelled) return;
+        const user = data.user;
+        setCurrentUserId(user?.id ?? null);
+        if (!user?.id) {
+          setComposerAuthorLabel("");
+          return;
+        }
+        const { data: profile } = await createClient()
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        setComposerAuthorLabel(
+          profileDisplayName({
+            full_name: profile?.full_name as string | null,
+            email: (profile?.email as string | null) ?? user.email ?? null,
+          }),
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const refresh = useCallback(async () => {
     const r = await fetchShipment(shipmentId);
     if (r.ok) setPayload(r.data);
     router.refresh();
-  }
+  }, [shipmentId, router]);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  usePostgresRealtimeInvalidation({
+    enabled: Boolean(organizationId),
+    dedupeKey: organizationId ? orgReportMessagesRealtimeDedupeKey(organizationId) : "",
+    table: "report_messages",
+    filter: organizationId ? `organization_id=eq.${organizationId}` : undefined,
+    onEvent: () => {
+      void refresh();
+    },
+  });
+
+  const postMessage = useCallback(async () => {
     const t = body.trim();
     if (!t) return;
-    if (messageTarget === "container" && !messageContainerId) {
-      toast("Select which container this message is about.", "error");
-      return;
-    }
     setSending(true);
     try {
       const r = await postShipmentThreadMessage({
         shipmentId,
-        ...(messageTarget === "container" ? { containerId: messageContainerId } : {}),
         body: t,
-        authorDisplayName: name.trim() || undefined,
         parentMessageId: replyParentId,
       });
       if (!r.ok) {
@@ -93,7 +146,7 @@ export function usePublicContainerReport({
     } finally {
       setSending(false);
     }
-  }
+  }, [body, replyParentId, shipmentId, refresh, toast]);
 
   async function handleSetupDismiss() {
     setSetupDismissBusy(true);
@@ -148,34 +201,19 @@ export function usePublicContainerReport({
     }
   }
 
-  const messageTree = useMemo(() => buildMessageTree(messages), [messages]);
-  const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
+  const messageTree = useMemo(() => buildMessageTree(threadMessages), [threadMessages]);
+  const messageById = useMemo(() => new Map(threadMessages.map((m) => [m.id, m])), [threadMessages]);
 
   const replyPreview = useMemo(() => {
     if (!replyParentId) return null;
-    const m = messages.find((x) => x.id === replyParentId);
+    const m = threadMessages.find((x) => x.id === replyParentId);
     if (!m) return null;
-    return { label: publicThreadAuthorName(m), excerpt: truncatedReplyPreview(m.body, 120) };
-  }, [replyParentId, messages]);
-
-  useEffect(() => {
-    if (!replyParentId) return;
-    const m = messages.find((x) => x.id === replyParentId);
-    if (!m) return;
-    if (m.scope === "shipment" || m.container_id == null) {
-      setMessageTarget("shipment");
-    } else {
-      setMessageTarget("container");
-      setMessageContainerId(m.container_id);
-    }
-  }, [replyParentId, messages]);
-
-  const showMessageScopeLabels = useMemo(
-    () =>
-      containerLines.length > 1 ||
-      messages.some((m) => m.scope === "shipment" || m.container_id == null),
-    [containerLines.length, messages],
-  );
+    const label =
+      (m.author_user_id && messageAuthorByUserId[m.author_user_id]) ||
+      m.author_display_name?.trim() ||
+      "Message";
+    return { label, excerpt: truncatedReplyPreview(m.body, 120) };
+  }, [replyParentId, threadMessages, messageAuthorByUserId]);
 
   const showDocumentScopeLabels = useMemo(
     () =>
@@ -188,16 +226,19 @@ export function usePublicContainerReport({
   const prevMessageCount = useRef<number | null>(null);
   useEffect(() => {
     if (prevMessageCount.current === null) {
-      prevMessageCount.current = messages.length;
+      prevMessageCount.current = threadMessages.length;
       return;
     }
-    if (messages.length > prevMessageCount.current) {
+    if (threadMessages.length > prevMessageCount.current) {
       updatesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-    prevMessageCount.current = messages.length;
-  }, [messages]);
+    prevMessageCount.current = threadMessages.length;
+  }, [threadMessages.length]);
 
   const fresh = formatFreshness(summary.freshness_minutes);
+
+  const shipmentLabel =
+    summary.order_number?.trim() || summary.container_number?.trim() || null;
 
   return {
     payload,
@@ -206,7 +247,8 @@ export function usePublicContainerReport({
     insights,
     timeline,
     alerts,
-    messages,
+    visibleMessages,
+    threadMessages,
     attachments,
     containerLines,
     logisticsHints,
@@ -216,25 +258,23 @@ export function usePublicContainerReport({
     messageTree,
     messageById,
     replyPreview,
-    showMessageScopeLabels,
     showDocumentScopeLabels,
 
     body,
     setBody,
-    name,
-    setName,
     replyParentId,
     setReplyParentId,
     sending,
     dashboardTab,
     setDashboardTab,
     setupDismissBusy,
-    messageContainerId,
-    setMessageContainerId,
-    messageTarget,
-    setMessageTarget,
+    currentUserId,
+    composerAuthorLabel,
+    messageAuthorByUserId,
+    attachmentsByMessageId,
 
     updatesEndRef,
+    shipmentLabel,
 
     commercialDetails,
     hasTracking,
@@ -242,7 +282,7 @@ export function usePublicContainerReport({
     rejectReasonById,
     setRejectReasonById,
 
-    onSubmit,
+    postMessage,
     handleSetupDismiss,
     handleDocumentOpen,
     handleDocumentReview,

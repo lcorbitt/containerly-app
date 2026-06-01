@@ -16,7 +16,7 @@ import {
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
-} from "@shared/notification/in-app";
+} from "@supabase-shared/in-app-alerts";
 
 function adminClient(): SupabaseClient {
   return createAdminClient();

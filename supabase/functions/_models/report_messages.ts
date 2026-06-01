@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const PORTAL_MSG_SELECT =
-  "id, body, author_kind, author_display_name, parent_message_id, created_at, is_internal, container_id, shipment_id";
+  "id, body, author_kind, author_user_id, author_display_name, parent_message_id, created_at, is_internal, container_id, shipment_id";
 
 /** `report_messages` — container-scoped thread for portal. */
 export function queryReportMessagesForContainers(

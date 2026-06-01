@@ -41,6 +41,8 @@ function ThreadMessageItem({
   onRenameAttachment,
   renamingAttachmentId,
   publicThreadMode = false,
+  allowMessageDelete = true,
+  allowReply = true,
 }: {
   node: ThreadNode<ReportMessage>;
   depth: number;
@@ -57,6 +59,8 @@ function ThreadMessageItem({
   onRenameAttachment: (attachmentId: string, newName: string) => Promise<void>;
   renamingAttachmentId: string | null;
   publicThreadMode?: boolean;
+  allowMessageDelete?: boolean;
+  allowReply?: boolean;
 }) {
   const messageAttachments = attachmentsByMessageId.get(node.id) ?? [];
   const parent = node.parent_message_id ? messageById.get(node.parent_message_id) : undefined;
@@ -143,21 +147,23 @@ function ThreadMessageItem({
           ) : null}
         </div>
         <div className={cornerActionsClass}>
-          <ActionHoverTooltip label="Reply">
-            <button
-              type="button"
-              onClick={() => onReply(node.id)}
-              aria-label="Reply to this message"
-              className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 dark:text-zinc-500 dark:hover:text-zinc-50"
-            >
-              <Reply
-                className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
-                strokeWidth={2}
-                aria-hidden
-              />
-            </button>
-          </ActionHoverTooltip>
-          {isOwnMessage ? (
+          {allowReply ? (
+            <ActionHoverTooltip label="Reply">
+              <button
+                type="button"
+                onClick={() => onReply(node.id)}
+                aria-label="Reply to this message"
+                className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 dark:text-zinc-500 dark:hover:text-zinc-50"
+              >
+                <Reply
+                  className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </button>
+            </ActionHoverTooltip>
+          ) : null}
+          {isOwnMessage && allowMessageDelete !== false ? (
             <ActionHoverTooltip label={isDeleting ? "Deleting…" : "Delete"}>
               <button
                 type="button"
@@ -203,6 +209,8 @@ function ThreadMessageItem({
               onRenameAttachment={onRenameAttachment}
               renamingAttachmentId={renamingAttachmentId}
               publicThreadMode={publicThreadMode}
+              allowMessageDelete={allowMessageDelete}
+              allowReply={allowReply}
             />
           ))}
         </ul>
@@ -241,6 +249,10 @@ export function ThreadPanel({
   showInternalComposerToggle = true,
   /** Single public thread — no internal note labels, audience hints, or team/customer chrome. */
   publicThreadMode = false,
+  /** When false, hide delete on the user's own messages (e.g. customer portal). */
+  allowMessageDelete = true,
+  composerHidden = false,
+  allowReply = true,
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
@@ -271,6 +283,10 @@ export function ThreadPanel({
   threadStartBanner?: ReactNode;
   showInternalComposerToggle?: boolean;
   publicThreadMode?: boolean;
+  allowMessageDelete?: boolean;
+  /** Hide the composer (e.g. portal preview). Reply buttons follow `allowReply`. */
+  composerHidden?: boolean;
+  allowReply?: boolean;
 }) {
   const tree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
@@ -373,11 +389,14 @@ export function ThreadPanel({
                 onRenameAttachment={onRenameAttachment}
                 renamingAttachmentId={renamingAttachmentId}
                 publicThreadMode={publicThreadMode}
+                allowMessageDelete={allowMessageDelete}
+                allowReply={allowReply}
               />
             ))}
           </ul>
         )}
       </div>
+      {composerHidden ? null : (
       <div className="shrink-0 space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
         {replyPreview ? (
           <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs dark:border-zinc-700 dark:bg-zinc-950">
@@ -497,6 +516,7 @@ export function ThreadPanel({
           </p>
         </div>
       </div>
+      )}
     </div>
   );
 }

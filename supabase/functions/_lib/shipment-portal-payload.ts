@@ -322,6 +322,7 @@ export async function buildShipmentPortalPayload(
     report: reportMeta,
     organization: org
       ? {
+        id: org.id as string,
         name: org.name,
         slug: org.slug,
         org_image_path: org.org_image_path ?? null,

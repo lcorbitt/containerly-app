@@ -62,7 +62,7 @@ export async function getShipmentForOperator(
     if (!result.ok) return result;
 
     const payload = result.payload as Record<string, unknown>;
-    payload.viewer = "operator";
+    payload.viewer = "org_member";
     payload.shipment_id = shipmentId;
     return { ok: true, payload: payload as unknown as ShipmentPortalPayload };
   }
