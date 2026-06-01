@@ -102,8 +102,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
               ? messageAuthorByUserId[currentUserId]!
               : ""
           }
-          emptyStateText={null}
-          centerThreadStartBannerWhenEmpty
+          emptyStateText="No messages yet."
           threadStartBanner={
             <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">

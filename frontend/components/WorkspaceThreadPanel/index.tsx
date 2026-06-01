@@ -237,7 +237,6 @@ export function ThreadPanel({
   onRemoveComposerPendingFile,
   emptyStateText = "No messages yet.",
   threadStartBanner,
-  centerThreadStartBannerWhenEmpty = false,
   /** When false, composer visibility is fixed by `internalOnly` (hide the internal/customer checkbox). */
   showInternalComposerToggle = true,
   /** Single public thread — no internal note labels, audience hints, or team/customer chrome. */
@@ -270,8 +269,6 @@ export function ThreadPanel({
   emptyStateText?: string | null;
   /** Always-visible content rendered at the top of the scroll area (Discord-style "beginning of thread"). */
   threadStartBanner?: ReactNode;
-  /** When true, centers the thread start banner when there are no messages. */
-  centerThreadStartBannerWhenEmpty?: boolean;
   showInternalComposerToggle?: boolean;
   publicThreadMode?: boolean;
 }) {
@@ -315,16 +312,20 @@ export function ThreadPanel({
         ref={messagesScrollRef}
         className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-5 sm:p-6"
       >
-        {threadStartBanner ? (
-          messages.length === 0 && centerThreadStartBannerWhenEmpty ? (
-            <div className="flex flex-1 items-center justify-center">{threadStartBanner}</div>
-          ) : (
-            <div className="mb-5">{threadStartBanner}</div>
-          )
-        ) : null}
+        {threadStartBanner ? <div className="mb-5">{threadStartBanner}</div> : null}
 
         {messages.length === 0 ? (
-          emptyStateText ? <p className="text-sm text-zinc-500">{emptyStateText}</p> : null
+          emptyStateText ? (
+            threadStartBanner ? (
+              <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                {emptyStateText}
+              </p>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-center">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">{emptyStateText}</p>
+              </div>
+            )
+          ) : null
         ) : (
           <ul className="flex flex-col gap-5">
             {tree.map((n) => (

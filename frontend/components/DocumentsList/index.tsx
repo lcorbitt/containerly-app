@@ -316,7 +316,7 @@ export function DocumentsList({
             ) : null}
           </ul>
         ) : (
-          <p className="px-2 py-3 text-sm text-zinc-500 dark:text-zinc-400">No documents yet.</p>
+          <p className="px-2 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">No documents yet.</p>
         )}
       </div>
     </div>
