@@ -2,6 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { DEFAULT_CUSTOMER_VISIBILITY } from "@supabase-shared/shipment-portal-payload.ts";
 import {
   fetchCustomerInviteByTokenHash,
+  fetchPendingInviteByEmailForShipment,
   insertCustomerInvite,
   updateCustomerInviteStatus,
 } from "@models/customer_invites.ts";
@@ -19,14 +20,17 @@ import {
   updateShipmentCustomerAccess,
 } from "@models/shipment_customer_access.ts";
 import { fetchShipmentIdAndOrganization } from "@models/shipments.ts";
+import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import { fetchContainerIdAndShipmentId } from "@models/containers.ts";
 import { updateProfileAccountKind } from "@models/profiles.ts";
 import type {
   AcceptCustomerInviteResponse,
+  ClaimShipmentAccessResponse,
   CreateCustomerInviteResponse,
   CompleteCustomerSetupResponse,
   PostCustomerMessageResponse,
 } from "@shared/dto/customer-access.dto.ts";
+import { notifyCustomerInviteSent, notifyOperatorsNewCustomerMessage } from "@supabase-shared/notification-workflow.service.ts";
 
 // ---------------------------------------------------------------------------
 // Crypto helpers
@@ -71,6 +75,7 @@ export async function createCustomerInvite(
     shipment_id: string;
     invited_email: string;
     visibility_settings?: Record<string, unknown>;
+    delivery_mode?: "email_invite" | "allowlist_only";
   },
 ): Promise<{ ok: true } & CreateCustomerInviteResponse | Err> {
   const orgId = input.organization_id.trim();
@@ -97,6 +102,8 @@ export async function createCustomerInvite(
       : {}),
   };
 
+  const deliveryMode = input.delivery_mode === "allowlist_only" ? "allowlist_only" : "email_invite";
+
   const { data: invite, error: insErr } = await insertCustomerInvite(admin, {
     organization_id: orgId,
     shipment_id: shipmentId,
@@ -106,6 +113,7 @@ export async function createCustomerInvite(
     status: "pending",
     expires_at: expiresAt,
     visibility_settings: visibility,
+    delivery_mode: deliveryMode,
   });
   if (insErr) throw insErr;
   if (!invite) throw new Error("insertCustomerInvite returned no row");
@@ -121,6 +129,17 @@ export async function createCustomerInvite(
   const siteUrl = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";
   const invitePath = `/invite/accept?token=${encodeURIComponent(token)}`;
   const invite_url = siteUrl ? `${siteUrl}${invitePath}` : invitePath;
+
+  const { data: orgRow } = await fetchOrganizationForPortal(admin, orgId);
+  const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
+
+  if (deliveryMode === "email_invite") {
+    await notifyCustomerInviteSent({
+      to: emailRaw,
+      orgName,
+      inviteUrl: invite_url,
+    });
+  }
 
   return {
     ok: true,
@@ -228,6 +247,86 @@ export async function acceptCustomerInvite(
   }
 
   return { ok: true, shipment_id: shipmentId, shipment_access_id: access.id as string };
+}
+
+// ---------------------------------------------------------------------------
+// claim-shipment-access (Notion-style allowlist)
+// ---------------------------------------------------------------------------
+
+export async function claimShipmentAccess(
+  admin: SupabaseClient,
+  userId: string,
+  userEmail: string,
+  shipmentId: string,
+): Promise<{ ok: true } & ClaimShipmentAccessResponse | Err> {
+  if (!shipmentId || !UUID_RE.test(shipmentId)) {
+    return { ok: false, status: 400, error: "Invalid shipment_id" };
+  }
+
+  const email = userEmail.trim().toLowerCase();
+  const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
+  if (existing?.id) {
+    return {
+      ok: true,
+      access_id: existing.id as string,
+      shipment_id: shipmentId,
+      already_had_access: true,
+    };
+  }
+
+  const { data: invite, error: invErr } = await fetchPendingInviteByEmailForShipment(
+    admin,
+    shipmentId,
+    email,
+  );
+  if (invErr) throw invErr;
+  if (!invite) {
+    return { ok: false, status: 403, error: "No pending invitation for this email on this shipment" };
+  }
+
+  const orgId = invite.organization_id as string;
+  const vis = invite.visibility_settings as Record<string, unknown> | null | undefined;
+  const visibility_settings = {
+    ...DEFAULT_CUSTOMER_VISIBILITY,
+    ...(vis && typeof vis === "object" && !Array.isArray(vis) ? vis : {}),
+  };
+  const reminderDue = new Date(Date.now() + REMINDER_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const { data: access, error: accErr } = await insertShipmentCustomerAccess(admin, {
+    organization_id: orgId,
+    shipment_id: shipmentId,
+    customer_user_id: userId,
+    invite_id: invite.id as string,
+    visibility_settings,
+    configuration_reminder_due_at: reminderDue,
+  });
+  if (accErr) throw accErr;
+  if (!access) throw new Error("insertShipmentCustomerAccess returned no row");
+
+  await updateCustomerInviteStatus(admin, invite.id as string, {
+    status: "accepted",
+    accepted_at: new Date().toISOString(),
+    accepted_by_user_id: userId,
+  });
+
+  await insertReportActivity(admin, {
+    shipment_id: shipmentId,
+    shared_report_id: null,
+    shipment_customer_access_id: access.id as string,
+    actor_user_id: userId,
+    action: "customer_invite_accepted",
+    metadata: { invite_id: invite.id, claim: true },
+  });
+
+  const { count: memberCount } = await countMembershipsForUser(admin, userId);
+  if ((memberCount ?? 0) === 0) {
+    await updateProfileAccountKind(admin, userId, "customer");
+  }
+
+  return {
+    ok: true,
+    access_id: access.id as string,
+    shipment_id: shipmentId,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -355,6 +454,15 @@ export async function postCustomerMessage(
     actor_user_id: userId,
     action: "customer_message",
     metadata: { message_id: inserted.id },
+  });
+
+  const { data: orgRow } = await fetchOrganizationForPortal(admin, access.organization_id as string);
+  await notifyOperatorsNewCustomerMessage(admin, {
+    organizationId: access.organization_id as string,
+    shipmentId,
+    containerId: shipmentScoped ? null : containerId,
+    orgName: (orgRow?.name as string | undefined) ?? "Containerly",
+    preview: text,
   });
 
   return {

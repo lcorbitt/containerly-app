@@ -14,6 +14,20 @@ export async function fetchMembershipByOrgAndUser(
     .maybeSingle();
 }
 
+/** `organization_members` — role check (e.g. admin-only shipment delete). */
+export async function fetchMembershipRoleForOrg(
+  client: SupabaseClient,
+  organizationId: string,
+  userId: string,
+) {
+  return client
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+}
+
 /** `organization_members` — used when creating tracking requests (creator must be member). */
 export async function fetchMembershipUserIdForOrg(
   client: SupabaseClient,

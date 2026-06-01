@@ -74,3 +74,11 @@ export async function fetchAccessIdForUser(
     .is("revoked_at", null)
     .maybeSingle();
 }
+
+export async function listActiveCustomerAccessForShipment(client: SupabaseClient, shipmentId: string) {
+  return client
+    .from("shipment_customer_access")
+    .select("customer_user_id")
+    .eq("shipment_id", shipmentId)
+    .is("revoked_at", null);
+}

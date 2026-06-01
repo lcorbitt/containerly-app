@@ -79,3 +79,18 @@ verify_jwt = false
 
 [functions.preview-customer-shipment]
 verify_jwt = false
+
+[functions.create-shipment]
+verify_jwt = false
+
+[functions.update-shipment]
+verify_jwt = false
+
+[functions.delete-shipment]
+verify_jwt = false
+
+[functions.review-shipment-document]
+verify_jwt = false
+
+[functions.claim-shipment-access]
+verify_jwt = false

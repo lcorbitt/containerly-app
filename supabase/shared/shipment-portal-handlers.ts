@@ -13,6 +13,7 @@ import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
 import { fetchProfileRole } from "@models/profiles.ts";
 import { fetchActiveAccessFull } from "@models/shipment_customer_access.ts";
 import { fetchShipmentIdAndOrganization, fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
+import { claimShipmentAccess } from "@supabase-shared/customer-access.service.ts";
 import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto.ts";
 
 type PortalResult =
@@ -63,9 +64,23 @@ export async function getShipmentForOperator(
     return { ok: true, payload: payload as unknown as ShipmentPortalPayload };
   }
 
-  const { data: access, error: accErr } = await fetchActiveAccessFull(userClient, shipmentId, userId);
+  const { data: accessRow, error: accErr } = await fetchActiveAccessFull(userClient, shipmentId, userId);
 
+  let access = accessRow;
   if (accErr) return { ok: false, status: 500, error: accErr.message };
+
+  if (!access) {
+    const { data: userData } = await userClient.auth.getUser();
+    const email = userData.user?.email ?? "";
+    if (email) {
+      const claim = await claimShipmentAccess(admin, userId, email, shipmentId);
+      if (claim.ok) {
+        const refetch = await fetchActiveAccessFull(userClient, shipmentId, userId);
+        access = refetch.data;
+      }
+    }
+  }
+
   if (!access) return { ok: false, status: 403, error: "No access to this shipment" };
 
   const grantResult = await buildImporterGrantShipmentPayload(admin, access as Record<string, unknown>);

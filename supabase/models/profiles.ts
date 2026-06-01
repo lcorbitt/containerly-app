@@ -13,3 +13,8 @@ export async function updateProfileAccountKind(
 ) {
   return client.from("profiles").update({ account_kind: accountKind }).eq("id", userId);
 }
+
+/** `profiles` — email for transactional notifications. */
+export async function fetchProfileEmailByUserId(client: SupabaseClient, userId: string) {
+  return client.from("profiles").select("email").eq("id", userId).maybeSingle();
+}

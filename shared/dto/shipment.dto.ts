@@ -19,6 +19,7 @@ export type ReportMeta = {
 export type ReportOrganization = {
   name: string;
   slug: string;
+  org_image_path?: string | null;
 } | null;
 
 // ---------------------------------------------------------------------------
@@ -40,7 +41,7 @@ export type ContainerLine = {
 // ---------------------------------------------------------------------------
 
 export type ReportSummary = {
-  shipment_reference?: string;
+  order_number?: string;
   container_number: string;
   container_count?: number;
   carrier: string | null;
@@ -108,6 +109,22 @@ export type PortalAttachment = {
   scope?: "container" | "shipment";
   report_message_id: string | null;
   storage_path: string;
+  document_type?: string | null;
+  document_group?: string | null;
+  approval_status?: string | null;
+  rejection_reason?: string | null;
+  reviewed_at?: string | null;
+  shipment_line_id?: string | null;
+  uploaded_by_kind?: "operator" | "customer" | null;
+};
+
+export type ShipmentActivityEvent = {
+  id: string;
+  event_type: string;
+  body: string;
+  actor_kind: string;
+  occurred_at: string;
+  metadata: Record<string, unknown>;
 };
 
 export type ShipmentAccessMeta = {
@@ -115,6 +132,10 @@ export type ShipmentAccessMeta = {
   configuration_reminder_due_at: string | null;
   profile_completed_at: string | null;
 };
+
+import type { ShipmentCommercialDetails, ShipmentLineDto } from "./logistics.dto.ts";
+
+export type { ShipmentCommercialDetails, ShipmentLineDto };
 
 export type LogisticsHints = {
   ais_vs_carrier_eta_hours: number;
@@ -130,8 +151,10 @@ export type ShipmentPortalPayload = {
   organization: ReportOrganization;
   summary: ReportSummary;
   container_lines?: ContainerLine[];
+  commercial_details?: ShipmentCommercialDetails;
+  activity_events?: ShipmentActivityEvent[];
   shipment_id?: string;
-  primary_container_id?: string;
+  primary_container_id?: string | null;
   insights: ReportInsights;
   timeline: TimelineEvent[];
   alerts: Alert[];

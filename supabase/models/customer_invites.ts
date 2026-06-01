@@ -13,6 +13,21 @@ export async function fetchCustomerInviteByTokenHash(client: SupabaseClient, tok
   return client.from("customer_invites").select("*").eq("token_hash", tokenHash).maybeSingle();
 }
 
+export async function fetchPendingInviteByEmailForShipment(
+  client: SupabaseClient,
+  shipmentId: string,
+  email: string,
+) {
+  return client
+    .from("customer_invites")
+    .select("*")
+    .eq("shipment_id", shipmentId)
+    .eq("invited_email", email.trim().toLowerCase())
+    .eq("status", "pending")
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+}
+
 export async function updateCustomerInviteStatus(
   client: SupabaseClient,
   id: string,

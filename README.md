@@ -1,12 +1,23 @@
 # Containerly
 
-Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Supabase** (Postgres + Auth + RLS + Edge Functions), and a pluggable **external container API** adapter (mock by default).
+Logistics customer portal for operators and importers: **documentation-first shipments** (commercial header + order lines, document approval workflow, activity feed) with **optional carrier container tracking**. Built on **Next.js (App Router)**, **Supabase** (Postgres + Auth + RLS + Edge Functions), and a pluggable **external container API** adapter (mock by default).
 
 ## Layout
 
-- `frontend/` — Next.js + Tailwind + Geist (via `next/font`)
-- `supabase/migrations/` — schema, indexes, RLS, `profiles` (global roles), `organization_members` (org roles)
-- `supabase/functions/` — Edge Functions (flat deploy slugs; **verb-first** HTTP-style names, e.g. `create-tracking-request`, `sync-container`, `get-shipment`, `create-customer-invite`). See `frontend/lib/supabase/edge-function-slugs.ts`.
+- `frontend/` — Next.js + Tailwind + Geist (via `next/font`); route-based UI, TanStack Query, `frontend/services/` → Edge or `/api`
+- `supabase/migrations/` — schema, indexes, RLS, commercial shipment model, document workflow, alerts
+- `supabase/functions/` — Edge Functions (flat deploy slugs; **verb-first** HTTP-style names). See `frontend/lib/supabase/edge-function-slugs.ts`.
+- `shared/dto/` — HTTP contracts between frontend services and Edge handlers
+- `docs/architecture-frontend-backend.md` — layer rules, data flow, and feature checklist
+
+### Key Edge slugs
+
+| Area | Slugs |
+|------|--------|
+| Tracking (optional, premium) | `create-tracking-request`, `sync-container`, `search-containers`, `lookup-bol-containers`, … |
+| Shipments | `create-shipment`, `update-shipment`, `get-shipment`, `review-shipment-document`, `claim-shipment-access`, … |
+| Customers | `create-customer-invite`, `accept-customer-invite`, `complete-customer-shipment-setup` |
+| Reports | `get-public-report`, `post-report-message`, `post-customer-shipment-message` |
 
 ## Quick start
 
@@ -23,6 +34,8 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
    - `CRON_SECRET` — shared secret header `x-cron-secret` for `sync-stale-tracking-requests`
    - Optional: `EXTERNAL_TRACKING_API_URL`, `EXTERNAL_TRACKING_API_KEY` for a real JSONCargo-style API
    - Optional: `CONTAINER_STALE_MS` (default 15 minutes), `SYNC_BATCH_LIMIT` (default 25)
+   - Optional: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — transactional email (invites, document events, messages)
+   - Optional: `PUBLIC_SITE_URL` — deep links in emails and invite redirects (also set in frontend env)
 
 3. Schedule `sync-stale-tracking-requests` (Supabase Dashboard → Edge Functions → Cron) with a request that includes header `x-cron-secret: <CRON_SECRET>`.
 
@@ -34,7 +47,7 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
    cp frontend/.env.local.example frontend/.env.local
    ```
 
-   Fill `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (server-only; required for superadmin org creation via `POST /api/organizations`).
+   Fill `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only; required for superadmin org creation via `POST /api/organizations`), and `NEXT_PUBLIC_SITE_URL=http://localhost:3000`.
 
    ```bash
    cd frontend && npm run dev
@@ -57,6 +70,15 @@ Logistics / supply-chain SaaS scaffold: **Next.js (App Router)** frontend, **Sup
 - Promote someone to platform superadmin with SQL or the Platform UI, e.g. `update public.profiles set role = 'superadmin' where id = '<user uuid>';` — not from an untrusted client.
 - All tenant data is scoped with **RLS** via `organization_id` and membership helpers.
 - `external_api_logs` has deny-all RLS for JWT clients; inserts use the service role from Edge Functions.
+
+## Local demo seed
+
+After `supabase db reset`, log in with `password` for any seeded account (see `supabase/seed.sql` header):
+
+- **Operator:** `admin@jbsfoods.com` — create shipments from **New Shipment** in the header; manage documents and mail tracking on `/shipments/[id]`
+- **Importer:** `importer@demo.com` — portal on `/requests/[id]` for MSCU1234567 (tracking + docs) and **JBS-EXP-2026-0142** (documentation-only, no containers)
+
+Seed includes commercial fields, `shipment_lines`, pending document approvals, activity events, and workflow alerts (`DOCUMENT_REJECTED`, `DOCUMENTS_APPROVED`, etc.).
 
 ## External API
 

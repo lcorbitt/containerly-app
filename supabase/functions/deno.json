@@ -1,8 +1,8 @@
 {
   "imports": {
-    "@shared/": "../../shared/",
-    "@supabase-shared/": "../shared/",
-    "@models/": "../models/"
+    "@shared/": "./edge-shared/",
+    "@supabase-shared/": "./supabase-shared/",
+    "@models/": "./edge-models/"
   },
   "compilerOptions": {
     "lib": ["deno.window"]

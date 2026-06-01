@@ -15,6 +15,7 @@ export type CreateCustomerInviteBody = {
   shipment_id: string;
   invited_email: string;
   visibility_settings?: Record<string, unknown>;
+  delivery_mode?: "email_invite" | "allowlist_only";
 };
 
 export type CreateCustomerInviteResponse = {
@@ -36,6 +37,16 @@ export type AcceptCustomerInviteBody = {
 export type AcceptCustomerInviteResponse = {
   shipment_id: string;
   shipment_access_id: string;
+  already_had_access?: boolean;
+};
+
+export type ClaimShipmentAccessBody = {
+  shipment_id: string;
+};
+
+export type ClaimShipmentAccessResponse = {
+  access_id: string;
+  shipment_id: string;
   already_had_access?: boolean;
 };
 

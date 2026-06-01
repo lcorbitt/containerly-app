@@ -4,7 +4,7 @@
 
 - Components are **dumb, thin, and UI-focused only** (no API calls, business logic, or non-UI state in components).
 - **Pure functions** live in colocated **`utils.ts`** (single file beside the component) or in `frontend/utils/` when shared across routes.
-- **Colocated component hooks** (`use<ComponentName>.ts`) only when needed for component-specific orchestration.
+- **Colocated component hooks** (`use<ComponentName>.ts` beside `index.tsx`) only when needed for component-specific orchestration.
 - **Server state** is centralized with **TanStack Query** under `frontend/hooks/` (`queries/`, `mutations/`).
 - **Supabase backend ↔ frontend services:** **`supabase/functions/<slug>/`** is the **Edge HTTP API layer** (slug = folder name = `/functions/v1/<slug>`). **`index.ts`** only starts `Deno.serve` and forwards to **`handler.ts`**; **`handler.ts`** is a **thin HTTP adapter** that delegates to **`@supabase-shared/*`** and **`@models/*`** (see **Supabase Edge: `supabase/functions/`** below). **Rails-like models** = **`supabase/models/<table>.ts`** (one file per Postgres table; **no** nested `models/foo/foo.ts`). **No** pointless re-export-only `<slug>.service.ts` layers under the function folder. Shared: **`@supabase-shared/`** → `supabase/shared/`; **`@models/`** → `supabase/models/` (see `supabase/functions/deno.json`). **`frontend/services/*.service.ts`** calls **`/functions/v1/...`** via **`EDGE_FUNCTION_SLUGS`**. **Runtime:** **Component → hook → TanStack Query → `frontend/services/` → Edge `index` → `handler` → `@supabase-shared` / `@models` → DB.**
 - **Model layer:** All **`.from("<table>")`** access for a given table belongs in **`supabase/models/<table>.ts`**. Edge **`handler.ts`** composes **`@models/*`** + **`@supabase-shared/*`**; add a colocated module under **`functions/<slug>/`** only when that slug has **substantial slug-only** logic (otherwise keep use-cases in **`supabase/shared/`**). **Do not** put non-deployable table code under **`functions/<table>/`** (Supabase would deploy it as a function).
@@ -61,19 +61,39 @@ Rules:
 ---
 
 ### 3. Component Folder Structure
-Every component must follow this structure:
+Every component lives in a **TitleCase** directory named after the component. **Do not** use kebab-case filenames such as `authenticated-top-nav.tsx` at the folder root.
 
     ComponentName/
       index.tsx
-      hooks/
-      utils.ts (optional)
-      types.ts (optional)
+      useComponentName.ts
+      constants.ts
+      utils.ts
+      types.ts
 
 Definitions:
-- index.tsx → main component entry
-- hooks/ → component-specific hooks only
-- utils.ts → optional single file of pure helpers (no React state); do **not** use a `utils/` subdirectory
-- types.ts → local types/interfaces if needed
+- **`index.tsx`** — main component entry (UI only).
+- **`use<ComponentName>.ts`** — colocated orchestration hook when the component needs state, effects, or composed data (same directory as `index.tsx`, **not** a nested `hooks/` folder).
+- **`constants.ts`** — component-scoped constants: Tailwind class strings, labels, config arrays, static maps. **Extract these from `index.tsx`**; do not leave inline component constants in the UI file.
+- **`utils.ts`** — component-scoped **pure** helpers (no React, no side effects). Use when the component (or its colocated hook) has non-trivial pure logic.
+- **`types.ts`** — component-scoped **interfaces** and prop shapes. Prefer **`interface`** over **`type`** for object shapes and props.
+
+When a component has constants, utils, or types specific to that component, they **belong** in these colocated files — not inlined in `index.tsx`, not in a parent folder, and not marked "optional" in structure docs.
+
+Nested sub-components follow the same pattern inside the parent folder:
+
+    TopNav/
+      index.ts
+      AuthenticatedTopNav/
+        index.tsx
+        useAuthenticatedTopNav.ts
+        constants.ts
+      TopNavBreadcrumb/
+        index.tsx
+        constants.ts
+        utils.ts
+        types.ts
+
+**Anti-patterns:** `component-name.tsx`, `hooks/useComponentName.ts`, magic strings/classes inline in JSX, `type` aliases where an `interface` would work for props/objects.
 
 ---
 
@@ -103,6 +123,9 @@ Definitions:
 - Global "components" folders outside frontend/components/
 - Hooks and utils mixed together
 - Components living far from where they are used
+- Kebab-case component files (`authenticated-top-nav.tsx`) instead of TitleCase folders
+- Nested `hooks/` folders when `useComponentName.ts` beside `index.tsx` is enough
+- Inline Tailwind class constants or config arrays in `index.tsx` instead of `constants.ts`
 
 ---
 
@@ -133,8 +156,10 @@ Definitions:
 **Example layout**
 
 - `DataTable/index.tsx`
-- `DataTable/hooks/useDataTable.ts`
+- `DataTable/useDataTable.ts`
+- `DataTable/constants.ts`
 - `DataTable/utils.ts`
+- `DataTable/types.ts`
 
 ---
 
@@ -145,14 +170,18 @@ Definitions:
 | File | Role |
 |------|------|
 | `index.tsx` | UI only; no business logic. |
-| `hooks/use<ComponentName>.ts` | Optional. Orchestration; consumes TanStack Query hooks; local UI state if needed. |
-| `utils.ts` | Optional. **Pure** helpers only: no side effects, no API calls, no state (one colocated file, not a `utils/` folder). |
+| `use<ComponentName>.ts` | Orchestration; consumes TanStack Query hooks; local UI state when needed. |
+| `constants.ts` | Component-scoped class strings, labels, static config. |
+| `utils.ts` | Pure helpers for this component only. |
+| `types.ts` | Component interfaces and prop types (`interface` preferred over `type`). |
 
 **Rules**
 
-- Move pure functions out of components into colocated `utils.ts` (or `frontend/utils/` if shared).
-- Create colocated hooks only when logic is non-trivial.
-- Keep components as thin as possible.
+- Move inline constants from components into colocated `constants.ts`.
+- Move pure functions into colocated `utils.ts` (or `frontend/utils/` when shared across routes).
+- Move component-specific interfaces into colocated `types.ts`.
+- Colocate `use<ComponentName>.ts` beside `index.tsx` when logic is non-trivial.
+- Keep `index.tsx` as thin as possible.
 
 ---
 
@@ -269,7 +298,9 @@ When refactoring, **identify and move**:
 | PostgREST in `frontend/services/*.service.ts` | New Edge function + `supabase/models/` / `supabase/shared/` + `shared/dto` + `frontend/services/*.service.ts` caller; or `frontend/services/*.server.ts` + `/api` if privileged |
 | Pure helpers (component-specific) | Colocated `utils.ts` |
 | Pure helpers (shared across routes) | `frontend/utils/` |
-| Heavy component logic | Colocated `hooks/use<ComponentName>.ts` |
+| Inline constants (classes, labels, config) | Colocated `constants.ts` |
+| Component prop/object shapes | Colocated `types.ts` (`interface` preferred) |
+| Heavy component logic | Colocated `use<ComponentName>.ts` |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 
@@ -280,8 +311,10 @@ When refactoring, **identify and move**:
 ```
 frontend/app/container-details/components/ComponentName/
   index.tsx
-  hooks/useComponentName.ts
+  useComponentName.ts
+  constants.ts
   utils.ts
+  types.ts
 
 frontend/hooks/
   queries/

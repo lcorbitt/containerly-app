@@ -12,7 +12,8 @@
 --   platform@containerly.com   — you (engineer); no org row; sees all orgs via RLS bypass
 --   admin@jbsfoods.com         — customer org administrator
 --   member@jbsfoods.com        — customer org member
---   importer@demo.com          — importer customer (no org); grant on demo MSCU1234567 → workspace /requests/<id> (shared tracking /shipments/hub/<shipmentId>; operator hub /shipments/<shipmentId>)
+--   importer@demo.com          — importer customer (no org); grants on MSCU1234567 (tracking + docs)
+--                                and JBS-EXP-2026-0142 (documentation-only) → /requests/<id>
 --
 -- GoTrue scans auth token columns as non-null strings; use '' not SQL NULL (otherwise login returns
 -- "Database error querying schema").
@@ -282,13 +283,130 @@ begin
   where id = v_importer_user_id;
 end $$;
 
--- Three demo shipments (same org): shipments.created_by = org admin; containers.shipment_id; tracking_requests (container_id).
+-- Four demo shipments (same org): commercial header + optional container tracking.
 -- MSCU1000001 — just started (1 timeline event); MSCU2000002 — early origin (6 events);
--- MSCU1234567 — full completed journey (~24 events) + importer grant + alerts/messages below.
-insert into public.shipments (id, organization_id, created_by, assignee_user_id, reference, bill_of_lading, shipping_line) values
-  ('c0000001-0000-4000-8000-000000000099', 'a0000001-0000-4000-8000-000000000001', 'a0000004-0000-4000-8000-000000000004', 'a0000002-0000-4000-8000-000000000002', 'MSCU1234567', null, 'MSC'),
-  ('c0000001-0000-4000-8000-000000000098', 'a0000001-0000-4000-8000-000000000001', 'a0000004-0000-4000-8000-000000000004', 'a0000004-0000-4000-8000-000000000004', 'MSCU1000001', null, 'MSC'),
-  ('c0000001-0000-4000-8000-000000000097', 'a0000001-0000-4000-8000-000000000001', 'a0000004-0000-4000-8000-000000000004', 'a0000004-0000-4000-8000-000000000004', 'MSCU2000002', null, 'MSC');
+-- MSCU1234567 — full completed journey (~24 events) + importer grant + docs awaiting review;
+-- JBS-EXP-2026-0142 — documentation-only export (no containers), pending customer doc review.
+insert into public.shipments (
+  id,
+  organization_id,
+  created_by,
+  assignee_user_id,
+  order_number,
+  carrier_booking_number,
+  container_number,
+  bill_of_lading,
+  shipping_line,
+  customer_name,
+  country,
+  port_of_loading,
+  port_of_destination,
+  estimated_departure_at,
+  estimated_arrival_at,
+  freight_booking_carrier,
+  vessel,
+  voyage,
+  health_certificate_no,
+  trade_terms,
+  workflow_status,
+  tags
+) values
+  (
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000002-0000-4000-8000-000000000002',
+    'PO-COSTCO-8891',
+    'MEDUSH914201',
+    'MSCU1234567',
+    'MEDUSH914201',
+    'MSC',
+    'Costco Wholesale',
+    'US',
+    'Shanghai, CN',
+    'Los Angeles, US',
+    '2025-01-06 18:00+00',
+    '2025-02-05 00:00+00',
+    'MSC',
+    'MSC LORETO',
+    'FY428W',
+    'HC-CN-2025-8891',
+    'CIF',
+    'awaiting_review',
+    array['Costco', 'Priority']::text[]
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000004',
+    'PO-TARGET-1001',
+    'BK-MSC-1001',
+    'MSCU1000001',
+    null,
+    'MSC',
+    'Target Corp',
+    'US',
+    'Ningbo, CN',
+    'Long Beach, US',
+    '2026-04-10 08:00+00',
+    '2026-05-01 00:00+00',
+    'MSC',
+    null,
+    null,
+    null,
+    'FOB',
+    'pending_drafts',
+    '{}'::text[]
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000004',
+    'PO-WALMART-2002',
+    'BK-MSC-2002',
+    'MSCU2000002',
+    null,
+    'MSC',
+    'Walmart',
+    'US',
+    'Shanghai, CN',
+    'Los Angeles, US',
+    '2026-03-20 14:00+00',
+    '2026-04-15 00:00+00',
+    'MSC',
+    'MSC IRINA',
+    'MA412E',
+    null,
+    'CIF',
+    'originals_sent',
+    array['Walmart']::text[]
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000096',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000002-0000-4000-8000-000000000002',
+    'JBS-EXP-2026-0142',
+    'BK-JBS-0142',
+    'PENDING',
+    null,
+    null,
+    'Costco Wholesale',
+    'US',
+    'Santos, BR',
+    'Long Beach, US',
+    '2026-06-15 08:00+00',
+    '2026-07-10 00:00+00',
+    'MSC',
+    'MSC Sealand',
+    'SE601W',
+    'HC-BR-2026-0142',
+    'CIF',
+    'awaiting_review',
+    '{}'::text[]
+  );
 
 insert into public.containers (
   id,
@@ -455,6 +573,116 @@ insert into public.containers (
   now(),
   now()
 );
+
+-- Order/booking lines (commercial model); container_id set when carrier tracking exists.
+insert into public.shipment_lines (
+  id,
+  shipment_id,
+  organization_id,
+  container_id,
+  container_number,
+  order_number,
+  customer_name,
+  country,
+  port_of_loading,
+  port_of_destination,
+  freight_booking_carrier,
+  vessel,
+  voyage,
+  health_certificate_no,
+  trade_terms,
+  sort_order
+) values
+  (
+    'd0000001-0000-4000-8000-000000000099',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000010',
+    'MSCU1234567',
+    'PO-88421',
+    'Costco Wholesale',
+    'US',
+    'Shanghai, CN',
+    'Los Angeles, US',
+    'MSC',
+    'MSC LORETO',
+    'FY428W',
+    'HC-CN-2025-8891',
+    'CIF',
+    0
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000098',
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000012',
+    'MSCU1000001',
+    'PO-99102',
+    'Target Corp',
+    'US',
+    'Ningbo, CN',
+    'Long Beach, US',
+    'MSC',
+    null,
+    null,
+    null,
+    'FOB',
+    0
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000097',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000014',
+    'MSCU2000002',
+    'PO-77201',
+    'Walmart',
+    'US',
+    'Shanghai, CN',
+    'Los Angeles, US',
+    'MSC',
+    'MSC IRINA',
+    'MA412E',
+    null,
+    'CIF',
+    0
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000091',
+    'c0000001-0000-4000-8000-000000000096',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'PO-44201-A',
+    'Costco Wholesale',
+    'US',
+    'Santos, BR',
+    'Long Beach, US',
+    'MSC',
+    'MSC Sealand',
+    'SE601W',
+    'HC-BR-2026-0142',
+    'CIF',
+    0
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000092',
+    'c0000001-0000-4000-8000-000000000096',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'PO-44201-B',
+    'Costco Wholesale',
+    'US',
+    'Santos, BR',
+    'Long Beach, US',
+    'MSC',
+    'MSC Sealand',
+    'SE601W',
+    'HC-BR-2026-0142',
+    'CIF',
+    1
+  );
 
 update public.containers
 set enrichment = jsonb_build_object(
@@ -872,6 +1100,142 @@ insert into public.shipment_customer_access (
   now()
 );
 
+insert into public.shipment_customer_access (
+  id,
+  organization_id,
+  shipment_id,
+  customer_user_id,
+  invite_id,
+  visibility_settings,
+  operator_overrides,
+  configuration_reminder_due_at,
+  profile_completed_at,
+  revoked_at,
+  created_at,
+  updated_at
+) values (
+  'b0000001-0000-4000-8000-0000000000f3',
+  'a0000001-0000-4000-8000-000000000001',
+  'c0000001-0000-4000-8000-000000000096',
+  'a0000005-0000-4000-8000-000000000005',
+  null,
+  '{"include_alerts": true, "include_raw_external": false}'::jsonb,
+  '{}'::jsonb,
+  now() + interval '14 days',
+  null,
+  null,
+  now(),
+  now()
+);
+
+-- Customer-facing documents (metadata only; storage paths are demo placeholders).
+insert into public.workspace_attachments (
+  id,
+  organization_id,
+  shipment_id,
+  is_internal,
+  storage_path,
+  file_name,
+  content_type,
+  file_size_bytes,
+  uploaded_by,
+  document_type,
+  document_group,
+  approval_status,
+  shipment_line_id
+) values
+  (
+    'e0000001-0000-4000-8000-000000000001',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000099',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000099/commercial-invoice.pdf',
+    'Commercial Invoice — MSCU1234567.pdf',
+    'application/pdf',
+    245760,
+    'a0000004-0000-4000-8000-000000000004',
+    'Commercial Invoice',
+    'draft',
+    'pending',
+    'd0000001-0000-4000-8000-000000000099'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000002',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000099',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000099/packing-list.pdf',
+    'Packing List — MSCU1234567.pdf',
+    'application/pdf',
+    98304,
+    'a0000004-0000-4000-8000-000000000004',
+    'Packing List',
+    'draft',
+    'pending',
+    'd0000001-0000-4000-8000-000000000099'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000003',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000096',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000096/commercial-invoice.pdf',
+    'Commercial Invoice — JBS-EXP-2026-0142.pdf',
+    'application/pdf',
+    312000,
+    'a0000004-0000-4000-8000-000000000004',
+    'Commercial Invoice',
+    'draft',
+    'pending',
+    'd0000001-0000-4000-8000-000000000091'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000004',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000096',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000096/health-certificate.pdf',
+    'Health Certificate — HC-BR-2026-0142.pdf',
+    'application/pdf',
+    156000,
+    'a0000004-0000-4000-8000-000000000004',
+    'Health Certificate',
+    'draft',
+    'pending',
+    'd0000001-0000-4000-8000-000000000091'
+  );
+
+insert into public.shipment_activity_events (
+  id,
+  shipment_id,
+  organization_id,
+  event_type,
+  body,
+  actor_kind,
+  actor_user_id,
+  occurred_at
+) values
+  (
+    'f0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Draft export documents uploaded for customer review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    now() - interval '4 hours'
+  ),
+  (
+    'f0000001-0000-4000-8000-000000000002',
+    'c0000001-0000-4000-8000-000000000096',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Draft commercial invoice and health certificate sent for Costco review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    now() - interval '2 hours'
+  );
+
 insert into public.report_messages (
   container_id,
   author_user_id,
@@ -902,13 +1266,15 @@ insert into public.report_messages (
 
 -- Demo alerts (side nav notifications): org broadcasts + per-recipient inbox rows.
 -- alert_type (stable enums): SHIPMENT_DELAYED, STATUS_EXCEPTION, INFO, ASSIGNMENT_ASSIGNEE,
--- ASSIGNMENT_PARTICIPANT, MESSAGE_NEW, MESSAGE_REPLY, DOCUMENT_UPLOADED, ORG_INVITE_ACCEPTED,
+-- ASSIGNMENT_PARTICIPANT, MESSAGE_NEW, MESSAGE_REPLY, DOCUMENT_UPLOADED, DOCUMENT_REJECTED,
+-- DOCUMENTS_APPROVED, DOCUMENTS_MAILED, CUSTOMER_INVITE_SENT, ORG_INVITE_ACCEPTED,
 -- CUSTOMER_JOINED_ORG, BOL_IMPORTED, TRACKING_SYNC_OK (+ add more in application code as needed).
 insert into public.alerts (
   id,
   organization_id,
   tracking_request_id,
   container_id,
+  shipment_id,
   alert_type,
   severity,
   message,
@@ -924,6 +1290,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'SHIPMENT_DELAYED',
     'warning',
     'MSCU1234567: carrier reported a schedule slip at transshipment (demo seed).',
@@ -939,6 +1306,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'STATUS_EXCEPTION',
     'critical',
     'MSCU1234567: customs documentation flagged for review (demo seed).',
@@ -954,6 +1322,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'INFO',
     'info',
     'Weekly digest: no action required for this shipment (demo seed).',
@@ -969,10 +1338,11 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'ASSIGNMENT_ASSIGNEE',
     'info',
     'Avery Admin made you the assignee of shipment MSCU1234567.',
-    '{"seed": true, "shipment_reference": "MSCU1234567"}'::jsonb,
+    '{"seed": true, "order_number": "PO-COSTCO-8891"}'::jsonb,
     'a0000002-0000-4000-8000-000000000002',
     'a0000004-0000-4000-8000-000000000004',
     null,
@@ -984,10 +1354,11 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'ASSIGNMENT_PARTICIPANT',
     'info',
     'Jordan Member made you a participant on shipment MSCU1234567.',
-    '{"seed": true, "shipment_reference": "MSCU1234567"}'::jsonb,
+    '{"seed": true, "order_number": "PO-COSTCO-8891"}'::jsonb,
     'a0000004-0000-4000-8000-000000000004',
     'a0000002-0000-4000-8000-000000000002',
     null,
@@ -999,6 +1370,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'MESSAGE_REPLY',
     'info',
     'Chris Importer replied to your message on MSCU1234567.',
@@ -1014,6 +1386,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'MESSAGE_NEW',
     'info',
     'Avery Admin messaged you on shipment MSCU1234567.',
@@ -1029,6 +1402,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'DOCUMENT_UPLOADED',
     'info',
     'A document was uploaded to shipment MSCU1234567.',
@@ -1042,6 +1416,7 @@ insert into public.alerts (
   (
     'c0000001-0000-4000-8000-000000000009',
     'a0000001-0000-4000-8000-000000000001',
+    null,
     null,
     null,
     'ORG_INVITE_ACCEPTED',
@@ -1059,6 +1434,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     null,
     null,
+    null,
     'CUSTOMER_JOINED_ORG',
     'info',
     'Chris Importer joined as a JBS Foods customer.',
@@ -1074,6 +1450,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'BOL_IMPORTED',
     'info',
     'Bill of lading data was imported for shipment MSCU1234567.',
@@ -1089,6 +1466,7 @@ insert into public.alerts (
     'a0000001-0000-4000-8000-000000000001',
     'b0000001-0000-4000-8000-000000000011',
     'b0000001-0000-4000-8000-000000000010',
+    'c0000001-0000-4000-8000-000000000099',
     'TRACKING_SYNC_OK',
     'info',
     'Carrier tracking synced successfully for MSCU1234567.',
@@ -1098,4 +1476,52 @@ insert into public.alerts (
     null,
     null,
     now() - interval '30 minutes'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000013',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'c0000001-0000-4000-8000-000000000096',
+    'DOCUMENT_UPLOADED',
+    'info',
+    'Draft documents uploaded for JBS-EXP-2026-0142 — awaiting customer review.',
+    '{"seed": true, "document_label": "Commercial Invoice"}'::jsonb,
+    'a0000002-0000-4000-8000-000000000002',
+    'a0000004-0000-4000-8000-000000000004',
+    null,
+    null,
+    now() - interval '2 hours'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000014',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'c0000001-0000-4000-8000-000000000099',
+    'DOCUMENTS_APPROVED',
+    'info',
+    'Chris Importer approved export documents for MSCU1234567 (demo — already acknowledged).',
+    '{"seed": true}'::jsonb,
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000005-0000-4000-8000-000000000005',
+    now() - interval '1 day',
+    'a0000004-0000-4000-8000-000000000004',
+    now() - interval '2 days'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000015',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'c0000001-0000-4000-8000-000000000096',
+    'CUSTOMER_INVITE_SENT',
+    'info',
+    'Portal invite sent to importer@demo.com for JBS-EXP-2026-0142.',
+    '{"seed": true, "delivery_mode": "email_invite"}'::jsonb,
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000004',
+    null,
+    null,
+    now() - interval '3 hours'
   );

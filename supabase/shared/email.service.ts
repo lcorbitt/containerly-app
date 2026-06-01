@@ -1,0 +1,180 @@
+/**
+ * Transactional email via Resend (or console log in local dev when RESEND_API_KEY unset).
+ */
+
+export type SendEmailInput = {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+};
+
+export type SendEmailResult = { ok: true } | { ok: false; error: string };
+
+export async function sendTransactionalEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
+  const from = Deno.env.get("RESEND_FROM_EMAIL")?.trim() ?? "Containerly <notifications@containerly.app>";
+
+  if (!apiKey) {
+    console.log("[email:dev]", {
+      to: input.to,
+      subject: input.subject,
+      text: input.text ?? input.html.replace(/<[^>]+>/g, " "),
+    });
+    return { ok: true };
+  }
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [input.to],
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      return { ok: false, error: `Resend ${res.status}: ${body}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Email send failed" };
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function buildBrandedEmailHtml(args: {
+  orgName: string;
+  title: string;
+  body: string;
+  actionUrl?: string;
+  actionLabel?: string;
+}): string {
+  const actionBlock = args.actionUrl
+    ? `<p style="margin-top:24px"><a href="${escapeHtml(args.actionUrl)}" style="background:#18181b;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none">${escapeHtml(args.actionLabel ?? "Open in Containerly")}</a></p>`
+    : "";
+  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;color:#18181b;line-height:1.5">
+<p style="color:#71717a;font-size:12px">${escapeHtml(args.orgName)} via Containerly</p>
+<h2 style="font-size:18px;margin:0 0 12px">${escapeHtml(args.title)}</h2>
+<p>${args.body}</p>
+${actionBlock}
+<p style="margin-top:32px;font-size:11px;color:#a1a1aa">Powered by Containerly</p>
+</body></html>`;
+}
+
+export async function sendCustomerInviteEmail(args: {
+  to: string;
+  orgName: string;
+  inviteUrl: string;
+}): Promise<SendEmailResult> {
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: `${args.orgName} shared a shipment with you`,
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title: "You've been invited to review shipment documents",
+      body: `<strong>${escapeHtml(args.orgName)}</strong> invited you to their customer portal on Containerly. Sign in with this email address to review documents and track your shipment.`,
+      actionUrl: args.inviteUrl,
+      actionLabel: "Accept invitation",
+    }),
+    text: `${args.orgName} invited you to review shipment documents. Open: ${args.inviteUrl}`,
+  });
+}
+
+export async function sendDocumentRejectedEmail(args: {
+  to: string;
+  orgName: string;
+  fileName: string;
+  reason: string;
+  workspaceUrl: string;
+}): Promise<SendEmailResult> {
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: `Document rejected: ${args.fileName}`,
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title: "Customer rejected a document",
+      body: `The customer rejected <strong>${escapeHtml(args.fileName)}</strong>.<br><br>Reason: ${escapeHtml(args.reason)}`,
+      actionUrl: args.workspaceUrl,
+      actionLabel: "Open shipment workspace",
+    }),
+  });
+}
+
+export async function sendDocumentsApprovedEmail(args: {
+  to: string;
+  orgName: string;
+  workspaceUrl: string;
+}): Promise<SendEmailResult> {
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: "All draft documents approved",
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title: "Documents approved",
+      body: "The customer approved all draft documents. You can mail the originals and add a tracking number.",
+      actionUrl: args.workspaceUrl,
+      actionLabel: "Open shipment workspace",
+    }),
+  });
+}
+
+export async function sendDocumentsMailedEmail(args: {
+  to: string;
+  orgName: string;
+  trackingNumber: string | null;
+  portalUrl: string;
+}): Promise<SendEmailResult> {
+  const trackingLine = args.trackingNumber
+    ? `<br><br>Tracking number: <strong>${escapeHtml(args.trackingNumber)}</strong>`
+    : "";
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: "Original documents have been mailed",
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title: "Original documents mailed",
+      body: `Your original export documents have been mailed.${trackingLine}`,
+      actionUrl: args.portalUrl,
+      actionLabel: "View shipment portal",
+    }),
+  });
+}
+
+export async function sendNewMessageEmail(args: {
+  to: string;
+  orgName: string;
+  preview: string;
+  url: string;
+  recipientRole: "operator" | "customer";
+}): Promise<SendEmailResult> {
+  const title = args.recipientRole === "operator"
+    ? "New customer message"
+    : "New message on your shipment";
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: title,
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title,
+      body: escapeHtml(args.preview.slice(0, 280)),
+      actionUrl: args.url,
+      actionLabel: "View message",
+    }),
+  });
+}

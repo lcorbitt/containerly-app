@@ -1,6 +1,8 @@
 # Frontend ↔ backend communication and code organization
 
-This document describes how the Containerly app moves data from UI to persistence, where each kind of code lives, and how **shared DTOs** define HTTP contracts between **Supabase Edge code** (`supabase/functions/` HTTP layer, `supabase/shared/`, `supabase/models/`) and **frontend services**. It is written for an internal wiki; diagrams use [Mermaid](https://mermaid.js.org/) (supported by many wikis and Git hosts).
+This document describes how the Containerly app moves data from UI to persistence, where each kind of code lives, and how **shared DTOs** define HTTP contracts between **Supabase Edge code** and **frontend services**.
+
+**Product note:** Primary user journeys are **export documentation**, **customer portal**, and **manual commercial data entry**. Live carrier container tracking (JSONCargo-style API, BOL bulk import) is an **optional premium path** enabled after document approval — not the default onboarding flow.
 
 ---
 
@@ -78,18 +80,18 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 | Product language | Primary table(s) |
 |------------------|-------------------|
 | Messages / thread | **`report_messages`** |
-| Documents / files | **`workspace_attachments`** (+ Supabase **Storage** bucket `workspace-files`, not a SQL table) |
+| Documents / files | **`workspace_attachments`** (+ Storage bucket `workspace-files`; optional `document_type`, `document_group`, `approval_status`) |
 | Containers | **`containers`** |
-| Shipments | **`shipments`** |
+| Shipments | **`shipments`**, **`shipment_lines`** (order/booking lines) |
 | Tracking / sync jobs | **`tracking_requests`**, **`tracking_events`**, **`external_api_logs`** |
-| Alerts | **`alerts`** |
-| Customer access | **`customer_invites`**, **`shipment_customer_access`** |
+| Alerts | **`alerts`** (optional `shipment_id` for doc-only shipments) |
+| Customer access | **`customer_invites`** (`delivery_mode`: email vs allowlist), **`shipment_customer_access`** |
 | Shared report links | **`shared_reports`** |
-| Activity feed | **`report_activity`** |
+| Activity feed | **`report_activity`**, **`shipment_activity_events`** (structured portal timeline) |
 | Org / membership | **`organizations`**, **`organization_members`**, **`profiles`** |
 | Collaboration | **`shipment_participants`**, **`tracking_request_participants`**, **`tracking_request_watchers`** |
 
-**Convention:** **`supabase/models/<table>.ts`** holds **table-scoped reads/writes** for that Postgres table (exact identifier, e.g. `report_messages.ts`, `workspace_attachments.ts`). **Shared workflows** (`shipment-portal-payload.ts`, `shipment-portal-handlers.ts`, `customer-access.service.ts`, `tracking-operations.service.ts`, `tracking-bol-lookup.ts`, …) **import `@models/*`** and do not call `.from("<table>")` directly except inside the matching model file. Implemented model modules in-repo include: `alerts`, `containers`, `customer_invites`, `external_api_logs`, `organization_members`, `organizations`, `profiles`, `report_activity`, `report_messages`, `shared_reports`, `shipment_customer_access`, `shipment_participants`, `shipments`, `tracking_events`, `tracking_requests`, `workspace_attachments`.
+**Convention:** **`supabase/models/<table>.ts`** holds **table-scoped reads/writes** for that Postgres table (exact identifier, e.g. `report_messages.ts`, `workspace_attachments.ts`, `shipment_lines.ts`, `shipment_activity_events.ts`). **Shared workflows** (`shipment-portal-payload.ts`, `shipment-portal-handlers.ts`, `shipment-operations.service.ts`, `document-workflow.service.ts`, `customer-access.service.ts`, `notification-workflow.service.ts`, `email.service.ts`, `tracking-operations.service.ts`, `tracking-bol-lookup.ts`, …) **import `@models/*`** and do not call `.from("<table>")` directly except inside the matching model file. Implemented model modules in-repo include: `alerts`, `containers`, `customer_invites`, `external_api_logs`, `organization_members`, `organizations`, `profiles`, `report_activity`, `report_messages`, `shared_reports`, `shipment_activity_events`, `shipment_customer_access`, `shipment_lines`, `shipment_participants`, `shipments`, `tracking_events`, `tracking_requests`, `workspace_attachments`.
 
 **Orchestration:** A **use-case** (e.g. “shipment portal JSON”, “create tracking request + first sync”) **composes** several models. That orchestrator usually lives in **`supabase/shared/`** (reused across slugs). It **must not** bury all table access in one giant model long-term—**call into `models/`** so each table’s rules stay in one place.
 
@@ -102,18 +104,20 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 | `profiles` | App profile row per `auth.users`; roles, display, account kind |
 | `organizations` | Tenant |
 | `organization_members` | User ↔ org membership + org role |
-| `shipments` | Commercial shipment / move |
+| `shipments` | Commercial shipment header; `workflow_status` for documentation lifecycle |
+| `shipment_lines` | Order/booking line items (multi-line, multi-container) |
 | `containers` | Physical container under a shipment |
 | `tracking_requests` | Sync subscription / workflow row per container (or number) |
 | `tracking_events` | Carrier/provider event history |
-| `alerts` | Alert rows for requests/containers |
+| `alerts` | In-app notifications; `container_id` and/or `shipment_id` |
 | `external_api_logs` | Outbound API audit |
 | `shared_reports` | Shareable report metadata for a shipment |
 | `report_messages` | Thread messages (shipment and/or container scope) |
-| `report_activity` | Activity / audit stream |
-| `customer_invites` | Importer invite tokens |
+| `report_activity` | Legacy activity / audit stream |
+| `shipment_activity_events` | Structured portal activity (docs approved, mail sent, etc.) |
+| `customer_invites` | Importer invite tokens; `delivery_mode` for email vs allowlist |
 | `shipment_customer_access` | Grant linking customer user to shipment + visibility |
-| `workspace_attachments` | File metadata (links to Storage paths; optional `report_message_id`) |
+| `workspace_attachments` | File metadata; document workflow columns when customer-facing |
 | `shipment_participants` | Org users participating on a shipment |
 | `tracking_request_participants` | Users tied to a tracking request |
 | `tracking_request_watchers` | Watchers on a tracking request |
@@ -121,6 +125,56 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 **Auth:** `auth.users` is managed by Supabase Auth, not a custom service file; **`profiles`** is the table-aligned module for app-level user fields.
 
 This registry should stay in sync when migrations add or rename tables.
+
+### 1.3 Logistics documentation workflow (commercial shipments)
+
+Shipments can exist **without container tracking**. Operators create a commercial header + **`shipment_lines`** via **`create-shipment`**; customers review documents and activity in the portal.
+
+```mermaid
+flowchart LR
+  subgraph operator [Operator]
+    NS[New Shipment form]
+    UP[Upload docs + metadata]
+    MT[Mail tracking number]
+  end
+  subgraph edge [Edge]
+    CS[create-shipment / update-shipment]
+    RD[review-shipment-document]
+    GP[get-shipment portal payload]
+  end
+  subgraph db [Postgres]
+    SH[shipments.workflow_status]
+    WA[workspace_attachments]
+    AE[shipment_activity_events]
+    AL[alerts]
+  end
+  subgraph customer [Customer portal]
+    DOC[Documents tab approve/reject]
+    ACT[Activity tab]
+  end
+  NS --> CS --> SH
+  UP --> WA
+  DOC --> RD --> WA
+  RD --> SH
+  RD --> AE
+  RD --> AL
+  MT --> CS
+  GP --> DOC
+  GP --> ACT
+```
+
+| Step | Edge slug | Shared module | DTO |
+|------|-----------|---------------|-----|
+| Create / update commercial shipment | `create-shipment`, `update-shipment` | `shipment-operations.service.ts` | `shared/dto/logistics.dto.ts`, `shipment.dto.ts` |
+| Customer document approve/reject | `review-shipment-document` | `document-workflow.service.ts` | `logistics.dto.ts` |
+| Portal read (docs, activity, commercial) | `get-shipment` | `shipment-portal-payload.ts`, `shipment-portal-handlers.ts` | `shipment.dto.ts` |
+| Notion-style allowlist claim | `claim-shipment-access` | `customer-access.service.ts` | `customer-access.dto.ts` |
+| Transactional email + in-app alerts | (called from shared services) | `email.service.ts`, `notification-workflow.service.ts` | — |
+| Acknowledge alert | Next `/api/alerts/[id]/acknowledge` | `alert.server.ts` | — |
+
+**`workflow_status` on `shipments`:** `draft` → `awaiting_review` → `revisions_needed` | `approved` → `mailed` → `in_transit` (when carrier tracking is linked).
+
+**Frontend entry points:** header **New Shipment** (`NewShipmentForm` + optional tracking tab), operator workspace `/shipments/[shipmentId]`, customer portal `/requests/[reportId]` (`PublicContainerReport`).
 
 ---
 
@@ -277,7 +331,7 @@ Shared across routes: `frontend/utils/` (or domain-specific files under `fronten
 
 ### 5.2 What belongs in `shared/dto`
 
-- Request/response types for **Edge Function** APIs (`CreateTrackingRequestBody`, `ShipmentPortalPayload`, `AcceptCustomerInviteResponse`, etc.).
+- Request/response types for **Edge Function** APIs (`CreateTrackingRequestBody`, `CreateShipmentBody`, `ShipmentPortalPayload`, `ReviewShipmentDocumentBody`, `AcceptCustomerInviteResponse`, etc.).
 - Small **cross-cutting** helpers such as `ServiceResult<T>` / `ErrorResponse` in `shared/dto/common.dto.ts` for consistent success/error envelopes.
 
 ### 5.3 What usually does *not* belong there

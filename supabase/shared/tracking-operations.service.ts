@@ -82,12 +82,15 @@ export async function createTrackingRequest(
         await updateShipmentShippingLine(userClient, shipmentId, shippingLine);
       }
     } else {
-      const ref = bol ?? `BOL import (${groupId.slice(0, 8)}…)`;
+      const containerNum = input.container_number.trim();
+      const booking = bol ?? `BOL-${groupId.slice(0, 8)}`;
       const { data: ship, error: shipErr } = await insertShipment(userClient, {
         organization_id: input.organization_id,
         created_by: userId,
         assignee_user_id: orgMembership?.user_id ? userId : null,
-        reference: ref,
+        order_number: booking,
+        carrier_booking_number: booking,
+        container_number: containerNum,
         bill_of_lading: bol,
         shipment_group_id: groupId,
         ...(shippingLine ? { shipping_line: shippingLine } : {}),
@@ -109,12 +112,16 @@ export async function createTrackingRequest(
       await updateShipmentShippingLine(userClient, shipmentId, shippingLine);
     }
   } else {
-    const ref = input.shipment_reference?.trim() || input.container_number.trim();
+    const containerNum = input.container_number.trim();
+    const orderNum = input.shipment_order_number?.trim() || containerNum;
+    const booking = bol ?? orderNum;
     const { data: ship, error: shipErr } = await insertShipment(userClient, {
       organization_id: input.organization_id,
       created_by: userId,
       assignee_user_id: orgMembership?.user_id ? userId : null,
-      reference: ref,
+      order_number: orderNum,
+      carrier_booking_number: booking,
+      container_number: containerNum,
       bill_of_lading: bol,
       ...(shippingLine ? { shipping_line: shippingLine } : {}),
     });

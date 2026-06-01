@@ -19,7 +19,7 @@ export type CreateTrackingRequestBody = {
   source_bill_of_lading?: string | null;
   shipping_line?: string | null;
   shipment_id?: string | null;
-  shipment_reference?: string | null;
+  shipment_order_number?: string | null;
 };
 
 export type CreateTrackingRequestResponse = {

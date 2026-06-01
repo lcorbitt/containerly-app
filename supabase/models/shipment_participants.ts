@@ -8,3 +8,10 @@ export async function insertShipmentParticipant(
 ) {
   return client.from("shipment_participants").insert({ shipment_id: shipmentId, user_id: userId });
 }
+
+export async function listShipmentParticipantsUserIds(client: SupabaseClient, shipmentId: string) {
+  return client
+    .from("shipment_participants")
+    .select("user_id")
+    .eq("shipment_id", shipmentId);
+}

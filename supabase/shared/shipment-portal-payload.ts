@@ -7,6 +7,8 @@ import {
   queryReportMessagesForShipment,
 } from "@models/report_messages.ts";
 import { fetchSharedReportById } from "@models/shared_reports.ts";
+import { listShipmentActivityEvents } from "@models/shipment_activity_events.ts";
+import { listShipmentLinesForShipment } from "@models/shipment_lines.ts";
 import { fetchShipmentPortalHeader } from "@models/shipments.ts";
 import { listTrackingEventsForContainers } from "@models/tracking_events.ts";
 import { listTrackingRequestsByContainerIds } from "@models/tracking_requests.ts";
@@ -149,16 +151,17 @@ export async function buildShipmentPortalPayload(
   const containerList = containers ?? [];
   const containerIds = containerList.map((c) => c.id as string);
 
-  if (containerIds.length === 0) {
-    return { ok: false, status: 404, error: "No containers on this shipment" };
-  }
+  const { data: lineRows } = await listShipmentLinesForShipment(admin, shipmentId);
+  const { data: activityRows } = await listShipmentActivityEvents(admin, shipmentId);
 
   const numberByContainer: Record<string, string> = {};
   for (const c of containerList) {
     numberByContainer[c.id as string] = c.container_number as string;
   }
 
-  const { data: trRows } = await listTrackingRequestsByContainerIds(admin, containerIds);
+  const { data: trRows } = containerIds.length > 0
+    ? await listTrackingRequestsByContainerIds(admin, containerIds)
+    : { data: [] as Record<string, unknown>[] };
 
   const trByContainer: Record<string, { status: string; last_sync_at: string | null }> = {};
   for (const tr of trRows ?? []) {
@@ -170,7 +173,9 @@ export async function buildShipmentPortalPayload(
     };
   }
 
-  const { data: events } = await listTrackingEventsForContainers(admin, containerIds, 500);
+  const { data: events } = containerIds.length > 0
+    ? await listTrackingEventsForContainers(admin, containerIds, 500)
+    : { data: [] as Record<string, unknown>[] };
 
   const eventsDecorated = (events ?? []).map((e) => ({
     ...e,
@@ -188,7 +193,9 @@ export async function buildShipmentPortalPayload(
 
   const includeInternal = Boolean(portalOptions?.includeInternalMessages);
   const [{ data: msgContainer }, { data: msgShipment }] = await Promise.all([
-    queryReportMessagesForContainers(admin, containerIds, includeInternal),
+    containerIds.length > 0
+      ? queryReportMessagesForContainers(admin, containerIds, includeInternal)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
     queryReportMessagesForShipment(admin, shipmentId, includeInternal),
   ]);
   const messages = [...(msgContainer ?? []), ...(msgShipment ?? [])].sort(
@@ -202,12 +209,18 @@ export async function buildShipmentPortalPayload(
   }));
 
   const [{ data: attContainer }, { data: attShipment }] = await Promise.all([
-    listWorkspaceAttachmentsForContainers(admin, containerIds, 100),
+    containerIds.length > 0
+      ? listWorkspaceAttachmentsForContainers(admin, containerIds, 100)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
     listWorkspaceAttachmentsForShipment(admin, shipmentId, 50),
   ]);
   let attachmentRows = [...(attContainer ?? []), ...(attShipment ?? [])];
   if (!portalOptions?.includeInternalMessages) {
-    attachmentRows = attachmentRows.filter((a) => (a as { is_internal?: boolean }).is_internal === false);
+    attachmentRows = attachmentRows.filter((a) => {
+      const row = a as { is_internal?: boolean; shipment_id?: string | null; container_id?: string | null };
+      if (row.shipment_id && !row.container_id) return true;
+      return row.is_internal === false;
+    });
   }
   attachmentRows.sort((a, b) => Date.parse(String(b.created_at)) - Date.parse(String(a.created_at)));
 
@@ -217,10 +230,10 @@ export async function buildShipmentPortalPayload(
     scope: a.container_id ? "container" as const : "shipment" as const,
   }));
 
-  const primary = containerList[0] as Record<string, unknown>;
-  const primaryId = primary.id as string;
-  const primaryLoc = primary.location as Record<string, unknown> | null | undefined;
-  const primaryTr = trByContainer[primaryId];
+  const primary = containerList[0] as Record<string, unknown> | undefined;
+  const primaryId = primary?.id as string | undefined;
+  const primaryLoc = primary?.location as Record<string, unknown> | null | undefined;
+  const primaryTr = primaryId ? trByContainer[primaryId] : undefined;
 
   const lastSyncTimes = [
     ...containerList.map((c) => c.last_synced_at as string | null),
@@ -233,7 +246,7 @@ export async function buildShipmentPortalPayload(
     : null;
 
   const carrierStatuses = containerList.map((c) => c.status as string | null);
-  const status = (primary.status as string | null) ?? null;
+  const status = (primary?.status as string | null) ?? (shipment.workflow_status as string | null);
   const risk = riskFromStatus(status);
 
   const lastKnown =
@@ -243,7 +256,9 @@ export async function buildShipmentPortalPayload(
     null;
 
   const workflowStatuses = Object.values(trByContainer).map((t) => t.status);
-  const trackingWorkflowAggregate = aggregateWorkflowStatus(workflowStatuses);
+  const trackingWorkflowAggregate = workflowStatuses.length > 0
+    ? aggregateWorkflowStatus(workflowStatuses)
+    : "pending";
 
   const containerLines = containerList.map((c) => {
     const row = c as Record<string, unknown>;
@@ -262,13 +277,33 @@ export async function buildShipmentPortalPayload(
     };
   });
 
+  const commercialLines = (lineRows ?? []).map((line) => ({
+    id: line.id,
+    shipment_id: line.shipment_id,
+    container_id: line.container_id ?? null,
+    container_number: line.container_number ?? null,
+    order_number: line.order_number ?? null,
+    carrier_booking_number: line.carrier_booking_number ?? null,
+    customer_name: line.customer_name ?? shipment.customer_name ?? null,
+    country: line.country ?? shipment.country ?? null,
+    port_of_loading: line.port_of_loading ?? shipment.port_of_loading ?? null,
+    port_of_destination: line.port_of_destination ?? shipment.port_of_destination ?? null,
+    estimated_departure_at: line.estimated_departure_at ?? shipment.estimated_departure_at ?? null,
+    estimated_arrival_at: line.estimated_arrival_at ?? shipment.estimated_arrival_at ?? null,
+    freight_booking_carrier: line.freight_booking_carrier ?? shipment.freight_booking_carrier ?? null,
+    vessel: line.vessel ?? shipment.vessel ?? null,
+    voyage: line.voyage ?? shipment.voyage ?? null,
+    health_certificate_no: line.health_certificate_no ?? shipment.health_certificate_no ?? null,
+    trade_terms: line.trade_terms ?? shipment.trade_terms ?? null,
+    sort_order: line.sort_order ?? 0,
+  }));
+
   const summary: Record<string, unknown> = {
-    shipment_reference: shipment.reference,
-    container_number: primary.container_number,
+    order_number: shipment.order_number,
+    container_number: primary?.container_number ?? shipment.container_number ?? commercialLines[0]?.container_number,
     container_count: containerList.length,
-    carrier: primary.carrier ?? null,
+    carrier: primary?.carrier ?? shipment.freight_booking_carrier ?? null,
     status,
-    /** Highest-severity carrier status label across units (same as primary when one unit). */
     carrier_statuses: carrierStatuses,
     last_known_location: lastKnown,
     tracking_request_status: trackingWorkflowAggregate,
@@ -285,11 +320,42 @@ export async function buildShipmentPortalPayload(
 
   const payload: Record<string, unknown> = {
     report: reportMeta,
-    organization: org ? { name: org.name, slug: org.slug } : null,
+    organization: org
+      ? {
+        name: org.name,
+        slug: org.slug,
+        org_image_path: org.org_image_path ?? null,
+      }
+      : null,
     summary,
     container_lines: containerLines,
+    commercial_details: {
+      customer_name: shipment.customer_name ?? null,
+      country: shipment.country ?? null,
+      port_of_loading: shipment.port_of_loading ?? null,
+      port_of_destination: shipment.port_of_destination ?? null,
+      estimated_departure_at: shipment.estimated_departure_at ?? null,
+      estimated_arrival_at: shipment.estimated_arrival_at ?? null,
+      freight_booking_carrier: shipment.freight_booking_carrier ?? null,
+      vessel: shipment.vessel ?? null,
+      voyage: shipment.voyage ?? null,
+      health_certificate_no: shipment.health_certificate_no ?? null,
+      trade_terms: shipment.trade_terms ?? null,
+      physical_mail_tracking_number: shipment.physical_mail_tracking_number ?? null,
+      physical_mail_sent_at: shipment.physical_mail_sent_at ?? null,
+      workflow_status: shipment.workflow_status ?? "pending_drafts",
+      lines: commercialLines,
+    },
+    activity_events: (activityRows ?? []).map((e) => ({
+      id: e.id,
+      event_type: e.event_type,
+      body: e.body,
+      actor_kind: e.actor_kind,
+      occurred_at: e.occurred_at,
+      metadata: e.metadata ?? {},
+    })),
     shipment_id: shipmentId,
-    primary_container_id: primaryId,
+    primary_container_id: primaryId ?? null,
     insights: {
       risk_level: risk,
       headline: headlineFromSummary({ status, risk, freshnessMinutes }),
@@ -300,11 +366,11 @@ export async function buildShipmentPortalPayload(
     attachments: attachmentsDecorated,
   };
 
-  if (includeRaw && primary.raw_external) {
+  if (includeRaw && primary?.raw_external) {
     payload.raw_external = primary.raw_external;
   }
 
-  const enrichment = primary.enrichment as Record<string, unknown> | null | undefined;
+  const enrichment = primary?.enrichment as Record<string, unknown> | null | undefined;
   if (showAis && enrichment && typeof enrichment === "object" && Object.keys(enrichment).length > 0) {
     payload.enrichment = enrichment;
     const ais = enrichment.vessel_ais as Record<string, unknown> | undefined;
