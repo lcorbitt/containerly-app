@@ -2,6 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { listAlertsForContainers } from "@models/alerts.ts";
 import { listContainersForShipment } from "@models/containers.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
+import { fetchProfileImagePathsByUserIds } from "@models/profiles.ts";
 import {
   queryReportMessagesForContainers,
   queryReportMessagesForShipment,
@@ -208,6 +209,18 @@ export async function buildShipmentPortalPayload(
     scope: m.container_id ? "container" as const : "shipment" as const,
   }));
 
+  const messageAuthorUserIds = [
+    ...new Set(
+      messagesDecorated
+        .map((m) => m.author_user_id as string | null | undefined)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const profileImagePathByUserId = await fetchProfileImagePathsByUserIds(
+    admin,
+    messageAuthorUserIds,
+  );
+
   const [{ data: attContainer }, { data: attShipment }] = await Promise.all([
     containerIds.length > 0
       ? listWorkspaceAttachmentsForContainers(admin, containerIds, 100)
@@ -365,6 +378,7 @@ export async function buildShipmentPortalPayload(
     alerts: includeAlerts ? alerts ?? [] : [],
     messages: messagesDecorated,
     attachments: attachmentsDecorated,
+    profile_image_path_by_user_id: profileImagePathByUserId,
   };
 
   if (includeRaw && primary?.raw_external) {

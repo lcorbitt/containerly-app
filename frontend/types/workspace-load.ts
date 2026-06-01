@@ -17,6 +17,7 @@ export type ContainerWorkspaceLoadResult =
       request: TrackingRequest;
       messages: ReportMessage[];
       messageAuthorByUserId: Record<string, string>;
+      profileImagePathByUserId: Record<string, string | null>;
       activity: ReportActivity[];
       timeline: PublicTimelineEvent[];
       containerRow: ContainerWorkspaceSnapshot;
@@ -32,6 +33,7 @@ export type ShipmentScopeLoadResult =
       messages: ReportMessage[];
       attachments: WorkspaceAttachment[];
       messageAuthorByUserId: Record<string, string>;
+      profileImagePathByUserId: Record<string, string | null>;
       currentUserId: string;
     };
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+import { ShipmentDocumentUploadModal } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
   ShipmentThreadStartBanner,
@@ -61,6 +63,7 @@ export function PublicContainerReport({
     currentUserId,
     composerAuthorLabel,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     attachmentsByMessageId,
     postMessage,
     handleSetupDismiss,
@@ -73,7 +76,24 @@ export function PublicContainerReport({
     handleDocumentReview,
     showDocumentScopeLabels,
     refresh,
+    documentsUploadEnabled,
+    uploadModalOpen,
+    setUploadModalOpen,
+    documentType,
+    setDocumentType,
+    documentGroup,
+    setDocumentGroup,
+    uploadingDocuments,
+    uploadDocuments,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
+
+  const handlePortalDocumentUpload = useCallback(
+    async (files: File[]) => {
+      const ok = await uploadDocuments(files);
+      if (ok) setUploadModalOpen(false);
+    },
+    [uploadDocuments, setUploadModalOpen],
+  );
 
   const orgLogoUrl = organization?.org_image_path
     ? getOrgImagePublicUrl(createClient(), organization.org_image_path)
@@ -170,6 +190,9 @@ export function PublicContainerReport({
                   }
                   onOpen={handleDocumentOpen}
                   onReview={handleDocumentReview}
+                  showUpload={documentsUploadEnabled}
+                  uploading={uploadingDocuments}
+                  onAddDocumentsClick={() => setUploadModalOpen(true)}
                 />
               }
               messagesPanel={
@@ -183,6 +206,7 @@ export function PublicContainerReport({
                     <ThreadPanel
                       messages={threadMessages}
                       authorNameByUserId={messageAuthorByUserId}
+                      authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                       uploaderDisplayByUserId={messageAuthorByUserId}
                       attachmentsByMessageId={attachmentsByMessageId}
                       onOpenAttachment={(row) => void handleDocumentOpen(row.storage_path)}
@@ -217,6 +241,17 @@ export function PublicContainerReport({
               }
             />
           </section>
+
+          <ShipmentDocumentUploadModal
+            open={uploadModalOpen}
+            onClose={() => setUploadModalOpen(false)}
+            documentType={documentType}
+            onDocumentTypeChange={setDocumentType}
+            documentGroup={documentGroup}
+            onDocumentGroupChange={setDocumentGroup}
+            uploading={uploadingDocuments}
+            onUpload={handlePortalDocumentUpload}
+          />
         </div>
 
         <footer className="mt-10 border-t border-zinc-200/80 pt-8 text-center text-xs text-zinc-500 dark:border-zinc-800">

@@ -55,6 +55,7 @@ export function ContainerWorkspace({
 
     threadMessages,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     attachmentsByMessageId,
     body,
     setBody,
@@ -325,6 +326,7 @@ export function ContainerWorkspace({
                 <ThreadPanel
                   messages={threadMessages}
                   authorNameByUserId={messageAuthorByUserId}
+                  authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                   uploaderDisplayByUserId={messageAuthorByUserId}
                   attachmentsByMessageId={attachmentsByMessageId}
                   onOpenAttachment={(row) => void openAttachment(row)}

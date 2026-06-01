@@ -9,4 +9,7 @@ export interface PortalDocumentsPanelProps {
   onRejectReasonChange: (attachmentId: string, reason: string) => void;
   onOpen: (storagePath: string) => void;
   onReview: (attachmentId: string, action: "approve" | "reject") => void | Promise<void>;
+  showUpload?: boolean;
+  uploading?: boolean;
+  onAddDocumentsClick?: () => void;
 }

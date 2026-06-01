@@ -3,10 +3,12 @@ export function UserAvatar({
   imageUrl,
   label,
   size = "sm",
+  className = "",
 }: {
   imageUrl: string | null;
   label: string;
   size?: "sm" | "md";
+  className?: string;
 }) {
   const initial = (label.trim().at(0) ?? "?").toUpperCase();
   const box =
@@ -16,7 +18,7 @@ export function UserAvatar({
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 font-semibold text-zinc-700 dark:bg-zinc-600 dark:text-zinc-100 ${box}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 font-semibold text-zinc-700 dark:bg-zinc-600 dark:text-zinc-100 ${box} ${className}`}
       aria-hidden
     >
       {imageUrl ? (

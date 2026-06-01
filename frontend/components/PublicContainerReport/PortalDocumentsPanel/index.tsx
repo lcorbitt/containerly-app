@@ -1,13 +1,18 @@
 "use client";
 
-import { ExternalLink, FileText, Loader2 } from "lucide-react";
+import { ExternalLink, FilePlus2, FileText, Loader2 } from "lucide-react";
+import { DOCUMENTS_LIST_ADD_LABEL } from "@/components/DocumentsList/constants";
 import { useEffect, useRef, useState } from "react";
 import {
   APPROVE_BUTTON_CLASS,
   APPROVED_STATUS_BADGE_CLASS,
   OPEN_LINK_CLASS,
   PENDING_STATUS_BADGE_CLASS,
+  PORTAL_DOCUMENTS_ACTIONS_CLASS,
+  PORTAL_DOCUMENTS_EMPTY_CLASS,
   PORTAL_DOCUMENTS_LIST_CLASS,
+  PORTAL_DOCUMENTS_PANEL_CLASS,
+  PORTAL_DOCUMENTS_UPLOAD_BUTTON_CLASS,
   REJECT_POPOVER_CLASS,
   REJECT_TRIGGER_CLASS,
   REJECTED_STATUS_BADGE_CLASS,
@@ -222,34 +227,49 @@ export function PortalDocumentsPanel({
   onRejectReasonChange,
   onOpen,
   onReview,
+  showUpload = false,
+  uploading = false,
+  onAddDocumentsClick,
 }: PortalDocumentsPanelProps) {
   const [rejectPopoverId, setRejectPopoverId] = useState<string | null>(null);
 
-  if (attachments.length === 0) {
-    return (
-      <p className="px-4 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400 sm:px-6">
-        No documents yet.
-      </p>
-    );
-  }
-
   return (
-    <ul className={PORTAL_DOCUMENTS_LIST_CLASS}>
-      {attachments.map((attachment) => (
-        <PortalDocumentRow
-          key={attachment.id}
-          attachment={attachment}
-          showScopeLabels={showScopeLabels}
-          readOnlyReview={readOnlyReview}
-          reviewBusyId={reviewBusyId}
-          rejectReason={rejectReasonById[attachment.id] ?? ""}
-          onRejectReasonChange={(reason) => onRejectReasonChange(attachment.id, reason)}
-          onOpen={onOpen}
-          onReview={onReview}
-          rejectPopoverId={rejectPopoverId}
-          onRejectPopoverChange={setRejectPopoverId}
-        />
-      ))}
-    </ul>
+    <div className={PORTAL_DOCUMENTS_PANEL_CLASS}>
+      {showUpload && onAddDocumentsClick ? (
+        <div className={PORTAL_DOCUMENTS_ACTIONS_CLASS}>
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={onAddDocumentsClick}
+            className={PORTAL_DOCUMENTS_UPLOAD_BUTTON_CLASS}
+          >
+            <FilePlus2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {uploading ? "Uploading…" : DOCUMENTS_LIST_ADD_LABEL}
+          </button>
+        </div>
+      ) : null}
+
+      {attachments.length === 0 ? (
+        <p className={PORTAL_DOCUMENTS_EMPTY_CLASS}>No documents yet.</p>
+      ) : (
+        <ul className={PORTAL_DOCUMENTS_LIST_CLASS}>
+          {attachments.map((attachment) => (
+            <PortalDocumentRow
+              key={attachment.id}
+              attachment={attachment}
+              showScopeLabels={showScopeLabels}
+              readOnlyReview={readOnlyReview}
+              reviewBusyId={reviewBusyId}
+              rejectReason={rejectReasonById[attachment.id] ?? ""}
+              onRejectReasonChange={(reason) => onRejectReasonChange(attachment.id, reason)}
+              onOpen={onOpen}
+              onReview={onReview}
+              rejectPopoverId={rejectPopoverId}
+              onRejectPopoverChange={setRejectPopoverId}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

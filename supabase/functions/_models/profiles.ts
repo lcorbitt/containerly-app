@@ -18,3 +18,20 @@ export async function updateProfileAccountKind(
 export async function fetchProfileEmailByUserId(client: SupabaseClient, userId: string) {
   return client.from("profiles").select("email").eq("id", userId).maybeSingle();
 }
+
+/** `profiles` — avatar storage paths keyed by user id (message thread display). */
+export async function fetchProfileImagePathsByUserIds(
+  client: SupabaseClient,
+  userIds: string[],
+): Promise<Record<string, string | null>> {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (ids.length === 0) return {};
+
+  const { data } = await client.from("profiles").select("id, profile_image_path").in("id", ids);
+  const out: Record<string, string | null> = {};
+  for (const row of data ?? []) {
+    const path = (row.profile_image_path as string | null | undefined)?.trim() || null;
+    out[row.id as string] = path;
+  }
+  return out;
+}

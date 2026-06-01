@@ -101,6 +101,7 @@ export async function loadContainerWorkspaceDataForUser(
   const profileIds = [...new Set([...authorIds, ...uploaderIds])];
 
   const nameByUser: Record<string, string> = {};
+  const profileImagePathByUserId: Record<string, string | null> = {};
   if (profileIds.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
@@ -112,6 +113,8 @@ export async function loadContainerWorkspaceDataForUser(
         full_name: p.full_name as string | null,
         email: p.email as string | null,
       });
+      profileImagePathByUserId[id] =
+        ((p.profile_image_path as string | null | undefined)?.trim() || null);
     }
   }
 
@@ -145,6 +148,7 @@ export async function loadContainerWorkspaceDataForUser(
     request: tr as TrackingRequest,
     messages: msgList,
     messageAuthorByUserId: nameByUser,
+    profileImagePathByUserId,
     activity: (act as ReportActivity[]) ?? [],
     timeline: [...((tev as PublicTimelineEvent[] | null) ?? [])],
     containerRow,

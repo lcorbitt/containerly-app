@@ -171,4 +171,6 @@ export type ShipmentPortalPayload = {
   viewer?: "importer" | "org_member";
   /** True when payload was built for an operator preview (read-only messaging). */
   preview?: boolean;
+  /** `profiles.profile_image_path` for message authors (resolve to public URL on the client). */
+  profile_image_path_by_user_id?: Record<string, string | null>;
 };

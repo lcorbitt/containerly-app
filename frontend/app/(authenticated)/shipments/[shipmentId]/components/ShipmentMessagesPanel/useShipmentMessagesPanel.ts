@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ATTACHMENT_DISPLAY_NAME_MAX_LEN,
@@ -58,6 +59,13 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
   const messages = threadQuery.data?.ok ? threadQuery.data.messages : [];
   const attachments = threadQuery.data?.ok ? threadQuery.data.attachments : [];
   const messageAuthorByUserId = threadQuery.data?.ok ? threadQuery.data.messageAuthorByUserId : {};
+  const profileImagePathByUserId = threadQuery.data?.ok
+    ? threadQuery.data.profileImagePathByUserId
+    : {};
+  const authorAvatarUrlByUserId = useMemo(
+    () => buildAuthorAvatarUrlByUserId(profileImagePathByUserId),
+    [profileImagePathByUserId],
+  );
   const currentUserId = threadQuery.data?.ok ? threadQuery.data.currentUserId : null;
 
   const loadError =
@@ -241,6 +249,7 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     currentUserId,
     attachmentsByMessageId,
     openAttachment,

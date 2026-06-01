@@ -334,10 +334,11 @@ export async function loadShipmentScopeThreadForUser(
   const uploaderIds = [...new Set(attRows.map((a) => a.uploaded_by))];
   const profileIds = [...new Set([...authorIds, ...uploaderIds])];
   const nameByUser: Record<string, string> = {};
+  const profileImagePathByUserId: Record<string, string | null> = {};
   if (profileIds.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
-      .select("id, email, full_name")
+      .select("id, email, full_name, profile_image_path")
       .in("id", profileIds);
     for (const p of profs ?? []) {
       const id = p.id as string;
@@ -345,6 +346,8 @@ export async function loadShipmentScopeThreadForUser(
         full_name: p.full_name as string | null,
         email: p.email as string | null,
       });
+      profileImagePathByUserId[id] =
+        ((p.profile_image_path as string | null | undefined)?.trim() || null);
     }
   }
 
@@ -353,6 +356,7 @@ export async function loadShipmentScopeThreadForUser(
     messages: msgList,
     attachments: attRows,
     messageAuthorByUserId: nameByUser,
+    profileImagePathByUserId,
     currentUserId: userId,
   };
 }

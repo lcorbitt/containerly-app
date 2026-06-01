@@ -2,7 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/utils";
 import { useToast } from "@/contexts/toast";
+import { MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
+import { uploadShipmentScopeStandaloneFiles } from "@/services/workspace.service";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
 import { orgReportMessagesRealtimeDedupeKey } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +21,7 @@ import { profileDisplayName } from "@/utils/author-display-name";
 import type { PublicReportPayload } from "@/types/public-report";
 import type { PortalDetailsTabId } from "../PortalDetailsTabs";
 import { formatFreshness } from "../utils";
+import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import {
   buildPortalAttachmentsByMessageId,
   buildPortalMessageAuthorMap,
@@ -46,6 +50,10 @@ export function usePublicContainerReport({
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [composerAuthorLabel, setComposerAuthorLabel] = useState("");
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [documentType, setDocumentType] = useState(DOCUMENT_TYPE_NONE_VALUE);
+  const [documentGroup, setDocumentGroup] = useState<"draft" | "revision" | "original">("draft");
+  const [uploadingDocuments, setUploadingDocuments] = useState(false);
 
   const organizationId = payload.organization?.id ?? null;
 
@@ -57,6 +65,7 @@ export function usePublicContainerReport({
   const hasTracking = containerLines.length > 0 && timeline.length > 0;
 
   const threadReadOnly = readOnlyMessaging || payload.preview === true;
+  const documentsUploadEnabled = !payload.preview && Boolean(organizationId);
 
   const visibleMessages = useMemo(() => {
     const list = payload.messages ?? [];
@@ -72,6 +81,11 @@ export function usePublicContainerReport({
   const messageAuthorByUserId = useMemo(
     () => buildPortalMessageAuthorMap(visibleMessages),
     [visibleMessages],
+  );
+
+  const authorAvatarUrlByUserId = useMemo(
+    () => buildAuthorAvatarUrlByUserId(payload.profile_image_path_by_user_id ?? {}),
+    [payload.profile_image_path_by_user_id],
   );
 
   const attachmentsByMessageId = useMemo(
@@ -172,6 +186,40 @@ export function usePublicContainerReport({
     }
   }
 
+  const uploadDocuments = useCallback(
+    async (files: File[]): Promise<boolean> => {
+      if (!organizationId) return false;
+      const queue = files.filter(Boolean).slice(0, MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH);
+      if (!queue.length) return false;
+      if (files.filter(Boolean).length > MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH) {
+        toast(`Only the first ${MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH} files were included.`, "info");
+      }
+      setUploadingDocuments(true);
+      try {
+        const uploaded = await uploadShipmentScopeStandaloneFiles({
+          organizationId,
+          shipmentId,
+          files: queue,
+          documentType: documentType.trim() || null,
+          documentGroup,
+        });
+        if (uploaded.length === 0) {
+          toast("No files were uploaded.", "info");
+          return false;
+        }
+        await refresh();
+        toast(uploaded.length === 1 ? "File uploaded" : `${uploaded.length} files uploaded`, "success");
+        return true;
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Upload failed", "error");
+        return false;
+      } finally {
+        setUploadingDocuments(false);
+      }
+    },
+    [organizationId, shipmentId, documentType, documentGroup, refresh, toast],
+  );
+
   async function handleDocumentReview(attachmentId: string, action: "approve" | "reject") {
     if (action === "reject" && !rejectReasonById[attachmentId]?.trim()) {
       toast("Please enter a reason for rejection.", "error");
@@ -255,6 +303,15 @@ export function usePublicContainerReport({
 
     fresh,
     threadReadOnly,
+    documentsUploadEnabled,
+    uploadModalOpen,
+    setUploadModalOpen,
+    documentType,
+    setDocumentType,
+    documentGroup,
+    setDocumentGroup,
+    uploadingDocuments,
+    uploadDocuments,
     messageTree,
     messageById,
     replyPreview,
@@ -271,6 +328,7 @@ export function usePublicContainerReport({
     currentUserId,
     composerAuthorLabel,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     attachmentsByMessageId,
 
     updatesEndRef,

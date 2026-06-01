@@ -25,6 +25,7 @@ import {
   formatTimelineWhen,
   useShipmentTimelineOrder,
 } from "@/components/ShipmentTimeline";
+import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { computePublicReportInsights } from "@/utils/report-insights";
 import { getShipmentDetailRows, shipperReceiverFromLocation } from "@/utils/jsoncargo-display";
 import { formatTimestamp } from "@/utils/datetime";
@@ -48,6 +49,9 @@ export function useContainerWorkspace({
   const [request, setRequest] = useState<TrackingRequest | null>(null);
   const [messages, setMessages] = useState<ReportMessage[]>([]);
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
+  const [profileImagePathByUserId, setProfileImagePathByUserId] = useState<
+    Record<string, string | null>
+  >({});
   const [activity, setActivity] = useState<ReportActivity[]>([]);
   const [timeline, setTimeline] = useState<PublicTimelineEvent[]>([]);
   const timelineOrder = useShipmentTimelineOrder(timeline);
@@ -88,6 +92,11 @@ export function useContainerWorkspace({
     }
     return m;
   }, [attachments]);
+
+  const authorAvatarUrlByUserId = useMemo(
+    () => buildAuthorAvatarUrlByUserId(profileImagePathByUserId),
+    [profileImagePathByUserId],
+  );
 
   const threadMessages = useMemo(
     () => messages.filter((m) => !m.is_internal),
@@ -169,6 +178,7 @@ export function useContainerWorkspace({
           setTimeline([]);
           setAttachments([]);
           setMessageAuthorByUserId({});
+          setProfileImagePathByUserId({});
           setLoadError(result.error);
           return;
         }
@@ -176,6 +186,7 @@ export function useContainerWorkspace({
         setRequest(result.request);
         setMessages(result.messages);
         setMessageAuthorByUserId(result.messageAuthorByUserId);
+        setProfileImagePathByUserId(result.profileImagePathByUserId);
         setActivity(result.activity);
         setTimeline(result.timeline);
         setAttachments(result.attachments);
@@ -478,6 +489,7 @@ export function useContainerWorkspace({
 
     threadMessages,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     attachmentsByMessageId,
     body,
     setBody,

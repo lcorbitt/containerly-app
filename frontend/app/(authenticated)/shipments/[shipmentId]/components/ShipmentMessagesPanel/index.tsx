@@ -25,6 +25,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
     shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
+    authorAvatarUrlByUserId,
     currentUserId,
     attachmentsByMessageId,
     openAttachment,
@@ -80,6 +81,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
           key={shipmentId}
           messages={threadMessages}
           authorNameByUserId={messageAuthorByUserId}
+          authorAvatarUrlByUserId={authorAvatarUrlByUserId}
           uploaderDisplayByUserId={messageAuthorByUserId}
           attachmentsByMessageId={attachmentsByMessageId}
           onOpenAttachment={(row) => void openAttachment(row)}

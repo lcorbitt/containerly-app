@@ -4,6 +4,7 @@ import { Paperclip, Reply, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
+import { UserAvatar } from "@/components/UserAvatar";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import {
   ComposerPendingAttachmentChip,
@@ -21,7 +22,26 @@ import {
   type ThreadNode,
 } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
-import { threadMessageAuthorName } from "./utils";
+import {
+  THREAD_CUSTOMER_COMPOSER_BG_CLASS,
+  THREAD_CUSTOMER_QUOTE_BG_CLASS,
+  THREAD_CUSTOMER_REPLY_BG_CLASS,
+  THREAD_CUSTOMER_REPLY_RING_CLASS,
+  THREAD_CUSTOMER_ROOT_BG_CLASS,
+  THREAD_INTERNAL_COMPOSER_BG_CLASS,
+  THREAD_INTERNAL_QUOTE_BG_CLASS,
+  THREAD_INTERNAL_REPLY_BG_CLASS,
+  THREAD_INTERNAL_REPLY_RING_CLASS,
+  THREAD_MESSAGE_AVATAR_CLASS,
+  THREAD_MESSAGE_ROW_CLASS,
+} from "./constants";
+import {
+  threadMessageAuthorAvatarUrl,
+  threadMessageAuthorName,
+  threadMessageAvatarClass,
+  threadMessageAuthorHeadingClass,
+  threadMessageShellClass,
+} from "./utils";
 
 export { threadMessageAuthorName };
 
@@ -33,6 +53,7 @@ function ThreadMessageItem({
   onDeleteMessage,
   messageById,
   authorNameByUserId,
+  authorAvatarUrlByUserId,
   uploaderDisplayByUserId,
   currentUserId,
   deletingMessageId,
@@ -51,6 +72,7 @@ function ThreadMessageItem({
   onDeleteMessage: (id: string) => void;
   messageById: Map<string, ReportMessage>;
   authorNameByUserId: Record<string, string>;
+  authorAvatarUrlByUserId: Record<string, string | null>;
   uploaderDisplayByUserId: Record<string, string>;
   currentUserId: string | null;
   deletingMessageId: string | null;
@@ -72,36 +94,38 @@ function ThreadMessageItem({
     Boolean(currentUserId && node.author_user_id && node.author_user_id === currentUserId);
   const isDeleting = deletingMessageId === node.id;
   const actionsBusy = Boolean(deletingMessageId);
+  const authorLabel = threadMessageAuthorName(node, authorNameByUserId);
+  const authorAvatarUrl = threadMessageAuthorAvatarUrl(node, authorAvatarUrlByUserId);
 
-  const shell = isRoot
-    ? `group/card rounded-2xl px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] ${
-        isInternal
-          ? "bg-emerald-50/85 dark:bg-emerald-950/30"
-          : "bg-sky-50/90 dark:bg-sky-950/28"
-      }`
-    : `group/card rounded-xl px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.18)] ${
-        isInternal
-          ? "bg-emerald-50/55 dark:bg-emerald-950/22"
-          : "bg-sky-50/55 dark:bg-sky-950/20"
-      }`;
+  const shell = threadMessageShellClass({ isRoot, isInternal, isOwnMessage });
+  const avatarClass = threadMessageAvatarClass({
+    isInternal,
+    isOwnMessage,
+    baseClass: THREAD_MESSAGE_AVATAR_CLASS,
+  });
 
   const replyTargetRing = isInternal
-    ? "ring-2 ring-emerald-400/45 ring-offset-2 ring-offset-emerald-50 dark:ring-emerald-500/35 dark:ring-offset-emerald-950"
-    : "ring-2 ring-sky-400/45 ring-offset-2 ring-offset-sky-50 dark:ring-sky-500/35 dark:ring-offset-sky-950";
+    ? THREAD_INTERNAL_REPLY_RING_CLASS
+    : THREAD_CUSTOMER_REPLY_RING_CLASS;
 
   const cornerActionsClass =
     "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
 
   return (
     <li className="list-none">
-      <div className={`relative text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
+      <div className={THREAD_MESSAGE_ROW_CLASS}>
+        <UserAvatar
+          imageUrl={authorAvatarUrl}
+          label={authorLabel}
+          size="md"
+          className={avatarClass}
+        />
+        <div className={`relative min-w-0 flex-1 text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
         {parent ? (
           <div
-            className={`mb-3 border-l-[3px] pl-3 pr-25 ${
-              parentInternal
-                ? "border-emerald-400/90 bg-emerald-100/35 py-1.5 dark:border-emerald-500/70 dark:bg-emerald-950/35"
-                : "border-sky-400/90 bg-sky-100/40 py-1.5 dark:border-sky-500/70 dark:bg-sky-950/35"
-            } rounded-r-md`}
+            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${
+              parentInternal ? THREAD_INTERNAL_QUOTE_BG_CLASS : THREAD_CUSTOMER_QUOTE_BG_CLASS
+            }`}
           >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Replying to {threadMessageAuthorName(parent, authorNameByUserId)}
@@ -113,8 +137,8 @@ function ThreadMessageItem({
         ) : null}
         <div className="min-w-0 pr-25">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              {threadMessageAuthorName(node, authorNameByUserId)}
+            <span className={threadMessageAuthorHeadingClass({ isInternal, isOwnMessage })}>
+              {authorLabel}
             </span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
               {isInternal ? (
@@ -188,6 +212,7 @@ function ThreadMessageItem({
             </ActionHoverTooltip>
           ) : null}
         </div>
+        </div>
       </div>
       {node.children.length > 0 ? (
         <ul className="relative mt-4 flex flex-col gap-4 border-l-2 border-zinc-300 pl-5 dark:border-zinc-600">
@@ -201,6 +226,7 @@ function ThreadMessageItem({
               onDeleteMessage={onDeleteMessage}
               messageById={messageById}
               authorNameByUserId={authorNameByUserId}
+              authorAvatarUrlByUserId={authorAvatarUrlByUserId}
               uploaderDisplayByUserId={uploaderDisplayByUserId}
               currentUserId={currentUserId}
               deletingMessageId={deletingMessageId}
@@ -222,6 +248,7 @@ function ThreadMessageItem({
 export function ThreadPanel({
   messages,
   authorNameByUserId,
+  authorAvatarUrlByUserId = {},
   uploaderDisplayByUserId,
   body,
   onBodyChange,
@@ -256,6 +283,7 @@ export function ThreadPanel({
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
+  authorAvatarUrlByUserId?: Record<string, string | null>;
   uploaderDisplayByUserId: Record<string, string>;
   attachmentsByMessageId: Map<string, WorkspaceAttachment[]>;
   onOpenAttachment: (row: WorkspaceAttachment) => void;
@@ -346,8 +374,8 @@ export function ThreadPanel({
   }, [replyParentId, messages, authorNameByUserId]);
 
   const composerShell = internalOnly
-    ? "rounded-2xl bg-emerald-50/85 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-emerald-400/35 dark:bg-emerald-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-emerald-500/30"
-    : "rounded-2xl bg-sky-50/90 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-sky-500/35";
+    ? THREAD_INTERNAL_COMPOSER_BG_CLASS
+    : THREAD_CUSTOMER_COMPOSER_BG_CLASS;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -381,6 +409,7 @@ export function ThreadPanel({
                 onDeleteMessage={onDeleteMessage}
                 messageById={messageById}
                 authorNameByUserId={authorNameByUserId}
+                authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                 uploaderDisplayByUserId={uploaderDisplayByUserId}
                 currentUserId={currentUserId}
                 deletingMessageId={deletingMessageId}
