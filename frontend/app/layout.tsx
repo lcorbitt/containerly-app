@@ -25,9 +25,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fustat.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fustat.variable} ${geistMono.variable} h-full bg-white text-zinc-900 antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col bg-white text-zinc-900">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
