@@ -9,12 +9,10 @@ import { buildPortalAttachmentDisplayNameMap } from "./utils";
 export function PortalTrackingPanel({
   shipmentId,
   payload,
-  isActive = true,
   onRefresh,
 }: {
   shipmentId: string;
   payload: PublicReportPayload;
-  isActive?: boolean;
   onRefresh: () => void | Promise<void>;
 }) {
   const { selectedOrgId } = useOrganizationWorkspace();
@@ -34,7 +32,6 @@ export function PortalTrackingPanel({
       carrierEvents={payload.timeline}
       attachmentDisplayNamesById={attachmentDisplayNamesById}
       readOnly={readOnly}
-      timelineIsActive={isActive}
       onEnabled={() => void onRefresh()}
     />
   );

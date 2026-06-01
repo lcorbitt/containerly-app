@@ -2,7 +2,8 @@
   "imports": {
     "@shared/": "./_wire/",
     "@supabase-shared/": "./_lib/",
-    "@models/": "./_models/"
+    "@models/": "./_models/",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
   },
   "compilerOptions": {
     "lib": ["deno.window"]

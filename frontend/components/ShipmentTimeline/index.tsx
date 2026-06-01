@@ -8,7 +8,7 @@ import {
   Route,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type {
@@ -31,7 +31,6 @@ import {
   formatLocationSnippet,
 } from "./utils";
 import { useShipmentTimelineOrder } from "./useShipmentTimeline";
-import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 import { TimelineDocumentMeta } from "./TimelineDocumentMeta";
 
 export type {
@@ -348,22 +347,10 @@ export function ShipmentTimelineView({
   className: classNameProp,
   emptyMessage = "No events recorded yet",
   emptyHint = "Shipment milestones and carrier updates will appear here.",
-  autoScrollToLatest = true,
-  isActive = true,
 }: ShipmentTimelineViewProps) {
-  const { displayEvents, orderFadeOut, newestFirst } = order;
+  const { displayEvents, orderFadeOut } = order;
   const [detailEvent, setDetailEvent] = useState<ShipmentTimelineDisplayEvent | null>(null);
   const eventCount = displayEvents.length;
-  const timelineEndRef = useRef<HTMLDivElement>(null);
-
-  useTimelineAutoScroll({
-    enabled: autoScrollToLatest,
-    isActive,
-    eventCount,
-    orderFadeOut,
-    newestFirst,
-    endRef: timelineEndRef,
-  });
 
   return (
     <section
@@ -472,7 +459,6 @@ export function ShipmentTimelineView({
                 );
               })}
             </ol>
-            <div ref={timelineEndRef} aria-hidden className="h-1 w-full shrink-0 scroll-mt-4" />
             </div>
           </div>
         )}

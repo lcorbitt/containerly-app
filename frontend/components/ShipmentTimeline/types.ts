@@ -44,10 +44,6 @@ export interface ShipmentTimelineProps {
   className?: string;
   emptyMessage?: string;
   emptyHint?: string;
-  /** Scroll to the latest event when the timeline first renders with events. Default true. */
-  autoScrollToLatest?: boolean;
-  /** When false, skip scroll until the parent tab panel is visible (stacked workspace tabs). Default true. */
-  isActive?: boolean;
 }
 
 export interface ShipmentTimelineOrder {

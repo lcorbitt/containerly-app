@@ -220,20 +220,31 @@ export async function recordOriginalsMailed(
   userId: string,
 ): Promise<void> {
   const now = new Date();
-  const trackingPart = trackingNumber?.trim()
-    ? ` — Tracking Number: ${trackingNumber.trim()}`
-    : "";
+  const when = formatActivityDate(now);
+
   await insertShipmentActivityEvent(client, {
     shipment_id: shipmentId,
     event_type: "originals_mailed",
-    body: `${formatActivityDate(now)} — Original documents have been mailed${trackingPart}`,
+    body: `${when} — Original documents have been mailed`,
     actor_kind: "operator",
     actor_user_id: userId,
-    metadata: {
-      tracking_number: trackingNumber?.trim() ?? null,
-      document_group: "original",
-    },
+    metadata: { document_group: "original" },
   });
+
+  const trimmed = trackingNumber?.trim() ?? "";
+  if (trimmed) {
+    await insertShipmentActivityEvent(client, {
+      shipment_id: shipmentId,
+      event_type: "originals_mailed",
+      body: `${when} — Tracking number added: ${trimmed}`,
+      actor_kind: "operator",
+      actor_user_id: userId,
+      metadata: {
+        tracking_number: trimmed,
+        document_group: "original",
+      },
+    });
+  }
 }
 
 export { recomputeWorkflowStatus };

@@ -91,7 +91,7 @@ export function CustomerAccessPanel({
             Allowlist only
           </label>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
           <label className="min-w-0 flex-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
             Customer emails
             <TextInput

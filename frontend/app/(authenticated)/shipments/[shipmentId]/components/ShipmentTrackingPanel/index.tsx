@@ -5,7 +5,6 @@ import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
-import { ShipmentCarrierTrackingPanel } from "../ShipmentCarrierTrackingPanel";
 import { ShipmentMailTrackingPanel } from "../ShipmentMailTrackingPanel";
 import { isShipmentPostApproval } from "@/utils/shipment-workflow-status";
 import {
@@ -23,7 +22,6 @@ export function ShipmentTrackingPanel({
   carrierEvents = [],
   attachmentDisplayNamesById: attachmentDisplayNamesByIdProp,
   readOnly = false,
-  timelineIsActive = true,
   onEnabled,
 }: {
   shipmentId: string;
@@ -36,8 +34,6 @@ export function ShipmentTrackingPanel({
   /** When set, skips workspace scope query (customer portal). */
   attachmentDisplayNamesById?: Record<string, string>;
   readOnly?: boolean;
-  /** Parent tracking tab visible — defers auto-scroll until the panel is shown. */
-  timelineIsActive?: boolean;
   onEnabled?: () => void;
 }) {
   const postApproval = isShipmentPostApproval(workflowStatus);
@@ -55,31 +51,21 @@ export function ShipmentTrackingPanel({
 
   return (
     <div className={SHIPMENT_TRACKING_PANEL_STACK_CLASS}>
-      <ShipmentCarrierTrackingPanel
+      <ShipmentMailTrackingPanel
         shipmentId={shipmentId}
-        organizationId={organizationId}
-        workflowStatus={workflowStatus}
+        initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
+        enabled={postApproval}
         readOnly={readOnly}
-        onEnabled={onEnabled}
+        onSaved={onEnabled}
       />
 
       <ShipmentTimeline
         events={carrierEvents}
         activityEvents={activityEvents}
         attachmentDisplayNamesById={attachmentDisplayNamesById}
-        isActive={timelineIsActive}
         className={SHIPMENT_TRACKING_TIMELINE_CLASS}
         emptyHint="Document uploads, approvals, and carrier updates will appear here."
       />
-
-      {postApproval ? (
-        <ShipmentMailTrackingPanel
-          shipmentId={shipmentId}
-          initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
-          readOnly={readOnly}
-          onSaved={onEnabled}
-        />
-      ) : null}
     </div>
   );
 }

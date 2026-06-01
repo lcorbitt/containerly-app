@@ -24,6 +24,7 @@ import {
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
+import { MARKETING_SITE_URL } from "@/lib/site-metadata";
 
 export function PublicContainerReport({
   shipmentId,
@@ -154,7 +155,6 @@ export function PublicContainerReport({
                 <PortalTrackingPanel
                   shipmentId={shipmentId}
                   payload={payload}
-                  isActive={dashboardTab === "tracking"}
                   onRefresh={refresh}
                 />
               }
@@ -220,7 +220,15 @@ export function PublicContainerReport({
         </div>
 
         <footer className="mt-10 border-t border-zinc-200/80 pt-8 text-center text-xs text-zinc-500 dark:border-zinc-800">
-          Powered by Containerly · Carrier data is indicative and may change.
+          Powered by{" "}
+          <a
+            href={MARKETING_SITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+          >
+            Containerly
+          </a>
         </footer>
       </div>
     </div>

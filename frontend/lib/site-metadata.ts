@@ -17,6 +17,10 @@ export const SITE_TITLE = "Containerly — Real-time shipment visibility";
 
 export const SITE_LANDING_TITLE = "Containerly — Track every shipment in one place";
 
+/** Public marketing site (portal footer, emails). Works for all users, including when logged in. */
+export const MARKETING_SITE_URL =
+  process.env.NEXT_PUBLIC_MARKETING_SITE_URL?.trim() || "https://containerly.com";
+
 export function siteMetadataBase(): URL {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
   return new URL(raw.endsWith("/") ? raw : `${raw}/`);

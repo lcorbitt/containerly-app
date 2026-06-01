@@ -252,8 +252,14 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
       return showsFileInMeta ? "Document approved" : "Draft documents approved by customer";
     case "documents_rejected":
       return "Document rejected";
-    case "originals_mailed":
+    case "originals_mailed": {
+      const body = event.body?.trim();
+      if (body) {
+        const stripped = body.replace(/^\d{1,2}\/\d{1,2}\/\d{2}\s—\s*/, "").trim();
+        if (stripped) return stripped;
+      }
       return "Original documents mailed";
+    }
     case "tracking_linked":
       return "Carrier tracking linked";
     case "customer_message":

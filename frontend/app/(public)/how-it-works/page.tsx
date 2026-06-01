@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 
 const toc = [
   { id: "overview", label: "Overview" },
-  { id: "roles", label: "Roles & workspaces" },
-  { id: "shipment-lifecycle", label: "Shipment lifecycle" },
-  { id: "documents", label: "Documents & approvals" },
-  { id: "customer-portal", label: "Customer portal & access" },
-  { id: "messages-activity", label: "Messages & activity timeline" },
-  { id: "tracking-alerts", label: "Tracking & notifications" },
-  { id: "permissions", label: "Permissions model" },
+  { id: "roles", label: "Roles & Workspaces" },
+  { id: "shipment-lifecycle", label: "Shipment Lifecycle" },
+  { id: "documents", label: "Documents & Approvals" },
+  { id: "customer-portal", label: "Customer Portal & Access" },
+  { id: "messages-activity", label: "Messages & Activity Timeline" },
+  { id: "tracking-alerts", label: "Tracking & Notifications" },
+  { id: "permissions", label: "Permissions Model" },
   { id: "glossary", label: "Glossary" },
 ] as const;
 
