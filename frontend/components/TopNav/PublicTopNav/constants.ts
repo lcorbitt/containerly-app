@@ -30,7 +30,7 @@ export const PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS =
 
 export const PUBLIC_TOP_NAV_LINKS = [
   { href: "/#features", label: "Features" },
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/how-it-works", label: "How it works" },
   { href: "/#security", label: "Security" },
 ] as const;
 

@@ -139,7 +139,7 @@ export function OperatorShipmentsOverview({
                 onSortChange={handleSortChange}
                 emptyMessage={
                   listFilter === "all"
-                    ? "No shipments yet. Create one from New Shipment — you'll upload documents and invite customers before optional carrier tracking."
+                    ? "No shipments yet."
                     : "No shipments match this filter."
                 }
                 onRowClick={navigateToShipment}

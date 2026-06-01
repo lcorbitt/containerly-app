@@ -236,7 +236,7 @@ export function NewTrackingForm({
                 <p className="text-xs text-red-600 dark:text-red-400">{shipmentsError}</p>
               ) : shipments.length === 0 ? (
                 <p className="text-xs text-zinc-500">
-                  No shipments yet — create a commercial shipment first, then return here after document approval.
+                  No shipments yet.
                 </p>
               ) : (
                 <CustomSelect

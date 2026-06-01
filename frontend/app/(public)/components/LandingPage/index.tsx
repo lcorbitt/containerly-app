@@ -98,17 +98,32 @@ const steps = [
   {
     n: "01",
     title: "Set up your organization",
-    body: "Invite the roles that need visibility. Everyone works from shared history and the same shipment records.",
+    body: "Create your organization and invite teammates so operations, planning, and leadership work from one shared source of truth.",
   },
   {
     n: "02",
-    title: "Create Shipments",
-    body: "Enter commercial details and order lines first; add container tracking when the carrier publishes a number.",
+    title: "Create a shipment workspace",
+    body: "Start with commercial details and order lines. Keep every update anchored to a single shipment record instead of scattered threads and spreadsheets.",
   },
   {
     n: "03",
-    title: "Open the portal",
-    body: "Give customers access, tune notifications, and let structured communication replace repetitive status touchpoints.",
+    title: "Upload documents and collect approval",
+    body: "Route export drafts and key attachments for customer sign-off. Approvals, rejections, and comments stay attached to the shipment timeline.",
+  },
+  {
+    n: "04",
+    title: "Invite customers into a branded portal",
+    body: "Share a dedicated customer portal where importers and partners can self-serve documents, shipment details, and the same narrative your team relies on.",
+  },
+  {
+    n: "05",
+    title: "Keep communication structured",
+    body: "Use portal messaging and activity history so updates stay tied to evidence, decisions, and accountability — not forwarded screenshots.",
+  },
+  {
+    n: "06",
+    title: "Track progress and notify the right people",
+    body: "Add container tracking as identifiers become available, monitor milestones, and configure notifications so exceptions surface early and subscribers return to the portal.",
   },
 ] as const;
 
@@ -139,7 +154,7 @@ export function LandingPage() {
             <Link href="/login" className={accentBtn}>
               Start for free
             </Link>
-            <Link href="/#features" className={ghostBtn}>
+            <Link href="/how-it-works" className={ghostBtn}>
               See how it works
             </Link>
           </div>
@@ -282,15 +297,15 @@ export function LandingPage() {
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How it works</h2>
               <p className="mt-2 max-w-xl text-zinc-600 dark:text-zinc-400">
-                Stand up internal visibility first, then extend the same rigor to customers when you are ready to scale
-                the experience.
+                Build the shipment workspace your team trusts, then publish that same clarity to customers through a
+                branded portal with document approvals, messaging, and live milestones.
               </p>
             </div>
             <Link href="/login" className={`${ghostBtn} hidden md:inline-flex`}>
               Open the app
             </Link>
           </div>
-          <ol className="mt-12 grid gap-6 md:grid-cols-3">
+          <ol className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {steps.map(({ n, title, body }) => (
               <li
                 key={n}

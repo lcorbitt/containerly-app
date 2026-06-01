@@ -195,7 +195,7 @@ export function ShipmentDataImportModal({
         <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <div>
             <h2 id={titleId} className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              {isBulk ? "Bulk Import Shipments" : "Import Shipment Data"}
+              {isBulk ? "Bulk Import Shipments" : "Import Shipment"}
             </h2>
           </div>
           <DialogCloseButton
