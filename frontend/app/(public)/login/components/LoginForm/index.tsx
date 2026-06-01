@@ -101,7 +101,7 @@ export function LoginForm() {
               <span>{mode === "signup" ? "Creating account…" : "Signing in…"}</span>
             </>
           ) : mode === "signup" ? (
-            "Create account"
+            "Create Account"
           ) : (
             "Continue"
           )}
