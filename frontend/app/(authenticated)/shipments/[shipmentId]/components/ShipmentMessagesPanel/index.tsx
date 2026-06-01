@@ -111,7 +111,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
                 {shipmentLabel ? (
                   <span className="font-semibold">
                     {" "}
-                    Order No. <span className="font-mono">{shipmentLabel}</span> This is your direct message thread with the customer.
+                    Order No. <span className="font-mono">{shipmentLabel}</span>. This is your direct message thread.
                   </span>
                 ) : null}
               </p>
