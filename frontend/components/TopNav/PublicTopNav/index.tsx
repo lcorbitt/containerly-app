@@ -9,6 +9,8 @@ import {
   PUBLIC_TOP_NAV_CTA_CLASS,
   PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS,
   PUBLIC_TOP_NAV_DESKTOP_NAV_CLASS,
+  PUBLIC_TOP_NAV_LAYOUT_CLASS,
+  PUBLIC_TOP_NAV_LEFT_CLASS,
   PUBLIC_TOP_NAV_LINKS,
   PUBLIC_TOP_NAV_LINK_CLASS,
   PUBLIC_TOP_NAV_LOGIN_PATH,
@@ -26,39 +28,45 @@ export function PublicTopNav() {
   return (
     <>
       <TopNavShell variant="marketing">
-        <NavBrand href="/" variant="marketing" />
-
-        {!hideMarketingLinks ? (
-          <nav className={PUBLIC_TOP_NAV_DESKTOP_NAV_CLASS} aria-label="Marketing">
-            {PUBLIC_TOP_NAV_LINKS.map(({ href, label }) => (
-              <Link key={href} href={href} className={PUBLIC_TOP_NAV_LINK_CLASS}>
-                {label}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
-
-        <div className={PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS}>
-          <div className={PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS}>
-            <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS}>
-              Sign in
-            </Link>
-            <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_CTA_CLASS}>
-              Get started
-            </Link>
+        <div className={PUBLIC_TOP_NAV_LAYOUT_CLASS}>
+          <div className={PUBLIC_TOP_NAV_LEFT_CLASS}>
+            <NavBrand href="/" variant="marketing" />
           </div>
 
-          <button
-            type="button"
-            className={PUBLIC_TOP_NAV_MOBILE_MENU_BUTTON_CLASS}
-            aria-expanded={mobileOpen}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            onClick={toggleMobile}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {!hideMarketingLinks ? (
+            <nav className={PUBLIC_TOP_NAV_DESKTOP_NAV_CLASS} aria-label="Marketing">
+              {PUBLIC_TOP_NAV_LINKS.map(({ href, label }) => (
+                <Link key={href} href={href} className={PUBLIC_TOP_NAV_LINK_CLASS}>
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          ) : (
+            <div className="hidden flex-1 md:block" aria-hidden />
+          )}
 
-          <ThemeToggle variant="marketing" />
+          <div className={PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS}>
+            <div className={PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS}>
+              <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS}>
+                Sign in
+              </Link>
+              <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_CTA_CLASS}>
+                Get started
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              className={PUBLIC_TOP_NAV_MOBILE_MENU_BUTTON_CLASS}
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              onClick={toggleMobile}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+
+            <ThemeToggle variant="marketing" />
+          </div>
         </div>
       </TopNavShell>
 

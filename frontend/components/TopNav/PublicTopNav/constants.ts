@@ -16,11 +16,17 @@ export const PUBLIC_TOP_NAV_MOBILE_OVERLAY_CLASS =
 export const PUBLIC_TOP_NAV_MOBILE_LINK_CLASS =
   "rounded-lg px-3 py-3 text-base font-medium text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/5";
 
-export const PUBLIC_TOP_NAV_DESKTOP_NAV_CLASS = "hidden items-center gap-8 md:flex";
+export const PUBLIC_TOP_NAV_LAYOUT_CLASS = "flex w-full items-center";
+
+export const PUBLIC_TOP_NAV_LEFT_CLASS = "flex min-w-0 flex-1 items-center justify-start";
+
+export const PUBLIC_TOP_NAV_DESKTOP_NAV_CLASS =
+  "hidden flex-1 items-center justify-center gap-8 md:flex";
 
 export const PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS = "hidden items-center gap-3 md:flex";
 
-export const PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS = "ml-auto flex items-center gap-2 md:gap-3";
+export const PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS =
+  "flex min-w-0 flex-1 items-center justify-end gap-2 md:gap-3";
 
 export const PUBLIC_TOP_NAV_LINKS = [
   { href: "/#features", label: "Features" },
