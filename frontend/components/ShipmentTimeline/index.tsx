@@ -495,6 +495,7 @@ export function ShipmentTimeline(props: ShipmentTimelineProps) {
   const mergedEvents = buildShipmentTimelineEvents({
     carrierEvents: props.events ?? [],
     activityEvents: props.activityEvents ?? [],
+    attachmentDisplayNamesById: props.attachmentDisplayNamesById,
   });
   const order = useShipmentTimelineOrder(mergedEvents);
   return <ShipmentTimelineView {...props} order={order} />;

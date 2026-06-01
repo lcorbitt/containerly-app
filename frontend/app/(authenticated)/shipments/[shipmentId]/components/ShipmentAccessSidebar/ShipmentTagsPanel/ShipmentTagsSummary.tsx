@@ -5,7 +5,7 @@ import { SIDEBAR_SETTINGS_EMPTY_CLASS } from "../ShipmentSidebarSettingsRow/cons
 
 export function ShipmentTagsSummary({ tags }: { tags: string[] }) {
   if (tags.length === 0) {
-    return <p className={SIDEBAR_SETTINGS_EMPTY_CLASS}>None yet</p>;
+    return <p className={SIDEBAR_SETTINGS_EMPTY_CLASS}>None</p>;
   }
 
   return (

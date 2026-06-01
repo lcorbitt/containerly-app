@@ -3,7 +3,12 @@ export const SHIPMENT_DETAILS_TAB_LIST_CLASS =
 
 export const SHIPMENT_DETAILS_TAB_PANEL_CLASS = "min-w-0";
 
-export const SHIPMENT_DETAILS_TAB_DETAILS_PANEL_CLASS = "p- sm:p-6";
+/** Stacks tab panels in one grid cell so height follows the tallest tab (no shift on toggle). */
+export const SHIPMENT_DETAILS_TAB_CONTENTS_CLASS = "grid min-w-0";
+
+export const SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS = "col-start-1 row-start-1 min-w-0";
+
+export const SHIPMENT_DETAILS_TAB_REVEAL_CLASS = "min-w-0";
 
 export const SHIPMENT_DETAILS_TAB_DOCUMENTS_PANEL_CLASS =
   "flex min-h-0 min-w-0 flex-col";
@@ -12,7 +17,7 @@ export const SHIPMENT_DETAILS_TAB_MESSAGES_PANEL_CLASS =
   "flex min-h-0 min-w-0 flex-col";
 
 export const SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS =
-  "flex min-h-0 min-w-0 flex-col px-4 p-4 sm:px-6";
+  "flex min-h-0 min-w-0 flex-col px-4 py-4 sm:px-6";
 
 export const SHIPMENT_TRACKING_TAB_DISABLED_TOOLTIP =
   "Tracking unlocks after the customer approves all draft documents.";

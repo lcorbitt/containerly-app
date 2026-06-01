@@ -41,7 +41,7 @@ function ShipmentWorkspaceLayout({
 }) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-      <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-6">
         {detailsCard}
         {workspaceContent}
       </div>
@@ -67,6 +67,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("shipment");
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [redirectAfterDelete, setRedirectAfterDelete] = useState(false);
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
   const canDeleteShipment = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
@@ -124,8 +125,8 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   );
 
   const handleDeleteShipment = useCallback(async () => {
-    if (!selectedOrgId || !row || !canDeleteShipment) return;
-    const label = row.order_number?.trim() || row.customer_name?.trim() || "this shipment";
+    if (!selectedOrgId || !canDeleteShipment) return;
+    const label = row?.order_number?.trim() || row?.customer_name?.trim() || "this shipment";
     const ok = await confirm({
       title: "Delete shipment?",
       description: `Permanently delete ${label}? This removes documents, messages, and tracking linked to the shipment.`,
@@ -145,14 +146,18 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
         toast(result.error, "error");
         return;
       }
+      setRedirectAfterDelete(true);
+      void qc.removeQueries({
+        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
+      });
       toast("Shipment deleted", "success");
-      router.push("/shipments");
+      await router.replace("/shipments");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not delete shipment", "error");
     } finally {
       setDeleting(false);
     }
-  }, [canDeleteShipment, confirm, row, router, selectedOrgId, shipmentId, toast]);
+  }, [canDeleteShipment, confirm, qc, row, router, selectedOrgId, shipmentId, toast]);
 
   if (!selectedOrgId) {
     return (
@@ -164,6 +169,10 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
 
   if (loading) {
     return <PageLoading loadingText="Loading Shipment…" />;
+  }
+
+  if (redirectAfterDelete) {
+    return <PageLoading loadingText="Returning to shipments…" />;
   }
 
   if (error || !row) {
@@ -193,7 +202,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   ) : null;
 
   const shipmentMainColumn = (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-6">
       <ShipmentDetailsCard
         createdAt={row.created_at}
         creatorName={row.creator_display_name}

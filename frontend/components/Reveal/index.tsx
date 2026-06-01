@@ -9,16 +9,24 @@ import {
 import type { RevealProps } from "./types";
 import { useReveal } from "./useReveal";
 
-export function Reveal({ show, children, className, durationMs = REVEAL_DURATION_MS }: RevealProps) {
-  const { mounted, visible } = useReveal(show, durationMs);
+export function Reveal({
+  show,
+  children,
+  className,
+  durationMs = REVEAL_DURATION_MS,
+  keepMounted = false,
+}: RevealProps) {
+  const { mounted, visible } = useReveal(show, durationMs, keepMounted);
 
-  if (!mounted) return null;
+  if (!keepMounted && !mounted) return null;
+
+  const isShown = keepMounted ? show && visible : visible;
 
   return (
     <div
-      className={`transition-opacity ${REVEAL_EASE_CLASS} motion-reduce:transition-none motion-reduce:duration-0 ${visible ? REVEAL_VISIBLE_CLASS : REVEAL_HIDDEN_CLASS}${className ? ` ${className}` : ""}`}
+      className={`transition-opacity ${REVEAL_EASE_CLASS} motion-reduce:transition-none motion-reduce:duration-0 ${isShown ? REVEAL_VISIBLE_CLASS : REVEAL_HIDDEN_CLASS}${className ? ` ${className}` : ""}`}
       style={{ transitionDuration: `${durationMs}ms` }}
-      aria-hidden={!visible}
+      aria-hidden={!show}
     >
       {children}
     </div>

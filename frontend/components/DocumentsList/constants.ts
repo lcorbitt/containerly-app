@@ -1,3 +1,9 @@
+/** Opens upload modal / custom flow (not the native file picker). */
+export const DOCUMENTS_LIST_ADD_LABEL = "Add documents";
+
+/** Direct native file picker upload. */
+export const DOCUMENTS_LIST_UPLOAD_LABEL = "Upload";
+
 export const DOCUMENT_TYPE_PILL_CLASS =
   "inline-flex max-w-full truncate rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold leading-snug text-violet-900 dark:border-violet-900/45 dark:bg-violet-950/35 dark:text-violet-200";
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Loader2, Upload } from "lucide-react";
+import { FilePlus2, FileText, Loader2 } from "lucide-react";
+import { DOCUMENTS_LIST_ADD_LABEL } from "@/components/DocumentsList/constants";
 import { useCallback, useState } from "react";
 import { DocumentsList } from "@/components/DocumentsList";
 import { ShipmentDocumentUploadModal } from "./ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
@@ -17,7 +18,7 @@ import {
   SHIPMENT_DOCUMENTS_LOADING_TEXT,
   SHIPMENT_DOCUMENTS_LOADING_TEXT_CLASS,
   SHIPMENT_DOCUMENTS_SECTION_CLASS,
-  SHIPMENT_DOCUMENTS_TOOLBAR_CLASS,
+  SHIPMENT_DOCUMENTS_TAB_ACTIONS_CLASS,
   SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS,
 } from "./constants";
 import { useShipmentWorkspaceScopePanel } from "./hooks/useShipmentWorkspaceScopePanel";
@@ -64,6 +65,8 @@ export function ShipmentWorkspaceScopePanel({
     [uploadAttachmentFiles],
   );
 
+  const openUploadModal = useCallback(() => setUploadModalOpen(true), []);
+
   if (!selectedOrgId) {
     return (
       <p className="p-6 text-sm text-zinc-600 dark:text-zinc-400">
@@ -97,11 +100,12 @@ export function ShipmentWorkspaceScopePanel({
   const uploadButton = (
     <button
       type="button"
-      onClick={() => setUploadModalOpen(true)}
+      onClick={openUploadModal}
+      disabled={uploadingAttachments}
       className={SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS}
     >
-      <Upload className="h-4 w-4" strokeWidth={2} aria-hidden />
-      Upload
+      <FilePlus2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+      {DOCUMENTS_LIST_ADD_LABEL}
     </button>
   );
 
@@ -127,7 +131,7 @@ export function ShipmentWorkspaceScopePanel({
       ) : null}
 
       <div className={isTab ? "flex flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5" : "flex flex-col"}>
-        {isTab ? <div className={SHIPMENT_DOCUMENTS_TOOLBAR_CLASS}>{uploadButton}</div> : null}
+        {isTab ? <div className={SHIPMENT_DOCUMENTS_TAB_ACTIONS_CLASS}>{uploadButton}</div> : null}
         <div className={SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS}>
           <DocumentsList
             variant="embedded"
@@ -146,7 +150,6 @@ export function ShipmentWorkspaceScopePanel({
               documentGroup: a.document_group,
               onOpen: () => void openAttachment(a),
             }))}
-            uploading={uploadingAttachments}
             onRemoveFile={(id) => void removeAttachment(id)}
             removingFileId={removingAttachmentId}
             onRenameFile={(id, name) => renameAttachment(id, name)}

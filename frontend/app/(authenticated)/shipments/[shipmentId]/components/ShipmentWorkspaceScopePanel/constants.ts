@@ -18,7 +18,7 @@ export const SHIPMENT_DOCUMENTS_HEADER_TITLE = "Documents";
 export const SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS =
   "max-h-[min(42rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain";
 
-export const SHIPMENT_DOCUMENTS_TOOLBAR_CLASS = "mb-3 flex shrink-0 items-center justify-end";
+export const SHIPMENT_DOCUMENTS_TAB_ACTIONS_CLASS = "mb-3 flex shrink-0 items-center justify-start";
 
 export const SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS =
   "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900";

@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { REVEAL_DURATION_MS } from "./constants";
 
-export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
-  const [mounted, setMounted] = useState(show);
+export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS, keepMounted = false) {
+  const [mounted, setMounted] = useState(show || keepMounted);
   const [visible, setVisible] = useState(false);
-  const wasMountedRef = useRef(show);
+  const wasMountedRef = useRef(show || keepMounted);
 
   useEffect(() => {
     const generation = Symbol("reveal-phase");
@@ -67,6 +67,10 @@ export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
         return;
       }
 
+      if (keepMounted) {
+        return;
+      }
+
       exitTimer = window.setTimeout(() => {
         if (!isActive()) return;
         wasMountedRef.current = false;
@@ -75,7 +79,7 @@ export function useReveal(show: boolean, durationMs = REVEAL_DURATION_MS) {
     });
 
     return cancelAll;
-  }, [show, durationMs]);
+  }, [show, durationMs, keepMounted]);
 
   return { mounted, visible };
 }

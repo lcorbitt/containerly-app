@@ -194,11 +194,77 @@ export async function renameWorkspaceAttachmentFileNameForUser(
   attachmentId: string,
   fileName: string,
 ): Promise<void> {
+  const { data: attachment, error: fetchErr } = await supabase
+    .from("workspace_attachments")
+    .select("shipment_id")
+    .eq("id", attachmentId)
+    .maybeSingle();
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!attachment?.shipment_id) throw new Error("Attachment not found");
+
   const { error } = await supabase
     .from("workspace_attachments")
     .update({ file_name: fileName })
     .eq("id", attachmentId);
   if (error) throw new Error(error.message);
+
+  await syncActivityEventAttachmentDisplayNames(
+    supabase,
+    attachment.shipment_id as string,
+    attachmentId,
+    fileName,
+  );
+}
+
+function patchActivityMetadataFileName(
+  metadata: Record<string, unknown>,
+  attachmentId: string,
+  fileName: string,
+): Record<string, unknown> | null {
+  let changed = false;
+  const next: Record<string, unknown> = { ...metadata };
+
+  if (next.attachment_id === attachmentId) {
+    next.file_name = fileName;
+    changed = true;
+  }
+
+  if (Array.isArray(next.documents)) {
+    next.documents = next.documents.map((entry) => {
+      if (!entry || typeof entry !== "object") return entry;
+      const row = entry as Record<string, unknown>;
+      if (row.attachment_id !== attachmentId) return entry;
+      changed = true;
+      return { ...row, file_name: fileName };
+    });
+  }
+
+  return changed ? next : null;
+}
+
+async function syncActivityEventAttachmentDisplayNames(
+  supabase: SupabaseClient,
+  shipmentId: string,
+  attachmentId: string,
+  fileName: string,
+): Promise<void> {
+  const { data: events, error } = await supabase
+    .from("shipment_activity_events")
+    .select("id, metadata")
+    .eq("shipment_id", shipmentId);
+  if (error) throw new Error(error.message);
+
+  for (const event of events ?? []) {
+    const metadata = (event.metadata as Record<string, unknown> | null) ?? {};
+    const patched = patchActivityMetadataFileName(metadata, attachmentId, fileName);
+    if (!patched) continue;
+
+    const { error: updateErr } = await supabase
+      .from("shipment_activity_events")
+      .update({ metadata: patched })
+      .eq("id", event.id as string);
+    if (updateErr) throw new Error(updateErr.message);
+  }
 }
 
 export async function removeWorkspaceAttachmentByIdForUser(

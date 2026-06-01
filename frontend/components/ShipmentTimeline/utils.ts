@@ -105,7 +105,7 @@ export function formatDocumentGroupLabel(group: string): string {
 export function formatApprovalStatusLabel(status: string): string {
   switch (status.trim().toLowerCase()) {
     case "pending":
-      return "Pending review";
+      return "Pending Review";
     case "approved":
       return "Approved";
     case "rejected":
@@ -185,6 +185,49 @@ export function parseActivityDocumentMeta(
   return hasTimelineDocumentMeta(meta) ? meta : null;
 }
 
+function resolveAttachmentDisplayName(
+  attachmentId: string | null | undefined,
+  fallback: string | null | undefined,
+  attachmentDisplayNamesById: Record<string, string>,
+): string | null {
+  if (attachmentId && attachmentDisplayNamesById[attachmentId]?.trim()) {
+    return attachmentDisplayNamesById[attachmentId].trim();
+  }
+  return fallback?.trim() || null;
+}
+
+export function enrichTimelineDocumentMeta(
+  meta: TimelineDocumentMeta | null,
+  metadata: Record<string, unknown>,
+  attachmentDisplayNamesById?: Record<string, string>,
+): TimelineDocumentMeta | null {
+  if (!meta || !attachmentDisplayNamesById || Object.keys(attachmentDisplayNamesById).length === 0) {
+    return meta;
+  }
+
+  const topAttachmentId = readMetadataString(metadata, "attachment_id");
+  const documents = meta.documents?.map((doc) => ({
+    ...doc,
+    fileName: resolveAttachmentDisplayName(
+      doc.attachmentId,
+      doc.fileName,
+      attachmentDisplayNamesById,
+    ),
+  }));
+
+  const singleDocument = documents?.length === 1 ? documents[0] : null;
+
+  return {
+    ...meta,
+    fileName: resolveAttachmentDisplayName(
+      topAttachmentId,
+      meta.fileName ?? singleDocument?.fileName ?? null,
+      attachmentDisplayNamesById,
+    ),
+    documents,
+  };
+}
+
 export function hasTimelineDocumentMeta(meta: TimelineDocumentMeta): boolean {
   return Boolean(
     meta.fileName?.trim() ||
@@ -227,7 +270,9 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
 
 export function mapActivityEventToTimelineEvent(
   event: ShipmentActivityEvent,
+  attachmentDisplayNamesById?: Record<string, string>,
 ): ShipmentTimelineDisplayEvent {
+  const parsedMeta = parseActivityDocumentMeta(event.metadata);
   return {
     id: event.id,
     event_type: event.event_type,
@@ -236,7 +281,11 @@ export function mapActivityEventToTimelineEvent(
     occurred_at: event.occurred_at,
     source: "activity",
     displayTitle: activityEventTitle(event),
-    documentMeta: parseActivityDocumentMeta(event.metadata),
+    documentMeta: enrichTimelineDocumentMeta(
+      parsedMeta,
+      event.metadata ?? {},
+      attachmentDisplayNamesById,
+    ),
   };
 }
 
@@ -249,10 +298,13 @@ export function mapCarrierEventToTimelineEvent(
 export function buildShipmentTimelineEvents(input: {
   carrierEvents?: PublicTimelineEvent[];
   activityEvents?: ShipmentActivityEvent[];
+  attachmentDisplayNamesById?: Record<string, string>;
 }): ShipmentTimelineDisplayEvent[] {
   const items: ShipmentTimelineDisplayEvent[] = [
     ...(input.carrierEvents ?? []).map(mapCarrierEventToTimelineEvent),
-    ...(input.activityEvents ?? []).map(mapActivityEventToTimelineEvent),
+    ...(input.activityEvents ?? []).map((event) =>
+      mapActivityEventToTimelineEvent(event, input.attachmentDisplayNamesById),
+    ),
   ];
   return items.sort((a, b) => Date.parse(a.occurred_at) - Date.parse(b.occurred_at));
 }

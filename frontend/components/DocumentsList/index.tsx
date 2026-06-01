@@ -1,12 +1,14 @@
 "use client";
 
-import { Check, FileText, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Check, FilePlus2, FileText, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { StoredFileThumbnail } from "@/components/StoredFileThumbnail";
 import { TextInput } from "@/components/TextInput";
 import { attachmentUploaderKindLabel } from "@shared/dto/attachment.dto";
 import {
   DOCUMENT_GROUP_PILL_CLASS,
+  DOCUMENTS_LIST_ADD_LABEL,
+  DOCUMENTS_LIST_UPLOAD_LABEL,
   DOCUMENT_TYPE_PILL_CLASS,
 } from "./constants";
 import type { DocumentsListProps } from "./types";
@@ -47,6 +49,9 @@ export function DocumentsList({
   const bol = billOfLading?.trim() ?? "";
   const hasStored = storedFiles && storedFiles.length > 0;
   const hasAny = Boolean(bol) || hasStored;
+  const opensUploadModal = Boolean(onUploadClick && !onPickFiles);
+  const uploadActionLabel = opensUploadModal ? DOCUMENTS_LIST_ADD_LABEL : DOCUMENTS_LIST_UPLOAD_LABEL;
+  const UploadActionIcon = opensUploadModal ? FilePlus2 : Upload;
   const shell =
     variant === "embedded"
       ? naturalHeight
@@ -83,15 +88,15 @@ export function DocumentsList({
               {uploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
               ) : (
-                <Upload className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                <UploadActionIcon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
               )}
-              Upload
+              {uploadActionLabel}
             </button>
           </>
         ) : null}
       </div>
       ) : onUploadClick || onPickFiles ? (
-        <div className="flex shrink-0 justify-end border-b border-zinc-100 px-4 py-2 dark:border-zinc-800">
+        <div className="flex shrink-0 justify-start border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800">
           {onPickFiles && !onUploadClick ? (
             <input
               ref={inputRef}
@@ -114,9 +119,9 @@ export function DocumentsList({
             {uploading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
             ) : (
-              <Upload className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              <UploadActionIcon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
             )}
-            Upload
+            {uploadActionLabel}
           </button>
         </div>
       ) : null}
@@ -146,7 +151,7 @@ export function DocumentsList({
               };
               return (
                 <li key={f.id}>
-                  <div className="flex items-start gap-1 rounded-md py-0.5 pr-1 pl-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
+                  <div className="flex items-center gap-1 rounded-md py-0.5 pr-1 pl-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
                     <button
                       type="button"
                       onClick={() => {
@@ -222,9 +227,9 @@ export function DocumentsList({
                         type="button"
                         onClick={() => void open()}
                         disabled={busy}
-                        className="flex min-w-0 flex-1 items-start gap-2 rounded-md px-1.5 py-2 text-left text-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed dark:hover:bg-zinc-900/60"
+                        className="flex min-w-0 flex-1 rounded-md px-1.5 py-2 text-left text-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed dark:hover:bg-zinc-900/60"
                       >
-                        <span className="min-w-0 pt-0.5">
+                        <span className="min-w-0">
                           <span className="block font-medium wrap-break-word text-zinc-800 dark:text-zinc-200">
                             {f.name}
                           </span>
@@ -274,7 +279,7 @@ export function DocumentsList({
                           setEditingFileId(f.id);
                           setEditDraft(f.name);
                         }}
-                        className="mt-1.5 shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                        className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                       >
                         <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden />
                       </button>
@@ -285,7 +290,7 @@ export function DocumentsList({
                         aria-label={`Remove ${f.name}`}
                         disabled={busyRemove}
                         onClick={() => onRemoveFile!(f.id)}
-                        className="mt-1.5 shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                        className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                       >
                         {busyRemove ? (
                           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
