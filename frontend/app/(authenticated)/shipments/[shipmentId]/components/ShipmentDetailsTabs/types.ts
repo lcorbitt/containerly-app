@@ -10,6 +10,8 @@ export interface ShipmentDetailsTabsProps {
   physicalMailTrackingNumber?: string | null;
   activityEvents?: ShipmentActivityEvent[];
   detailsContent?: ReactNode;
+  activeTab?: ShipmentDetailsTabId;
+  onTabChange?: (tab: ShipmentDetailsTabId) => void;
   onActiveTabChange?: (tab: ShipmentDetailsTabId) => void;
   onTrackingEnabled?: () => void;
 }

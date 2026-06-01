@@ -5,6 +5,7 @@ import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type {
   ContainerWorkspaceLoadResult,
   ContainerWorkspaceSnapshot,
+  OrgShipmentMessageThreadsResult,
   ShipmentScopeLoadResult,
   WorkspaceQuickSearchRow,
 } from "@/types/workspace-load";
@@ -12,6 +13,7 @@ import type {
 export type {
   ContainerWorkspaceLoadResult,
   ContainerWorkspaceSnapshot,
+  OrgShipmentMessageThreadsResult,
   ShipmentScopeLoadResult,
   WorkspaceQuickSearchRow,
 };
@@ -131,6 +133,14 @@ export async function loadShipmentScopeThread(input: {
 }): Promise<ShipmentScopeLoadResult> {
   return apiJson<ShipmentScopeLoadResult>(
     `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/workspace-scope-thread`,
+  );
+}
+
+export async function fetchOrgShipmentMessageThreads(
+  organizationId: string,
+): Promise<OrgShipmentMessageThreadsResult> {
+  return apiJson<OrgShipmentMessageThreadsResult>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/shipment-message-threads`,
   );
 }
 

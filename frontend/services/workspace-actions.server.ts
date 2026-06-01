@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
-import type { ShipmentScopeLoadResult } from "@/types/workspace-load";
+import type { OrgShipmentMessageThreadsResult, ShipmentScopeLoadResult } from "@/types/workspace-load";
 import {
   buildContainerAttachmentPath,
   buildShipmentAttachmentPath,
@@ -624,5 +624,80 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
   }
 
   return out;
+}
+
+const ORG_SHIPMENT_THREAD_INDEX_LIMIT = 100;
+const ORG_SHIPMENT_MESSAGE_FETCH_LIMIT = 5000;
+
+export async function loadOrgShipmentMessageThreadsForUser(
+  supabase: SupabaseClient,
+  _userId: string,
+  organizationId: string,
+): Promise<OrgShipmentMessageThreadsResult> {
+  const { data: msgRows, error } = await supabase
+    .from("report_messages")
+    .select("shipment_id, body, author_kind, created_at")
+    .eq("organization_id", organizationId)
+    .not("shipment_id", "is", null)
+    .is("container_id", null)
+    .eq("is_internal", false)
+    .order("created_at", { ascending: false })
+    .limit(ORG_SHIPMENT_MESSAGE_FETCH_LIMIT);
+
+  if (error) return { ok: false, error: error.message };
+
+  const byShipment = new Map<
+    string,
+    {
+      last_message_at: string;
+      last_message_preview: string;
+      last_author_kind: string;
+      message_count: number;
+    }
+  >();
+
+  for (const row of msgRows ?? []) {
+    const shipmentId = row.shipment_id as string | null;
+    if (!shipmentId) continue;
+    const existing = byShipment.get(shipmentId);
+    if (existing) {
+      existing.message_count += 1;
+      continue;
+    }
+    byShipment.set(shipmentId, {
+      last_message_at: row.created_at as string,
+      last_message_preview: typeof row.body === "string" ? row.body.trim() : "",
+      last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
+      message_count: 1,
+    });
+  }
+
+  const shipmentIds = [...byShipment.keys()];
+  if (shipmentIds.length === 0) {
+    return { ok: true, threads: [] };
+  }
+
+  const { data: shipments, error: shErr } = await supabase
+    .from("shipments")
+    .select("id, order_number")
+    .eq("organization_id", organizationId)
+    .in("id", shipmentIds);
+
+  if (shErr) return { ok: false, error: shErr.message };
+
+  const orderById = new Map(
+    (shipments ?? []).map((s) => [s.id as string, (s.order_number as string | null) ?? null]),
+  );
+
+  const threads = [...byShipment.entries()]
+    .map(([shipment_id, agg]) => ({
+      shipment_id,
+      order_number: orderById.get(shipment_id) ?? null,
+      ...agg,
+    }))
+    .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))
+    .slice(0, ORG_SHIPMENT_THREAD_INDEX_LIMIT);
+
+  return { ok: true, threads };
 }
 

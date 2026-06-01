@@ -7,6 +7,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageLoading } from "@/components/PageLoading";
 import { ShipmentAccessSidebar } from "../ShipmentAccessSidebar";
 import { ShipmentDetailsTabs } from "../ShipmentDetailsTabs";
+import type { ShipmentDetailsTabId } from "../ShipmentDetailsTabs/types";
+import { parseShipmentDetailsTabParam } from "../ShipmentDetailsTabs/utils";
 import { ShipmentDetailsTabsSection } from "../ShipmentDetailsTabsSection";
 import { ContainerWorkspace } from "@/app/(authenticated)/containers/[containerId]/components/ContainerWorkspace";
 import { ShipmentDetailsCard } from "../ShipmentHeaderInfo/ShipmentDetailsCard";
@@ -101,6 +103,34 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
 
   const lines = row ? pickTrackingRowsExported(row) : [];
 
+  const activeDetailsTab = useMemo(
+    () => parseShipmentDetailsTabParam(searchParams.get("tab")),
+    [searchParams],
+  );
+
+  const replaceSearchParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const selectDetailsTab = useCallback(
+    (tab: ShipmentDetailsTabId) => {
+      replaceSearchParams((params) => {
+        if (tab === "tracking") {
+          params.delete("tab");
+        } else {
+          params.set("tab", tab);
+        }
+      });
+    },
+    [replaceSearchParams],
+  );
+
   const activeContainerId = useMemo(() => {
     const want = searchParams.get("container")?.trim() ?? "";
     if (want && lines.some((l) => l.container_id === want)) return want;
@@ -113,15 +143,19 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
     if (want && lines.some((l) => l.container_id === want)) return;
     const first = lines.find((l) => l.container_id)?.container_id;
     if (first) {
-      router.replace(`${pathname}?container=${encodeURIComponent(first)}`, { scroll: false });
+      replaceSearchParams((params) => {
+        params.set("container", first);
+      });
     }
-  }, [workspaceMode, row, lines, searchParams, pathname, router]);
+  }, [workspaceMode, row, lines, searchParams, replaceSearchParams]);
 
   const selectLine = useCallback(
     (containerId: string) => {
-      router.replace(`${pathname}?container=${encodeURIComponent(containerId)}`, { scroll: false });
+      replaceSearchParams((params) => {
+        params.set("container", containerId);
+      });
     },
-    [pathname, router],
+    [replaceSearchParams],
   );
 
   const handleDeleteShipment = useCallback(async () => {
@@ -224,6 +258,8 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           workflowStatus={row.workflow_status ?? undefined}
           physicalMailTrackingNumber={row.physical_mail_tracking_number}
           activityEvents={row.activity_events ?? []}
+          activeTab={activeDetailsTab}
+          onTabChange={selectDetailsTab}
           onTrackingEnabled={refetchShipment}
           detailsContent={
             workspaceMode === "container" && lines.length > 1 ? (

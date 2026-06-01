@@ -18,6 +18,7 @@ import {
   useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
+import { orgMessageThreadsQueryKeyRoot } from "@/hooks/queries/useOrgMessageThreads";
 import {
   createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
@@ -47,6 +48,9 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     if (selectedOrgId) {
       void qc.invalidateQueries({
         queryKey: shipmentScopeThreadQueryKey(selectedOrgId, shipmentId),
+      });
+      void qc.invalidateQueries({
+        queryKey: [...orgMessageThreadsQueryKeyRoot, selectedOrgId],
       });
     }
   }, [qc, selectedOrgId, shipmentId]);

@@ -399,7 +399,6 @@ export function ShipmentTimelineView({
                 const { tone, Icon, label } = inferTimelineVisual(ev.event_type, ev.status);
                 const s = TONE_STYLES[tone];
                 const isLast = index === displayEvents.length - 1;
-                const relative = formatRelativeWhen(ev.occurred_at);
                 const { title, subtitle } = eventHeading(ev);
                 const locSnippet =
                   ev.location && Object.keys(ev.location).length > 0
@@ -440,9 +439,6 @@ export function ShipmentTimelineView({
                             className={`inline-flex max-w-full items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${s.chip}`}
                           >
                             {label}
-                          </span>
-                          <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
-                            {relative}
                           </span>
                         </div>
                         <p className="mt-1 text-[13px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50">

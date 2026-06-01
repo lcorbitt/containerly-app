@@ -1,24 +1,34 @@
 "use client";
 
-import { Bell } from "lucide-react";
-import { NotificationsList } from "@/app/(authenticated)/components/NotificationsList";
+import { MessageSquare } from "lucide-react";
+import { MessagesList } from "@/app/(authenticated)/components/MessagesList";
 import { SubSideNav } from "@/components/SubSideNav";
 import { WorkspaceQuickSearch } from "@/components/WorkspaceQuickSearch";
 import { useSideNav } from "./hooks/useSideNav";
-import { adminNavItems, howItWorksNavItem } from "./constants";
+import {
+  adminNavItems,
+  dashboardNavItem,
+  howItWorksNavItem,
+  REPORTS_NAV_DISABLED_TOOLTIP,
+  reportsNavItem,
+  settingsNavItem,
+  shipmentsNavItem,
+} from "./constants";
+import { SideNavDisabledLink } from "./SideNavDisabledLink";
 import { SideNavLink } from "./SideNavLink";
-import { getSideNavLinkClassName, isSideNavLinkActive } from "./utils";
+import { SideNavPanelTrigger } from "./SideNavPanelTrigger";
+import { isSideNavLinkActive } from "./utils";
 
 export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const {
     pathname,
     selectedOrgId,
-    notificationsOpen,
-    alerts,
-    unackedCount,
-    mainNavItems,
-    toggleNotifications,
-    closeNotifications,
+    isFreight,
+    messagesOpen,
+    messageThreads,
+    needsReplyCount,
+    toggleMessages,
+    closeSecondaryPanel,
   } = useSideNav(isSuperAdmin);
 
   const howItWorksActive = isSideNavLinkActive(pathname, howItWorksNavItem.href);
@@ -34,34 +44,46 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           aria-label="Main"
         >
           <div className="flex min-h-0 flex-col gap-2">
-            {mainNavItems.map(({ href, label, icon }) => (
+            {isFreight ? (
               <SideNavLink
-                key={href}
-                href={href}
-                label={label}
-                icon={icon}
-                active={isSideNavLinkActive(pathname, href)}
+                href={dashboardNavItem.href}
+                label={dashboardNavItem.label}
+                icon={dashboardNavItem.icon}
+                active={isSideNavLinkActive(pathname, dashboardNavItem.href)}
               />
-            ))}
+            ) : null}
+
+            <SideNavLink
+              href={shipmentsNavItem.href}
+              label={shipmentsNavItem.label}
+              icon={shipmentsNavItem.icon}
+              active={isSideNavLinkActive(pathname, shipmentsNavItem.href)}
+            />
 
             {selectedOrgId ? (
-              <button
-                type="button"
-                onClick={toggleNotifications}
-                className={`relative cursor-pointer text-left ${getSideNavLinkClassName(notificationsOpen)}`}
-                aria-expanded={notificationsOpen}
-                aria-controls="app-notifications-panel"
-                id="app-notifications-trigger"
-              >
-                <Bell className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                <span className="min-w-0 wrap-break-word">Notifications</span>
-                {unackedCount > 0 ? (
-                  <span className="absolute right-2 top-1/2 flex h-[1.125rem] min-w-[1.125rem] -translate-y-1/2 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white dark:bg-red-500">
-                    {unackedCount > 9 ? "9+" : unackedCount}
-                  </span>
-                ) : null}
-              </button>
+              <SideNavPanelTrigger
+                label="Messages"
+                icon={MessageSquare}
+                active={messagesOpen}
+                badgeCount={needsReplyCount}
+                ariaControls="app-messages-panel"
+                triggerId="app-messages-trigger"
+                onClick={toggleMessages}
+              />
             ) : null}
+
+            <SideNavDisabledLink
+              label={reportsNavItem.label}
+              icon={reportsNavItem.icon}
+              tooltip={REPORTS_NAV_DISABLED_TOOLTIP}
+            />
+
+            <SideNavLink
+              href={settingsNavItem.href}
+              label={settingsNavItem.label}
+              icon={settingsNavItem.icon}
+              active={isSideNavLinkActive(pathname, settingsNavItem.href)}
+            />
 
             <SideNavLink
               href={howItWorksNavItem.href}
@@ -98,12 +120,14 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       </div>
 
       <SubSideNav
-        title="Notifications"
-        open={notificationsOpen && Boolean(selectedOrgId)}
-        onOpenChange={closeNotifications}
+        title="Messages"
+        open={messagesOpen && Boolean(selectedOrgId)}
+        onOpenChange={(open) => {
+          if (!open) closeSecondaryPanel();
+        }}
       >
-        <div id="app-notifications-panel" role="region" aria-labelledby="app-notifications-trigger">
-          <NotificationsList alerts={alerts} onItemNavigate={closeNotifications} />
+        <div id="app-messages-panel" role="region" aria-labelledby="app-messages-trigger">
+          <MessagesList threads={messageThreads} onItemNavigate={closeSecondaryPanel} />
         </div>
       </SubSideNav>
     </aside>

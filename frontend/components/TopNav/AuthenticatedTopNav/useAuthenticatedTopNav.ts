@@ -8,6 +8,7 @@ import { useMockJourneyModal } from "@/contexts/mock-journey-modal";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useSessionAvatar } from "@/contexts/session-avatar";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
+import { useOrgAlerts } from "@/hooks/queries/useAlert";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { signOutBrowser } from "@/services/auth.service";
 import { fetchShipment } from "@/services/shipment.service";
@@ -36,8 +37,16 @@ export function useAuthenticatedTopNav({
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const { profileImagePath } = useSessionAvatar();
   const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const notificationsMenuRef = useRef<HTMLDivElement>(null);
+  const alerts = useOrgAlerts(selectedOrgId);
+
+  const unackedCount = useMemo(
+    () => alerts.filter((a) => !a.acknowledged_at).length,
+    [alerts],
+  );
 
   const isFreight =
     isSuperAdmin || orgs.some((r) => r.organizations != null && r.organizations.id != null);
@@ -106,30 +115,48 @@ export function useAuthenticatedTopNav({
   );
 
   useEffect(() => {
-    if (!open) return;
+    if (!accountMenuOpen && !notificationsMenuOpen) return;
     function onPointerDown(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (accountMenuRef.current?.contains(target)) return;
+      if (notificationsMenuRef.current?.contains(target)) return;
+      setAccountMenuOpen(false);
+      setNotificationsMenuOpen(false);
     }
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open]);
+  }, [accountMenuOpen, notificationsMenuOpen]);
 
   const logout = useCallback(async () => {
-    setOpen(false);
+    setAccountMenuOpen(false);
+    setNotificationsMenuOpen(false);
     await signOutBrowser();
     router.push("/login");
     router.refresh();
   }, [router]);
 
-  const toggleMenu = useCallback(() => {
-    setOpen((v) => !v);
+  const toggleAccountMenu = useCallback(() => {
+    setNotificationsMenuOpen(false);
+    setAccountMenuOpen((value) => !value);
+  }, []);
+
+  const toggleNotificationsMenu = useCallback(() => {
+    setAccountMenuOpen(false);
+    setNotificationsMenuOpen((value) => !value);
+  }, []);
+
+  const closeNotificationsMenu = useCallback(() => {
+    setNotificationsMenuOpen(false);
   }, []);
 
   return {
-    open,
-    menuRef,
+    accountMenuOpen,
+    accountMenuRef,
+    notificationsMenuOpen,
+    notificationsMenuRef,
+    selectedOrgId,
+    alerts,
+    unackedCount,
     orgSegment,
     tabSegment,
     activeSubTabName,
@@ -141,7 +168,9 @@ export function useAuthenticatedTopNav({
     openNewShipmentModal,
     openBulkImportModal,
     openMockJourneyModal,
-    toggleMenu,
+    toggleAccountMenu,
+    toggleNotificationsMenu,
+    closeNotificationsMenu,
     logout,
   };
 }

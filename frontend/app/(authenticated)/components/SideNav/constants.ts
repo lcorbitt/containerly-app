@@ -1,4 +1,12 @@
-import { Building2, CircleHelp, LayoutDashboard, Package, Settings, Shield } from "lucide-react";
+import {
+  BarChart2,
+  Building2,
+  CircleHelp,
+  LayoutDashboard,
+  Package,
+  Settings,
+  Shield,
+} from "lucide-react";
 
 export const howItWorksNavItem = {
   href: "/container-details",
@@ -6,16 +14,38 @@ export const howItWorksNavItem = {
   icon: CircleHelp,
 } as const;
 
+export const reportsNavItem = {
+  label: "Reports",
+  icon: BarChart2,
+} as const;
+
+export const REPORTS_NAV_DISABLED_TOOLTIP = "Coming soon!";
+
+export const dashboardNavItem = {
+  href: "/dashboard",
+  label: "Dashboard",
+  icon: LayoutDashboard,
+} as const;
+
+export const shipmentsNavItem = {
+  href: "/shipments",
+  label: "Shipments",
+  icon: Package,
+} as const;
+
+export const settingsNavItem = {
+  href: "/settings",
+  label: "Settings",
+  icon: Settings,
+} as const;
+
 export const freightNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/shipments", label: "Shipments", icon: Package },
-  { href: "/settings", label: "Settings", icon: Settings },
+  dashboardNavItem,
+  shipmentsNavItem,
+  settingsNavItem,
 ] as const;
 
-export const importerNavItems = [
-  { href: "/shipments", label: "Shipments", icon: Package },
-  { href: "/settings", label: "Settings", icon: Settings },
-] as const;
+export const importerNavItems = [shipmentsNavItem, settingsNavItem] as const;
 
 export const adminNavItems = [
   { href: "/admin", label: "Users", icon: Shield },
@@ -27,3 +57,6 @@ export const SIDE_NAV_LINK_ACTIVE_CLASS =
 
 export const SIDE_NAV_LINK_INACTIVE_CLASS =
   "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100";
+
+export const SIDE_NAV_LINK_DISABLED_CLASS =
+  "cursor-not-allowed opacity-45 hover:bg-transparent hover:text-zinc-600 dark:hover:text-zinc-400";

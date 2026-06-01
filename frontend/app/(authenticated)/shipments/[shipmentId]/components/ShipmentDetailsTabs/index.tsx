@@ -26,13 +26,19 @@ export function ShipmentDetailsTabs({
   physicalMailTrackingNumber,
   activityEvents = [],
   detailsContent,
+  activeTab: controlledActiveTab,
+  onTabChange,
   onActiveTabChange,
   onTrackingEnabled,
 }: ShipmentDetailsTabsProps) {
-  const [activeTab, setActiveTab] = useState<ShipmentDetailsTabId>("tracking");
+  const [internalActiveTab, setInternalActiveTab] = useState<ShipmentDetailsTabId>("tracking");
+  const activeTab = controlledActiveTab ?? internalActiveTab;
 
   const selectTab = (tab: ShipmentDetailsTabId) => {
-    setActiveTab(tab);
+    if (controlledActiveTab === undefined) {
+      setInternalActiveTab(tab);
+    }
+    onTabChange?.(tab);
     onActiveTabChange?.(tab);
   };
 

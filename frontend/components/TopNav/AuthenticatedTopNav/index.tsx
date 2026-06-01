@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
+import { NotificationsMenu } from "./NotificationsMenu";
 import {
   AUTHENTICATED_TOP_NAV_ACTION_CLASS,
   AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS,
@@ -22,8 +23,13 @@ import type { AuthenticatedTopNavProps } from "./types";
 
 export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProps) {
   const {
-    open,
-    menuRef,
+    accountMenuOpen,
+    accountMenuRef,
+    notificationsMenuOpen,
+    notificationsMenuRef,
+    selectedOrgId,
+    alerts,
+    unackedCount,
     orgSegment,
     tabSegment,
     activeSubTabName,
@@ -32,8 +38,9 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
     accountPrimaryLabel,
     openNewShipmentModal,
     openBulkImportModal,
-    openMockJourneyModal,
-    toggleMenu,
+    toggleAccountMenu,
+    toggleNotificationsMenu,
+    closeNotificationsMenu,
     logout,
   } = useAuthenticatedTopNav({ email, fullName });
 
@@ -45,18 +52,6 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
       </div>
 
       <div className={AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS}>
-        {/* {showMockJourney ? (
-          <button
-            type="button"
-            onClick={() => openMockJourneyModal()}
-            className={AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS}
-            title="Simulate container journey (development)"
-            aria-haspopup="dialog"
-          >
-            <Route className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
-            <span className="hidden sm:inline">Simulate</span>
-          </button>
-        ) : null} */}
         <button
           type="button"
           onClick={() => openNewShipmentModal()}
@@ -77,12 +72,24 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
           <FileDown className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
           <span className="hidden sm:inline">Bulk Import</span>
         </button>
-        <div className="relative" ref={menuRef}>
+
+        {selectedOrgId ? (
+          <NotificationsMenu
+            open={notificationsMenuOpen}
+            alerts={alerts}
+            unackedCount={unackedCount}
+            menuRef={notificationsMenuRef}
+            onToggle={toggleNotificationsMenu}
+            onClose={closeNotificationsMenu}
+          />
+        ) : null}
+
+        <div className="relative" ref={accountMenuRef}>
           <button
             type="button"
-            onClick={toggleMenu}
+            onClick={toggleAccountMenu}
             className={AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS}
-            aria-expanded={open}
+            aria-expanded={accountMenuOpen}
             aria-haspopup="menu"
             aria-label="Account menu"
           >
@@ -94,7 +101,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
             )}
           </button>
 
-          <Reveal show={open} className={AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS}>
+          <Reveal show={accountMenuOpen} className={AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS}>
             <div role="menu" className={AUTHENTICATED_TOP_NAV_MENU_CLASS}>
               <div className="border-b border-zinc-100 p-4 dark:border-zinc-800">
                 <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
