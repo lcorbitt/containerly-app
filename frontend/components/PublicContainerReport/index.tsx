@@ -298,7 +298,7 @@ export function PublicContainerReport({
             <div
               role="tablist"
               aria-label="Report sections"
-              className="flex w-full flex-col gap-2 rounded-xl bg-zinc-100/90 p-2 sm:flex-row dark:bg-zinc-900/80"
+              className="flex w-full flex-col gap-2 rounded-xl bg-zinc-50/80 p-2 sm:flex-row dark:bg-zinc-900/80"
             >
               {tabDefs.map(({ id, label, shortLabel, icon: Icon, count }) => {
                 const selected = dashboardTab === id;

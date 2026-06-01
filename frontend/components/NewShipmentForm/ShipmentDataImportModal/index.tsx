@@ -66,6 +66,7 @@ export function ShipmentDataImportModal({
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const busy = parsing || creating;
 
   useEffect(() => {
     setPortalReady(true);
@@ -90,7 +91,7 @@ export function ShipmentDataImportModal({
     document.body.style.overflow = "hidden";
     panelRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !creating) {
+      if (e.key === "Escape" && !busy) {
         e.preventDefault();
         onClose();
       }
@@ -100,7 +101,7 @@ export function ShipmentDataImportModal({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose, creating]);
+  }, [open, onClose, busy]);
 
   const parseFile = useCallback(async (file: File) => {
     setError(null);
@@ -109,20 +110,41 @@ export function ShipmentDataImportModal({
     setParsing(true);
     setFileName(file.name);
 
+    const startedAt = Date.now();
+    const MIN_PARSING_MS = 2000;
+    let ok = false;
+    let nextBulkParse: ShipmentBulkImportParseResult | null = null;
+    let nextDraft: ShipmentImportDraft | null = null;
     try {
       if (isBulk) {
-        const parsed = await parseShipmentBulkImportFile(file);
-        setBulkParse(parsed);
+        nextBulkParse = await parseShipmentBulkImportFile(file);
+        ok = true;
       } else {
-        const draft = await parseShipmentImportFileAsync(file);
-        onApply?.(draft, { fileName: file.name });
-        onClose();
+        nextDraft = await parseShipmentImportFileAsync(file);
+        ok = true;
       }
     } catch (e) {
       setFileName(null);
       setError(e instanceof Error ? e.message : "Could not parse file.");
     } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_PARSING_MS) {
+        await new Promise<void>((resolve) => setTimeout(resolve, MIN_PARSING_MS - elapsed));
+      }
+
+      if (ok) {
+        if (isBulk && nextBulkParse) {
+          setBulkParse(nextBulkParse);
+        }
+        if (!isBulk && nextDraft) {
+          onApply?.(nextDraft, { fileName: file.name });
+        }
+      }
+
       setParsing(false);
+      if (!isBulk && ok) {
+        onClose();
+      }
     }
   }, [isBulk, onApply, onClose]);
 
@@ -181,7 +203,7 @@ export function ShipmentDataImportModal({
                 aria-label="Close dialog"
                 className={SHIPMENT_DATA_IMPORT_MODAL_BACKDROP_CLASS}
                 onClick={() => {
-                  if (!creating) onClose();
+                  if (!busy) onClose();
                 }}
               />
               <div
@@ -192,20 +214,22 @@ export function ShipmentDataImportModal({
                 tabIndex={-1}
                 className={SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS}
               >
-        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-          <div>
-            <h2 id={titleId} className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              {isBulk ? "Bulk Import Shipments" : "Import Shipment"}
-            </h2>
-          </div>
-          <DialogCloseButton
-            onClick={() => {
-              if (!creating) onClose();
-            }}
-          />
-        </div>
+        <div className="relative">
+          <div className={`transition-[filter,opacity] ${parsing ? "pointer-events-none blur-[2px] opacity-60" : ""}`}>
+            <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+              <div>
+                <h2 id={titleId} className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                  {isBulk ? "Bulk Import Shipments" : "Import Shipment"}
+                </h2>
+              </div>
+              <DialogCloseButton
+                onClick={() => {
+                  if (!busy) onClose();
+                }}
+              />
+            </div>
 
-        <div className="space-y-4 px-5 py-4">
+            <div className="space-y-4 px-5 py-4">
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             {isBulk ? (
               <>
@@ -316,7 +340,7 @@ export function ShipmentDataImportModal({
               </div>
 
               {fileName ? (
-                <div className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700">
+                <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900/10">
                   {parsing ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin text-zinc-500" aria-hidden />
                   ) : (
@@ -401,9 +425,9 @@ export function ShipmentDataImportModal({
           )}
 
           {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-        </div>
+            </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">
           {showBulkResults ? (
             <button
               type="button"
@@ -443,6 +467,26 @@ export function ShipmentDataImportModal({
               ) : null}
             </>
           )}
+            </div>
+          </div>
+
+          {parsing ? (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-zinc-950/50"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-4 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-950/70">
+                <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Parsing shipment file…</p>
+                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    We’re reading your file and preparing a pre-filled shipment draft.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
               </div>
             </div>

@@ -69,7 +69,7 @@ export function SettingsPageTabs({
       <div
         role="tablist"
         aria-label="Settings sections"
-        className="mt-8 flex w-full flex-col gap-2 rounded-xl bg-zinc-100/90 p-2 sm:flex-row dark:bg-zinc-900/80"
+        className="mt-8 flex w-full flex-col gap-2 rounded-xl bg-zinc-50/80 p-2 sm:flex-row dark:bg-zinc-900/80"
       >
         <button
           type="button"

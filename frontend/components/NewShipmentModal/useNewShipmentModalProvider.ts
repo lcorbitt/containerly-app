@@ -32,7 +32,6 @@ export function useNewShipmentModalProvider() {
       emitTrackingCreated();
       await router.push(`/shipments/${shipmentId}`);
       dismissModal();
-      router.refresh();
     },
     [router, dismissModal],
   );
