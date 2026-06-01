@@ -88,7 +88,7 @@ export function ShipmentDetailsTabs({
           aria-labelledby="shipment-tab-tracking"
           aria-hidden={!isTrackingTab}
           tabIndex={isTrackingTab ? 0 : -1}
-          className={SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS}
+          className={`${SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS} ${isTrackingTab ? "" : "pointer-events-none invisible"}`}
         >
           <Reveal show={isTrackingTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
             <div className={SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS}>
@@ -113,7 +113,7 @@ export function ShipmentDetailsTabs({
           aria-labelledby="shipment-tab-documents"
           aria-hidden={!isDocumentsTab}
           tabIndex={isDocumentsTab ? 0 : -1}
-          className={SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS}
+          className={`${SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS} ${isDocumentsTab ? "" : "pointer-events-none invisible"}`}
         >
           <Reveal show={isDocumentsTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
             <div className={SHIPMENT_DETAILS_TAB_DOCUMENTS_PANEL_CLASS}>
@@ -128,7 +128,7 @@ export function ShipmentDetailsTabs({
           aria-labelledby="shipment-tab-messages"
           aria-hidden={!isMessagesTab}
           tabIndex={isMessagesTab ? 0 : -1}
-          className={SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS}
+          className={`${SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS} ${isMessagesTab ? "" : "pointer-events-none invisible"}`}
         >
           <Reveal show={isMessagesTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
             <div className={SHIPMENT_DETAILS_TAB_MESSAGES_PANEL_CLASS}>
