@@ -1,7 +1,8 @@
-export const SHIPMENT_MESSAGES_PANEL_SHELL_CLASS = "flex min-h-0 min-w-0 flex-col";
+export const SHIPMENT_MESSAGES_PANEL_SHELL_CLASS =
+  "flex h-full min-h-0 min-w-0 flex-1 flex-col";
 
 export const SHIPMENT_MESSAGES_THREAD_SHELL_CLASS =
-  "flex min-h-[min(24rem,calc(100dvh-20rem))] min-w-0 flex-1 flex-col overflow-hidden";
+  "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden";
 
 export const SHIPMENT_MESSAGES_LOADING_SHELL_CLASS =
   "flex w-full min-h-[min(24rem,calc(100dvh-20rem))] items-center justify-center";

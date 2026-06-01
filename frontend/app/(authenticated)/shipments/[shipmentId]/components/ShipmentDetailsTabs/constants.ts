@@ -1,7 +1,7 @@
 export const SHIPMENT_DETAILS_TAB_LIST_CLASS =
   "flex shrink-0 overflow-x-auto border-b border-zinc-200 px-4 sm:px-6 dark:border-zinc-800";
 
-export const SHIPMENT_DETAILS_TAB_PANEL_CLASS = "min-w-0";
+export const SHIPMENT_DETAILS_TAB_PANEL_CLASS = "flex min-h-0 min-w-0 flex-col";
 
 /**
  * Tab content area is height-bounded so long threads don't grow the page forever.
@@ -12,7 +12,7 @@ export const SHIPMENT_DETAILS_TAB_CONTENTS_CLASS =
 
 export const SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS = "col-start-1 row-start-1 min-h-0 min-w-0 h-full";
 
-export const SHIPMENT_DETAILS_TAB_REVEAL_CLASS = "min-w-0 min-h-0 h-full";
+export const SHIPMENT_DETAILS_TAB_REVEAL_CLASS = "flex h-full min-h-0 min-w-0 flex-col";
 
 export const SHIPMENT_DETAILS_TAB_DOCUMENTS_PANEL_CLASS =
   "flex min-h-0 min-w-0 h-full flex-col overflow-y-auto";

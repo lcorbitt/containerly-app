@@ -322,7 +322,7 @@ export function ShipmentDataImportModal({
                     onClick={() => inputRef.current?.click()}
                     className="mt-3 inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
                   >
-                    Select file
+                    Select File
                   </button>
                   <input
                     ref={inputRef}

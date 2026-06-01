@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip, Reply, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
@@ -277,17 +277,44 @@ export function ThreadPanel({
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const composerFileInputRef = useRef<HTMLInputElement>(null);
   const prevMessageCount = useRef<number | null>(null);
+  const [messagesOverflow, setMessagesOverflow] = useState(false);
 
   useEffect(() => {
-    if (prevMessageCount.current === null) {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+
+    const updateOverflow = () => {
+      setMessagesOverflow(el.scrollHeight > el.clientHeight + 1);
+    };
+
+    updateOverflow();
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [messages]);
+
+  useLayoutEffect(() => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+
+    const scrollToBottom = (behavior: ScrollBehavior) => {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    };
+
+    const isInitial = prevMessageCount.current === null;
+
+    if (isInitial) {
       prevMessageCount.current = messages.length;
+      if (messages.length > 0) {
+        scrollToBottom("auto");
+        requestAnimationFrame(() => scrollToBottom("auto"));
+      }
       return;
     }
+
     if (messages.length > prevMessageCount.current) {
-      const el = messagesScrollRef.current;
-      if (el) {
-        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-      }
+      scrollToBottom("smooth");
     }
     prevMessageCount.current = messages.length;
   }, [messages]);
@@ -307,10 +334,10 @@ export function ThreadPanel({
     : "rounded-2xl bg-sky-50/90 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] focus-within:ring-2 focus-within:ring-sky-400/40 dark:bg-sky-950/28 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:focus-within:ring-sky-500/35";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div
         ref={messagesScrollRef}
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-5 sm:p-6"
+        className={`flex min-h-0 flex-1 flex-col p-5 sm:p-6 ${messagesOverflow ? "overflow-y-auto overscroll-y-auto" : "overflow-y-hidden"}`}
       >
         {threadStartBanner ? <div className="mb-5">{threadStartBanner}</div> : null}
 

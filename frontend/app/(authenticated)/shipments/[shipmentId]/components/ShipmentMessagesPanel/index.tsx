@@ -73,6 +73,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
     <section aria-label="Shipment messages" className={SHIPMENT_MESSAGES_PANEL_SHELL_CLASS}>
       <div className={SHIPMENT_MESSAGES_THREAD_SHELL_CLASS}>
         <ThreadPanel
+          key={shipmentId}
           messages={threadMessages}
           authorNameByUserId={messageAuthorByUserId}
           uploaderDisplayByUserId={messageAuthorByUserId}
