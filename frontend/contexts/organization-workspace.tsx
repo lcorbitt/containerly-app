@@ -60,16 +60,12 @@ export function OrganizationWorkspaceProvider({
   }, [initialOrgs]);
 
   const refreshOrgs = useCallback(async () => {
-    try {
-      const rows = await fetchOrganizationMembershipRows({ userId, isSuperAdmin });
-      setOrgs(rows);
-      setSelectedOrgId((prev) => {
-        if (prev && rows.some((r) => r.organizations?.id === prev)) return prev;
-        return rows[0]?.organizations?.id ?? null;
-      });
-    } catch {
-      /* ignore */
-    }
+    const rows = await fetchOrganizationMembershipRows({ userId, isSuperAdmin });
+    setOrgs(rows);
+    setSelectedOrgId((prev) => {
+      if (prev && rows.some((r) => r.organizations?.id === prev)) return prev;
+      return rows[0]?.organizations?.id ?? null;
+    });
   }, [userId, isSuperAdmin]);
 
   useEffect(() => {

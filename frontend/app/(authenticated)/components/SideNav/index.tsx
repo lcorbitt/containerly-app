@@ -1,20 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { Bell } from "lucide-react";
 import { NotificationsList } from "@/app/(authenticated)/components/NotificationsList";
 import { SubSideNav } from "@/components/SubSideNav";
 import { WorkspaceQuickSearch } from "@/components/WorkspaceQuickSearch";
 import { useSideNav } from "./hooks/useSideNav";
 import { adminNavItems, howItWorksNavItem } from "./constants";
-
-function linkClass(active: boolean) {
-  return `flex min-h-0 items-center gap-4 rounded-md p-4 text-xs font-medium leading-tight transition-colors ${
-    active
-      ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-  }`;
-}
+import { SideNavLink } from "./SideNavLink";
+import { getSideNavLinkClassName, isSideNavLinkActive } from "./utils";
 
 export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const {
@@ -28,9 +21,7 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     closeNotifications,
   } = useSideNav(isSuperAdmin);
 
-  const howItWorksActive =
-    pathname === howItWorksNavItem.href || pathname.startsWith(`${howItWorksNavItem.href}/`);
-  const HowItWorksIcon = howItWorksNavItem.icon;
+  const howItWorksActive = isSideNavLinkActive(pathname, howItWorksNavItem.href);
 
   return (
     <aside className="box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -43,30 +34,21 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           aria-label="Main"
         >
           <div className="flex min-h-0 flex-col gap-2">
-            {mainNavItems.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={linkClass(active)}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                  <span className="min-w-0 wrap-break-word">{label}</span>
-                </Link>
-              );
-            })}
+            {mainNavItems.map(({ href, label, icon }) => (
+              <SideNavLink
+                key={href}
+                href={href}
+                label={label}
+                icon={icon}
+                active={isSideNavLinkActive(pathname, href)}
+              />
+            ))}
 
             {selectedOrgId ? (
               <button
                 type="button"
                 onClick={toggleNotifications}
-                className={`relative flex min-h-0 w-full cursor-pointer items-center gap-4 rounded-md p-4 text-left text-xs font-medium leading-tight transition-colors ${
-                  notificationsOpen
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-                }`}
+                className={`relative cursor-pointer text-left ${getSideNavLinkClassName(notificationsOpen)}`}
                 aria-expanded={notificationsOpen}
                 aria-controls="app-notifications-panel"
                 id="app-notifications-trigger"
@@ -81,14 +63,12 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
               </button>
             ) : null}
 
-            <Link
+            <SideNavLink
               href={howItWorksNavItem.href}
-              className={linkClass(howItWorksActive)}
-              aria-current={howItWorksActive ? "page" : undefined}
-            >
-              <HowItWorksIcon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-              <span className="min-w-0 wrap-break-word">{howItWorksNavItem.label}</span>
-            </Link>
+              label={howItWorksNavItem.label}
+              icon={howItWorksNavItem.icon}
+              active={howItWorksActive}
+            />
           </div>
 
           {isSuperAdmin ? (
@@ -100,20 +80,15 @@ export function SideNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 Super Admin
               </p>
               <div className="flex flex-col gap-2">
-                {adminNavItems.map(({ href, label, icon: Icon }) => {
-                  const active = pathname === href || pathname.startsWith(`${href}/`);
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      className={linkClass(active)}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      <Icon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                      {label}
-                    </Link>
-                  );
-                })}
+                {adminNavItems.map(({ href, label, icon }) => (
+                  <SideNavLink
+                    key={href}
+                    href={href}
+                    label={label}
+                    icon={icon}
+                    active={isSideNavLinkActive(pathname, href)}
+                  />
+                ))}
               </div>
             </div>
           ) : (

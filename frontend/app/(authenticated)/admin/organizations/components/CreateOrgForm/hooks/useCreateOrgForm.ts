@@ -1,27 +1,51 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/contexts/toast";
 import { useCreateOrganizationMutation } from "@/hooks/mutations/useOrganization";
 
-export function useCreateOrgForm(onCreated: (orgId: string) => void) {
+export function useCreateOrgForm(onCreated: (orgId: string) => Promise<void> | void) {
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const mutation = useCreateOrganizationMutation();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      const message = "Company name is required";
+      setError(message);
+      toast(message, "error");
+      return;
+    }
+
     try {
       const result = await mutation.mutateAsync({
-        name: name.trim(),
+        name: trimmedName,
         slug: slug.trim() || null,
       });
-      onCreated(result.id);
+
       setName("");
       setSlug("");
+
+      setRefreshing(true);
+      try {
+        await onCreated(result.id);
+        toast(`Organization "${trimmedName}" created`, "success");
+      } catch {
+        toast("Organization created, but the list could not be refreshed. Reload the page.", "error");
+      } finally {
+        setRefreshing(false);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create organization");
+      const message = err instanceof Error ? err.message : "Could not create organization";
+      setError(message);
+      toast(message, "error");
     }
   }
 
@@ -30,8 +54,8 @@ export function useCreateOrgForm(onCreated: (orgId: string) => void) {
     setName,
     slug,
     setSlug,
-    error: error ?? (mutation.error instanceof Error ? mutation.error.message : null),
-    loading: mutation.isPending,
+    error,
+    loading: mutation.isPending || refreshing,
     submit,
   };
 }

@@ -42,8 +42,9 @@ export function AdminOrganizationsPanel() {
       </div>
 
       <CreateOrgForm
-        onCreated={(id) => {
-          void refreshOrgs().then(() => setSelectedOrgId(id));
+        onCreated={async (id) => {
+          await refreshOrgs();
+          setSelectedOrgId(id);
         }}
       />
     </div>
