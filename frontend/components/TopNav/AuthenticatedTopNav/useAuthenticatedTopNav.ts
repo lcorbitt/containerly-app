@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigationProgress } from "@/components/NavigationProgress";
 import { shouldShowMockJourneyPanel } from "@/components/MockJourneySimulator";
 import { useMockJourneyModal } from "@/contexts/mock-journey-modal";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
@@ -33,6 +34,8 @@ export function useAuthenticatedTopNav({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { startNavigation } = useNavigationProgress();
+  const [signingOut, setSigningOut] = useState(false);
   const { openNewShipmentModal, openBulkImportModal } = useNewShipmentModal();
   const { openMockJourneyModal } = useMockJourneyModal();
   const showMockJourney = shouldShowMockJourneyPanel();
@@ -147,12 +150,21 @@ export function useAuthenticatedTopNav({
   }, [accountMenuOpen, notificationsMenuOpen]);
 
   const logout = useCallback(async () => {
+    if (signingOut) return;
+
+    setSigningOut(true);
     setAccountMenuOpen(false);
     setNotificationsMenuOpen(false);
-    await signOutBrowser();
-    router.push("/login");
-    router.refresh();
-  }, [router]);
+    startNavigation({ message: "Signing out..." });
+
+    try {
+      await signOutBrowser();
+      router.push("/login");
+      router.refresh();
+    } catch {
+      setSigningOut(false);
+    }
+  }, [router, signingOut, startNavigation]);
 
   const toggleAccountMenu = useCallback(() => {
     setNotificationsMenuOpen(false);
@@ -194,5 +206,6 @@ export function useAuthenticatedTopNav({
     toggleNotificationsMenu,
     closeNotificationsMenu,
     logout,
+    signingOut,
   };
 }

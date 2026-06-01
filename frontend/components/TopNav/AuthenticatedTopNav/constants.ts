@@ -23,6 +23,10 @@ export const AUTHENTICATED_TOP_NAV_MENU_CLASS =
 export const AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS =
   "w-full cursor-pointer rounded-bl-xl rounded-br-xl p-4 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900";
 
+export const AUTHENTICATED_TOP_NAV_LOGOUT_LABEL = "Log out";
+
+export const AUTHENTICATED_TOP_NAV_SIGNING_OUT_LABEL = "Signing out...";
+
 export const AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS = "flex min-w-0 items-center gap-3 sm:gap-4";
 
 export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS = "ml-auto flex items-center gap-2 sm:gap-6";

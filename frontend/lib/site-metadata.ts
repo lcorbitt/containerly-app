@@ -18,7 +18,7 @@ export const SITE_TITLE = "Containerly — Real-time shipment visibility";
 export const SITE_LANDING_TITLE = "Containerly — Track every shipment in one place";
 
 /** Short line beside the logo in public nav (unauthenticated). */
-export const SITE_NAV_TAGLINE = "Operator-to-importer shipment intelligence";
+export const SITE_NAV_TAGLINE = "Exporter-to-Importer Shipment Intelligence";
 
 /** Public marketing site (portal footer, emails). Works for all users, including when logged in. */
 export const MARKETING_SITE_URL =

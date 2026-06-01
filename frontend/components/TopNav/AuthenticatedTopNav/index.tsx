@@ -2,7 +2,6 @@
 
 import { Import, PackagePlus } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
@@ -16,7 +15,9 @@ import {
   AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS,
   AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_MENU_CLASS,
+  AUTHENTICATED_TOP_NAV_LOGOUT_LABEL,
   AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS,
+  AUTHENTICATED_TOP_NAV_SIGNING_OUT_LABEL,
   AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS,
 } from "./constants";
 import { useAuthenticatedTopNav } from "./useAuthenticatedTopNav";
@@ -46,6 +47,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
     toggleNotificationsMenu,
     closeNotificationsMenu,
     logout,
+    signingOut,
   } = useAuthenticatedTopNav({ email, fullName });
 
   return (
@@ -129,14 +131,15 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
                 type="button"
                 role="menuitem"
                 onClick={() => void logout()}
-                className={AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS}
+                disabled={signingOut}
+                aria-busy={signingOut}
+                className={`${AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS} disabled:opacity-70`}
               >
-                Log out
+                {signingOut ? AUTHENTICATED_TOP_NAV_SIGNING_OUT_LABEL : AUTHENTICATED_TOP_NAV_LOGOUT_LABEL}
               </button>
             </div>
           </Reveal>
         </div>
-        <ThemeToggle />
       </div>
     </TopNavShell>
   );

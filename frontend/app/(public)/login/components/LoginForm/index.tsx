@@ -122,7 +122,9 @@ export function LoginForm() {
             <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
             <div>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{loadingTitle}</p>
-              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{loadingSubtitle}</p>
+              {loadingSubtitle ? (
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{loadingSubtitle}</p>
+              ) : null}
             </div>
           </div>
         </div>

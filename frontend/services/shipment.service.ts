@@ -112,6 +112,8 @@ export type ShipmentOverviewRow = {
   shipping_line: string | null;
   shipment_group_id: string | null;
   workflow_status: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */

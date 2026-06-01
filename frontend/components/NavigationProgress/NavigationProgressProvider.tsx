@@ -19,10 +19,9 @@ import {
   NAVIGATION_PROGRESS_SHOW_DELAY_MS,
   NAVIGATION_PROGRESS_TRACK_CLASS,
 } from "./constants";
-import {
-  buildNavigationLoadingText,
-  navigationEntityLabelFromAnchor,
-} from "./navigation-entity-label";
+import { navigationEntityLabelFromAnchor } from "./navigation-entity-label";
+import { resolveNavigationLoadingText } from "./resolve-navigation-start";
+import type { NavigationStartInput } from "./resolve-navigation-start";
 import type { NavigationProgressContextValue, NavigationProgressPhase } from "./types";
 import { shouldStartNavigationFromAnchor } from "./utils";
 
@@ -34,7 +33,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
   const pathname = usePathname();
   const [phase, setPhase] = useState<NavigationProgressPhase>("idle");
   const [pendingNavigation, setPendingNavigation] = useState(false);
-  const [destinationLabel, setDestinationLabel] = useState<string | null>(null);
+  const [loadingText, setLoadingText] = useState<string | null>(null);
   const showTimerRef = useRef<number | null>(null);
   const completeTimerRef = useRef<number | null>(null);
   const pendingStartRef = useRef(false);
@@ -58,7 +57,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
     clearShowTimer();
     pendingStartRef.current = false;
     setPendingNavigation(false);
-    setDestinationLabel(null);
+    setLoadingText(null);
     setPhase((current) => {
       if (current === "idle") return "idle";
       return "completing";
@@ -70,10 +69,10 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
     }, NAVIGATION_PROGRESS_COMPLETE_MS);
   }, [clearCompleteTimer, clearShowTimer]);
 
-  const startNavigation = useCallback((label?: string) => {
+  const startNavigation = useCallback((input?: NavigationStartInput) => {
     pendingStartRef.current = true;
     setPendingNavigation(true);
-    setDestinationLabel(label?.trim() ? label.trim() : null);
+    setLoadingText(resolveNavigationLoadingText(input));
     clearShowTimer();
     showTimerRef.current = window.setTimeout(() => {
       if (!pendingStartRef.current) return;
@@ -116,17 +115,14 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
     [clearCompleteTimer, clearShowTimer],
   );
 
-  const loadingText = destinationLabel ? buildNavigationLoadingText(destinationLabel) : null;
-
   const value = useMemo<NavigationProgressContextValue>(
     () => ({
       phase,
       isNavigating: pendingNavigation || phase !== "idle",
-      destinationLabel,
       loadingText,
       startNavigation,
     }),
-    [destinationLabel, loadingText, pendingNavigation, phase, startNavigation],
+    [loadingText, pendingNavigation, phase, startNavigation],
   );
 
   return (

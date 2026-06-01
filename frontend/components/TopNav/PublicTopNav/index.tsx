@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { NavBrandTagline } from "../NavBrandTagline";
 import { TopNavShell } from "../TopNavShell";
@@ -66,8 +65,6 @@ export function PublicTopNav() {
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-
-            <ThemeToggle variant="marketing" />
           </div>
         </div>
       </TopNavShell>

@@ -1,66 +1,80 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { DashboardPersonalOverview } from "../DashboardPersonalOverview";
-import { DashboardTriage } from "../DashboardTriage";
+import dynamic from "next/dynamic";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
+import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
+import { DashboardKpiStrip } from "../DashboardKpiStrip";
+import { DashboardMessageThreads } from "../DashboardMessageThreads";
+import { DashboardSpotlightShipment } from "../DashboardSpotlightShipment";
 import {
-  trackingDashboardQueryKeyRoot,
-  useTrackingDashboardQuery,
-} from "@/hooks/queries/useTracking";
+  TRACKING_DASHBOARD_GRID_CLASS,
+  TRACKING_DASHBOARD_HEADER_COPY_CLASS,
+  TRACKING_DASHBOARD_HEADER_TITLE_CLASS,
+  TRACKING_DASHBOARD_SHELL_CLASS,
+  TRACKING_DASHBOARD_SPAN_FULL,
+  TRACKING_DASHBOARD_SPAN_MAIN,
+  TRACKING_DASHBOARD_SPAN_SIDE,
+} from "./constants";
+import { useTrackingDashboard } from "./useTrackingDashboard";
+
+const DashboardCharts = dynamic(
+  () => import("../DashboardCharts").then((m) => m.DashboardCharts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading charts...</p>
+      </div>
+    ),
+  },
+);
 
 export function TrackingDashboard() {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
-  const qc = useQueryClient();
-  const q = useTrackingDashboardQuery(selectedOrgId);
-
-  useEffect(() => {
-    const onCreated = () => {
-      startTransition(() => {
-        void qc.invalidateQueries({ queryKey: trackingDashboardQueryKeyRoot });
-      });
-    };
-    window.addEventListener(TRACKING_CREATED_EVENT, onCreated);
-    return () => window.removeEventListener(TRACKING_CREATED_EVENT, onCreated);
-  }, [qc]);
-
-  const selectedOrgName = orgs.find((r) => r.organizations?.id === selectedOrgId)?.organizations?.name ?? null;
-
-  const snap = q.data;
-  const currentUserId = snap?.currentUserId ?? null;
-  const requests = snap?.requests ?? [];
-  const alerts = snap?.alerts ?? [];
-  const triageContainersById = snap?.triageContainersById ?? {};
-  const triageAttachmentCounts = snap?.triageAttachmentCounts ?? {};
-  const triageMessages = snap?.triageMessages ?? [];
-  const participatingShipmentIds = snap?.participatingShipmentIds ?? [];
-  const shipmentOwnerByShipmentId = snap?.shipmentOwnerByShipmentId ?? {};
-  const shipmentAssigneeByShipmentId = snap?.shipmentAssigneeByShipmentId ?? {};
-  const triageLoading = q.isLoading && Boolean(selectedOrgId);
+  const {
+    selectedOrgName,
+    isAdminView,
+    loading,
+    isError,
+    snapshot,
+    personalMetrics,
+    triageBuckets,
+    messageThreads,
+    messagesLoading,
+  } = useTrackingDashboard();
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10">
+    <div className={TRACKING_DASHBOARD_SHELL_CLASS}>
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Dashboard
-        </h1>
-        <p className="max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-          Your workload and triage for shipments you own or collaborate on. Create commercial shipments from{" "}
-          <span className="font-medium text-zinc-800 dark:text-zinc-200">New Shipment</span>, upload documents, and
-          invite customers — carrier sync is optional after approval. Browse every shipment under{" "}
-          <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">Shipments</Link>.
-          {process.env.NODE_ENV === "development" ? (
+        <h1 className={TRACKING_DASHBOARD_HEADER_TITLE_CLASS}>Dashboard</h1>
+        <p className={TRACKING_DASHBOARD_HEADER_COPY_CLASS}>
+          {isAdminView ? (
             <>
-              {" "}
-              In local dev, <span className="font-medium text-zinc-800 dark:text-zinc-200">Simulate</span> drives mock
-              milestones from the header.
+              Org-wide metrics for <span className="font-medium text-zinc-800 dark:text-zinc-200">{selectedOrgName ?? "your organization"}</span>
+              , with personal action items below. Browse every shipment under{" "}
+              <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">
+                Shipments
+              </Link>
+              .
             </>
-          ) : null}
+          ) : (
+            <>
+              Your workload and triage for shipments you own or collaborate on. Browse every shipment under{" "}
+              <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">
+                Shipments
+              </Link>
+              .
+            </>
+          )}
         </p>
       </header>
+
+      {isError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+          <p className="text-sm text-red-800 dark:text-red-200">Could not load dashboard data. Try refreshing the page.</p>
+        </div>
+      ) : null}
 
       {orgs.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
@@ -77,36 +91,59 @@ export function TrackingDashboard() {
             </p>
           ) : null}
         </div>
-      ) : (
-        <>
-          {selectedOrgId ? (
+      ) : selectedOrgId ? (
+        <div className={TRACKING_DASHBOARD_GRID_CLASS}>
+          <div className={TRACKING_DASHBOARD_SPAN_FULL}>
+            <DashboardKpiStrip
+              isAdminView={isAdminView}
+              orgMetrics={snapshot?.orgMetrics}
+              personalMetrics={personalMetrics}
+            />
+          </div>
+
+          <div className={TRACKING_DASHBOARD_SPAN_MAIN}>
+            <DashboardAlertsPanel
+              loading={loading}
+              userId={snapshot?.currentUserId ?? null}
+              buckets={triageBuckets}
+              isAdminView={isAdminView}
+            />
+          </div>
+
+          {isAdminView ? (
+            <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
+              <DashboardSpotlightShipment spotlight={snapshot?.spotlightShipment} />
+            </div>
+          ) : (
+            <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
+              <DashboardCharts
+                isAdminView={false}
+                personalMetrics={personalMetrics}
+                orgMetrics={snapshot?.orgMetrics}
+              />
+            </div>
+          )}
+
+          {isAdminView ? (
             <>
-              <DashboardPersonalOverview
-                userId={currentUserId}
-                orgName={selectedOrgName}
-                requests={requests}
-                alerts={alerts}
-                containersById={triageContainersById}
-                shipmentOwnerByShipmentId={shipmentOwnerByShipmentId}
-                shipmentAssigneeByShipmentId={shipmentAssigneeByShipmentId}
-                participatingShipmentIds={participatingShipmentIds}
-              />
-              <DashboardTriage
-                userId={currentUserId}
-                loading={triageLoading}
-                requests={requests}
-                alerts={alerts}
-                containersById={triageContainersById}
-                shipmentOwnerByShipmentId={shipmentOwnerByShipmentId}
-                shipmentAssigneeByShipmentId={shipmentAssigneeByShipmentId}
-                attachmentCountByRequestId={triageAttachmentCounts}
-                messages={triageMessages}
-                participatingShipmentIds={new Set(participatingShipmentIds)}
-              />
+              <div className={TRACKING_DASHBOARD_SPAN_MAIN}>
+                <DashboardCharts
+                  isAdminView
+                  personalMetrics={personalMetrics}
+                  orgMetrics={snapshot?.orgMetrics}
+                />
+              </div>
+              <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
+                <DashboardMessageThreads threads={messageThreads} loading={messagesLoading} />
+              </div>
             </>
-          ) : null}
-        </>
-      )}
+          ) : (
+            <div className={TRACKING_DASHBOARD_SPAN_FULL}>
+              <DashboardMessageThreads threads={messageThreads} loading={messagesLoading} />
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

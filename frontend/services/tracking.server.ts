@@ -3,6 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isRequestInMyScope } from "@/utils/dashboard-scope";
 import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
 import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snapshot";
+import {
+  buildDaySeries,
+  buildTriageBuckets,
+  countByDay,
+  pickSpotlightFromTriage,
+  triageCountsFromBuckets,
+  type OrgDashboardMetrics,
+} from "@/utils/dashboard-metrics";
 import type {
   OperatorRequestScope,
   OperatorRequestSortColumn,
@@ -12,10 +20,171 @@ import type {
 export type { TrackingDashboardSnapshot };
 export type { OperatorRequestScope, OperatorRequestSortColumn, SortDirection };
 
+async function buildOrgDashboardMetrics(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<OrgDashboardMetrics> {
+  const now = Date.now();
+  const dayStarts = buildDaySeries(now, 14);
+  const sinceIso = new Date(dayStarts[0]).toISOString();
+
+  const [
+    { count: shipmentCount },
+    { count: activeLines },
+    { count: completedLines },
+    { data: workflowRows },
+    { data: shipmentRows },
+    { data: lineRows },
+    { data: orgRequests },
+    { data: orgAlerts },
+  ] = await Promise.all([
+    supabase.from("shipments").select("*", { count: "exact", head: true }).eq("organization_id", organizationId),
+    supabase
+      .from("tracking_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .in("status", ["pending", "syncing", "active"]),
+    supabase
+      .from("tracking_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("status", "completed"),
+    supabase.from("shipments").select("workflow_status").eq("organization_id", organizationId),
+    supabase
+      .from("shipments")
+      .select("created_at")
+      .eq("organization_id", organizationId)
+      .gte("created_at", sinceIso),
+    supabase
+      .from("tracking_requests")
+      .select("created_at")
+      .eq("organization_id", organizationId)
+      .gte("created_at", sinceIso),
+    supabase
+      .from("tracking_requests")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(500),
+    supabase
+      .from("alerts")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ]);
+
+  const workflowCounts: Record<string, number> = {};
+  for (const row of workflowRows ?? []) {
+    const key = (row.workflow_status as string | null) ?? "unknown";
+    workflowCounts[key] = (workflowCounts[key] ?? 0) + 1;
+  }
+
+  const orgList = (orgRequests as TrackingRequest[]) ?? [];
+  const orgAlertList = (orgAlerts as Alert[]) ?? [];
+  const orgContainerIds = [
+    ...new Set(orgList.map((r) => r.container_id).filter((id): id is string => Boolean(id))),
+  ];
+
+  const orgContainersById: Record<
+    string,
+    Pick<Container, "id" | "status" | "location" | "shipment_id">
+  > = {};
+  if (orgContainerIds.length > 0) {
+    const { data: contRows } = await supabase
+      .from("containers")
+      .select("id, status, location, shipment_id")
+      .in("id", orgContainerIds);
+    for (const row of (contRows ?? []) as Pick<
+      Container,
+      "id" | "status" | "location" | "shipment_id"
+    >[]) {
+      orgContainersById[row.id] = row;
+    }
+  }
+
+  let orgAttachmentCounts: Record<string, number> = {};
+  let orgMessages: ReportMessage[] = [];
+  if (orgContainerIds.length > 0) {
+    const { data: attRows } = await supabase
+      .from("workspace_attachments")
+      .select("container_id")
+      .in("container_id", orgContainerIds);
+    const requestByContainer = new Map<string, string>();
+    for (const r of orgList) {
+      if (r.container_id) requestByContainer.set(r.container_id, r.id);
+    }
+    const counts: Record<string, number> = {};
+    for (const row of attRows ?? []) {
+      const cid = row.container_id as string;
+      const rid = requestByContainer.get(cid);
+      if (!rid) continue;
+      counts[rid] = (counts[rid] ?? 0) + 1;
+    }
+    orgAttachmentCounts = counts;
+
+    const orgShipmentIds = [
+      ...new Set(
+        orgContainerIds
+          .map((cid) => orgContainersById[cid]?.shipment_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
+      supabase
+        .from("report_messages")
+        .select("*")
+        .in("container_id", orgContainerIds)
+        .order("created_at", { ascending: true })
+        .limit(2000),
+      orgShipmentIds.length > 0
+        ? supabase
+            .from("report_messages")
+            .select("*")
+            .in("shipment_id", orgShipmentIds)
+            .is("container_id", null)
+            .order("created_at", { ascending: true })
+            .limit(500)
+        : Promise.resolve({ data: [] as ReportMessage[] }),
+    ]);
+    orgMessages = [...(msgRows ?? []), ...(msgShipmentRows ?? [])].sort(
+      (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
+    ) as ReportMessage[];
+  }
+
+  const orgBuckets = buildTriageBuckets({
+    userId: null,
+    requests: orgList,
+    alerts: orgAlertList,
+    containersById: orgContainersById,
+    shipmentOwnerByShipmentId: {},
+    shipmentAssigneeByShipmentId: {},
+    attachmentCountByRequestId: orgAttachmentCounts,
+    messages: orgMessages,
+    participatingShipmentIds: new Set(),
+    orgWide: true,
+  });
+  const triageCounts = triageCountsFromBuckets(orgBuckets);
+  const needsAttention = Object.values(triageCounts).reduce((n, c) => n + c, 0);
+
+  return {
+    shipmentCount: shipmentCount ?? 0,
+    activeLines: activeLines ?? 0,
+    completedLines: completedLines ?? 0,
+    needsAttention,
+    triageCounts,
+    workflowCounts,
+    shipmentsCreatedByDay: countByDay((shipmentRows ?? []) as { created_at: string }[], dayStarts),
+    linesCreatedByDay: countByDay((lineRows ?? []) as { created_at: string }[], dayStarts),
+  };
+}
+
 export async function buildTrackingDashboardSnapshot(
   supabase: SupabaseClient,
   organizationId: string,
   uid: string | null,
+  options?: { includeOrgMetrics?: boolean },
 ): Promise<TrackingDashboardSnapshot> {
   const [{ data: tr }, { data: al }] = await Promise.all([
     supabase
@@ -34,7 +203,13 @@ export async function buildTrackingDashboardSnapshot(
   const list = (tr as TrackingRequest[]) ?? [];
   const alerts = (al as Alert[]) ?? [];
 
+  const includeOrgMetrics = options?.includeOrgMetrics ?? false;
+  const orgMetricsPromise = includeOrgMetrics
+    ? buildOrgDashboardMetrics(supabase, organizationId)
+    : Promise.resolve(undefined);
+
   if (list.length === 0) {
+    const orgMetrics = await orgMetricsPromise;
     return {
       currentUserId: uid,
       requests: list,
@@ -45,6 +220,8 @@ export async function buildTrackingDashboardSnapshot(
       participatingShipmentIds: [],
       shipmentOwnerByShipmentId: {},
       shipmentAssigneeByShipmentId: {},
+      orgMetrics,
+      spotlightShipment: null,
     };
   }
 
@@ -160,6 +337,43 @@ export async function buildTrackingDashboardSnapshot(
     triageMessages = merged as ReportMessage[];
   }
 
+  const personalBuckets = buildTriageBuckets({
+    userId: uid,
+    requests: list,
+    alerts,
+    containersById: map,
+    shipmentOwnerByShipmentId: owners,
+    shipmentAssigneeByShipmentId: assignees,
+    attachmentCountByRequestId: triageAttachmentCounts,
+    messages: triageMessages,
+    participatingShipmentIds: participatingSet,
+  });
+
+  const spotlightShipmentIds = [
+    ...new Set(
+      flattenSpotlightShipmentIds(personalBuckets, map),
+    ),
+  ];
+  const shipmentCommercialById: Record<
+    string,
+    { orderNumber: string | null; portOfLoading: string | null; portOfDestination: string | null }
+  > = {};
+  if (spotlightShipmentIds.length > 0) {
+    const { data: shipCommercialRows } = await supabase
+      .from("shipments")
+      .select("id, order_number, port_of_loading, port_of_destination")
+      .in("id", spotlightShipmentIds);
+    for (const row of shipCommercialRows ?? []) {
+      shipmentCommercialById[row.id as string] = {
+        orderNumber: (row.order_number as string | null) ?? null,
+        portOfLoading: (row.port_of_loading as string | null) ?? null,
+        portOfDestination: (row.port_of_destination as string | null) ?? null,
+      };
+    }
+  }
+
+  const orgMetrics = await orgMetricsPromise;
+
   return {
     currentUserId: uid,
     requests: list,
@@ -170,7 +384,23 @@ export async function buildTrackingDashboardSnapshot(
     participatingShipmentIds,
     shipmentOwnerByShipmentId: owners,
     shipmentAssigneeByShipmentId: assignees,
+    orgMetrics,
+    spotlightShipment: pickSpotlightFromTriage(personalBuckets, shipmentCommercialById, map),
   };
+}
+
+function flattenSpotlightShipmentIds(
+  buckets: ReturnType<typeof buildTriageBuckets>,
+  containersById: Record<string, Pick<Container, "shipment_id">>,
+): string[] {
+  const ids: string[] = [];
+  for (const bucket of buckets) {
+    for (const row of bucket.rows) {
+      const sid = containersById[row.containerId]?.shipment_id;
+      if (sid) ids.push(sid);
+    }
+  }
+  return ids.slice(0, 1);
 }
 
 export async function fetchRecentTrackingRequestsForOrganizationQuery(

@@ -62,6 +62,8 @@ export type ShipmentOverviewRow = {
   shipping_line: string | null;
   shipment_group_id: string | null;
   workflow_status: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */
@@ -83,6 +85,8 @@ type RpcOverviewRow = {
   shipping_line: string | null;
   shipment_group_id: string | null;
   workflow_status: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   owner_user_id: string | null;
@@ -115,6 +119,8 @@ function toOverviewRow(r: RpcOverviewRow): ShipmentOverviewRow {
     shipping_line: r.shipping_line,
     shipment_group_id: r.shipment_group_id,
     workflow_status: r.workflow_status,
+    port_of_loading: r.port_of_loading,
+    port_of_destination: r.port_of_destination,
     estimated_arrival_at: r.estimated_arrival_at,
     created_at: r.created_at,
     owner_user_id: r.owner_user_id,

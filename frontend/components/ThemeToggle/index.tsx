@@ -2,12 +2,11 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/theme/ThemeProvider";
-import { THEME_TOGGLE_BUTTON_CLASS, THEME_TOGGLE_MARKETING_BUTTON_CLASS } from "./constants";
+import type { ThemeToggleProps } from "./types";
 
-export function ThemeToggle({ variant = "app" }: { variant?: "app" | "marketing" }) {
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
-  const className = variant === "marketing" ? THEME_TOGGLE_MARKETING_BUTTON_CLASS : THEME_TOGGLE_BUTTON_CLASS;
 
   return (
     <button
@@ -19,9 +18,9 @@ export function ThemeToggle({ variant = "app" }: { variant?: "app" | "marketing"
       suppressHydrationWarning
     >
       {isDark ? (
-        <Sun className="h-4 w-4" strokeWidth={2} aria-hidden />
+        <Sun className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
       ) : (
-        <Moon className="h-4 w-4" strokeWidth={2} aria-hidden />
+        <Moon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
       )}
     </button>
   );

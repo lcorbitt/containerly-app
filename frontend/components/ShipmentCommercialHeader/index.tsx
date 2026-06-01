@@ -1,9 +1,11 @@
 "use client";
 
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
+import { ShipmentCommercialRouteLane } from "./ShipmentCommercialRouteLane";
 import type { ShipmentCommercialHeaderProps } from "./types";
 import {
   SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS,
+  SHIPMENT_COMMERCIAL_HEADER_ROUTE_WRAP_CLASS,
   SHIPMENT_COMMERCIAL_HEADER_TITLE_WRAP_CLASS,
   SHIPMENT_DETAIL_GRID_FIELDS,
   SHIPMENT_DETAIL_LABEL_CLASS,
@@ -49,6 +51,13 @@ export function ShipmentCommercialHeader({ source, workflowStatus }: ShipmentCom
             </dd>
           </div>
         </dl>
+      </div>
+
+      <div className={SHIPMENT_COMMERCIAL_HEADER_ROUTE_WRAP_CLASS}>
+        <ShipmentCommercialRouteLane
+          origin={source.port_of_loading}
+          destination={source.port_of_destination}
+        />
       </div>
 
       <div className={SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS}>

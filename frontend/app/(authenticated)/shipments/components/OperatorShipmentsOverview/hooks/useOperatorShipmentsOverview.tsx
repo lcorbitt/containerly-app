@@ -184,6 +184,30 @@ export function useOperatorShipmentsOverview() {
         ),
       },
       {
+        id: "port_of_loading",
+        header: "Origin",
+        cell: (r) => (
+          <span
+            className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
+            title={r.port_of_loading ?? undefined}
+          >
+            {displayOverviewText(r.port_of_loading)}
+          </span>
+        ),
+      },
+      {
+        id: "port_of_destination",
+        header: "Destination",
+        cell: (r) => (
+          <span
+            className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
+            title={r.port_of_destination ?? undefined}
+          >
+            {displayOverviewText(r.port_of_destination)}
+          </span>
+        ),
+      },
+      {
         id: "container_number",
         header: "Container No.",
         cell: (r) => (

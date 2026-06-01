@@ -7,11 +7,6 @@ export const LOGIN_FORM_LOADING_OVERLAY_CLASS =
 export const LOGIN_FORM_LOADING_CARD_CLASS =
   "flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-4 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-950/70";
 
-/** After this delay, the subtitle switches to the workspace message. */
-export const LOGIN_FORM_LOADING_WORKSPACE_MESSAGE_DELAY_MS = 2000;
-
 export const LOGIN_FORM_LOADING_TITLE_SIGN_IN = "Signing in…";
 export const LOGIN_FORM_LOADING_TITLE_SIGN_UP = "Creating account…";
-export const LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_IN = "Verifying your credentials.";
 export const LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP = "Setting up your account.";
-export const LOGIN_FORM_LOADING_SUBTITLE_WORKSPACE = "Loading your workspace…";

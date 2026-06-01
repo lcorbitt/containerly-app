@@ -13,7 +13,7 @@ export function AuthenticatedMainPane({ children }: { children: React.ReactNode 
 
   return (
     <div className={AUTHENTICATED_MAIN_PANE_ROOT_CLASS}>
-      {children}
+      {isNavigating ? null : children}
       {isNavigating ? (
         <div className="absolute inset-0 z-10" aria-hidden={false}>
           <div className={AUTHENTICATED_MAIN_PANE_BLOCKER_CLASS} aria-hidden />
@@ -23,7 +23,7 @@ export function AuthenticatedMainPane({ children }: { children: React.ReactNode 
             aria-live="polite"
             aria-busy="true"
           >
-            <PageLoading loadingText={loadingText ?? "Loading..."} variant="overlay" />
+            <PageLoading loadingText={loadingText ?? undefined} variant="overlay" />
           </div>
         </div>
       ) : null}

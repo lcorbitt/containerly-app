@@ -35,6 +35,9 @@ export const SHIPMENT_TITLE_CELL_CLASS = "min-w-0";
 export const SHIPMENT_COMMERCIAL_HEADER_TITLE_WRAP_CLASS =
   "border-b border-zinc-100 pb-3 dark:border-zinc-800";
 
+export const SHIPMENT_COMMERCIAL_HEADER_ROUTE_WRAP_CLASS =
+  "border-b border-zinc-100 py-3 dark:border-zinc-800";
+
 export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
 
 export const SHIPMENT_DETAIL_FIELDS = [
@@ -58,8 +61,12 @@ export const SHIPMENT_DOCUMENTS_STATUS_LABEL = "Documents status";
 
 export const SHIPMENT_TITLE_FIELD_KEYS = ["customer_name", "order_number"] as const;
 
+export const SHIPMENT_ROUTE_FIELD_KEYS = ["port_of_loading", "port_of_destination"] as const;
+
 export const SHIPMENT_DETAIL_GRID_FIELDS = SHIPMENT_DETAIL_FIELDS.filter(
-  (field) => !(SHIPMENT_TITLE_FIELD_KEYS as readonly string[]).includes(field.key),
+  (field) =>
+    !(SHIPMENT_TITLE_FIELD_KEYS as readonly string[]).includes(field.key) &&
+    !(SHIPMENT_ROUTE_FIELD_KEYS as readonly string[]).includes(field.key),
 );
 
 export function shipmentTitleParts(source: Pick<ShipmentCommercialHeaderSource, "customer_name" | "order_number">) {
