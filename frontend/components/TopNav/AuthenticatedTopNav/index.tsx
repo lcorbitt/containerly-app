@@ -75,7 +75,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
           aria-haspopup="dialog"
         >
           <FileDown className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
-          <span className="hidden sm:inline">Bulk import</span>
+          <span className="hidden sm:inline">Bulk Import</span>
         </button>
         <div className="relative" ref={menuRef}>
           <button

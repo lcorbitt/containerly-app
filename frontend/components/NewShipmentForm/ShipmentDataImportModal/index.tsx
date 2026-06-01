@@ -277,7 +277,7 @@ export function ShipmentDataImportModal({
                     Bulk Import
                   </button>
                 ) : (
-                  <strong className="font-semibold">Bulk import</strong>
+                  <strong className="font-semibold">Bulk Import</strong>
                 )}
                 .
               </>
