@@ -48,7 +48,7 @@ export async function renderPdfThumbnailDataUrl(pdfUrl: string): Promise<string 
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    await page.render({ canvasContext: ctx, viewport } as Parameters<typeof page.render>[0]).promise;
     return canvas.toDataURL("image/jpeg", 0.82);
   } catch {
     return null;

@@ -201,9 +201,9 @@ export function useContainerWorkspace({
 
   useEffect(() => {
     if (!replyParentId) return;
-    const ok = filteredThreadMessages.some((m) => m.id === replyParentId);
+    const ok = threadMessages.some((m) => m.id === replyParentId);
     if (!ok) setReplyParentId(null);
-  }, [filteredThreadMessages, replyParentId]);
+  }, [threadMessages, replyParentId]);
 
   // --- Composer file handling ---
 

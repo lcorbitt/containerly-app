@@ -26,7 +26,7 @@ export function normalizeShipmentWorkflowStatus(
 export function shipmentWorkflowDisplayLabel(status: string | null | undefined): string {
   const normalized = normalizeShipmentWorkflowStatus(status);
   if (!normalized) return "—";
-  return SHIPMENT_WORKFLOW_STATUS_LABELS[normalized] ?? status.replace(/_/g, " ");
+  return SHIPMENT_WORKFLOW_STATUS_LABELS[normalized] ?? (status ?? "").replace(/_/g, " ");
 }
 
 /** Approved or originals already mailed to customer. */
