@@ -1,8 +1,44 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Profile } from "@/types/database";
 import type { OrganizationMemberRole } from "@/types/database";
 import type { AdminOrgMemberRow } from "@/types/organization-directory";
+import { deriveOrgMemberInviteStatus } from "@/utils/org-member-invite-status";
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+type AuthInviteFields = {
+  invitedAt: string | null;
+  emailConfirmedAt: string | null;
+  lastSignInAt: string | null;
+};
+
+async function fetchAuthInviteFieldsByUserIds(
+  admin: AdminClient,
+  userIds: string[],
+): Promise<Map<string, AuthInviteFields>> {
+  const map = new Map<string, AuthInviteFields>();
+  const unique = [...new Set(userIds)];
+  const chunkSize = 20;
+
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const chunk = unique.slice(i, i + chunkSize);
+    await Promise.all(
+      chunk.map(async (userId) => {
+        const { data, error } = await admin.auth.admin.getUserById(userId);
+        if (error || !data.user) return;
+        map.set(userId, {
+          invitedAt: data.user.invited_at ?? null,
+          emailConfirmedAt: data.user.email_confirmed_at ?? null,
+          lastSignInAt: data.user.last_sign_in_at ?? null,
+        });
+      }),
+    );
+  }
+
+  return map;
+}
 
 export type AdminProfileTableRow = Pick<
   Profile,
@@ -59,6 +95,7 @@ export async function loadAdminProfilesWithOrgLabels(supabase: SupabaseClient): 
 
 export async function fetchAdminOrgMemberDirectoryRowsQuery(
   supabase: SupabaseClient,
+  admin: AdminClient,
 ): Promise<AdminOrgMemberRow[]> {
   const { data: members, error: mErr } = await supabase
     .from("organization_members")
@@ -83,10 +120,20 @@ export async function fetchAdminOrgMemberDirectoryRowsQuery(
     ]),
   );
 
+  const authByUser = await fetchAuthInviteFieldsByUserIds(admin, userIds);
+
   return list.map((m) => {
     const o = m.organizations as { id: string; name: string } | { id: string; name: string }[] | null;
     const org = Array.isArray(o) ? o[0] : o;
     const prof = profileByUser.get(m.user_id);
+    const auth = authByUser.get(m.user_id);
+    const inviteFields = auth ?? {
+      invitedAt: null,
+      emailConfirmedAt: null,
+      lastSignInAt: null,
+    };
+    const { status: inviteStatus, acceptedAt } = deriveOrgMemberInviteStatus(inviteFields);
+
     return {
       membershipId: m.id,
       organizationId: m.organization_id,
@@ -96,6 +143,9 @@ export async function fetchAdminOrgMemberDirectoryRowsQuery(
       email: prof?.email ?? null,
       role: m.role as OrganizationMemberRole,
       createdAt: m.created_at,
+      inviteStatus,
+      invitedAt: inviteFields.invitedAt,
+      acceptedAt,
     };
   });
 }

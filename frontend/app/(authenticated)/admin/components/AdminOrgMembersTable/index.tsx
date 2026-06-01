@@ -10,10 +10,15 @@ import {
 import { TextInput } from "@/components/TextInput";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
+  ADMIN_ORG_MEMBER_INVITE_STATUS_CLASS,
+  adminOrgMemberInviteStatusTitle,
+} from "./utils";
+import {
   PAGE_SIZE_OPTIONS,
   ROLE_OPTIONS,
   useAdminOrgMembersTable,
 } from "./hooks/useAdminOrgMembersTable";
+import { orgMemberInviteStatusLabel } from "@/utils/org-member-invite-status";
 
 export function AdminOrgMembersTable() {
   const t = useAdminOrgMembersTable();
@@ -120,7 +125,8 @@ export function AdminOrgMembersTable() {
         <>
           One row per user per organization. Roles are{" "}
           <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">organization_members</code>, not{" "}
-          <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">profiles</code>.
+          <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">profiles</code>. Invite status reflects
+          Supabase Auth email invites — pending until the user confirms their email or signs in.
         </>
       }
       toolbar={toolbar}
@@ -143,14 +149,15 @@ export function AdminOrgMembersTable() {
       ) : t.filtered.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No rows match your filters.</p>
       ) : (
-        <table className="w-full min-w-[60rem] table-fixed border-collapse text-left">
+        <table className="w-full min-w-[68rem] table-fixed border-collapse text-left">
           <colgroup>
+            <col className="w-[14%]" />
             <col className="w-[16%]" />
+            <col className="w-[14%]" />
             <col className="w-[18%]" />
+            <col className="w-[8%]" />
+            <col className="w-[12%]" />
             <col className="w-[18%]" />
-            <col className="w-[22%]" />
-            <col className="w-[10%]" />
-            <col className="w-[16%]" />
           </colgroup>
           <thead>
             <tr className={ADMIN_TABLE_HEAD_ROW}>
@@ -159,6 +166,7 @@ export function AdminOrgMembersTable() {
               <th className={ADMIN_TABLE_TH}>Organization</th>
               <th className={ADMIN_TABLE_TH}>User ID</th>
               <th className={ADMIN_TABLE_TH}>Org role</th>
+              <th className={ADMIN_TABLE_TH}>Invite</th>
               <th className={ADMIN_TABLE_TH}>Joined</th>
             </tr>
           </thead>
@@ -205,6 +213,14 @@ export function AdminOrgMembersTable() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className={ADMIN_TABLE_TD}>
+                    <span
+                      className={ADMIN_ORG_MEMBER_INVITE_STATUS_CLASS[row.inviteStatus]}
+                      title={adminOrgMemberInviteStatusTitle(row)}
+                    >
+                      {orgMemberInviteStatusLabel(row.inviteStatus)}
+                    </span>
                   </td>
                   <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-zinc-600 dark:text-zinc-400`}>
                     {new Date(row.createdAt).toLocaleString()}

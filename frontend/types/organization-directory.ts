@@ -1,4 +1,5 @@
 import type { OrganizationMemberRole } from "@/types/database";
+import type { OrgMemberInviteStatus } from "@/utils/org-member-invite-status";
 
 export type OrgMemberRow = {
   membershipId: string;
@@ -26,4 +27,7 @@ export type AdminOrgMemberRow = {
   email: string | null;
   role: OrganizationMemberRole;
   createdAt: string;
+  inviteStatus: OrgMemberInviteStatus;
+  invitedAt: string | null;
+  acceptedAt: string | null;
 };
