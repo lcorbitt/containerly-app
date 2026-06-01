@@ -274,7 +274,7 @@ export function ShipmentDataImportModal({
                     onClick={onSwitchToBulkImport}
                     className="font-semibold text-sky-800 underline dark:text-sky-300"
                   >
-                    Bulk import
+                    Bulk Import
                   </button>
                 ) : (
                   <strong className="font-semibold">Bulk import</strong>

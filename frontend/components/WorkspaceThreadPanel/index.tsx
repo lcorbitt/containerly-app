@@ -2,6 +2,7 @@
 
 import { Paperclip, Reply, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import {
@@ -235,6 +236,8 @@ export function ThreadPanel({
   onComposerPickFiles,
   onRemoveComposerPendingFile,
   emptyStateText = "No messages yet.",
+  threadStartBanner,
+  centerThreadStartBannerWhenEmpty = false,
   /** When false, composer visibility is fixed by `internalOnly` (hide the internal/customer checkbox). */
   showInternalComposerToggle = true,
   /** Single public thread — no internal note labels, audience hints, or team/customer chrome. */
@@ -264,7 +267,11 @@ export function ThreadPanel({
   deletingMessageId: string | null;
   composerAuthorLabel: string;
   /** Shown when there are no messages (e.g. scope hint). */
-  emptyStateText?: string;
+  emptyStateText?: string | null;
+  /** Always-visible content rendered at the top of the scroll area (Discord-style "beginning of thread"). */
+  threadStartBanner?: ReactNode;
+  /** When true, centers the thread start banner when there are no messages. */
+  centerThreadStartBannerWhenEmpty?: boolean;
   showInternalComposerToggle?: boolean;
   publicThreadMode?: boolean;
 }) {
@@ -304,9 +311,20 @@ export function ThreadPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div ref={messagesScrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
+      <div
+        ref={messagesScrollRef}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-5 sm:p-6"
+      >
+        {threadStartBanner ? (
+          messages.length === 0 && centerThreadStartBannerWhenEmpty ? (
+            <div className="flex flex-1 items-center justify-center">{threadStartBanner}</div>
+          ) : (
+            <div className="mb-5">{threadStartBanner}</div>
+          )
+        ) : null}
+
         {messages.length === 0 ? (
-          <p className="text-sm text-zinc-500">{emptyStateText}</p>
+          emptyStateText ? <p className="text-sm text-zinc-500">{emptyStateText}</p> : null
         ) : (
           <ul className="flex flex-col gap-5">
             {tree.map((n) => (

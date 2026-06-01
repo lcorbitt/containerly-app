@@ -18,6 +18,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
     selectedOrgId,
     loading,
     loadError,
+    shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
     currentUserId,
@@ -40,9 +41,11 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
 
   if (!selectedOrgId) {
     return (
-      <p className="p-6 text-sm text-zinc-600 dark:text-zinc-400">
-        Select an organization in the header to view shipment messages.
-      </p>
+      <div className="flex min-h-[min(24rem,calc(100dvh-20rem))] w-full items-center justify-center p-6 text-center">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Select an organization in the header to view shipment messages.
+        </p>
+      </div>
     );
   }
 
@@ -99,7 +102,21 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
               ? messageAuthorByUserId[currentUserId]!
               : ""
           }
-          emptyStateText="No messages on this shipment yet."
+          emptyStateText={null}
+          centerThreadStartBannerWhenEmpty
+          threadStartBanner={
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                Welcome to
+                {shipmentLabel ? (
+                  <span className="font-semibold">
+                    {" "}
+                    Order No. <span className="font-mono">{shipmentLabel}</span> This is your direct message thread with the customer.
+                  </span>
+                ) : null}
+              </p>
+            </div>
+          }
         />
       </div>
     </section>

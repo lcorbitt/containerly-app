@@ -16,6 +16,7 @@ import type { WorkspaceAttachment } from "@/types/database";
 import {
   shipmentScopeThreadQueryKey,
   useShipmentScopeThreadQuery,
+  useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
 import {
   createWorkspaceAttachmentSignedUrl,
@@ -30,6 +31,10 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
   const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
   const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
+  const shipmentRowQuery = useShipmentWorkspaceRowQuery({
+    shipmentId,
+    organizationId: selectedOrgId,
+  });
 
   const [body, setBody] = useState("");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
@@ -59,6 +64,8 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
         : null;
 
   const loading = threadQuery.isLoading;
+  const shipmentLabel =
+    shipmentRowQuery.data && shipmentRowQuery.data.ok ? shipmentRowQuery.data.row.order_number : null;
 
   const threadMessages = useMemo(
     () => messages.filter((m) => !m.is_internal),
@@ -227,6 +234,7 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     selectedOrgId,
     loading,
     loadError,
+    shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
     currentUserId,
