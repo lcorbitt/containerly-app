@@ -23,6 +23,6 @@ export const AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS =
 
 export const AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS = "flex min-w-0 items-center gap-3 sm:gap-4";
 
-export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS = "flex items-center gap-2 sm:gap-6";
+export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS = "ml-auto flex items-center gap-2 sm:gap-6";
 
 export const AUTHENTICATED_TOP_NAV_ORG_HREF = "/dashboard";

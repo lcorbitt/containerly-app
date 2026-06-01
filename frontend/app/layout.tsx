@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fustat, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/AppProviders";
+import { ThemeScript } from "@/contexts/theme/ThemeScript";
 import { rootSiteMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 
@@ -25,9 +26,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fustat.variable} ${geistMono.variable} h-full bg-white text-zinc-900 antialiased`}
+      suppressHydrationWarning
+      className={`${fustat.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-white text-zinc-900">
+      <head>
+        <ThemeScript />
+      </head>
+      <body className="flex min-h-full flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

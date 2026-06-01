@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 
 const accentBtn =
-  "inline-flex items-center justify-center rounded-full border border-primary-orange/85 bg-black/55 px-6 py-3 text-sm font-semibold text-primary-orange shadow-[0_0_28px_rgba(255,78,0,0.35)] backdrop-blur-sm transition-[box-shadow,transform,border-color,background-color] hover:border-primary-orange hover:bg-primary-orange/10 hover:shadow-[0_0_40px_rgba(255,78,0,0.48)] active:scale-[0.98]";
+  "inline-flex items-center justify-center rounded-full border border-primary-orange/70 bg-white px-6 py-3 text-sm font-semibold text-primary-orange shadow-sm transition-[box-shadow,transform,border-color,background-color] hover:border-primary-orange hover:bg-primary-orange/5 active:scale-[0.98] dark:border-primary-orange/85 dark:bg-black/55 dark:shadow-[0_0_28px_rgba(255,78,0,0.35)] dark:backdrop-blur-sm dark:hover:bg-primary-orange/10 dark:hover:shadow-[0_0_40px_rgba(255,78,0,0.48)]";
 
 const ghostBtn =
-  "inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-zinc-200 transition-colors hover:border-primary-orange/40 hover:text-white";
+  "inline-flex items-center justify-center rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:border-primary-orange/40 hover:text-zinc-900 dark:border-white/15 dark:text-zinc-200 dark:hover:text-white";
 
 const featureCards = [
   {
@@ -127,11 +127,11 @@ export function LandingPage() {
           <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary-orange">
             Operator-to-importer shipment intelligence
           </p>
-          <h1 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-white md:text-6xl md:leading-[1.08]">
+          <h1 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-6xl md:leading-[1.08]">
             One credible view of every shipment for{" "}
             <span className="text-primary-orange">your team and your customers</span>.
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-400 md:text-lg">
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400 md:text-lg">
             Containerly is the logistics customer portal that pairs export documentation workflows with optional live
             container tracking, so status inquiries route to a single source instead of email threads and phone tags.
           </p>
@@ -152,23 +152,23 @@ export function LandingPage() {
             ].map(({ k, v }) => (
               <div
                 key={k}
-                className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 backdrop-blur-sm"
+                className="rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.02] px-4 py-3 backdrop-blur-sm"
               >
                 <dt className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">{k}</dt>
-                <dd className="mt-1 text-sm font-medium text-zinc-200">{v}</dd>
+                <dd className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">{v}</dd>
               </div>
             ))}
           </dl>
         </div>
       </section>
 
-      <section id="problem" className="scroll-mt-20 border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section id="problem" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               Fragmented information creates expensive conversations.
             </h2>
-            <p className="mt-3 max-w-xl text-zinc-400">
+            <p className="mt-3 max-w-xl text-zinc-600 dark:text-zinc-400">
               When customers cannot self serve, every update becomes a bespoke reply. Containerly gives operators a
               professional surface to publish clarity and gives customers a reason to stop opening new threads.
             </p>
@@ -177,7 +177,7 @@ export function LandingPage() {
             {painBullets.map((text) => (
               <li
                 key={text}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-3.5 text-sm text-zinc-300"
+                className="rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.02] px-5 py-3.5 text-sm text-zinc-600 dark:text-zinc-300"
               >
                 {text}
               </li>
@@ -186,11 +186,11 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="scroll-mt-20 border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section id="features" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">Platform capabilities</h2>
-            <p className="mt-3 text-zinc-400">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">Platform capabilities</h2>
+            <p className="mt-3 text-zinc-600 dark:text-zinc-400">
               Everything you need to run export documentation and customer portal programs with less noise.
             </p>
           </div>
@@ -198,13 +198,13 @@ export function LandingPage() {
             {featureCards.map(({ icon: Icon, title, body }) => (
               <article
                 key={title}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-6 transition-[border-color,box-shadow] hover:border-primary-orange/35 hover:shadow-[0_0_40px_-8px_rgba(255,78,0,0.25)]"
+                className="group relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-gradient-to-b from-zinc-100 dark:from-white/[0.04] to-transparent p-6 transition-[border-color,box-shadow] hover:border-primary-orange/35 hover:shadow-[0_0_40px_-8px_rgba(255,78,0,0.25)]"
               >
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-primary-orange/30 bg-primary-orange/10 text-primary-orange">
                   <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                 </div>
-                <h3 className="text-lg font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{body}</p>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{body}</p>
               </article>
             ))}
           </div>
@@ -213,14 +213,14 @@ export function LandingPage() {
 
       <section
         id="customer-portal"
-        className="scroll-mt-20 border-t border-white/[0.06] bg-black/40 px-4 py-20 md:px-8"
+        className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] bg-zinc-100 dark:bg-black/40 px-4 py-20 md:px-8"
       >
         <div className="mx-auto max-w-6xl">
           <div className="max-w-xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               The customer portal your program deserves
             </h2>
-            <p className="mt-3 text-zinc-400">
+            <p className="mt-3 text-zinc-600 dark:text-zinc-400">
               Present importers and partners with the same depth you rely on internally. The experience stays accurate,
               searchable, and anchored to each shipment so communication stays structured instead of improvised.
             </p>
@@ -229,25 +229,25 @@ export function LandingPage() {
             {portalSteps.map(({ n, title, body }) => (
               <li
                 key={n}
-                className="relative rounded-2xl border border-white/[0.08] p-6 pl-8 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:rounded-l-2xl before:bg-primary-orange before:shadow-[0_0_16px_rgba(255,78,0,0.5)]"
+                className="relative rounded-2xl border border-zinc-200 dark:border-white/[0.08] p-6 pl-8 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:rounded-l-2xl before:bg-primary-orange before:shadow-[0_0_16px_rgba(255,78,0,0.5)]"
               >
                 <span className="font-mono text-xs text-primary-orange">{n}</span>
-                <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm text-zinc-400">{body}</p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section id="automation" className="scroll-mt-20 border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section id="automation" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl">
-              <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
                 Automation tuned to your operating model
               </h2>
-              <p className="mt-3 text-zinc-400">
+              <p className="mt-3 text-zinc-600 dark:text-zinc-400">
                 Decide which events matter, then let Containerly route the signal to subscribers and internal owners
                 without another manual distribution list.
               </p>
@@ -260,13 +260,13 @@ export function LandingPage() {
             {automationExamples.map(({ title, body }) => (
               <article
                 key={title}
-                className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-transparent p-6"
+                className="rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-gradient-to-b from-zinc-100 dark:from-white/[0.03] to-transparent p-6"
               >
                 <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg border border-primary-orange/25 bg-primary-orange/10 text-primary-orange">
                   <Zap className="h-4 w-4" strokeWidth={1.75} aria-hidden />
                 </div>
-                <h3 className="text-base font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{body}</p>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{body}</p>
               </article>
             ))}
           </div>
@@ -275,13 +275,13 @@ export function LandingPage() {
 
       <section
         id="how-it-works"
-        className="scroll-mt-20 border-t border-white/[0.06] bg-black/40 px-4 py-20 md:px-8"
+        className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] bg-zinc-100 dark:bg-black/40 px-4 py-20 md:px-8"
       >
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">How it works</h2>
-              <p className="mt-2 max-w-xl text-zinc-400">
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How it works</h2>
+              <p className="mt-2 max-w-xl text-zinc-600 dark:text-zinc-400">
                 Stand up internal visibility first, then extend the same rigor to customers when you are ready to scale
                 the experience.
               </p>
@@ -294,24 +294,24 @@ export function LandingPage() {
             {steps.map(({ n, title, body }) => (
               <li
                 key={n}
-                className="relative rounded-2xl border border-white/[0.08] p-6 pl-8 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:rounded-l-2xl before:bg-primary-orange before:shadow-[0_0_16px_rgba(255,78,0,0.5)]"
+                className="relative rounded-2xl border border-zinc-200 dark:border-white/[0.08] p-6 pl-8 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:rounded-l-2xl before:bg-primary-orange before:shadow-[0_0_16px_rgba(255,78,0,0.5)]"
               >
                 <span className="font-mono text-xs text-primary-orange">{n}</span>
-                <h3 className="mt-2 text-lg font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm text-zinc-400">{body}</p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section id="team" className="scroll-mt-20 border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section id="team" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               One workspace for everyone who owns the answer
             </h2>
-            <p className="mt-3 text-zinc-400">
+            <p className="mt-3 text-zinc-600 dark:text-zinc-400">
               Operations, planning, and leadership stay aligned on the same shipments. Add seats and company level
               billing as you move from pilot teams to full departments.
             </p>
@@ -319,40 +319,40 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="security" className="scroll-mt-20 border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section id="security" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-zinc-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               <ShieldCheck className="h-3.5 w-3.5 text-primary-orange" aria-hidden />
               Trust and control
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               Your program data stays under your governance
             </h2>
-            <p className="mt-3 text-zinc-400">
+            <p className="mt-3 text-zinc-600 dark:text-zinc-400">
               Permissions follow your organization. Published customer views include only the shipments and artifacts you
               choose to expose, with nothing beyond that boundary.
             </p>
           </div>
           <div className="flex flex-1 flex-wrap justify-center gap-4 md:justify-end">
-            <div className="flex h-28 w-40 flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-center text-xs text-zinc-400">
+            <div className="flex h-28 w-40 flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.02] text-center text-xs text-zinc-600 dark:text-zinc-400">
               <Lock className="h-8 w-8 text-primary-orange/80" strokeWidth={1.5} aria-hidden />
-              <span className="font-medium text-zinc-300">Company scoped access</span>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Company scoped access</span>
             </div>
-            <div className="flex h-28 w-40 flex-col items-center justify-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-center text-xs text-zinc-400">
+            <div className="flex h-28 w-40 flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.02] text-center text-xs text-zinc-600 dark:text-zinc-400">
               <ShieldCheck className="h-8 w-8 text-primary-orange/80" strokeWidth={1.5} aria-hidden />
-              <span className="font-medium text-zinc-300">Publish deliberately</span>
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Publish deliberately</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-t border-white/[0.06] px-4 py-20 md:px-8">
+      <section className="border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
         <div className="mx-auto max-w-4xl rounded-3xl border border-primary-orange/25 bg-gradient-to-br from-primary-orange/10 via-transparent to-transparent px-8 py-14 text-center md:px-16">
-          <h2 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
             Launch your documentation portal first
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-zinc-400">
+          <p className="mx-auto mt-3 max-w-md text-zinc-600 dark:text-zinc-400">
             Create commercial shipments, route export documents for customer approval, and open a branded portal. Add
             premium carrier tracking only when documents are signed off and numbers are published.
           </p>
@@ -367,23 +367,23 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/[0.06] px-4 py-10 md:px-8">
+      <footer className="border-t border-zinc-200 dark:border-white/[0.06] px-4 py-10 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
           <p>© {new Date().getFullYear()} Containerly</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            <Link href="/#problem" className="transition-colors hover:text-zinc-300">
+            <Link href="/#problem" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
               Challenge
             </Link>
-            <Link href="/#features" className="transition-colors hover:text-zinc-300">
+            <Link href="/#features" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
               Product
             </Link>
-            <Link href="/#customer-portal" className="transition-colors hover:text-zinc-300">
+            <Link href="/#customer-portal" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
               Portal
             </Link>
-            <Link href="/#automation" className="transition-colors hover:text-zinc-300">
+            <Link href="/#automation" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
               Automation
             </Link>
-            <Link href="/login" className="transition-colors hover:text-zinc-300">
+            <Link href="/login" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
               App
             </Link>
           </div>

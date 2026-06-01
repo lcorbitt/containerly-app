@@ -32,7 +32,7 @@ export function LoginForm() {
             type="text"
             autoComplete="name"
             clearable={false}
-            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             placeholder="Full name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -44,7 +44,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           clearable={false}
-          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -54,7 +54,7 @@ export function LoginForm() {
         <input
           type="password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -71,7 +71,7 @@ export function LoginForm() {
           >
             Sign in
           </button>
-          <span className="text-zinc-300">|</span>
+          <span className="text-zinc-300 dark:text-zinc-600">|</span>
           <button
             type="button"
             disabled={loading}
@@ -107,7 +107,7 @@ export function LoginForm() {
           )}
         </button>
       </form>
-      <p className="mt-4 text-center text-xs text-zinc-400">
+      <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
         <Link href="/" className="underline">
           Back home
         </Link>

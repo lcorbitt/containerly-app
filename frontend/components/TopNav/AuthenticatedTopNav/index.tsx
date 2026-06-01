@@ -2,6 +2,7 @@
 
 import { FileDown, PackagePlus } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
@@ -116,6 +117,7 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
             </div>
           </Reveal>
         </div>
+        <ThemeToggle />
       </div>
     </TopNavShell>
   );

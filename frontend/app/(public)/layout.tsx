@@ -23,7 +23,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="landing-root flex min-h-0 flex-1 flex-col">
+    <div className="public-shell flex min-h-0 flex-1 flex-col">
       <PublicTopNav />
       <main className="relative flex min-h-0 flex-1 flex-col">{children}</main>
     </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavShell } from "../TopNavShell";
 import {
@@ -14,6 +15,7 @@ import {
   PUBLIC_TOP_NAV_MOBILE_LINK_CLASS,
   PUBLIC_TOP_NAV_MOBILE_MENU_BUTTON_CLASS,
   PUBLIC_TOP_NAV_MOBILE_OVERLAY_CLASS,
+  PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS,
   PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS,
 } from "./constants";
 import { usePublicTopNav } from "./usePublicTopNav";
@@ -36,24 +38,28 @@ export function PublicTopNav() {
           </nav>
         ) : null}
 
-        <div className={PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS}>
-          <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS}>
-            Sign in
-          </Link>
-          <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_CTA_CLASS}>
-            Get started
-          </Link>
-        </div>
+        <div className={PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS}>
+          <div className={PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS}>
+            <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS}>
+              Sign in
+            </Link>
+            <Link href={PUBLIC_TOP_NAV_LOGIN_PATH} className={PUBLIC_TOP_NAV_CTA_CLASS}>
+              Get started
+            </Link>
+          </div>
 
-        <button
-          type="button"
-          className={PUBLIC_TOP_NAV_MOBILE_MENU_BUTTON_CLASS}
-          aria-expanded={mobileOpen}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          onClick={toggleMobile}
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+          <button
+            type="button"
+            className={PUBLIC_TOP_NAV_MOBILE_MENU_BUTTON_CLASS}
+            aria-expanded={mobileOpen}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            onClick={toggleMobile}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+
+          <ThemeToggle variant="marketing" />
+        </div>
       </TopNavShell>
 
       {mobileOpen ? (
@@ -71,7 +77,7 @@ export function PublicTopNav() {
                   </Link>
                 ))
               : null}
-            {!hideMarketingLinks ? <hr className="my-4 border-white/10" /> : null}
+            {!hideMarketingLinks ? <hr className="my-4 border-zinc-200 dark:border-white/10" /> : null}
             <Link
               href={PUBLIC_TOP_NAV_LOGIN_PATH}
               className={PUBLIC_TOP_NAV_MOBILE_LINK_CLASS}
