@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# synced from repo root shared/ (see scripts/sync-shared.mjs)
+/shared

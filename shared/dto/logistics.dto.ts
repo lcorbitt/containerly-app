@@ -175,15 +175,6 @@ export type ReviewShipmentDocumentResponse = {
   workflow_status: ShipmentWorkflowStatus;
 };
 
-export type ClaimShipmentAccessBody = {
-  shipment_id: string;
-};
-
-export type ClaimShipmentAccessResponse = {
-  access_id: string;
-  shipment_id: string;
-};
-
 export type ShipmentActivityEventDto = {
   id: string;
   event_type: string;

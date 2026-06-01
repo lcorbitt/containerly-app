@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
+    "postinstall": "node scripts/sync-shared.mjs",
+    "prebuild": "node scripts/sync-shared.mjs",
     "start": "next start",
     "lint": "eslint",
     "mock:jsoncargo": "node ../scripts/mock-jsoncargo-server.mjs"
