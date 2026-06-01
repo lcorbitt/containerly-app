@@ -40,7 +40,7 @@ function ShipmentWorkspaceLayout({
   sidebar: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
       <div className="flex min-w-0 flex-col gap-6">
         {detailsCard}
         {workspaceContent}

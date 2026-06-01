@@ -401,7 +401,7 @@ export function ThreadPanel({
               }}
               disabled={posting}
               className="min-w-0 flex-1 border-0 bg-transparent py-1.5 pl-1 text-sm leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200 dark:placeholder:text-zinc-500"
-              placeholder="Message here… (optional if you attach files)"
+              placeholder="Message here…"
               aria-label="Message"
             />
           </div>
