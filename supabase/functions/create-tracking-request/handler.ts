@@ -24,6 +24,7 @@ export async function handle(req: Request): Promise<Response> {
     }
     return jsonResponse({
       tracking_request: result.tracking_request,
+      ...(result.shipment_id ? { shipment_id: result.shipment_id } : {}),
       ...(result.sync_error ? { sync_error: result.sync_error } : {}),
     });
   } catch (e) {

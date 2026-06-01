@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchOrgAlertsPage, subscribeOrgAlerts } from "@/services/alert.service";
+import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
+import { fetchOrgAlertsPage, orgAlertsRealtimeDedupeKey } from "@/services/alert.service";
 
 const DEFAULT_ORG_ALERTS_LIMIT = 50;
 
@@ -26,13 +27,18 @@ export function useOrgAlertsQuery(organizationId: string | null) {
     enabled: Boolean(organizationId),
   });
 
-  useEffect(() => {
+  const onEvent = useCallback(() => {
     if (!organizationId) return;
-    const sub = subscribeOrgAlerts(organizationId, () => {
-      void qc.invalidateQueries({ queryKey: [...orgAlertsQueryKeyRoot, organizationId] });
-    });
-    return () => sub.unsubscribe();
+    void qc.invalidateQueries({ queryKey: [...orgAlertsQueryKeyRoot, organizationId] });
   }, [organizationId, qc]);
+
+  usePostgresRealtimeInvalidation({
+    enabled: Boolean(organizationId),
+    dedupeKey: organizationId ? orgAlertsRealtimeDedupeKey(organizationId) : "",
+    table: "alerts",
+    filter: organizationId ? `organization_id=eq.${organizationId}` : undefined,
+    onEvent,
+  });
 
   return query;
 }

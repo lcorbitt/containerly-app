@@ -12,6 +12,7 @@ import {
 import {
   notifyOperatorsDocumentRejected,
   notifyOperatorsDocumentsApproved,
+  notifyOperatorsDraftsPublished,
 } from "@supabase-shared/notification-workflow.service.ts";
 import type {
   ReviewShipmentDocumentBody,
@@ -182,8 +183,11 @@ export async function reviewShipmentDocument(
 
 export async function publishDraftDocuments(
   client: SupabaseClient,
+  admin: SupabaseClient | null,
   shipmentId: string,
   userId: string,
+  organizationId: string,
+  fileCount = 1,
 ): Promise<void> {
   await updateShipmentCommercial(client, shipmentId, { workflow_status: "awaiting_review" });
   const now = new Date();
@@ -195,6 +199,18 @@ export async function publishDraftDocuments(
     actor_user_id: userId,
     metadata: {},
   });
+
+  const db = admin ?? client;
+  try {
+    await notifyOperatorsDraftsPublished(db, {
+      organizationId,
+      shipmentId,
+      actorUserId: userId,
+      fileCount,
+    });
+  } catch {
+    /* best-effort */
+  }
 }
 
 export async function recordOriginalsMailed(

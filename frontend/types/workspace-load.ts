@@ -49,6 +49,7 @@ export interface ShipmentMessageThreadSummary {
   last_message_at: string;
   last_message_preview: string;
   last_author_kind: string;
+  last_author_user_id: string | null;
   message_count: number;
 }
 

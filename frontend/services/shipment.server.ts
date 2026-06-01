@@ -550,6 +550,19 @@ export async function updateShipmentTagsQuery(
   if (error) throw new Error(error.message);
   return normalized;
 }
+export async function fetchShipmentAssigneeQuery(
+  supabase: SupabaseClient,
+  shipmentId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("shipments")
+    .select("assignee_user_id")
+    .eq("id", shipmentId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.assignee_user_id as string | null | undefined) ?? null;
+}
+
 export async function updateShipmentAssigneeQuery(
   supabase: SupabaseClient,
   input: {
@@ -564,6 +577,23 @@ export async function updateShipmentAssigneeQuery(
     .eq("id", input.shipmentId)
     .eq("organization_id", input.organizationId);
   if (error) throw new Error(error.message);
+}
+
+export async function fetchShipmentParticipantRowQuery(
+  supabase: SupabaseClient,
+  participantRowId: string,
+): Promise<{ shipment_id: string; user_id: string } | null> {
+  const { data, error } = await supabase
+    .from("shipment_participants")
+    .select("shipment_id, user_id")
+    .eq("id", participantRowId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data?.shipment_id || !data?.user_id) return null;
+  return {
+    shipment_id: data.shipment_id as string,
+    user_id: data.user_id as string,
+  };
 }
 
 export async function insertShipmentParticipantQuery(

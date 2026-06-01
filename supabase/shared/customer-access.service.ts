@@ -30,7 +30,12 @@ import type {
   CompleteCustomerSetupResponse,
   PostCustomerMessageResponse,
 } from "@shared/dto/customer-access.dto.ts";
-import { notifyCustomerInviteSent, notifyOperatorsNewCustomerMessage } from "@supabase-shared/notification-workflow.service.ts";
+import {
+  notifyCustomerInviteSent,
+  notifyOperatorsCustomerAccessGranted,
+  notifyOperatorsNewCustomerMessage,
+} from "@supabase-shared/notification-workflow.service.ts";
+import { fetchProfileDisplayName } from "../../../shared/notification/in-app.ts";
 
 // ---------------------------------------------------------------------------
 // Crypto helpers
@@ -246,6 +251,14 @@ export async function acceptCustomerInvite(
     await updateProfileAccountKind(admin, userId, "customer");
   }
 
+  const customerName = await fetchProfileDisplayName(admin, userId);
+  await notifyOperatorsCustomerAccessGranted(admin, {
+    organizationId: orgId,
+    shipmentId,
+    customerDisplayName: customerName,
+    actorUserId: userId,
+  });
+
   return { ok: true, shipment_id: shipmentId, shipment_access_id: access.id as string };
 }
 
@@ -321,6 +334,14 @@ export async function claimShipmentAccess(
   if ((memberCount ?? 0) === 0) {
     await updateProfileAccountKind(admin, userId, "customer");
   }
+
+  const customerName = await fetchProfileDisplayName(admin, userId);
+  await notifyOperatorsCustomerAccessGranted(admin, {
+    organizationId: orgId,
+    shipmentId,
+    customerDisplayName: customerName,
+    actorUserId: userId,
+  });
 
   return {
     ok: true,
@@ -463,6 +484,7 @@ export async function postCustomerMessage(
     containerId: shipmentScoped ? null : containerId,
     orgName: (orgRow?.name as string | undefined) ?? "Containerly",
     preview: text,
+    customerUserId: userId,
   });
 
   return {

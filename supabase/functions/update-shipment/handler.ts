@@ -1,5 +1,5 @@
 import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
+import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
 import { updateCommercialShipment } from "@supabase-shared/shipment-operations.service.ts";
 import { recordOriginalsMailed } from "@supabase-shared/document-workflow.service.ts";
 import { notifyCustomerDocumentsMailed } from "@supabase-shared/notification-workflow.service.ts";
@@ -34,15 +34,17 @@ export async function handle(req: Request): Promise<Response> {
         auth.userId,
       );
 
+      const notifyClient = tryCreateServiceClient() ?? userClient;
       const { data: orgRow } = await fetchOrganizationForPortal(userClient, body.organization_id);
       const { data: customers } = await listActiveCustomerAccessForShipment(userClient, body.shipment_id);
       for (const row of customers ?? []) {
-        await notifyCustomerDocumentsMailed(userClient, {
+        await notifyCustomerDocumentsMailed(notifyClient, {
           organizationId: body.organization_id,
           shipmentId: body.shipment_id,
           customerUserId: row.customer_user_id as string,
           orgName: (orgRow?.name as string | undefined) ?? "Containerly",
           trackingNumber: mailTracking.trim(),
+          actorUserId: auth.userId,
         });
       }
     }

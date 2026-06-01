@@ -24,6 +24,10 @@ import {
   updateTrackingRequestStatus,
 } from "@models/tracking_requests.ts";
 import { normalizeContainerNumber } from "@supabase-shared/container-number.ts";
+import {
+  notifyOperatorsTrackingLinked,
+  notifyOperatorsTrackingSyncFailed,
+} from "@supabase-shared/notification-workflow.service.ts";
 import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "@supabase-shared/tracking-sync.ts";
 import type {
   CreateTrackingRequestBody,
@@ -162,6 +166,8 @@ export async function createTrackingRequest(
     if (spErr && spErr.code !== "23505") throw spErr;
   }
 
+  const notifyClient = admin ?? userClient;
+
   if (input.run_sync !== false) {
     await updateTrackingRequestStatus(userClient, inserted.id as string, { status: "syncing" });
     const { data: shipForSync } = await fetchShipmentShippingLine(userClient, shipmentId);
@@ -180,18 +186,47 @@ export async function createTrackingRequest(
         status: "failed",
         error_message: syncMessage,
       });
+      try {
+        await notifyOperatorsTrackingSyncFailed(notifyClient, {
+          organizationId: input.organization_id,
+          shipmentId,
+          containerNumber: input.container_number.trim(),
+          errorMessage: syncMessage,
+        });
+      } catch {
+        /* best-effort */
+      }
       const { data: afterFail } = await fetchTrackingRequestById(userClient, inserted.id as string);
       return {
         ok: true,
         tracking_request: (afterFail ?? inserted) as Record<string, unknown>,
+        shipment_id: shipmentId,
         sync_error: syncMessage,
       };
     }
   }
 
+  const skipPerContainerLinkedAlert = Boolean(groupId && bol);
+  if (!skipPerContainerLinkedAlert) {
+    try {
+      await notifyOperatorsTrackingLinked(notifyClient, {
+        organizationId: input.organization_id,
+        shipmentId,
+        actorUserId: userId,
+        containerNumber: input.container_number.trim(),
+      });
+    } catch {
+      /* best-effort */
+    }
+  }
+
   const { data: finalRow } = await fetchTrackingRequestById(userClient, inserted.id as string);
 
-  return { ok: true, tracking_request: (finalRow ?? inserted) as Record<string, unknown> };
+  return {
+    ok: true,
+    tracking_request: (finalRow ?? inserted) as Record<string, unknown>,
+    shipment_id: shipmentId,
+  };
 }
 
 // ---------------------------------------------------------------------------

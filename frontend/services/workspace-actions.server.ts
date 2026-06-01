@@ -10,6 +10,11 @@ import {
   MAX_ATTACHMENT_SIZE_LABEL,
   WORKSPACE_FILES_BUCKET,
 } from "@/utils/workspace-files";
+import {
+  runCustomerDocumentUploadNotification,
+  runOperatorDraftsPublishedNotification,
+  runOperatorShipmentMessageNotifications,
+} from "@/services/notification.server";
 
 export async function createWorkspaceStorageSignedUrlQuery(
   supabase: SupabaseClient,
@@ -534,6 +539,18 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
       attachmentErrors.push(e instanceof Error ? e.message : "Could not upload an attachment");
     }
   }
+  try {
+    await runOperatorShipmentMessageNotifications({
+      organizationId: input.organizationId,
+      shipmentId: input.shipmentId,
+      actorUserId: userId,
+      body: input.body,
+      internalOnly: input.internalOnly,
+    });
+  } catch {
+    /* best-effort */
+  }
+
   return { messageId, attachmentErrors };
 }
 
@@ -621,6 +638,37 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
     if (activityErr) {
       throw new Error(activityErr.message);
     }
+
+    const draftGroup = input.documentGroup?.trim().toLowerCase();
+    if (draftGroup === "draft" || draftGroup === "revision") {
+      try {
+        await runOperatorDraftsPublishedNotification({
+          organizationId: input.organizationId,
+          shipmentId: input.shipmentId,
+          actorUserId: userId,
+          fileCount: out.length,
+        });
+      } catch {
+        /* best-effort */
+      }
+    }
+  }
+
+  const customerUploads = out.filter((row) => row.uploaded_by_kind === "customer");
+  for (const row of customerUploads) {
+    const docGroup = row.document_group?.trim().toLowerCase();
+    if (docGroup === "draft" || docGroup === "revision") {
+      try {
+        await runCustomerDocumentUploadNotification({
+          organizationId: input.organizationId,
+          shipmentId: input.shipmentId,
+          customerUserId: userId,
+          fileName: row.file_name,
+        });
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 
   return out;
@@ -631,12 +679,12 @@ const ORG_SHIPMENT_MESSAGE_FETCH_LIMIT = 5000;
 
 export async function loadOrgShipmentMessageThreadsForUser(
   supabase: SupabaseClient,
-  _userId: string,
+  userId: string,
   organizationId: string,
 ): Promise<OrgShipmentMessageThreadsResult> {
   const { data: msgRows, error } = await supabase
     .from("report_messages")
-    .select("shipment_id, body, author_kind, created_at")
+    .select("shipment_id, body, author_kind, author_user_id, created_at")
     .eq("organization_id", organizationId)
     .not("shipment_id", "is", null)
     .is("container_id", null)
@@ -652,6 +700,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
       last_message_at: string;
       last_message_preview: string;
       last_author_kind: string;
+      last_author_user_id: string | null;
       message_count: number;
     }
   >();
@@ -668,6 +717,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
       last_message_at: row.created_at as string,
       last_message_preview: typeof row.body === "string" ? row.body.trim() : "",
       last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
+      last_author_user_id: (row.author_user_id as string | null | undefined) ?? null,
       message_count: 1,
     });
   }

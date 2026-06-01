@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { notifyBolImported } from "@/services/notification.service";
 import { createTrackingRequest } from "@/services/tracking.service";
 import { lookupBolContainers } from "@/services/shipment.service";
 import { useToast } from "@/contexts/toast";
@@ -91,11 +92,12 @@ export function useBolImportDialog({
     const shipmentGroupId = crypto.randomUUID();
     setImportBusy(true);
     let ok = 0;
+    let shipmentIdForNotify: string | null = null;
     const failures: string[] = [];
     try {
       for (const container_number of toCreate) {
         try {
-          await createTrackingRequest({
+          const created = await createTrackingRequest({
             organization_id: organizationId,
             container_number,
             run_sync: true,
@@ -105,6 +107,9 @@ export function useBolImportDialog({
               ? { shipping_line: shippingLineParam.trim() }
               : {}),
           });
+          if (!shipmentIdForNotify && typeof created.shipment_id === "string") {
+            shipmentIdForNotify = created.shipment_id;
+          }
           ok += 1;
         } catch (e) {
           failures.push(
@@ -113,6 +118,18 @@ export function useBolImportDialog({
         }
       }
       if (ok > 0) {
+        if (shipmentIdForNotify && bolNorm) {
+          try {
+            await notifyBolImported({
+              organizationId,
+              shipmentId: shipmentIdForNotify,
+              billOfLading: bolNorm,
+              containerCount: ok,
+            });
+          } catch {
+            /* best-effort */
+          }
+        }
         toast(
           ok === 1
             ? "Created 1 tracking request."

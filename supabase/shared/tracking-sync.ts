@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { insertAlert } from "@models/alerts.ts";
+import { notifyOperatorsTrackingSyncFailed } from "@supabase-shared/notification-workflow.service.ts";
+import { notifyShipmentStakeholdersCarrierAlert } from "../../../shared/notification/in-app.ts";
 import { buildContainerEnrichment } from "@supabase-shared/providers/jsoncargo/enrichment.ts";
 import { getJsoncargoConfig } from "@supabase-shared/providers/jsoncargo/client.ts";
 import { fetchLiveFromProvider, type NormalizedContainer } from "@supabase-shared/providers/jsoncargo/container-tracking.ts";
@@ -133,7 +134,7 @@ export async function syncContainerByNumber(
 
     if (opts.trackingRequestId) {
       await appendEventsAndAlerts(
-        userClient,
+        admin ?? userClient,
         organizationId,
         opts.trackingRequestId,
         upserted.id as string,
@@ -195,7 +196,7 @@ export async function resolveShippingLineForTrackingRequest(
 }
 
 async function appendEventsAndAlerts(
-  userClient: SupabaseClient,
+  alertClient: SupabaseClient,
   organizationId: string,
   trackingRequestId: string,
   containerId: string,
@@ -208,9 +209,9 @@ async function appendEventsAndAlerts(
     occurred_at: data.occurred_at,
   };
 
-  const { data: recent } = await fetchLatestTrackingEventForRequest(userClient, trackingRequestId);
+  const { data: recent } = await fetchLatestTrackingEventForRequest(alertClient, trackingRequestId);
 
-  await updateTrackingRequestStatus(userClient, trackingRequestId, {
+  await updateTrackingRequestStatus(alertClient, trackingRequestId, {
     container_id: containerId,
     status: "active",
     last_sync_at: new Date().toISOString(),
@@ -224,7 +225,7 @@ async function appendEventsAndAlerts(
     (recent.occurred_at as string) !== primaryEvent.occurred_at;
 
   if (changed) {
-    await insertTrackingEvent(userClient, {
+    await insertTrackingEvent(alertClient, {
       organization_id: organizationId,
       tracking_request_id: trackingRequestId,
       container_id: containerId,
@@ -238,15 +239,20 @@ async function appendEventsAndAlerts(
 
   const s = (data.status ?? "").toUpperCase();
   if (s.includes("DELAY") || s.includes("EXCEPTION")) {
-    await insertAlert(userClient, {
-      organization_id: organizationId,
-      tracking_request_id: trackingRequestId,
-      container_id: containerId,
-      alert_type: s.includes("EXCEPTION") ? "STATUS_EXCEPTION" : "SHIPMENT_DELAYED",
-      severity: s.includes("EXCEPTION") ? "critical" : "warning",
-      message: `Container ${data.container_number} reported status: ${data.status}`,
-      details: { status: data.status },
-    });
+    const { data: containerRow } = await fetchContainerShipmentId(alertClient, containerId, organizationId);
+    const shipmentId = containerRow?.shipment_id as string | null | undefined;
+    if (shipmentId) {
+      await notifyShipmentStakeholdersCarrierAlert(alertClient, {
+        organizationId,
+        shipmentId,
+        containerId,
+        trackingRequestId,
+        alertType: s.includes("EXCEPTION") ? "STATUS_EXCEPTION" : "SHIPMENT_DELAYED",
+        severity: s.includes("EXCEPTION") ? "critical" : "warning",
+        message: `Container ${data.container_number} reported status: ${data.status}`,
+        details: { status: data.status },
+      });
+    }
   }
 }
 
@@ -307,6 +313,18 @@ export async function syncStaleRequests(
         error_message: msg,
         next_check_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       });
+      if (shipmentId) {
+        try {
+          await notifyOperatorsTrackingSyncFailed(admin, {
+            organizationId: row.organization_id as string,
+            shipmentId,
+            containerNumber: row.container_number as string,
+            errorMessage: msg,
+          });
+        } catch {
+          /* best-effort */
+        }
+      }
       results.push({ id: row.id as string, ok: false, error: msg });
     }
   }

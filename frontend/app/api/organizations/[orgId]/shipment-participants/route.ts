@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { runParticipantAddedNotification } from "@/services/notification.server";
 import { insertShipmentParticipantQuery } from "@/services/shipment.server";
 
 export async function POST(
@@ -30,6 +31,16 @@ export async function POST(
 
   try {
     await insertShipmentParticipantQuery(supabase, { shipmentId, userId: targetUserId });
+    try {
+      await runParticipantAddedNotification({
+        organizationId: orgId,
+        shipmentId,
+        participantUserId: targetUserId,
+        actorUserId: user.id,
+      });
+    } catch {
+      /* best-effort */
+    }
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Insert failed" },

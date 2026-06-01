@@ -24,6 +24,7 @@ export type CreateTrackingRequestBody = {
 
 export type CreateTrackingRequestResponse = {
   tracking_request: Record<string, unknown>;
+  shipment_id?: string;
   sync_error?: string;
 };
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { updateShipmentAssigneeQuery } from "@/services/shipment.server";
+import { runAssigneeChangeNotifications } from "@/services/notification.server";
+import { fetchShipmentAssigneeQuery, updateShipmentAssigneeQuery } from "@/services/shipment.server";
 
 export async function PATCH(
   request: Request,
@@ -29,12 +30,25 @@ export async function PATCH(
         ? body.assignee_user_id
         : null;
 
+  let previousAssigneeUserId: string | null = null;
   try {
+    previousAssigneeUserId = await fetchShipmentAssigneeQuery(supabase, shipmentId);
     await updateShipmentAssigneeQuery(supabase, {
       shipmentId,
       organizationId: orgId,
       assigneeUserId,
     });
+    try {
+      await runAssigneeChangeNotifications({
+        organizationId: orgId,
+        shipmentId,
+        actorUserId: user.id,
+        previousAssigneeUserId,
+        newAssigneeUserId: assigneeUserId,
+      });
+    } catch {
+      /* best-effort */
+    }
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Update failed" },

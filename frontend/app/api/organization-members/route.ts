@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { OrganizationMemberRole } from "@/types/database";
 import { inviteOrAddOrganizationMember } from "@/services/organization.server";
+import { runOrgMemberJoinedNotifications } from "@/services/notification.server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -55,8 +56,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
+  const membership = result.membership;
+  const newMemberUserId = membership.user_id as string;
+  try {
+    await runOrgMemberJoinedNotifications({
+      organizationId: orgId,
+      newMemberUserId,
+      actorUserId: user.id,
+      memberEmail: emailRaw,
+      invited: result.invited,
+    });
+  } catch {
+    /* alerts are best-effort */
+  }
+
   return NextResponse.json({
-    membership: result.membership,
+    membership,
     invited: result.invited,
   });
 }
