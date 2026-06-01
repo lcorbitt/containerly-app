@@ -3,6 +3,10 @@
 import { Loader2 } from "lucide-react";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
+  ShipmentThreadStartBanner,
+  SHIPMENT_THREAD_EMPTY_STATE_TEXT,
+} from "@/components/WorkspaceThreadPanel/ShipmentThreadStartBanner";
+import {
   SHIPMENT_MESSAGES_LOADING_CONTENT_CLASS,
   SHIPMENT_MESSAGES_LOADING_SHELL_CLASS,
   SHIPMENT_MESSAGES_LOADING_SPINNER_CLASS,
@@ -103,20 +107,8 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
               ? messageAuthorByUserId[currentUserId]!
               : ""
           }
-          emptyStateText="No messages yet."
-          threadStartBanner={
-            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                Welcome to
-                {shipmentLabel ? (
-                  <span className="font-semibold">
-                    {" "}
-                    Order No. <span className="font-mono">{shipmentLabel}</span>. This is your direct message thread.
-                  </span>
-                ) : null}
-              </p>
-            </div>
-          }
+          emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}
+          threadStartBanner={<ShipmentThreadStartBanner shipmentLabel={shipmentLabel} />}
         />
       </div>
     </section>

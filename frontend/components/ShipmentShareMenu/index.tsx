@@ -10,6 +10,7 @@ import {
   SHIPMENT_SHARE_MENU_PANEL_CLASS,
   SHIPMENT_SHARE_MENU_PANEL_REVEAL_CLASS,
   SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS,
+  SHIPMENT_SHARE_MENU_PRIMARY_ACTION_PORTAL_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_PORTAL_CLASS,
 } from "./constants";
@@ -17,7 +18,11 @@ import type { ShipmentShareMenuProps } from "./types";
 import { useShipmentShareMenu } from "./useShipmentShareMenu";
 import { buildShipmentShareAccessRows, shipmentPortalUrl } from "./utils";
 
-export function ShipmentShareMenu({ shipmentId, state }: ShipmentShareMenuProps) {
+export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: ShipmentShareMenuProps) {
+  const primaryActionClass =
+    variant === "portal"
+      ? SHIPMENT_SHARE_MENU_PRIMARY_ACTION_PORTAL_CLASS
+      : SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS;
   const { menuId, triggerRef, panelRef, open, panelPos, toggle } = useShipmentShareMenu();
   const accessRows = buildShipmentShareAccessRows(state);
   const portalUrl = shipmentPortalUrl(shipmentId, state.origin);
@@ -75,7 +80,7 @@ export function ShipmentShareMenu({ shipmentId, state }: ShipmentShareMenuProps)
                       type="button"
                       disabled={state.inviteCreating}
                       onClick={() => void state.createInvite()}
-                      className={SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS}
+                      className={primaryActionClass}
                     >
                       {state.inviteCreating ? <WorkspacePostSpinner /> : "Share"}
                     </button>

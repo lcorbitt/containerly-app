@@ -1,8 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithPassword, signUpWithEmail } from "@/services/auth.service";
+import {
+  LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_IN,
+  LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP,
+  LOGIN_FORM_LOADING_SUBTITLE_WORKSPACE,
+  LOGIN_FORM_LOADING_TITLE_SIGN_IN,
+  LOGIN_FORM_LOADING_TITLE_SIGN_UP,
+  LOGIN_FORM_LOADING_WORKSPACE_MESSAGE_DELAY_MS,
+} from "../constants";
 
 export function useLoginForm() {
   const router = useRouter();
@@ -15,6 +23,35 @@ export function useLoginForm() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingSubtitle, setLoadingSubtitle] = useState(
+    LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_IN,
+  );
+
+  const loadingTitle =
+    mode === "signup" ? LOGIN_FORM_LOADING_TITLE_SIGN_UP : LOGIN_FORM_LOADING_TITLE_SIGN_IN;
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingSubtitle(
+        mode === "signup"
+          ? LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP
+          : LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_IN,
+      );
+      return;
+    }
+
+    setLoadingSubtitle(
+      mode === "signup"
+        ? LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP
+        : LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_IN,
+    );
+
+    const timer = window.setTimeout(() => {
+      setLoadingSubtitle(LOGIN_FORM_LOADING_SUBTITLE_WORKSPACE);
+    }, LOGIN_FORM_LOADING_WORKSPACE_MESSAGE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [loading, mode]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,6 +74,7 @@ export function useLoginForm() {
           return;
         }
         setMessage("Check your email to confirm, then sign in.");
+        setLoading(false);
       } else {
         const { error } = await signInWithPassword(email, password);
         if (error) throw error;
@@ -45,7 +83,6 @@ export function useLoginForm() {
       }
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Authentication failed");
-    } finally {
       setLoading(false);
     }
   }
@@ -61,6 +98,8 @@ export function useLoginForm() {
     setMode,
     message,
     loading,
+    loadingTitle,
+    loadingSubtitle,
     submit,
   };
 }

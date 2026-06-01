@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
-import { SHIPMENT_MESSAGES_THREAD_SHELL_CLASS } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentMessagesPanel/constants";
+import {
+  ShipmentThreadStartBanner,
+  SHIPMENT_THREAD_EMPTY_STATE_TEXT,
+} from "@/components/WorkspaceThreadPanel/ShipmentThreadStartBanner";
+import {
+  SHIPMENT_MESSAGES_PANEL_SHELL_CLASS,
+  SHIPMENT_MESSAGES_THREAD_SHELL_CLASS,
+} from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentMessagesPanel/constants";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
@@ -14,7 +20,6 @@ import { PortalDetailsTabs } from "./PortalDetailsTabs";
 import { PortalTrackingPanel } from "./PortalTrackingPanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
-  PORTAL_MESSAGES_SHELL_CLASS,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
@@ -72,30 +77,6 @@ export function PublicContainerReport({
   const orgLogoUrl = organization?.org_image_path
     ? getOrgImagePublicUrl(createClient(), organization.org_image_path)
     : null;
-
-  const threadStartBanner = useMemo(() => {
-    const audience =
-      payload.viewer === "org_member"
-        ? "your customer and logistics team"
-        : "your logistics team";
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-          Shipment messages
-          {shipmentLabel ? (
-            <>
-              {" "}
-              · Order <span className="font-mono">{shipmentLabel}</span>
-            </>
-          ) : null}
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          This thread is shared with {audience}. Everyone sees the same messages with names and
-          timestamps.
-        </p>
-      </div>
-    );
-  }, [payload.viewer, shipmentLabel]);
 
   return (
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
@@ -192,10 +173,7 @@ export function PublicContainerReport({
                 />
               }
               messagesPanel={
-                <section
-                  aria-label="Shipment messages"
-                  className={`${PORTAL_MESSAGES_SHELL_CLASS} min-h-[min(28rem,70vh)]`}
-                >
+                <section aria-label="Shipment messages" className={SHIPMENT_MESSAGES_PANEL_SHELL_CLASS}>
                   {threadReadOnly ? (
                     <p className="border-b border-zinc-100 px-5 py-3 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                       Messaging is read-only in this preview.
@@ -231,8 +209,8 @@ export function PublicContainerReport({
                       allowMessageDelete={false}
                       composerHidden={threadReadOnly}
                       allowReply={!threadReadOnly}
-                      emptyStateText="No messages yet. Start the conversation below."
-                      threadStartBanner={threadStartBanner}
+                      emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}
+                      threadStartBanner={<ShipmentThreadStartBanner shipmentLabel={shipmentLabel} />}
                     />
                   </div>
                 </section>

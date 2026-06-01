@@ -13,3 +13,6 @@ export const SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS =
 
 export const SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS =
   "inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-[#2383E2] px-3 text-sm font-medium text-white transition-opacity hover:bg-[#1f7fd6] disabled:cursor-not-allowed disabled:opacity-50";
+
+export const SHIPMENT_SHARE_MENU_PRIMARY_ACTION_PORTAL_CLASS =
+  "inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary-orange px-3 text-sm font-medium text-white transition-opacity hover:bg-primary-orange/90 disabled:cursor-not-allowed disabled:opacity-50";

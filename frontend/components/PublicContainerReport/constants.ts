@@ -4,9 +4,3 @@ export const PORTAL_COMMERCIAL_CARD_CLASS =
 
 export const PORTAL_STATUS_STRIP_CLASS =
   "px-4 py-5 dark:border-zinc-800 sm:px-6";
-
-export const PORTAL_MESSAGES_SHELL_CLASS =
-  "flex h-full min-h-0 min-w-0 flex-1 flex-col";
-
-export const PORTAL_MESSAGES_SCROLL_CLASS =
-  "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-4 sm:px-6";
