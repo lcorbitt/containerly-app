@@ -287,7 +287,6 @@ export function ShipmentDataImportModal({
           {!showBulkResults ? (
             <>
               <div>
-                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Import file</p>
                 <div
                   onDragEnter={(e) => {
                     e.preventDefault();

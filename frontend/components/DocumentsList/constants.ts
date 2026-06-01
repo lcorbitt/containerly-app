@@ -1,5 +1,5 @@
 /** Opens upload modal / custom flow (not the native file picker). */
-export const DOCUMENTS_LIST_ADD_LABEL = "Add documents";
+export const DOCUMENTS_LIST_ADD_LABEL = "Add Documents";
 
 /** Direct native file picker upload. */
 export const DOCUMENTS_LIST_UPLOAD_LABEL = "Upload";
