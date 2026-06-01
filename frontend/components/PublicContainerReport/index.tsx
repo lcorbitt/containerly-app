@@ -7,18 +7,28 @@ import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import { formatTimestamp } from "@/utils/datetime";
 import { ShipmentDetailsPanel } from "@/components/ShipmentDetailsPanel";
-import { ShipmentCommercialPanel } from "@/components/ShipmentCommercialPanel";
 import { ShipmentActivityPanel } from "@/components/ShipmentActivityPanel";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
-import { CarrierReportedStatusPill, ShipmentWorkflowStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
+import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { truncatedReplyPreview, type ThreadNode } from "@/utils/report-message-tree";
 import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
 import { VesselEnrichmentCard } from "@/components/VesselEnrichmentCard";
-import { attachmentUploaderKindLabel } from "@shared/dto/attachment.dto";
+import { BrandedHeader } from "@/components/BrandedHeader";
+import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
+import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
+import { PortalDetailsTabs } from "./PortalDetailsTabs";
+import {
+  PORTAL_COMMERCIAL_CARD_CLASS,
+  PORTAL_MESSAGES_SCROLL_CLASS,
+  PORTAL_MESSAGES_SHELL_CLASS,
+  PORTAL_STATUS_STRIP_CLASS,
+  PORTAL_TRACKING_STACK_CLASS,
+} from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { publicThreadAuthorName } from "./utils";
+import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
 
 function SubmitSpinner() {
   return (
@@ -134,7 +144,6 @@ export function PublicContainerReport({
 }) {
   const {
     payload,
-    report,
     organization,
     summary,
     insights,
@@ -152,7 +161,6 @@ export function PublicContainerReport({
     messageById,
     replyPreview,
     showMessageScopeLabels,
-    tabDefs,
 
     body,
     setBody,
@@ -183,6 +191,7 @@ export function PublicContainerReport({
     rejectReasonById,
     setRejectReasonById,
     handleDocumentReview,
+    showDocumentScopeLabels,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
 
   const orgLogoUrl = organization?.org_image_path
@@ -192,30 +201,20 @@ export function PublicContainerReport({
   return (
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-          <div className="border-b border-zinc-100 bg-linear-to-br from-white via-zinc-50/80 to-sky-50/30 px-5 py-6 sm:px-8 sm:py-8 dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-950 dark:to-sky-950/20">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex min-w-0 flex-1 items-start gap-4">
-              {orgLogoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={orgLogoUrl}
-                  alt=""
-                  className="h-12 w-12 shrink-0 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700"
-                />
-              ) : null}
-              <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
-              {organization?.name ?? "Shipment report"}
-            </p>
-            <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50">
-              {report.title?.trim() ||
-                (summary.order_number?.trim()
-                  ? summary.order_number.trim()
-                  : `Container ${summary.container_number}`)}
-            </h1>
+        <div className="flex flex-col gap-6">
+          <header className={PORTAL_COMMERCIAL_CARD_CLASS}>
+            <BrandedHeader
+              variant="embedded"
+              organizationName={organization?.name ?? "Shipment report"}
+              organizationImageUrl={orgLogoUrl}
+              actions={headerActions}
+            />
+
+            <PortalCommercialDetailsSection commercialDetails={commercialDetails} summary={summary} />
+
+            <div className={PORTAL_STATUS_STRIP_CLASS}>
             {payload.viewer === "operator" ? (
-              <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Use <span className="font-medium text-zinc-700 dark:text-zinc-300">Share</span> to invite importers.{" "}
                 <Link
                   href={
@@ -230,22 +229,17 @@ export function PublicContainerReport({
                 for team messages and documents.
               </p>
             ) : null}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {commercialDetails?.workflow_status ? (
-                <ShipmentWorkflowStatusPill status={commercialDetails.workflow_status} compact />
-              ) : null}
-              {hasTracking ? (
-                <>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
-                  >
-                    {insights.risk_level.toUpperCase()} risk
-                  </span>
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
-                </>
-              ) : null}
-            </div>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+            {hasTracking ? (
+              <div className={`flex flex-wrap items-center gap-2${payload.viewer === "operator" ? " mt-3" : ""}`}>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
+                >
+                  {insights.risk_level.toUpperCase()} risk
+                </span>
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
+              </div>
+            ) : null}
+            <p className={`max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300${hasTracking || payload.viewer === "operator" ? " mt-3" : ""}`}>
               {insights.headline}
             </p>
             {summary.customer_note?.trim() ? (
@@ -288,176 +282,131 @@ export function PublicContainerReport({
                 </button>
               </div>
             ) : null}
-              </div>
-              </div>
-              {headerActions ? <div className="flex shrink-0 items-start pt-0.5">{headerActions}</div> : null}
             </div>
-          </div>
+          </header>
 
-          <div className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
-            <div
-              role="tablist"
-              aria-label="Report sections"
-              className="flex w-full flex-col gap-2 rounded-xl bg-zinc-50/80 p-2 sm:flex-row dark:bg-zinc-900/80"
-            >
-              {tabDefs.map(({ id, label, shortLabel, icon: Icon, count }) => {
-                const selected = dashboardTab === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    id={`report-tab-${id}`}
-                    aria-controls={`report-panel-${id}`}
-                    onClick={() => setDashboardTab(id)}
-                    className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:justify-center ${
-                      selected
-                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
-                        : "text-zinc-600 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                    <span className="sm:hidden">{shortLabel}</span>
-                    <span className="hidden sm:inline">{label}</span>
-                    {count !== undefined && count > 0 ? (
-                      <span
-                        className={`ml-0.5 inline-flex min-w-5 justify-center rounded-full px-1.5 py-0 text-[11px] font-semibold tabular-nums ${
-                          selected
-                            ? "bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
-                            : "bg-zinc-200/80 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                        }`}
-                      >
-                        {count > 99 ? "99+" : count}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 sm:mt-8">
-          {dashboardTab === "tracking" ? (
-            <div
-              role="tabpanel"
-              id="report-panel-tracking"
-              aria-labelledby="report-tab-tracking"
-              className="flex flex-col gap-6"
-            >
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Container
-                  </p>
-                  <p className="mt-2 font-mono text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    {summary.container_number}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Carrier
-                  </p>
-                  <p className="mt-2 text-base font-medium text-zinc-900 dark:text-zinc-50">
-                    {summary.carrier ?? "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Tracking sync
-                  </p>
-                  <div className="mt-2">
-                    <TrackingWorkflowStatusPill status={summary.tracking_request_status} />
+          <section className={WORKSPACE_TABS_SECTION_CLASS}>
+            <PortalDetailsTabs
+              activeTab={dashboardTab}
+              onTabChange={setDashboardTab}
+              hasTracking={hasTracking}
+              trackingPanel={
+                <div className={PORTAL_TRACKING_STACK_CLASS}>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        Container
+                      </p>
+                      <p className="mt-2 font-mono text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        {summary.container_number}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        Carrier
+                      </p>
+                      <p className="mt-2 text-base font-medium text-zinc-900 dark:text-zinc-50">
+                        {summary.carrier ?? "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        Tracking sync
+                      </p>
+                      <div className="mt-2">
+                        <TrackingWorkflowStatusPill status={summary.tracking_request_status} />
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        Reported status
+                      </p>
+                      <div className="mt-2">
+                        <CarrierReportedStatusPill status={summary.status} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Reported status
-                  </p>
-                  <div className="mt-2">
-                    <CarrierReportedStatusPill status={summary.status} />
+
+                  <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5">
+                    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Last known location</h2>
+                    <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                      {summary.last_known_location != null ? String(summary.last_known_location) : "—"}
+                    </p>
                   </div>
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5">
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Last known location</h2>
-                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                  {summary.last_known_location != null ? String(summary.last_known_location) : "—"}
-                </p>
-              </div>
+                  <ShipmentDetailsPanel
+                    location={summary.shipment_context}
+                    title="Shipment details"
+                    subtitle="Latest carrier-reported facts for this container."
+                    className="border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+                  />
 
-              <ShipmentDetailsPanel
-                location={summary.shipment_context}
-                title="Shipment details"
-                subtitle="Latest carrier-reported facts for this container."
-                className="border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
-              />
-
-              {enrichmentBlock && typeof enrichmentBlock === "object" ? (
-                <VesselEnrichmentCard enrichment={enrichmentBlock} />
-              ) : null}
-
-              <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <ShipmentTimeline
-                  events={timeline}
-                  interactiveDetail={false}
-                  className="rounded-none border-0 shadow-none"
-                />
-              </div>
-
-              {alerts.length > 0 ? (
-                <section className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-                  <h2 className="mb-3 text-sm font-semibold text-amber-950 dark:text-amber-100">Alerts</h2>
-                  <ul className="flex flex-col gap-2 text-sm">
-                    {alerts.map((a) => (
-                      <li
-                        key={a.id}
-                        className="rounded-lg border border-amber-200/60 bg-white/80 px-3 py-2 dark:border-amber-900/40 dark:bg-zinc-950/40"
-                      >
-                        <span className="font-medium text-amber-950 dark:text-amber-100">{a.severity}</span>
-                        <span className="text-amber-800/80 dark:text-amber-200/80"> · {a.alert_type}</span>
-                        <p className="text-zinc-800 dark:text-zinc-200">{a.message}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
-
-              {payload.raw_external ? (
-                <section className="rounded-xl border border-zinc-200/90 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-950/50">
-                  <button
-                    type="button"
-                    onClick={() => setRawOpen((o) => !o)}
-                    className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                  >
-                    Raw carrier payload
-                    <span className="text-zinc-400">{rawOpen ? "▼" : "▶"}</span>
-                  </button>
-                  {rawOpen ? (
-                    <pre className="max-h-96 overflow-auto border-t border-zinc-200 p-4 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-                      {JSON.stringify(payload.raw_external, null, 2)}
-                    </pre>
+                  {enrichmentBlock && typeof enrichmentBlock === "object" ? (
+                    <VesselEnrichmentCard enrichment={enrichmentBlock} />
                   ) : null}
-                </section>
-              ) : null}
-            </div>
-          ) : null}
 
-          {dashboardTab === "messages" ? (
-            <div
-              role="tabpanel"
-              id="report-panel-messages"
-              aria-labelledby="report-tab-messages"
-              className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
-            >
-              <div className="mb-6 flex flex-col gap-1 border-b border-zinc-100 pb-5 dark:border-zinc-800 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Messages</h2>
+                  <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+                    <ShipmentTimeline
+                      events={timeline}
+                      interactiveDetail={false}
+                      className="rounded-none border-0 shadow-none"
+                    />
+                  </div>
+
+                  {alerts.length > 0 ? (
+                    <section className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+                      <h2 className="mb-3 text-sm font-semibold text-amber-950 dark:text-amber-100">Alerts</h2>
+                      <ul className="flex flex-col gap-2 text-sm">
+                        {alerts.map((a) => (
+                          <li
+                            key={a.id}
+                            className="rounded-lg border border-amber-200/60 bg-white/80 px-3 py-2 dark:border-amber-900/40 dark:bg-zinc-950/40"
+                          >
+                            <span className="font-medium text-amber-950 dark:text-amber-100">{a.severity}</span>
+                            <span className="text-amber-800/80 dark:text-amber-200/80"> · {a.alert_type}</span>
+                            <p className="text-zinc-800 dark:text-zinc-200">{a.message}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  {payload.raw_external ? (
+                    <section className="rounded-xl border border-zinc-200/90 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-950/50">
+                      <button
+                        type="button"
+                        onClick={() => setRawOpen((o) => !o)}
+                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                      >
+                        Raw carrier payload
+                        <span className="text-zinc-400">{rawOpen ? "▼" : "▶"}</span>
+                      </button>
+                      {rawOpen ? (
+                        <pre className="max-h-96 overflow-auto border-t border-zinc-200 p-4 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+                          {JSON.stringify(payload.raw_external, null, 2)}
+                        </pre>
+                      ) : null}
+                    </section>
+                  ) : null}
                 </div>
-              </div>
-              <div className="mb-8">
+              }
+              documentsPanel={
+                <PortalDocumentsPanel
+                  attachments={attachments}
+                  showScopeLabels={showDocumentScopeLabels}
+                  readOnlyReview={threadReadOnly || payload.viewer !== "importer"}
+                  reviewBusyId={reviewBusyId}
+                  rejectReasonById={rejectReasonById}
+                  onRejectReasonChange={(attachmentId, reason) =>
+                    setRejectReasonById((prev) => ({ ...prev, [attachmentId]: reason }))
+                  }
+                  onOpen={handleDocumentOpen}
+                  onReview={handleDocumentReview}
+                />
+              }
+              messagesPanel={
+                <section aria-label="Shipment messages" className={PORTAL_MESSAGES_SHELL_CLASS}>
+                  <div className={PORTAL_MESSAGES_SCROLL_CLASS}>
                 <ul className="flex flex-col gap-8">
                   {messages.length === 0 ? (
                     <li className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-400">
@@ -478,17 +427,16 @@ export function PublicContainerReport({
                     ))
                   )}
                 </ul>
-                <div ref={updatesEndRef} className="h-1 shrink-0 scroll-mt-4" aria-hidden />
-              </div>
-              {threadReadOnly ? (
-                <p className="border-t border-zinc-100 pt-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  Messaging is read-only in this preview.
-                </p>
-              ) : (
-                <form
-                  onSubmit={onSubmit}
-                  className="flex flex-col gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800"
-                >
+                    <div ref={updatesEndRef} className="h-1 shrink-0 scroll-mt-4" aria-hidden />
+                    {threadReadOnly ? (
+                      <p className="border-t border-zinc-100 pt-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                        Messaging is read-only in this preview.
+                      </p>
+                    ) : (
+                      <form
+                        onSubmit={onSubmit}
+                        className="flex flex-col gap-3 border-t border-zinc-100 pt-6 dark:border-zinc-800"
+                      >
                   {replyPreview ? (
                     <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/50">
                       <div className="min-w-0 border-l-[3px] border-sky-400/90 pl-3 dark:border-sky-500/70">
@@ -590,113 +538,21 @@ export function PublicContainerReport({
                     ) : (
                       <span>Send message</span>
                     )}
-                  </button>
-                </form>
-              )}
-            </div>
-          ) : null}
-
-          {dashboardTab === "activity" ? (
-            <ShipmentActivityPanel activityEvents={activityEvents} trackingEvents={timeline} />
-          ) : null}
-
-          {dashboardTab === "details" ? (
-            <ShipmentCommercialPanel details={commercialDetails} />
-          ) : null}
-
-          {dashboardTab === "documents" ? (
-            <div
-              role="tabpanel"
-              id="report-panel-documents"
-              aria-labelledby="report-tab-documents"
-              className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
-            >
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Documents</h2>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Files attached to this shipment overall or to a specific container.
-              </p>
-              {attachments.length === 0 ? (
-                <p className="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  No documents yet.
-                </p>
-              ) : (
-                <ul className="mt-4 flex flex-col gap-3">
-                  {attachments.map((a) => {
-                    const reviewable =
-                      !threadReadOnly &&
-                      payload.viewer === "importer" &&
-                      (a.document_group === "draft" || a.document_group === "revision") &&
-                      a.approval_status !== "approved";
-                    return (
-                    <li
-                      key={a.id}
-                      className="rounded-lg border border-zinc-100 px-3 py-3 dark:border-zinc-800"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{a.file_name}</p>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                          {[
-                            a.uploaded_by_kind
-                              ? attachmentUploaderKindLabel(a.uploaded_by_kind)
-                              : null,
-                            a.document_type,
-                            a.document_group,
-                            a.approval_status,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                          {a.container_number ? ` · ${a.container_number}` : ""}
-                        </p>
-                        {a.rejection_reason ? (
-                          <p className="mt-1 text-xs text-red-600 dark:text-red-400">Rejected: {a.rejection_reason}</p>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        className="shrink-0 text-xs font-medium text-sky-800 underline dark:text-sky-300"
-                        onClick={() => handleDocumentOpen(a.storage_path)}
-                      >
-                        Open
                       </button>
-                      </div>
-                      {reviewable ? (
-                        <div className="mt-3 flex flex-col gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-                          <input
-                            placeholder="Rejection reason (required to reject)"
-                            value={rejectReasonById[a.id] ?? ""}
-                            onChange={(e) =>
-                              setRejectReasonById((prev) => ({ ...prev, [a.id]: e.target.value }))
-                            }
-                            className="w-full rounded-md border border-zinc-200 px-2 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              disabled={reviewBusyId === a.id}
-                              onClick={() => handleDocumentReview(a.id, "approve")}
-                              className="rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              disabled={reviewBusyId === a.id}
-                              onClick={() => handleDocumentReview(a.id, "reject")}
-                              className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 dark:border-red-800 dark:text-red-300 disabled:opacity-50"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          ) : null}
+                      </form>
+                    )}
+                  </div>
+                </section>
+              }
+              activityPanel={
+                <ShipmentActivityPanel
+                  activityEvents={activityEvents}
+                  trackingEvents={timeline}
+                  variant="embedded"
+                />
+              }
+            />
+          </section>
         </div>
 
         <footer className="mt-10 border-t border-zinc-200/80 pt-8 text-center text-xs text-zinc-500 dark:border-zinc-800">

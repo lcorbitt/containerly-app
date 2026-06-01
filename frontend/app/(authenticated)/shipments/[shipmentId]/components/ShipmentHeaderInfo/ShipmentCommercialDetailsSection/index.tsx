@@ -2,13 +2,8 @@
 
 import type { ReactNode } from "react";
 import type { ShipmentWorkspaceRow } from "@/services/shipment.service";
-import { ShipmentHeaderInfo } from "../index";
-import { ShipmentTitleHeading } from "../ShipmentTitleHeading";
-import {
-  SHIPMENT_COMMERCIAL_DETAILS_GRID_WRAP_CLASS,
-  SHIPMENT_COMMERCIAL_DETAILS_SECTION_CLASS,
-  SHIPMENT_COMMERCIAL_DETAILS_TITLE_CLASS,
-} from "./constants";
+import { ShipmentCommercialHeader } from "@/components/ShipmentCommercialHeader";
+import { SHIPMENT_COMMERCIAL_DETAILS_SECTION_CLASS } from "./constants";
 
 export function ShipmentCommercialDetailsSection({
   row,
@@ -22,14 +17,7 @@ export function ShipmentCommercialDetailsSection({
   return (
     <section className={SHIPMENT_COMMERCIAL_DETAILS_SECTION_CLASS}>
       {editModal}
-
-      <div className={SHIPMENT_COMMERCIAL_DETAILS_TITLE_CLASS}>
-        <ShipmentTitleHeading row={row} workflowStatus={workflowStatus} />
-      </div>
-
-      <div className={SHIPMENT_COMMERCIAL_DETAILS_GRID_WRAP_CLASS}>
-        <ShipmentHeaderInfo row={row} />
-      </div>
+      <ShipmentCommercialHeader source={row} workflowStatus={workflowStatus} />
     </section>
   );
 }

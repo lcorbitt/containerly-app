@@ -16,8 +16,10 @@ import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
 import {
   activeNavSegmentFromPathname,
   fallbackSubTabLabel,
+  hubShipmentOrderBreadcrumbLabel,
   parseSubTabRoute,
 } from "../TopNavBreadcrumb/utils";
+import { CUSTOMER_PORTAL_BREADCRUMB_LABEL } from "../TopNavBreadcrumb/constants";
 import type { BreadcrumbSegment } from "../TopNavBreadcrumb/types";
 import { AUTHENTICATED_TOP_NAV_ORG_HREF } from "./constants";
 import { initialsFromEmail, profileMenuLabels } from "./utils";
@@ -51,18 +53,6 @@ export function useAuthenticatedTopNav({
   const isFreight =
     isSuperAdmin || orgs.some((r) => r.organizations != null && r.organizations.id != null);
 
-  const orgSegment = useMemo((): BreadcrumbSegment | null => {
-    const selected = orgs.find((r) => r.organizations?.id === selectedOrgId);
-    const name = selected?.organizations?.name?.trim();
-    if (!name) return null;
-    return { label: name, href: AUTHENTICATED_TOP_NAV_ORG_HREF };
-  }, [orgs, selectedOrgId]);
-
-  const tabSegment = useMemo(
-    () => activeNavSegmentFromPathname(pathname, isFreight),
-    [pathname, isFreight],
-  );
-
   const subTabRoute = useMemo(() => parseSubTabRoute(pathname), [pathname]);
 
   const operatorShipmentId =
@@ -80,8 +70,29 @@ export function useAuthenticatedTopNav({
     enabled: Boolean(hubShipmentId),
   });
 
+  const orgSegment = useMemo((): BreadcrumbSegment | null => {
+    if (hubShipmentId && hubShipmentQuery.data?.ok) {
+      const portalOrgName = hubShipmentQuery.data.data.organization?.name?.trim();
+      if (portalOrgName) {
+        return { label: portalOrgName, href: AUTHENTICATED_TOP_NAV_ORG_HREF };
+      }
+    }
+
+    const selected = orgs.find((r) => r.organizations?.id === selectedOrgId);
+    const name = selected?.organizations?.name?.trim();
+    if (!name) return null;
+    return { label: name, href: AUTHENTICATED_TOP_NAV_ORG_HREF };
+  }, [orgs, selectedOrgId, hubShipmentId, hubShipmentQuery.data]);
+
+  const tabSegment = useMemo(
+    () => activeNavSegmentFromPathname(pathname, isFreight),
+    [pathname, isFreight],
+  );
+
+  const isHubRoute = subTabRoute?.kind === "shipment-hub";
+
   const activeSubTabName = useMemo(() => {
-    if (!subTabRoute) return null;
+    if (!subTabRoute || isHubRoute) return null;
 
     if (subTabRoute.kind === "shipment-operator") {
       const row = workspaceRowQuery.data?.ok ? workspaceRowQuery.data.row : null;
@@ -92,21 +103,29 @@ export function useAuthenticatedTopNav({
       );
     }
 
-    if (subTabRoute.kind === "shipment-hub") {
-      const payload = hubShipmentQuery.data?.ok ? hubShipmentQuery.data.data : null;
-      return (
-        payload?.summary?.order_number?.trim() ||
-        payload?.commercial_details?.lines?.[0]?.order_number?.trim() ||
-        fallbackSubTabLabel(subTabRoute.shipmentId)
-      );
-    }
-
     if (subTabRoute.kind === "container") {
       return fallbackSubTabLabel(subTabRoute.containerId);
     }
 
     return null;
-  }, [subTabRoute, workspaceRowQuery.data, hubShipmentQuery.data]);
+  }, [subTabRoute, isHubRoute, workspaceRowQuery.data]);
+
+  const hubSubTabLabel = useMemo(() => {
+    if (!isHubRoute || !subTabRoute || subTabRoute.kind !== "shipment-hub") return null;
+    const payload = hubShipmentQuery.data?.ok ? hubShipmentQuery.data.data : null;
+    return hubShipmentOrderBreadcrumbLabel(payload, subTabRoute.shipmentId);
+  }, [isHubRoute, subTabRoute, hubShipmentQuery.data]);
+
+  const hubSubTabHref = useMemo(() => {
+    if (!isHubRoute || !subTabRoute || subTabRoute.kind !== "shipment-hub") return null;
+    const payload = hubShipmentQuery.data?.ok ? hubShipmentQuery.data.data : null;
+    if (payload?.viewer === "operator") {
+      return `/shipments/${subTabRoute.shipmentId}`;
+    }
+    return null;
+  }, [isHubRoute, subTabRoute, hubShipmentQuery.data]);
+
+  const hubLeafLabel = isHubRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
 
   const initials = initialsFromEmail(email);
   const { primary: accountPrimaryLabel, secondary: accountSecondaryLabel } = useMemo(
@@ -160,6 +179,9 @@ export function useAuthenticatedTopNav({
     orgSegment,
     tabSegment,
     activeSubTabName,
+    hubSubTabLabel,
+    hubSubTabHref,
+    hubLeafLabel,
     initials,
     avatarUrl,
     accountPrimaryLabel,

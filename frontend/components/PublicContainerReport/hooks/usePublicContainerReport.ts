@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, ClipboardList, FileText, MessageSquare, Route } from "lucide-react";
 import { useToast } from "@/contexts/toast";
 import {
   completeImporterPortalSetup,
@@ -13,17 +12,8 @@ import {
 import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
 import type { PublicReportPayload } from "@/types/public-report";
+import type { PortalDetailsTabId } from "../PortalDetailsTabs";
 import { publicThreadAuthorName, formatFreshness } from "../utils";
-
-export type DashboardTab = "documents" | "activity" | "details" | "tracking" | "messages";
-
-export interface TabDef {
-  id: DashboardTab;
-  label: string;
-  shortLabel: string;
-  icon: typeof Route;
-  count?: number;
-}
 
 export function usePublicContainerReport({
   shipmentId,
@@ -43,7 +33,9 @@ export function usePublicContainerReport({
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [rawOpen, setRawOpen] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<DashboardTab>("documents");
+  const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>(() =>
+    initial.container_lines?.length && initial.timeline?.length ? "tracking" : "documents",
+  );
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
@@ -60,6 +52,12 @@ export function usePublicContainerReport({
   const commercialDetails = payload.commercial_details;
   const activityEvents = payload.activity_events ?? [];
   const hasTracking = containerLines.length > 0 && timeline.length > 0;
+
+  useEffect(() => {
+    if (dashboardTab === "tracking" && !hasTracking) {
+      setDashboardTab("documents");
+    }
+  }, [dashboardTab, hasTracking]);
 
   // Sync messageContainerId when payload changes
   useEffect(() => {
@@ -149,6 +147,11 @@ export function usePublicContainerReport({
         return;
       }
       await refresh();
+      setRejectReasonById((prev) => {
+        const next = { ...prev };
+        delete next[attachmentId];
+        return next;
+      });
       toast(action === "approve" ? "Document approved" : "Document rejected", "success");
     } finally {
       setReviewBusyId(null);
@@ -167,7 +170,6 @@ export function usePublicContainerReport({
     return { label: publicThreadAuthorName(m), excerpt: truncatedReplyPreview(m.body, 120) };
   }, [replyParentId, messages]);
 
-  // Sync message target scope when replying to a specific message
   useEffect(() => {
     if (!replyParentId) return;
     const m = messages.find((x) => x.id === replyParentId);
@@ -187,6 +189,13 @@ export function usePublicContainerReport({
     [containerLines.length, messages],
   );
 
+  const showDocumentScopeLabels = useMemo(
+    () =>
+      containerLines.length > 1 ||
+      attachments.some((a) => a.scope === "shipment" || a.container_id == null),
+    [containerLines.length, attachments],
+  );
+
   const updatesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef<number | null>(null);
   useEffect(() => {
@@ -202,23 +211,8 @@ export function usePublicContainerReport({
 
   const fresh = formatFreshness(summary.freshness_minutes);
 
-  const tabDefs: TabDef[] = useMemo(() => {
-    const defs: TabDef[] = [
-      { id: "documents", label: "Documents", shortLabel: "Docs", icon: FileText, count: attachments.length },
-      { id: "activity", label: "Activity", shortLabel: "Activity", icon: Activity, count: activityEvents.length },
-      { id: "details", label: "Details", shortLabel: "Details", icon: ClipboardList },
-      { id: "messages", label: "Messages", shortLabel: "Messages", icon: MessageSquare, count: messages.length },
-    ];
-    if (hasTracking) {
-      defs.push({ id: "tracking", label: "Carrier tracking", shortLabel: "Tracking", icon: Route });
-    }
-    return defs;
-  }, [messages.length, attachments.length, activityEvents.length, hasTracking]);
-
   return {
-    // Payload slices
     payload,
-    report,
     organization,
     summary,
     insights,
@@ -230,16 +224,14 @@ export function usePublicContainerReport({
     logisticsHints,
     enrichmentBlock,
 
-    // Computed
     fresh,
     threadReadOnly,
     messageTree,
     messageById,
     replyPreview,
     showMessageScopeLabels,
-    tabDefs,
+    showDocumentScopeLabels,
 
-    // UI state
     body,
     setBody,
     name,
@@ -257,7 +249,6 @@ export function usePublicContainerReport({
     messageTarget,
     setMessageTarget,
 
-    // Refs
     updatesEndRef,
 
     commercialDetails,
@@ -267,7 +258,6 @@ export function usePublicContainerReport({
     rejectReasonById,
     setRejectReasonById,
 
-    // Handlers
     onSubmit,
     handleSetupDismiss,
     handleDocumentOpen,

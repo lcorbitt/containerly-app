@@ -302,9 +302,9 @@ export function ThreadPanel({
       el.scrollTo({ top: el.scrollHeight, behavior });
     };
 
-    const isInitial = prevMessageCount.current === null;
+    const previousCount = prevMessageCount.current;
 
-    if (isInitial) {
+    if (previousCount === null) {
       prevMessageCount.current = messages.length;
       if (messages.length > 0) {
         scrollToBottom("auto");
@@ -313,7 +313,7 @@ export function ThreadPanel({
       return;
     }
 
-    if (messages.length > prevMessageCount.current) {
+    if (messages.length > previousCount) {
       scrollToBottom("smooth");
     }
     prevMessageCount.current = messages.length;

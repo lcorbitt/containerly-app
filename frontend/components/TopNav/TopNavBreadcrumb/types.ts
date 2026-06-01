@@ -26,5 +26,10 @@ export type SubTabRoute = ShipmentOperatorSubTabRoute | ShipmentHubSubTabRoute |
 export interface TopNavBreadcrumbProps {
   org: BreadcrumbSegment | null;
   tab: BreadcrumbSegment | null;
+  /** Shipment identifier (e.g. order number) between tab and leaf. */
   subTabLabel: string | null;
+  /** When set with `leafLabel`, sub-tab renders as a link. */
+  subTabHref?: string | null;
+  /** Final crumb (e.g. "Customer Portal" on `/shipments/hub/[id]`). */
+  leafLabel?: string | null;
 }

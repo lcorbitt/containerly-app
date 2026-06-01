@@ -7,15 +7,32 @@ import {
 } from "./constants";
 import type { TopNavBreadcrumbProps } from "./types";
 
-export function TopNavBreadcrumb({ org, tab, subTabLabel }: TopNavBreadcrumbProps) {
-  if (!org && !tab && !subTabLabel) return null;
+function BreadcrumbSeparator() {
+  return (
+    <li className={TOP_NAV_BREADCRUMB_SEPARATOR_CLASS} aria-hidden>
+      /
+    </li>
+  );
+}
+
+export function TopNavBreadcrumb({
+  org,
+  tab,
+  subTabLabel,
+  subTabHref,
+  leafLabel,
+}: TopNavBreadcrumbProps) {
+  if (!org && !tab && !subTabLabel && !leafLabel) return null;
+
+  const hasLeaf = Boolean(leafLabel?.trim());
+  const subTabIsLink = hasLeaf && Boolean(subTabHref?.trim() && subTabLabel?.trim());
 
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
       <ol className={TOP_NAV_BREADCRUMB_LIST_CLASS}>
         {org ? (
           <li className="min-w-0 truncate">
-            {tab || subTabLabel ? (
+            {tab || subTabLabel || leafLabel ? (
               <Link href={org.href} className={TOP_NAV_BREADCRUMB_LINK_CLASS}>
                 {org.label}
               </Link>
@@ -27,15 +44,11 @@ export function TopNavBreadcrumb({ org, tab, subTabLabel }: TopNavBreadcrumbProp
           </li>
         ) : null}
 
-        {org && tab ? (
-          <li className={TOP_NAV_BREADCRUMB_SEPARATOR_CLASS} aria-hidden>
-            /
-          </li>
-        ) : null}
+        {org && tab ? <BreadcrumbSeparator /> : null}
 
         {tab ? (
           <li className="min-w-0 truncate">
-            {subTabLabel ? (
+            {subTabLabel || leafLabel ? (
               <Link href={tab.href} className={TOP_NAV_BREADCRUMB_LINK_CLASS}>
                 {tab.label}
               </Link>
@@ -47,15 +60,29 @@ export function TopNavBreadcrumb({ org, tab, subTabLabel }: TopNavBreadcrumbProp
           </li>
         ) : null}
 
-        {tab && subTabLabel ? (
-          <li className={TOP_NAV_BREADCRUMB_SEPARATOR_CLASS} aria-hidden>
-            /
+        {tab && subTabLabel ? <BreadcrumbSeparator /> : null}
+
+        {subTabLabel ? (
+          <li className="min-w-0 truncate">
+            {subTabIsLink ? (
+              <Link href={subTabHref!} className={TOP_NAV_BREADCRUMB_LINK_CLASS}>
+                {subTabLabel}
+              </Link>
+            ) : hasLeaf ? (
+              <span className="truncate font-normal">{subTabLabel}</span>
+            ) : (
+              <span aria-current="page" className={TOP_NAV_BREADCRUMB_CURRENT_CLASS}>
+                {subTabLabel}
+              </span>
+            )}
           </li>
         ) : null}
 
-        {subTabLabel ? (
+        {subTabLabel && leafLabel ? <BreadcrumbSeparator /> : null}
+
+        {leafLabel ? (
           <li className={`min-w-0 truncate ${TOP_NAV_BREADCRUMB_CURRENT_CLASS}`} aria-current="page">
-            {subTabLabel}
+            {leafLabel}
           </li>
         ) : null}
       </ol>

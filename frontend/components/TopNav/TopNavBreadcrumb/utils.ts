@@ -3,6 +3,7 @@ import {
   freightNavItems,
   importerNavItems,
 } from "@/app/(authenticated)/components/SideNav/constants";
+import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
 import type { BreadcrumbSegment, SubTabRoute } from "./types";
 
 const navItemsByHrefLength = (isFreight: boolean) =>
@@ -60,4 +61,16 @@ export function parseSubTabRoute(pathname: string): SubTabRoute | null {
 
 export function fallbackSubTabLabel(id: string): string {
   return id.slice(0, 8);
+}
+
+export function hubShipmentOrderBreadcrumbLabel(
+  payload: ShipmentPortalPayload | null | undefined,
+  shipmentId: string,
+): string {
+  return (
+    payload?.summary?.order_number?.trim() ||
+    payload?.commercial_details?.lines?.[0]?.order_number?.trim() ||
+    payload?.summary?.container_number?.trim() ||
+    fallbackSubTabLabel(shipmentId)
+  );
 }

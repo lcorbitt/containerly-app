@@ -15,3 +15,17 @@ export async function listShipmentParticipantsUserIds(client: SupabaseClient, sh
     .select("user_id")
     .eq("shipment_id", shipmentId);
 }
+
+/** Whether `userId` is a row on `shipment_participants` for this shipment. */
+export async function fetchShipmentParticipantForUser(
+  client: SupabaseClient,
+  shipmentId: string,
+  userId: string,
+) {
+  return client
+    .from("shipment_participants")
+    .select("id")
+    .eq("shipment_id", shipmentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+}

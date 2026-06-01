@@ -40,7 +40,11 @@ export default function SharedShipmentTrackingPage({
         return;
       }
       if (!cancelled) {
-        setErr(r.error);
+        setErr(
+          r.status === 403
+            ? "You don't have access to this shipment. Sign in with an invited customer email, or ask to be added as assignee or participant."
+            : r.error,
+        );
         setLoading(false);
       }
     })();

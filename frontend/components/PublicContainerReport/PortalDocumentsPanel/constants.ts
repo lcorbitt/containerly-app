@@ -1,0 +1,25 @@
+export const PORTAL_DOCUMENTS_LIST_CLASS = "min-w-0 flex-1 divide-y divide-zinc-100 dark:divide-zinc-800";
+
+export const APPROVE_BUTTON_CLASS =
+  "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500";
+
+export const REJECT_TRIGGER_CLASS =
+  "inline-flex shrink-0 items-center justify-center rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:bg-zinc-950 dark:text-red-400 dark:hover:bg-red-950/30";
+
+export const OPEN_LINK_CLASS =
+  "inline-flex shrink-0 items-center gap-1 text-xs font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40";
+
+export const PENDING_STATUS_BADGE_CLASS =
+  "inline-flex shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200";
+
+export const APPROVED_STATUS_BADGE_CLASS =
+  "inline-flex shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-950/45 dark:text-emerald-200";
+
+export const REJECTED_STATUS_BADGE_CLASS =
+  "inline-flex shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950/45 dark:text-red-300";
+
+export const SCOPE_BADGE_CLASS =
+  "inline-flex shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300";
+
+export const REJECT_POPOVER_CLASS =
+  "absolute right-0 top-full z-20 mt-2 w-52 rounded-lg border border-red-200/80 bg-white p-3 shadow-lg dark:border-red-900/50 dark:bg-zinc-950";

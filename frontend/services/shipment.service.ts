@@ -371,7 +371,7 @@ export async function fetchShipmentWorkspaceRowForBrowser(input: {
 /*  Edge Functions — Shipment Portal                                   */
 /* ------------------------------------------------------------------ */
 
-/** Shipment portal payload (operator, assignee/participant, or importer grant). */
+/** Shipment portal payload (assignee, participant, or invited customer grant). */
 export async function fetchShipment(shipmentId: string): Promise<
   | { ok: true; data: ShipmentPortalPayload }
   | { ok: false; status: number; error: string }

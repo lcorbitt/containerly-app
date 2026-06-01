@@ -13,7 +13,11 @@ export async function fetchShipmentPortalOperatorRow(
   client: SupabaseClient,
   shipmentId: string,
 ) {
-  return client.from("shipments").select("id, organization_id, created_at").eq("id", shipmentId).maybeSingle();
+  return client
+    .from("shipments")
+    .select("id, organization_id, created_at, assignee_user_id")
+    .eq("id", shipmentId)
+    .maybeSingle();
 }
 
 /** `shipments` — preview path. */

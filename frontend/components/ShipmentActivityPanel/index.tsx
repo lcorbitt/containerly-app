@@ -7,9 +7,12 @@ import { formatTimestamp } from "@/utils/datetime";
 export function ShipmentActivityPanel({
   activityEvents,
   trackingEvents,
+  variant = "card",
 }: {
   activityEvents: ShipmentActivityEvent[];
   trackingEvents?: TimelineEvent[];
+  /** `embedded` — inside workspace tab shell without duplicate card chrome. */
+  variant?: "card" | "embedded";
 }) {
   type UnifiedItem = {
     id: string;
@@ -35,8 +38,13 @@ export function ShipmentActivityPanel({
     })),
   ].sort((a, b) => Date.parse(a.occurred_at) - Date.parse(b.occurred_at));
 
+  const shell =
+    variant === "embedded"
+      ? "min-w-0"
+      : "rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6";
+
   return (
-    <div className="rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+    <div className={shell}>
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Activity</h2>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
         Documentation milestones and carrier updates in one timeline.

@@ -33,6 +33,9 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
     orgSegment,
     tabSegment,
     activeSubTabName,
+    hubSubTabLabel,
+    hubSubTabHref,
+    hubLeafLabel,
     initials,
     avatarUrl,
     accountPrimaryLabel,
@@ -48,7 +51,13 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
     <TopNavShell variant="app">
       <div className={AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS}>
         <NavBrand href="/dashboard" variant="app" />
-        <TopNavBreadcrumb org={orgSegment} tab={tabSegment} subTabLabel={activeSubTabName} />
+        <TopNavBreadcrumb
+          org={orgSegment}
+          tab={tabSegment}
+          subTabLabel={hubSubTabLabel ?? activeSubTabName}
+          subTabHref={hubSubTabHref}
+          leafLabel={hubLeafLabel}
+        />
       </div>
 
       <div className={AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS}>

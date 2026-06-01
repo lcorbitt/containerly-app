@@ -6,5 +6,7 @@ export const TOP_NAV_BREADCRUMB_CURRENT_CLASS = "truncate font-bold";
 export const TOP_NAV_BREADCRUMB_SEPARATOR_CLASS =
   "shrink-0 px-1 font-normal text-zinc-400 dark:text-zinc-500";
 
+export const CUSTOMER_PORTAL_BREADCRUMB_LABEL = "Customer Portal";
+
 export const TOP_NAV_BREADCRUMB_LIST_CLASS =
   "flex min-w-0 items-center truncate text-sm font-normal text-zinc-700 dark:text-zinc-300";
