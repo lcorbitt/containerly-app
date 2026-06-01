@@ -78,7 +78,7 @@ export function LoginForm() {
               className={`disabled:opacity-50 ${mode === "signin" ? "font-semibold text-zinc-900 dark:text-zinc-100" : "text-zinc-500"}`}
               onClick={() => setMode("signin")}
             >
-              Sign in
+              Sign In
             </button>
             <span className="text-zinc-300 dark:text-zinc-600">|</span>
             <button

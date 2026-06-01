@@ -243,3 +243,15 @@ input[type="search"]::-webkit-search-results-button {
   appearance: none;
   display: none;
 }
+
+@keyframes navigation-progress-indeterminate {
+  0% {
+    transform: scaleX(0.08);
+  }
+  50% {
+    transform: scaleX(0.72);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}

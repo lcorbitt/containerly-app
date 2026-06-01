@@ -373,10 +373,10 @@ export function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/login" className={accentBtn}>
-              Get started
+              Get Started
             </Link>
             <Link href="/login" className={ghostBtn}>
-              Sign in
+              Sign In
             </Link>
           </div>
         </div>

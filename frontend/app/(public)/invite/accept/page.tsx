@@ -54,7 +54,7 @@ function InviteAcceptInner() {
           Missing invite token. Use the link from your email.
         </p>
         <Link href="/login" className="mt-6 inline-block text-sm font-medium underline">
-          Sign in
+          Sign In
         </Link>
       </div>
     );

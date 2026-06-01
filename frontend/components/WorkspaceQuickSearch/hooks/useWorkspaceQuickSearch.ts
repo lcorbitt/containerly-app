@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   fetchWorkspaceQuickSearchBrowser,
   type WorkspaceQuickSearchRow,
@@ -42,7 +42,7 @@ function useDropdownPosition(
 }
 
 export function useWorkspaceQuickSearch() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { selectedOrgId } = useOrganizationWorkspace();
   const inputId = useId();
   const listboxId = useId();

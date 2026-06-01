@@ -11,9 +11,10 @@ export function isSideNavLinkActive(pathname: string, href: string): boolean {
   return pathname.startsWith(`${href}/`);
 }
 
-export function getSideNavLinkClassName(active: boolean): string {
+export function getSideNavLinkClassName(active: boolean, pending = false): string {
+  const highlighted = active || pending;
   return `flex min-h-0 w-full items-center gap-4 rounded-md p-4 text-xs font-medium leading-tight transition-colors ${
-    active ? SIDE_NAV_LINK_ACTIVE_CLASS : SIDE_NAV_LINK_INACTIVE_CLASS
+    highlighted ? SIDE_NAV_LINK_ACTIVE_CLASS : SIDE_NAV_LINK_INACTIVE_CLASS
   }`;
 }
 

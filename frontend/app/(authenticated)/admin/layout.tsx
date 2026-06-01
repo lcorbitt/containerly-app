@@ -1,24 +1,19 @@
 import { redirect } from "next/navigation";
-import { getSessionProfile } from "@/services/auth-server.service";
-import { isSuperadminRole } from "@/utils/profile-role";
-import { createClient } from "@/lib/supabase/server";
+import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
 
+/** Superadmin-only segment; parent `(authenticated)/layout` already enforces sign-in. */
 export default async function AdminSectionLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await loadAuthenticatedLayoutSession();
 
-  if (!user) {
+  if (!session) {
     redirect("/login?next=/admin");
   }
 
-  const profile = await getSessionProfile(supabase, user.id);
-  if (!isSuperadminRole(profile?.role)) {
+  if (!session.isSuperAdmin) {
     redirect("/dashboard");
   }
 
-  return <>{children}</>;
+  return children;
 }

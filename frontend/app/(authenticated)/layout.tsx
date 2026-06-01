@@ -1,61 +1,30 @@
 import { redirect } from "next/navigation";
-import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
-import type { OrgMembershipRow } from "@/types/organization-workspace";
-import { SessionAvatarProvider } from "@/contexts/session-avatar";
-import { getSessionProfile } from "@/services/auth-server.service";
-import { isSuperadminRole } from "@/utils/profile-role";
-import { createClient } from "@/lib/supabase/server";
-import { fetchOrgMembershipRows } from "@/services/organization.server";
-import { AuthenticatedTopNav } from "@/components/TopNav";
-import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
-import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
-import { SideNav } from "./components/SideNav";
+import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { AuthenticatedAppShell } from "./components/AuthenticatedAppShell";
 
 export default async function AuthenticatedLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await loadAuthenticatedLayoutSession();
 
-  if (!user) {
+  if (!session) {
     redirect("/login");
   }
 
-  const profile = await getSessionProfile(supabase, user.id);
-  const isSuperAdmin = isSuperadminRole(profile?.role);
-
-  const initialOrgs = await fetchOrgMembershipRows(supabase, user.id, isSuperAdmin);
+  const { user, profile, isSuperAdmin, initialOrgs } = session;
 
   return (
-    <OrganizationWorkspaceProvider
+    <AuthenticatedAppShell
+      userId={user.id}
+      email={user.email ?? ""}
+      fullName={profile?.full_name ?? null}
+      initialProfileImagePath={profile?.profile_image_path ?? null}
       initialOrgs={initialOrgs}
       isSuperAdmin={isSuperAdmin}
-      userId={user.id}
     >
-      <SessionAvatarProvider
-        initialProfileImagePath={profile?.profile_image_path ?? null}
-      >
-        <NewShipmentModalProvider>
-          <MockJourneyModalProvider>
-            <div className="grid h-dvh min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-              <AuthenticatedTopNav
-                email={user.email ?? ""}
-                fullName={profile?.full_name ?? null}
-              />
-              <div className="flex min-h-0 flex-1 overflow-hidden">
-                <SideNav isSuperAdmin={isSuperAdmin} />
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-                  <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-                </div>
-              </div>
-            </div>
-          </MockJourneyModalProvider>
-        </NewShipmentModalProvider>
-      </SessionAvatarProvider>
-    </OrganizationWorkspaceProvider>
+      {children}
+    </AuthenticatedAppShell>
   );
 }

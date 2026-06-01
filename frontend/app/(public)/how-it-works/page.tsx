@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
                 href="/login"
                 className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-primary-orange/70 bg-white px-4 py-2 text-sm font-semibold text-primary-orange shadow-sm transition-[box-shadow,transform,border-color,background-color] hover:border-primary-orange hover:bg-primary-orange/5 active:scale-[0.98] dark:border-primary-orange/85 dark:bg-black/55 dark:hover:bg-primary-orange/10"
               >
-                Sign in
+                Sign In
               </Link>
             </div>
           </aside>
