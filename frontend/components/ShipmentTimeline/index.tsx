@@ -31,6 +31,7 @@ import {
   formatLocationSnippet,
 } from "./utils";
 import { useShipmentTimelineOrder } from "./useShipmentTimeline";
+import { useTimelineAutoScroll } from "./useTimelineAutoScroll";
 import { TimelineDocumentMeta } from "./TimelineDocumentMeta";
 
 export type {
@@ -348,28 +349,21 @@ export function ShipmentTimelineView({
   emptyMessage = "No events recorded yet",
   emptyHint = "Shipment milestones and carrier updates will appear here.",
   autoScrollToLatest = true,
+  isActive = true,
 }: ShipmentTimelineViewProps) {
-  const { displayEvents, orderFadeOut } = order;
+  const { displayEvents, orderFadeOut, newestFirst } = order;
   const [detailEvent, setDetailEvent] = useState<ShipmentTimelineDisplayEvent | null>(null);
   const eventCount = displayEvents.length;
   const timelineEndRef = useRef<HTMLDivElement>(null);
-  const hasAutoScrolledRef = useRef(false);
 
-  useEffect(() => {
-    if (!autoScrollToLatest || hasAutoScrolledRef.current || eventCount === 0 || orderFadeOut) {
-      return;
-    }
-    hasAutoScrolledRef.current = true;
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    requestAnimationFrame(() => {
-      timelineEndRef.current?.scrollIntoView({
-        block: order.newestFirst ? "start" : "end",
-        behavior: reduced ? "auto" : "smooth",
-      });
-    });
-  }, [autoScrollToLatest, eventCount, order.newestFirst, orderFadeOut]);
+  useTimelineAutoScroll({
+    enabled: autoScrollToLatest,
+    isActive,
+    eventCount,
+    orderFadeOut,
+    newestFirst,
+    endRef: timelineEndRef,
+  });
 
   return (
     <section
@@ -478,7 +472,7 @@ export function ShipmentTimelineView({
                 );
               })}
             </ol>
-            <div ref={timelineEndRef} aria-hidden className="h-px w-full shrink-0" />
+            <div ref={timelineEndRef} aria-hidden className="h-1 w-full shrink-0 scroll-mt-4" />
             </div>
           </div>
         )}

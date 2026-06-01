@@ -32,7 +32,6 @@ export function usePublicContainerReport({
   const [name, setName] = useState("");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [rawOpen, setRawOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("tracking");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
@@ -149,8 +148,6 @@ export function usePublicContainerReport({
     }
   }
 
-  const enrichmentBlock = payload.enrichment;
-
   const messageTree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
@@ -213,7 +210,6 @@ export function usePublicContainerReport({
     attachments,
     containerLines,
     logisticsHints,
-    enrichmentBlock,
 
     fresh,
     threadReadOnly,
@@ -230,8 +226,6 @@ export function usePublicContainerReport({
     replyParentId,
     setReplyParentId,
     sending,
-    rawOpen,
-    setRawOpen,
     dashboardTab,
     setDashboardTab,
     setupDismissBusy,
@@ -252,5 +246,6 @@ export function usePublicContainerReport({
     handleSetupDismiss,
     handleDocumentOpen,
     handleDocumentReview,
+    refresh,
   };
 }

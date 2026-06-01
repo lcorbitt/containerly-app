@@ -59,8 +59,8 @@ export function ShipmentCommercialPanel({
           <table className="min-w-full text-left text-sm">
             <thead className="text-[11px] uppercase tracking-wide text-zinc-500">
               <tr>
-                <th className="px-2 py-2">Order no.</th>
-                <th className="px-2 py-2">Booking no.</th>
+                <th className="px-2 py-2">Order No.</th>
+                <th className="px-2 py-2">Booking No.</th>
                 <th className="px-2 py-2">Container</th>
                 <th className="px-2 py-2">Customer</th>
                 <th className="px-2 py-2">Country</th>

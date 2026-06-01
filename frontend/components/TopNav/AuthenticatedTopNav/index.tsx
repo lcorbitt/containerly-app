@@ -1,6 +1,6 @@
 "use client";
 
-import { FileDown, PackagePlus } from "lucide-react";
+import { Import, PackagePlus } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
@@ -9,6 +9,7 @@ import { TopNavShell } from "../TopNavShell";
 import { NotificationsMenu } from "./NotificationsMenu";
 import {
   AUTHENTICATED_TOP_NAV_ACTION_CLASS,
+  AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS,
   AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS,
   AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS,
@@ -66,20 +67,22 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
           onClick={() => openNewShipmentModal()}
           className={AUTHENTICATED_TOP_NAV_ACTION_CLASS}
           title="Create a new shipment"
+          aria-label="New shipment"
           aria-haspopup="dialog"
         >
           <PackagePlus className="h-4 w-4 shrink-0 text-zinc-600 dark:text-zinc-300" strokeWidth={2} aria-hidden />
-          <span className="hidden sm:inline">New Shipment</span>
+          <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>New Shipment</span>
         </button>
         <button
           type="button"
           onClick={() => openBulkImportModal()}
           className={AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS}
           title="Bulk import shipments from Excel or CSV"
+          aria-label="Bulk import"
           aria-haspopup="dialog"
         >
-          <FileDown className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
-          <span className="hidden sm:inline">Bulk Import</span>
+          <Import className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
+          <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
         </button>
 
         {selectedOrgId ? (

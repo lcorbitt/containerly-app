@@ -205,7 +205,7 @@ export async function recordOriginalsMailed(
 ): Promise<void> {
   const now = new Date();
   const trackingPart = trackingNumber?.trim()
-    ? ` — Tracking number: ${trackingNumber.trim()}`
+    ? ` — Tracking Number: ${trackingNumber.trim()}`
     : "";
   await insertShipmentActivityEvent(client, {
     shipment_id: shipmentId,

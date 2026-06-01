@@ -40,8 +40,8 @@ export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
 export const SHIPMENT_DETAIL_FIELDS = [
   { key: "customer_name", label: "Customer", format: displayValue },
   { key: "order_number", label: "Order No", format: displayValue },
-  { key: "carrier_booking_number", label: "Carrier Booking No", format: displayValue },
-  { key: "container_number", label: "Container No", format: displayValue, mono: true },
+  { key: "carrier_booking_number", label: "Carrier Booking No.", format: displayValue },
+  { key: "container_number", label: "Container No.", format: displayValue, mono: true },
   { key: "country", label: "Country", format: displayValue },
   { key: "port_of_loading", label: "Port of Loading", format: displayValue },
   { key: "port_of_destination", label: "Port of Destination", format: displayValue },
@@ -50,7 +50,7 @@ export const SHIPMENT_DETAIL_FIELDS = [
   { key: "freight_booking_carrier", label: "Freight Booking Carrier", format: displayValue },
   { key: "vessel", label: "Vessel", format: displayValue },
   { key: "voyage", label: "Voyage", format: displayValue },
-  { key: "health_certificate_no", label: "Health Certificate No", format: displayValue },
+  { key: "health_certificate_no", label: "Health Certificate No.", format: displayValue },
   { key: "trade_terms", label: "Trade Terms", format: displayValue },
 ] as const;
 

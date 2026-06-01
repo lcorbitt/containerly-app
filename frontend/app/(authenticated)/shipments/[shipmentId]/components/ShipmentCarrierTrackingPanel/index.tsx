@@ -15,11 +15,13 @@ export function ShipmentCarrierTrackingPanel({
   shipmentId,
   organizationId,
   workflowStatus,
+  readOnly = false,
   onEnabled,
 }: {
   shipmentId: string;
   organizationId: string;
   workflowStatus: string | null | undefined;
+  readOnly?: boolean;
   onEnabled?: () => void;
 }) {
   const { selectedOrgId } = useOrganizationWorkspace();
@@ -38,7 +40,7 @@ export function ShipmentCarrierTrackingPanel({
     return (
       <div className={SHIPMENT_CARRIER_TRACKING_PANEL_CLASS}>
         <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-          Tracking number
+          Tracking Number
           <input
             type="text"
             disabled
@@ -47,6 +49,17 @@ export function ShipmentCarrierTrackingPanel({
             className={SHIPMENT_CARRIER_TRACKING_INPUT_CLASS}
           />
         </label>
+      </div>
+    );
+  }
+
+  if (readOnly) {
+    return (
+      <div className={SHIPMENT_CARRIER_TRACKING_PANEL_CLASS}>
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Carrier tracking (premium)</p>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          Optional live milestones from a carrier API once container numbers are published.
+        </p>
       </div>
     );
   }

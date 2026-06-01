@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 
 export const SITE_NAME = "Containerly";
 
+/** Full-resolution brand mark (OG, favicon, share cards). */
 export const SITE_LOGO_PATH = "/containerly-logo.png";
 export const SITE_LOGO_WIDTH = 1152;
 export const SITE_LOGO_HEIGHT = 928;
+
+/** Small nav-optimized PNG in `public/` (also bundled via static import in NavBrand). */
+export const SITE_NAV_LOGO_PATH = "/containerly-logo-nav.png";
 
 export const SITE_DESCRIPTION =
   "Real-time shipment status and carrier updates in one place—so logistics teams spend less time searching and more time managing.";

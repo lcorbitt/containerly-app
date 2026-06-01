@@ -185,7 +185,7 @@ export function useOperatorShipmentsOverview() {
       },
       {
         id: "container_number",
-        header: "Container no.",
+        header: "Container No.",
         cell: (r) => (
           <span className="font-mono text-xs text-zinc-800 dark:text-zinc-200">
             {displayOverviewText(r.container_number)}

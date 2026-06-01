@@ -10,5 +10,3 @@ export const PORTAL_MESSAGES_SHELL_CLASS =
 
 export const PORTAL_MESSAGES_SCROLL_CLASS =
   "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-4 sm:px-6";
-
-export const PORTAL_TRACKING_STACK_CLASS = "flex flex-col gap-6";

@@ -4,26 +4,22 @@ import Link from "next/link";
 import { Reply } from "lucide-react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
-import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import { formatTimestamp } from "@/utils/datetime";
-import { ShipmentDetailsPanel } from "@/components/ShipmentDetailsPanel";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
-import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { truncatedReplyPreview, type ThreadNode } from "@/utils/report-message-tree";
 import type { PublicReportPayload, PublicThreadMessage } from "@/types/public-report";
-import { VesselEnrichmentCard } from "@/components/VesselEnrichmentCard";
 import { BrandedHeader } from "@/components/BrandedHeader";
 import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
 import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
 import { PortalDetailsTabs } from "./PortalDetailsTabs";
+import { PortalTrackingPanel } from "./PortalTrackingPanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
   PORTAL_MESSAGES_SCROLL_CLASS,
   PORTAL_MESSAGES_SHELL_CLASS,
   PORTAL_STATUS_STRIP_CLASS,
-  PORTAL_TRACKING_STACK_CLASS,
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { publicThreadAuthorName } from "./utils";
@@ -146,13 +142,10 @@ export function PublicContainerReport({
     organization,
     summary,
     insights,
-    timeline,
-    alerts,
     messages,
     attachments,
     containerLines,
     logisticsHints,
-    enrichmentBlock,
 
     fresh,
     threadReadOnly,
@@ -168,8 +161,6 @@ export function PublicContainerReport({
     replyParentId,
     setReplyParentId,
     sending,
-    rawOpen,
-    setRawOpen,
     dashboardTab,
     setDashboardTab,
     setupDismissBusy,
@@ -190,6 +181,7 @@ export function PublicContainerReport({
     setRejectReasonById,
     handleDocumentReview,
     showDocumentScopeLabels,
+    refresh,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
 
   const orgLogoUrl = organization?.org_image_path
@@ -269,104 +261,12 @@ export function PublicContainerReport({
               activeTab={dashboardTab}
               onTabChange={setDashboardTab}
               trackingPanel={
-                <div className={PORTAL_TRACKING_STACK_CLASS}>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Container
-                      </p>
-                      <p className="mt-2 font-mono text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        {summary.container_number}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Carrier
-                      </p>
-                      <p className="mt-2 text-base font-medium text-zinc-900 dark:text-zinc-50">
-                        {summary.carrier ?? "—"}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Tracking sync
-                      </p>
-                      <div className="mt-2">
-                        <TrackingWorkflowStatusPill status={summary.tracking_request_status} />
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Reported status
-                      </p>
-                      <div className="mt-2">
-                        <CarrierReportedStatusPill status={summary.status} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5">
-                    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Last known location</h2>
-                    <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                      {summary.last_known_location != null ? String(summary.last_known_location) : "—"}
-                    </p>
-                  </div>
-
-                  <ShipmentDetailsPanel
-                    location={summary.shipment_context}
-                    title="Shipment details"
-                    subtitle="Latest carrier-reported facts for this container."
-                    className="border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
-                  />
-
-                  {enrichmentBlock && typeof enrichmentBlock === "object" ? (
-                    <VesselEnrichmentCard enrichment={enrichmentBlock} />
-                  ) : null}
-
-                  <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                    <ShipmentTimeline
-                      events={timeline}
-                      interactiveDetail={false}
-                      className="rounded-none border-0 shadow-none"
-                    />
-                  </div>
-
-                  {alerts.length > 0 ? (
-                    <section className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-                      <h2 className="mb-3 text-sm font-semibold text-amber-950 dark:text-amber-100">Alerts</h2>
-                      <ul className="flex flex-col gap-2 text-sm">
-                        {alerts.map((a) => (
-                          <li
-                            key={a.id}
-                            className="rounded-lg border border-amber-200/60 bg-white/80 px-3 py-2 dark:border-amber-900/40 dark:bg-zinc-950/40"
-                          >
-                            <span className="font-medium text-amber-950 dark:text-amber-100">{a.severity}</span>
-                            <span className="text-amber-800/80 dark:text-amber-200/80"> · {a.alert_type}</span>
-                            <p className="text-zinc-800 dark:text-zinc-200">{a.message}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ) : null}
-
-                  {payload.raw_external ? (
-                    <section className="rounded-xl border border-zinc-200/90 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-950/50">
-                      <button
-                        type="button"
-                        onClick={() => setRawOpen((o) => !o)}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                      >
-                        Raw carrier payload
-                        <span className="text-zinc-400">{rawOpen ? "▼" : "▶"}</span>
-                      </button>
-                      {rawOpen ? (
-                        <pre className="max-h-96 overflow-auto border-t border-zinc-200 p-4 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-                          {JSON.stringify(payload.raw_external, null, 2)}
-                        </pre>
-                      ) : null}
-                    </section>
-                  ) : null}
-                </div>
+                <PortalTrackingPanel
+                  shipmentId={shipmentId}
+                  payload={payload}
+                  isActive={dashboardTab === "tracking"}
+                  onRefresh={refresh}
+                />
               }
               documentsPanel={
                 <PortalDocumentsPanel

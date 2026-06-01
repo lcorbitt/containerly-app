@@ -141,7 +141,7 @@ export async function sendDocumentsMailedEmail(args: {
   portalUrl: string;
 }): Promise<SendEmailResult> {
   const trackingLine = args.trackingNumber
-    ? `<br><br>Tracking number: <strong>${escapeHtml(args.trackingNumber)}</strong>`
+    ? `<br><br>Tracking Number: <strong>${escapeHtml(args.trackingNumber)}</strong>`
     : "";
   return sendTransactionalEmail({
     to: args.to,

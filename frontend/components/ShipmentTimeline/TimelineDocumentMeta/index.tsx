@@ -41,6 +41,9 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
   const previewLimit = compact ? TIMELINE_DOCUMENT_PREVIEW_LIMIT : fileNames.length;
   const previewNames = fileNames.slice(0, previewLimit);
   const remainingCount = Math.max(0, fileNames.length - previewNames.length);
+  const showStandaloneFileName =
+    Boolean(meta.fileName?.trim()) && !isBatch && fileNames.length <= 1;
+  const showFileList = previewNames.length > 0 && !showStandaloneFileName;
 
   return (
     <div className={compact ? "mt-1.5 space-y-1" : "mt-2 space-y-1.5"}>
@@ -48,10 +51,10 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
         <p className={FILE_COUNT_CLASS}>
           {displayCount} document{displayCount === 1 ? "" : "s"}
         </p>
-      ) : meta.fileName ? (
+      ) : showStandaloneFileName ? (
         <p
           className="truncate text-[11px] font-medium leading-snug text-zinc-700 dark:text-zinc-300"
-          title={meta.fileName}
+          title={meta.fileName ?? undefined}
         >
           {meta.fileName}
         </p>
@@ -73,7 +76,7 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
           </span>
         ) : null}
       </div>
-      {previewNames.length > 0 ? (
+      {showFileList ? (
         <ul className={DOCUMENT_FILE_LIST_CLASS}>
           {previewNames.map((name, index) => (
             <li key={`${name}-${index}`} className={DOCUMENT_FILE_LIST_ITEM_CLASS} title={name}>
@@ -86,7 +89,7 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
         </ul>
       ) : null}
       {meta.trackingNumber ? (
-        <p className="truncate font-mono text-[10px] text-zinc-600 dark:text-zinc-400" title="Tracking number">
+        <p className="truncate font-mono text-[10px] text-zinc-600 dark:text-zinc-400" title="Tracking No">
           {meta.trackingNumber}
         </p>
       ) : null}

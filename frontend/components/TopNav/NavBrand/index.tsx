@@ -1,15 +1,18 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
+import { memo } from "react";
 import { NAV_BRAND_CLASS, NAV_BRAND_TEXT_CLASS } from "./constants";
+import { NavBrandLogo } from "./NavBrandLogo";
 import type { NavBrandProps } from "./types";
 
-export function NavBrand({ href, variant }: NavBrandProps) {
+export const NavBrand = memo(function NavBrand({ href, variant }: NavBrandProps) {
   return (
-    <Link href={href} className={NAV_BRAND_CLASS[variant]}>
-      <div className="flex items-center gap-2">
-        <Image src="/containerly-logo.png" alt="Containerly" width={70} height={70} />
+    <Link href={href} className={NAV_BRAND_CLASS[variant]} aria-label="Containerly home">
+      <div className="flex shrink-0 items-center gap-2">
+        <NavBrandLogo />
         <span className={NAV_BRAND_TEXT_CLASS[variant]}>Containerly</span>
       </div>
     </Link>
   );
-}
+});

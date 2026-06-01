@@ -242,19 +242,16 @@ export function hasTimelineDocumentMeta(meta: TimelineDocumentMeta): boolean {
 }
 
 export function activityEventTitle(event: ShipmentActivityEvent): string {
-  const body = event.body?.trim();
-  if (body) {
-    const stripped = body.replace(/^\d{1,2}\/\d{1,2}\/\d{2}\s—\s*/, "").trim();
-    if (stripped) return stripped;
-  }
+  const documentMeta = parseActivityDocumentMeta(event.metadata);
+  const showsFileInMeta = Boolean(documentMeta?.fileName?.trim());
 
   switch (event.event_type) {
     case "drafts_attached":
       return "Draft documents uploaded";
     case "documents_approved":
-      return "Draft documents approved by customer";
+      return showsFileInMeta ? "Document approved" : "Draft documents approved by customer";
     case "documents_rejected":
-      return "Draft documents rejected by customer";
+      return "Document rejected";
     case "originals_mailed":
       return "Original documents mailed";
     case "tracking_linked":
@@ -264,8 +261,16 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
     case "operator_message":
       return "Team message posted";
     default:
-      return body || humanizeCarrierToken(event.event_type);
+      break;
   }
+
+  const body = event.body?.trim();
+  if (body) {
+    const stripped = body.replace(/^\d{1,2}\/\d{1,2}\/\d{2}\s—\s*/, "").trim();
+    if (stripped) return stripped;
+  }
+
+  return body || humanizeCarrierToken(event.event_type);
 }
 
 export function mapActivityEventToTimelineEvent(

@@ -108,6 +108,7 @@ export function ShipmentDetailsTabs({
                 workflowStatus={workflowStatus}
                 physicalMailTrackingNumber={physicalMailTrackingNumber}
                 activityEvents={activityEvents}
+                timelineIsActive={isTrackingTab}
                 onEnabled={onTrackingEnabled}
               />
               {detailsContent ? (

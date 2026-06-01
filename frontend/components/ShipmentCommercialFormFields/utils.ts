@@ -14,8 +14,8 @@ export const SHIPMENT_COMMERCIAL_TITLE_FIELD_DEFS = [
 ];
 
 export const SHIPMENT_COMMERCIAL_GRID_FIELD_DEFS = [
-  { key: "carrierBookingNumber" as const, label: "Carrier Booking No", required: true },
-  { key: "containerNumber" as const, label: "Container No", required: true, mono: true },
+  { key: "carrierBookingNumber" as const, label: "Carrier Booking No.", required: true },
+  { key: "containerNumber" as const, label: "Container No.", required: true, mono: true },
   { key: "country" as const, label: "Country" },
   { key: "portOfLoading" as const, label: "Port of Loading" },
   { key: "portOfDestination" as const, label: "Port of Destination" },

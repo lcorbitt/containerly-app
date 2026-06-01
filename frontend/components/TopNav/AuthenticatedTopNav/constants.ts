@@ -4,9 +4,11 @@ import {
 } from "@/utils/button-variants";
 
 export const AUTHENTICATED_TOP_NAV_ACTION_CLASS =
-  "inline-flex px-4 py-2 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 md:h-auto md:w-auto md:px-4 md:py-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
 
-export const AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS = `inline-flex px-4 py-2 shrink-0 items-center gap-1.5 rounded-lg text-sm font-medium transition focus-visible:outline ${BUTTON_VARIANT_AMBER_SOFT_CLASS}`;
+export const AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS = `inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition focus-visible:outline md:h-auto md:w-auto md:px-4 md:py-2 ${BUTTON_VARIANT_AMBER_SOFT_CLASS}`;
+
+export const AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS = "hidden md:inline";
 
 export { BUTTON_VARIANT_AMBER_SOFT_ICON_CLASS as AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS };
 
