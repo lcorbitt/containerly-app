@@ -22,5 +22,5 @@ export function headlineFromSummary(args: {
   if (risk === "medium") {
     return "Possible delay — confirm ETA with carrier or terminal.";
   }
-  return `Current carrier-reported status: ${status ?? "unknown"}.`;
+  return `Current carrier-reported status 2: ${status ?? "unknown"}.`;
 }

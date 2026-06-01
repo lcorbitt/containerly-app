@@ -7,7 +7,6 @@ import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import { formatTimestamp } from "@/utils/datetime";
 import { ShipmentDetailsPanel } from "@/components/ShipmentDetailsPanel";
-import { ShipmentActivityPanel } from "@/components/ShipmentActivityPanel";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
@@ -185,7 +184,6 @@ export function PublicContainerReport({
     handleSetupDismiss,
     handleDocumentOpen,
     commercialDetails,
-    activityEvents,
     hasTracking,
     reviewBusyId,
     rejectReasonById,
@@ -213,75 +211,56 @@ export function PublicContainerReport({
             <PortalCommercialDetailsSection commercialDetails={commercialDetails} summary={summary} />
 
             <div className={PORTAL_STATUS_STRIP_CLASS}>
-            {payload.viewer === "operator" ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Use <span className="font-medium text-zinc-700 dark:text-zinc-300">Share</span> to invite importers.{" "}
-                <Link
-                  href={
-                    payload.primary_container_id
-                      ? `/containers/${payload.primary_container_id}`
-                      : `/shipments/${shipmentId}`
-                  }
-                  className="font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40"
-                >
-                  Open operator workspace
-                </Link>{" "}
-                for team messages and documents.
-              </p>
-            ) : null}
-            {hasTracking ? (
-              <div className={`flex flex-wrap items-center gap-2${payload.viewer === "operator" ? " mt-3" : ""}`}>
-                <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
-                >
-                  {insights.risk_level.toUpperCase()} risk
-                </span>
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
-              </div>
-            ) : null}
-            <p className={`max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300${hasTracking || payload.viewer === "operator" ? " mt-3" : ""}`}>
-              {insights.headline}
-            </p>
-            {summary.customer_note?.trim() ? (
-              <p className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
-                {summary.customer_note.trim()}
-              </p>
-            ) : null}
-            {logisticsHints?.note ? (
-              <div className="mt-4 rounded-lg border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/30 dark:text-amber-100">
-                <p className="font-medium">Logistics hint</p>
-                <p className="mt-1 leading-relaxed opacity-95">{logisticsHints.note}</p>
-                {typeof logisticsHints.ais_vs_carrier_eta_hours === "number" ? (
-                  <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
-                    Estimated divergence: {Math.round(Math.abs(logisticsHints.ais_vs_carrier_eta_hours))} hours
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            {!threadReadOnly &&
-            payload.shipment_access &&
-            !payload.shipment_access.profile_completed_at &&
-            payload.shipment_access.configuration_reminder_due_at ? (
-              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-sky-950 dark:text-sky-100">
-                  You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
-                  until{" "}
-                  {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                  .
+              {hasTracking ? (
+                <div className={`flex flex-wrap items-center gap-2${payload.viewer === "operator" ? " mt-3" : ""}`}>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
+                  >
+                    {insights.risk_level.toUpperCase()} risk
+                  </span>
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
+                </div>
+              ) : null}
+              {summary.customer_note?.trim() ? (
+                <p className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
+                  {summary.customer_note.trim()}
                 </p>
-                <button
-                  type="button"
-                  disabled={setupDismissBusy}
-                  onClick={handleSetupDismiss}
-                  className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
-                >
-                  {setupDismissBusy ? "Saving…" : "Configure later"}
-                </button>
-              </div>
-            ) : null}
+              ) : null}
+              {logisticsHints?.note ? (
+                <div className="mt-4 rounded-lg border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p className="font-medium">Logistics hint</p>
+                  <p className="mt-1 leading-relaxed opacity-95">{logisticsHints.note}</p>
+                  {typeof logisticsHints.ais_vs_carrier_eta_hours === "number" ? (
+                    <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
+                      Estimated divergence: {Math.round(Math.abs(logisticsHints.ais_vs_carrier_eta_hours))} hours
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+              {!threadReadOnly &&
+              payload.shipment_access &&
+              !payload.shipment_access.profile_completed_at &&
+              payload.shipment_access.configuration_reminder_due_at ? (
+                <div className="mt-4 flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-sky-950 dark:text-sky-100">
+                    You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
+                    until{" "}
+                    {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                    .
+                  </p>
+                  <button
+                    type="button"
+                    disabled={setupDismissBusy}
+                    onClick={handleSetupDismiss}
+                    className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
+                  >
+                    {setupDismissBusy ? "Saving…" : "Configure later"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </header>
 
@@ -289,7 +268,6 @@ export function PublicContainerReport({
             <PortalDetailsTabs
               activeTab={dashboardTab}
               onTabChange={setDashboardTab}
-              hasTracking={hasTracking}
               trackingPanel={
                 <div className={PORTAL_TRACKING_STACK_CLASS}>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -543,13 +521,6 @@ export function PublicContainerReport({
                     )}
                   </div>
                 </section>
-              }
-              activityPanel={
-                <ShipmentActivityPanel
-                  activityEvents={activityEvents}
-                  trackingEvents={timeline}
-                  variant="embedded"
-                />
               }
             />
           </section>

@@ -33,9 +33,7 @@ export function usePublicContainerReport({
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [rawOpen, setRawOpen] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>(() =>
-    initial.container_lines?.length && initial.timeline?.length ? "tracking" : "documents",
-  );
+  const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("tracking");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
@@ -50,14 +48,7 @@ export function usePublicContainerReport({
   const logisticsHints = payload.logistics_hints;
   const threadReadOnly = readOnlyMessaging || payload.viewer === "operator";
   const commercialDetails = payload.commercial_details;
-  const activityEvents = payload.activity_events ?? [];
   const hasTracking = containerLines.length > 0 && timeline.length > 0;
-
-  useEffect(() => {
-    if (dashboardTab === "tracking" && !hasTracking) {
-      setDashboardTab("documents");
-    }
-  }, [dashboardTab, hasTracking]);
 
   // Sync messageContainerId when payload changes
   useEffect(() => {
@@ -252,7 +243,6 @@ export function usePublicContainerReport({
     updatesEndRef,
 
     commercialDetails,
-    activityEvents,
     hasTracking,
     reviewBusyId,
     rejectReasonById,

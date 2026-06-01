@@ -6,6 +6,8 @@ export const WORKSPACE_TABS_SECTION_CLASS =
 export const WORKSPACE_TAB_LIST_CLASS =
   "flex shrink-0 overflow-x-auto border-b border-zinc-200 px-4 sm:px-6 dark:border-zinc-800";
 
+export const WORKSPACE_TAB_ICON_CLASS = "h-4 w-4 shrink-0 opacity-80";
+
 export const WORKSPACE_TAB_PANEL_CLASS = "flex min-h-0 min-w-0 flex-col";
 
 /**

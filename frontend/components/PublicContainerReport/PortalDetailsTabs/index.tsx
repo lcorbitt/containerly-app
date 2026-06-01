@@ -1,6 +1,5 @@
 "use client";
 
-import { Activity, FileText, MessageSquare, Route } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import {
   WORKSPACE_TAB_CONTENTS_CLASS,
@@ -11,42 +10,41 @@ import {
   WORKSPACE_TAB_REVEAL_CLASS,
   WORKSPACE_TAB_STACK_SLOT_CLASS,
   WORKSPACE_TAB_TRACKING_PANEL_CLASS,
-  WORKSPACE_TAB_ACTIVITY_PANEL_CLASS,
 } from "@/components/WorkspaceTabShell/constants";
+import {
+  WorkspaceDocumentsTabIcon,
+  WorkspaceMessagesTabIcon,
+  WorkspaceTrackingTabIcon,
+} from "@/components/WorkspaceTabShell/tab-icons";
 import { workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import type { PortalDetailsTabId, PortalDetailsTabsProps } from "./types";
 
 export function PortalDetailsTabs({
   activeTab,
   onTabChange,
-  hasTracking,
   trackingPanel,
   documentsPanel,
   messagesPanel,
-  activityPanel,
 }: PortalDetailsTabsProps) {
   const isTrackingTab = activeTab === "tracking";
   const isDocumentsTab = activeTab === "documents";
   const isMessagesTab = activeTab === "messages";
-  const isActivityTab = activeTab === "activity";
 
   return (
     <div className={WORKSPACE_TAB_PANEL_CLASS}>
       <div className={WORKSPACE_TAB_LIST_CLASS} role="tablist" aria-label="Shipment portal">
-        {hasTracking ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={isTrackingTab}
-            id="portal-tab-tracking"
-            aria-controls="portal-tabpanel-tracking"
-            className={workspaceTabButtonClass(isTrackingTab)}
-            onClick={() => onTabChange("tracking")}
-          >
-            <Route className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-            Tracking
-          </button>
-        ) : null}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={isTrackingTab}
+          id="portal-tab-tracking"
+          aria-controls="portal-tabpanel-tracking"
+          className={workspaceTabButtonClass(isTrackingTab)}
+          onClick={() => onTabChange("tracking")}
+        >
+          <WorkspaceTrackingTabIcon />
+          Tracking
+        </button>
         <button
           type="button"
           role="tab"
@@ -56,7 +54,7 @@ export function PortalDetailsTabs({
           className={workspaceTabButtonClass(isDocumentsTab)}
           onClick={() => onTabChange("documents")}
         >
-          <FileText className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+          <WorkspaceDocumentsTabIcon />
           Documents
         </button>
         <button
@@ -68,38 +66,24 @@ export function PortalDetailsTabs({
           className={workspaceTabButtonClass(isMessagesTab)}
           onClick={() => onTabChange("messages")}
         >
-          <MessageSquare className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+          <WorkspaceMessagesTabIcon />
           Messages
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={isActivityTab}
-          id="portal-tab-activity"
-          aria-controls="portal-tabpanel-activity"
-          className={workspaceTabButtonClass(isActivityTab)}
-          onClick={() => onTabChange("activity")}
-        >
-          <Activity className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-          Activity
         </button>
       </div>
 
       <div className={WORKSPACE_TAB_CONTENTS_CLASS}>
-        {hasTracking ? (
-          <div
-            id="portal-tabpanel-tracking"
-            role="tabpanel"
-            aria-labelledby="portal-tab-tracking"
-            aria-hidden={!isTrackingTab}
-            tabIndex={isTrackingTab ? 0 : -1}
-            className={`${WORKSPACE_TAB_STACK_SLOT_CLASS} ${isTrackingTab ? "" : "pointer-events-none invisible"}`}
-          >
-            <Reveal show={isTrackingTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
-              <div className={WORKSPACE_TAB_TRACKING_PANEL_CLASS}>{trackingPanel}</div>
-            </Reveal>
-          </div>
-        ) : null}
+        <div
+          id="portal-tabpanel-tracking"
+          role="tabpanel"
+          aria-labelledby="portal-tab-tracking"
+          aria-hidden={!isTrackingTab}
+          tabIndex={isTrackingTab ? 0 : -1}
+          className={`${WORKSPACE_TAB_STACK_SLOT_CLASS} ${isTrackingTab ? "" : "pointer-events-none invisible"}`}
+        >
+          <Reveal show={isTrackingTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
+            <div className={WORKSPACE_TAB_TRACKING_PANEL_CLASS}>{trackingPanel}</div>
+          </Reveal>
+        </div>
 
         <div
           id="portal-tabpanel-documents"
@@ -124,19 +108,6 @@ export function PortalDetailsTabs({
         >
           <Reveal show={isMessagesTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
             <div className={WORKSPACE_TAB_MESSAGES_PANEL_CLASS}>{messagesPanel}</div>
-          </Reveal>
-        </div>
-
-        <div
-          id="portal-tabpanel-activity"
-          role="tabpanel"
-          aria-labelledby="portal-tab-activity"
-          aria-hidden={!isActivityTab}
-          tabIndex={isActivityTab ? 0 : -1}
-          className={`${WORKSPACE_TAB_STACK_SLOT_CLASS} ${isActivityTab ? "" : "pointer-events-none invisible"}`}
-        >
-          <Reveal show={isActivityTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
-            <div className={WORKSPACE_TAB_ACTIVITY_PANEL_CLASS}>{activityPanel}</div>
           </Reveal>
         </div>
       </div>

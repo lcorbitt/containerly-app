@@ -27,7 +27,7 @@ export function headlineFromSummary(args: {
   if (risk === "medium") {
     return "Possible delay — confirm ETA with carrier or terminal.";
   }
-  return `Current carrier-reported status: ${status ?? "unknown"}.`;
+  return `Current carrier-reported status 1: ${status ?? "unknown"}.`;
 }
 
 export function freshnessMinutesFromSync(lastSyncedAt: string | null | undefined): number | null {

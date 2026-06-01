@@ -1,8 +1,12 @@
 "use client";
 
-import { FileText, MessageSquare, Route } from "lucide-react";
 import { useState } from "react";
 import { Reveal } from "@/components/Reveal";
+import {
+  WorkspaceDocumentsTabIcon,
+  WorkspaceMessagesTabIcon,
+  WorkspaceTrackingTabIcon,
+} from "@/components/WorkspaceTabShell/tab-icons";
 import { workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import { ShipmentMessagesPanel } from "../ShipmentMessagesPanel";
 import { ShipmentTrackingPanel } from "../ShipmentTrackingPanel";
@@ -58,7 +62,7 @@ export function ShipmentDetailsTabs({
           className={workspaceTabButtonClass(isTrackingTab)}
           onClick={() => selectTab("tracking")}
         >
-          <Route className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+          <WorkspaceTrackingTabIcon />
           Tracking
         </button>
         <button
@@ -70,7 +74,7 @@ export function ShipmentDetailsTabs({
           className={workspaceTabButtonClass(isDocumentsTab)}
           onClick={() => selectTab("documents")}
         >
-          <FileText className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+          <WorkspaceDocumentsTabIcon />
           Documents
         </button>
         <button
@@ -82,7 +86,7 @@ export function ShipmentDetailsTabs({
           className={workspaceTabButtonClass(isMessagesTab)}
           onClick={() => selectTab("messages")}
         >
-          <MessageSquare className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+          <WorkspaceMessagesTabIcon />
           Messages
         </button>
       </div>

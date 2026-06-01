@@ -7,14 +7,17 @@ import { TextInput } from "@/components/TextInput";
 import { Reveal } from "@/components/Reveal";
 import { WorkspacePostSpinner } from "@/components/WorkspacePostSpinner";
 import {
+  SHIPMENT_SHARE_MENU_PANEL_CLASS,
+  SHIPMENT_SHARE_MENU_PANEL_REVEAL_CLASS,
   SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS,
+  SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_PORTAL_CLASS,
 } from "./constants";
 import type { ShipmentShareMenuProps } from "./types";
 import { useShipmentShareMenu } from "./useShipmentShareMenu";
 import { buildShipmentShareAccessRows, shipmentPortalUrl } from "./utils";
 
-export function ShipmentShareMenu({ shipmentId, state, variant = "portal" }: ShipmentShareMenuProps) {
+export function ShipmentShareMenu({ shipmentId, state }: ShipmentShareMenuProps) {
   const { menuId, triggerRef, panelRef, open, panelPos, toggle } = useShipmentShareMenu();
   const accessRows = buildShipmentShareAccessRows(state);
   const portalUrl = shipmentPortalUrl(shipmentId, state.origin);
@@ -29,22 +32,24 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "portal" }: Shi
   }
 
   const panel =
-    typeof document !== "undefined"
+    typeof document !== "undefined" && panelPos
       ? createPortal(
-          <Reveal show={open}>
-            {panelPos ? (
-              <div
-                ref={panelRef}
-                id={menuId}
-                role="dialog"
-                aria-label="Share shipment"
-                className="fixed z-[200] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-950"
-                style={{
-                  top: panelPos.top,
-                  left: panelPos.left,
-                  width: panelPos.width,
-                }}
-              >
+          <Reveal
+            show={open}
+            className={SHIPMENT_SHARE_MENU_PANEL_REVEAL_CLASS}
+            style={{
+              top: panelPos.top,
+              left: panelPos.left,
+              width: panelPos.width,
+            }}
+          >
+            <div
+              ref={panelRef}
+              id={menuId}
+              role="dialog"
+              aria-label="Share shipment"
+              className={SHIPMENT_SHARE_MENU_PANEL_CLASS}
+            >
                 <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
                   <p className="text-center text-sm font-medium text-zinc-900 dark:text-zinc-50">Share</p>
                 </div>
@@ -132,8 +137,7 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "portal" }: Shi
                     Copy link
                   </button>
                 </div>
-              </div>
-            ) : null}
+            </div>
           </Reveal>,
           document.body,
         )
@@ -150,14 +154,13 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "portal" }: Shi
         onClick={toggle}
         className={SHIPMENT_SHARE_MENU_TRIGGER_PORTAL_CLASS}
       >
+        <Globe className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
         Share
-        {variant === "portal" ? null : (
-          <ChevronDown
-            className={`h-3.5 w-3.5 opacity-60 transition-transform${open ? " rotate-180" : ""}`}
-            strokeWidth={2}
-            aria-hidden
-          />
-        )}
+        <ChevronDown
+          className={`${SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS}${open ? " rotate-180" : ""}`}
+          strokeWidth={2}
+          aria-hidden
+        />
       </button>
       {panel}
     </>
