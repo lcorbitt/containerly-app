@@ -12,6 +12,14 @@ export function riskFromStatus(status: string | null | undefined): RiskLevel {
   return "low";
 }
 
+export function resolveShipmentRiskLevel(
+  operatorLevel: string | null | undefined,
+  computed: RiskLevel,
+): RiskLevel {
+  if (operatorLevel === "low" || operatorLevel === "medium" || operatorLevel === "high") return operatorLevel;
+  return computed;
+}
+
 export function headlineFromSummary(args: {
   status: string | null;
   risk: RiskLevel;

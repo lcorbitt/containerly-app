@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import type { BulkImportResult } from "@/services/shipment-import.service";
 import { emitTrackingCreated } from "@/utils/tracking-created-event";
 import type { NewShipmentModalContextValue } from "./types";
 
@@ -76,10 +77,18 @@ export function useNewShipmentModalProvider() {
     setBulkImportOpen(false);
   }, []);
 
-  const onBulkComplete = useCallback(() => {
-    emitTrackingCreated();
-    router.refresh();
-  }, [router]);
+  const onBulkComplete = useCallback(
+    (result: BulkImportResult) => {
+      emitTrackingCreated();
+      if (result.created.length > 0) {
+        setBulkImportOpen(false);
+        void router.push("/shipments");
+        return;
+      }
+      router.refresh();
+    },
+    [router],
+  );
 
   const contextValue = useMemo(
     (): NewShipmentModalContextValue => ({ openNewShipmentModal, openBulkImportModal }),

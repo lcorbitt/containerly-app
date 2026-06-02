@@ -14,8 +14,8 @@ import {
   AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_ACTIONS_UTILITY_GROUP_CLASS,
   AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS,
-  AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS,
-  AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS,
+  AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS,
+  AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS,
   AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS,
   AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_MENU_CLASS,
@@ -83,12 +83,12 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
           <button
             type="button"
             onClick={() => openBulkImportModal()}
-            className={AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS}
+            className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS}
             title="Bulk import shipments from Excel or CSV"
             aria-label="Bulk import"
             aria-haspopup="dialog"
           >
-            <Import className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS}`} strokeWidth={2} aria-hidden />
+            <Import className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS}`} strokeWidth={2} aria-hidden />
             <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
           </button>
         </div>

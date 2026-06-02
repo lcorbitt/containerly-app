@@ -33,7 +33,7 @@ export async function fetchShipmentPortalHeader(client: SupabaseClient, shipment
   return client
     .from("shipments")
     .select(
-      "id, organization_id, order_number, carrier_booking_number, container_number, bill_of_lading, shipping_line, status, customer_name, country, port_of_loading, port_of_destination, estimated_departure_at, estimated_arrival_at, freight_booking_carrier, vessel, voyage, health_certificate_no, trade_terms, physical_mail_tracking_number, physical_mail_sent_at, workflow_status",
+      "id, organization_id, order_number, carrier_booking_number, container_number, bill_of_lading, shipping_line, status, customer_name, country, port_of_loading, port_of_destination, estimated_departure_at, estimated_arrival_at, freight_booking_carrier, vessel, voyage, health_certificate_no, trade_terms, physical_mail_tracking_number, physical_mail_sent_at, workflow_status, risk_level, risk_message",
     )
     .eq("id", shipmentId)
     .maybeSingle();

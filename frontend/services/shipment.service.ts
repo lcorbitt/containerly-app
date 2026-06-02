@@ -7,6 +7,8 @@ import type {
   ReviewShipmentDocumentBody,
   ReviewShipmentDocumentResponse,
   UpdateShipmentBody,
+  UpdateShipmentRiskBody,
+  UpdateShipmentRiskResponse,
   UpdateShipmentResponse,
 } from "@shared/dto/logistics.dto";
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
@@ -356,6 +358,9 @@ export type ShipmentWorkspaceRow = {
   trade_terms: string | null;
   workflow_status: string | null;
   physical_mail_tracking_number: string | null;
+  risk_level: string | null;
+  risk_message: string | null;
+  primary_carrier_status: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
   activity_events: ShipmentActivityEvent[];
 };
@@ -735,6 +740,34 @@ export async function createCommercialShipment(
       return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
     }
     return { ok: true, data: parsed as CreateShipmentResponse };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function updateShipmentRisk(
+  body: UpdateShipmentRiskBody,
+): Promise<
+  { ok: true; data: UpdateShipmentRiskResponse } | { ok: false; status: number; error: string }
+> {
+  try {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.updateRisk, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if ("error" in r) return { ok: false, status: r.status, error: r.error };
+    let parsed: unknown = r.text;
+    try {
+      parsed = r.text ? JSON.parse(r.text) : null;
+    } catch {
+      /* leave */
+    }
+    if (!r.res.ok) {
+      const err = parsed as { error?: string };
+      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
+    }
+    return { ok: true, data: parsed as UpdateShipmentRiskResponse };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
   }

@@ -113,6 +113,21 @@ export type UpdateShipmentResponse = {
   line_ids: string[];
 };
 
+export type ShipmentRiskLevel = "low" | "medium" | "high";
+
+/** Edge `update-shipment-risk` — operator-managed shipment risk + message (shown on importer portal). */
+export type UpdateShipmentRiskBody = {
+  organization_id: string;
+  shipment_id: string;
+  /** Null = derive risk from carrier status on portal. */
+  risk_level: ShipmentRiskLevel | null;
+  risk_message: string;
+};
+
+export type UpdateShipmentRiskResponse = {
+  shipment_id: string;
+};
+
 /** Used by Edge `delete-shipment`. */
 export type DeleteShipmentBody = {
   organization_id: string;

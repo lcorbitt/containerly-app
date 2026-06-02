@@ -23,7 +23,7 @@ export const SHIPMENT_DETAIL_LABEL_CLASS = SHIPMENT_COMMERCIAL_LABEL_CLASS;
 
 export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-0.5 text-sm text-zinc-900 dark:text-zinc-100";
 
-export const SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS = "grid gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4";
+export const SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS = "grid gap-4 sm:grid-cols-3 lg:grid-cols-4";
 
 export const SHIPMENT_TITLE_VALUE_CLASS =
   "mt-0.5 text-lg font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
@@ -45,7 +45,7 @@ export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_TITLE_COL_CLASS =
 
 export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS = `flex min-w-0 flex-col justify-center md:border-l md:pl-6 ${SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS}`;
 
-export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
+export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-4";
 
 export const SHIPMENT_DETAIL_FIELDS = [
   { key: "customer_name", label: "Customer", format: displayValue },

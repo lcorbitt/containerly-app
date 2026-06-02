@@ -92,7 +92,6 @@ export function OperatorShipmentsOverview({
                     className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
                   />
                   <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Filter</span>
                     {(
                       [
                         ["all", "All"],

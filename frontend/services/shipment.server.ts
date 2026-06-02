@@ -728,6 +728,10 @@ export type ShipmentWorkspaceRow = {
   trade_terms: string | null;
   workflow_status: string | null;
   physical_mail_tracking_number: string | null;
+  risk_level: string | null;
+  risk_message: string | null;
+  /** Primary container carrier-reported status (for default portal risk). */
+  primary_carrier_status: string | null;
   tracking_requests: ShipmentOverviewTrackingRow[];
   activity_events: ShipmentActivityEvent[];
 };
@@ -770,6 +774,7 @@ export async function fetchShipmentWorkspaceRow(
           containers (
             id,
             container_number,
+            status,
             tracking_requests (
               id,
               container_id,
@@ -816,14 +821,20 @@ export async function fetchShipmentWorkspaceRow(
     trade_terms: string | null;
     workflow_status: string | null;
     physical_mail_tracking_number: string | null;
+    risk_level: string | null;
+    risk_message: string | null;
     containers?: Array<{
       id: string;
       container_number: string;
+      status: string | null;
       tracking_requests?: ShipmentOverviewTrackingRow | ShipmentOverviewTrackingRow[] | null;
     }> | null;
   };
+  const containers = raw.containers ?? [];
+  const primaryCarrierStatus = containers[0]?.status ?? null;
+
   const lines: ShipmentOverviewTrackingRow[] = [];
-  for (const c of raw.containers ?? []) {
+  for (const c of containers) {
     const trs = c.tracking_requests;
     if (Array.isArray(trs)) lines.push(...trs);
     else if (trs) lines.push(trs);
@@ -879,6 +890,9 @@ export async function fetchShipmentWorkspaceRow(
       trade_terms: raw.trade_terms,
       workflow_status: raw.workflow_status,
       physical_mail_tracking_number: raw.physical_mail_tracking_number,
+      risk_level: raw.risk_level,
+      risk_message: raw.risk_message,
+      primary_carrier_status: primaryCarrierStatus,
       tracking_requests: lines,
       activity_events: (activityRows ?? []).map((row) => ({
         id: row.id as string,

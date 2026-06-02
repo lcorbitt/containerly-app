@@ -1,16 +1,13 @@
-import {
-  BUTTON_VARIANT_AMBER_SOFT_CLASS,
-  BUTTON_VARIANT_AMBER_SOFT_ICON_CLASS,
-} from "@/utils/button-variants";
-
 export const AUTHENTICATED_TOP_NAV_ACTION_CLASS =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 md:h-auto md:w-auto md:px-4 md:py-2 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
 
-export const AUTHENTICATED_TOP_NAV_AMBER_ACTION_CLASS = `inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition focus-visible:outline md:h-auto md:w-auto md:px-4 md:py-2 ${BUTTON_VARIANT_AMBER_SOFT_CLASS}`;
+/** Bulk import — brand orange fill (slightly opaque), white label. */
+export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS =
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary-orange/90 bg-primary-orange/[0.80] text-sm font-semibold text-white shadow-sm transition hover:border-primary-orange hover:bg-primary-orange focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary-orange/50 md:h-auto md:w-auto md:px-4 md:py-2 dark:border-primary-orange dark:bg-primary-orange/[0.82] dark:shadow-[0_0_20px_rgba(255,78,0,0.22)] dark:hover:border-primary-orange dark:hover:bg-primary-orange dark:hover:shadow-[0_0_24px_rgba(255,78,0,0.32)] dark:focus-visible:ring-primary-orange/55";
+
+export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS = "text-white";
 
 export const AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS = "hidden md:inline";
-
-export { BUTTON_VARIANT_AMBER_SOFT_ICON_CLASS as AUTHENTICATED_TOP_NAV_AMBER_ICON_CLASS };
 
 export const AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS =
   "relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-sm font-medium text-zinc-800 ring-2 ring-transparent transition hover:bg-zinc-300 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus-visible:ring-zinc-500";

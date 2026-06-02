@@ -248,6 +248,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           row={row}
           workflowStatus={row.workflow_status ?? undefined}
           editModal={editModal}
+          onRiskSaved={refetchShipment}
         />
       </ShipmentDetailsCard>
 

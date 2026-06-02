@@ -16,7 +16,10 @@ import type {
   CreateShipmentResponse,
   DeleteShipmentBody,
   ShipmentCommercialHeader,
+  ShipmentRiskLevel,
   UpdateShipmentBody,
+  UpdateShipmentRiskBody,
+  UpdateShipmentRiskResponse,
   UpdateShipmentResponse,
 } from "@shared/dto/logistics.dto.ts";
 
@@ -199,6 +202,57 @@ export async function updateCommercialShipment(
   }
 
   return { ok: true, shipment_id: shipmentId, line_ids: lineIds };
+}
+
+const SHIPMENT_RISK_LEVELS = new Set<ShipmentRiskLevel>(["low", "medium", "high"]);
+
+export async function updateShipmentRisk(
+  userClient: SupabaseClient,
+  userId: string,
+  input: UpdateShipmentRiskBody,
+): Promise<{ ok: true } & UpdateShipmentRiskResponse | Err> {
+  const orgId = input.organization_id?.trim();
+  const shipmentId = input.shipment_id?.trim();
+  if (!orgId || !UUID_RE.test(orgId)) {
+    return { ok: false, status: 400, error: "Invalid organization_id" };
+  }
+  if (!shipmentId || !UUID_RE.test(shipmentId)) {
+    return { ok: false, status: 400, error: "Invalid shipment_id" };
+  }
+
+  const { data: existing, error: exErr } = await fetchShipmentInOrganization(
+    userClient,
+    shipmentId,
+    orgId,
+  );
+  if (exErr) throw exErr;
+  if (!existing?.id) return { ok: false, status: 404, error: "Shipment not found" };
+
+  const { data: membership, error: memErr } = await fetchMembershipUserIdForOrg(
+    userClient,
+    orgId,
+    userId,
+  );
+  if (memErr) throw memErr;
+  if (!membership) return { ok: false, status: 403, error: "Not a member of this organization" };
+
+  const level = input.risk_level;
+  if (level != null && !SHIPMENT_RISK_LEVELS.has(level)) {
+    return { ok: false, status: 400, error: "Invalid risk_level" };
+  }
+
+  const message = String(input.risk_message ?? "").trim();
+  if (!message) {
+    return { ok: false, status: 400, error: "risk_message is required" };
+  }
+
+  const { error: upErr } = await updateShipmentCommercial(userClient, shipmentId, {
+    risk_level: level,
+    risk_message: message,
+  });
+  if (upErr) return { ok: false, status: 500, error: upErr.message };
+
+  return { ok: true, shipment_id: shipmentId };
 }
 
 export async function deleteCommercialShipment(

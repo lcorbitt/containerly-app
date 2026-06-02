@@ -22,6 +22,7 @@ import { PortalDetailsTabs } from "./PortalDetailsTabs";
 import { PortalTrackingPanel } from "./PortalTrackingPanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
+  PORTAL_CUSTOMER_NOTE_CLASS,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
@@ -125,9 +126,7 @@ export function PublicContainerReport({
                 </div>
               ) : null}
               {summary.customer_note?.trim() ? (
-                <p className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
-                  {summary.customer_note.trim()}
-                </p>
+                <p className={PORTAL_CUSTOMER_NOTE_CLASS}>{summary.customer_note.trim()}</p>
               ) : null}
               {logisticsHints?.note ? (
                 <div className="mt-4 rounded-lg border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/30 dark:text-amber-100">

@@ -3,5 +3,3 @@ export const SHIPMENT_COMMERCIAL_DETAILS_SECTION_CLASS =
 
 export const SHIPMENT_COMMERCIAL_DETAILS_TITLE_CLASS =
   "border-b border-zinc-200 pb-3 dark:border-zinc-800";
-
-export const SHIPMENT_COMMERCIAL_DETAILS_GRID_WRAP_CLASS = "pt-";

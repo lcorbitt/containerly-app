@@ -17,7 +17,7 @@ import {
   listWorkspaceAttachmentsForContainers,
   listWorkspaceAttachmentsForShipment,
 } from "@models/workspace_attachments.ts";
-import { headlineFromSummary, riskFromStatus } from "./shipment-insights.ts";
+import { headlineFromSummary, resolveShipmentRiskLevel, riskFromStatus } from "./shipment-insights.ts";
 
 /** Visibility for importer portal + operator preview (per `shipment_customer_access.visibility_settings`). */
 export type ShareSettings = {
@@ -260,7 +260,11 @@ export async function buildShipmentPortalPayload(
 
   const carrierStatuses = containerList.map((c) => c.status as string | null);
   const status = (primary?.status as string | null) ?? (shipment.workflow_status as string | null);
-  const risk = riskFromStatus(status);
+  const computedRisk = riskFromStatus(status);
+  const risk = resolveShipmentRiskLevel(
+    shipment.risk_level as string | null | undefined,
+    computedRisk,
+  );
 
   const lastKnown =
     primaryLoc?.last_location ??
@@ -330,6 +334,10 @@ export async function buildShipmentPortalPayload(
 
   applyVisibilityToSummary(summary, settings);
   applyOperatorOverrides(summary, operatorOverrides);
+
+  const riskMessage =
+    typeof shipment.risk_message === "string" ? shipment.risk_message.trim() : "";
+  if (riskMessage) summary.customer_note = riskMessage;
 
   const payload: Record<string, unknown> = {
     report: reportMeta,
