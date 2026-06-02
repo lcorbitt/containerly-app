@@ -29,6 +29,15 @@ export const AUTHENTICATED_TOP_NAV_SIGNING_OUT_LABEL = "Signing out...";
 
 export const AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS = "flex min-w-0 items-center gap-3 sm:gap-4";
 
-export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS = "ml-auto flex items-center gap-2 sm:gap-6";
+export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS =
+  "ml-auto flex items-center gap-5 sm:gap-8 md:gap-10";
+
+export const AUTHENTICATED_TOP_NAV_ACTIONS_PRIMARY_GROUP_CLASS = "flex items-center gap-2 sm:gap-3";
+
+export const AUTHENTICATED_TOP_NAV_ACTIONS_UTILITY_GROUP_CLASS = "flex items-center gap-1.5 sm:gap-2";
+
+/** Theme toggle + notifications — border appears on hover only. */
+export const AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS =
+  "relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent text-zinc-700 transition hover:border-zinc-200 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-900 dark:focus-visible:ring-zinc-500/40";
 
 export const AUTHENTICATED_TOP_NAV_ORG_HREF = "/dashboard";

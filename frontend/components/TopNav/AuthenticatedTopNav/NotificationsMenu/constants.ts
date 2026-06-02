@@ -1,5 +1,7 @@
+import { AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS } from "../constants";
+
 export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_BUTTON_CLASS =
-  "relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
+  AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS;
 
 export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_REVEAL_CLASS =
   "absolute right-0 z-50 mt-2 w-[min(100vw-2rem,20rem)]";
