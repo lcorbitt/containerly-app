@@ -82,3 +82,18 @@ export async function listActiveCustomerAccessForShipment(client: SupabaseClient
     .eq("shipment_id", shipmentId)
     .is("revoked_at", null);
 }
+
+/** Active grant for a profile email on a shipment (portal gate). */
+export async function fetchActiveAccessForProfileEmailOnShipment(
+  client: SupabaseClient,
+  shipmentId: string,
+  emailLower: string,
+) {
+  const { data: profile } = await client
+    .from("profiles")
+    .select("id")
+    .eq("email", emailLower)
+    .maybeSingle();
+  if (!profile?.id) return { data: null, error: null };
+  return fetchActiveAccessId(client, shipmentId, profile.id as string);
+}

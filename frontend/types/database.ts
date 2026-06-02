@@ -174,6 +174,20 @@ export type SharedReport = {
   updated_at: string;
 };
 
+export type ShipmentCustomerAccessRequest = {
+  id: string;
+  organization_id: string;
+  shipment_id: string;
+  requester_email: string;
+  status: "pending" | "approved" | "denied";
+  requested_at: string;
+  resolved_at: string | null;
+  resolved_by_user_id: string | null;
+  invite_id: string | null;
+  access_id: string | null;
+  created_at: string;
+};
+
 export type CustomerInvite = {
   id: string;
   organization_id: string;

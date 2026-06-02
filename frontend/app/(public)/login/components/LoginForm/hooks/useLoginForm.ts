@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithPassword, signUpWithEmail } from "@/services/auth.service";
 import {
@@ -20,6 +20,12 @@ export function useLoginForm() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "signup") {
+      setMode("signup");
+    }
+  }, [searchParams]);
 
   const loadingTitle =
     mode === "signup" ? LOGIN_FORM_LOADING_TITLE_SIGN_UP : LOGIN_FORM_LOADING_TITLE_SIGN_IN;

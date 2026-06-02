@@ -94,3 +94,12 @@ verify_jwt = false
 
 [functions.claim-shipment-access]
 verify_jwt = false
+
+[functions.check-portal-access-email]
+verify_jwt = false
+
+[functions.resolve-customer-access-request]
+verify_jwt = false
+
+[functions.preview-customer-invite]
+verify_jwt = false

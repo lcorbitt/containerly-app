@@ -23,6 +23,8 @@ import {
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
+  notifyAssigneeCustomerAccessRequested,
+  notifyCustomerInviteReceived,
 } from "@supabase-shared/in-app-alerts.ts";
 import { insertAlert } from "@models/alerts.ts";
 import { fetchProfileEmailByUserId } from "@models/profiles.ts";
@@ -47,6 +49,8 @@ export {
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
+  notifyAssigneeCustomerAccessRequested,
+  notifyCustomerInviteReceived,
   notifyOperatorsTeamMessage,
   notifyOperatorsOperatorRepliedToCustomer,
   notifyOperatorsOriginalsMailed,
@@ -286,4 +290,37 @@ export async function notifyCustomerInviteSent(
 ): Promise<void> {
   const { sendCustomerInviteEmail } = await import("@supabase-shared/email.service.ts");
   await sendCustomerInviteEmail(args);
+}
+
+export async function notifyAssigneeAccessRequest(
+  admin: SupabaseClient,
+  args: {
+    organizationId: string;
+    shipmentId: string;
+    assigneeUserId: string;
+    requesterEmail: string;
+    accessRequestId: string;
+    orgName: string;
+  },
+): Promise<void> {
+  const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
+  await notifyAssigneeCustomerAccessRequested(admin, {
+    organizationId: args.organizationId,
+    shipmentId: args.shipmentId,
+    assigneeUserId: args.assigneeUserId,
+    requesterEmail: args.requesterEmail,
+    accessRequestId: args.accessRequestId,
+  });
+
+  const { data: profile } = await fetchProfileEmailByUserId(admin, args.assigneeUserId);
+  if (profile?.email) {
+    const { sendCustomerAccessRequestEmail } = await import("@supabase-shared/email.service.ts");
+    await sendCustomerAccessRequestEmail({
+      to: profile.email as string,
+      orgName: args.orgName,
+      requesterEmail: args.requesterEmail,
+      orderPhrase,
+      workspaceUrl: `${siteUrl()}/shipments/${args.shipmentId}`,
+    });
+  }
 }

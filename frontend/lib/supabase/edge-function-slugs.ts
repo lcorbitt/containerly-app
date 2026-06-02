@@ -30,6 +30,9 @@ export const EDGE_FUNCTION_SLUGS = {
     createInvite: "create-customer-invite",
     acceptInvite: "accept-customer-invite",
     completeShipmentSetup: "complete-customer-shipment-setup",
+    checkPortalAccessEmail: "check-portal-access-email",
+    resolveAccessRequest: "resolve-customer-access-request",
+    previewInvite: "preview-customer-invite",
   },
   reports: {
     getPublic: "get-public-report",

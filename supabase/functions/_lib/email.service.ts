@@ -77,6 +77,28 @@ ${actionBlock}
 </body></html>`;
 }
 
+export async function sendCustomerAccessRequestEmail(args: {
+  to: string;
+  orgName: string;
+  requesterEmail: string;
+  orderPhrase: string;
+  workspaceUrl: string;
+}): Promise<SendEmailResult> {
+  const masked = args.requesterEmail.replace(/(^.).*(@.*$)/, "$1***$2");
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: `Access request for ${args.orderPhrase}`,
+    html: buildBrandedEmailHtml({
+      orgName: args.orgName,
+      title: "Customer portal access request",
+      body: `<strong>${escapeHtml(masked)}</strong> requested access to <strong>${escapeHtml(args.orderPhrase)}</strong>. Approve or deny from your notifications in Containerly.`,
+      actionUrl: args.workspaceUrl,
+      actionLabel: "Review request",
+    }),
+    text: `${masked} requested access to ${args.orderPhrase}. Open: ${args.workspaceUrl}`,
+  });
+}
+
 export async function sendCustomerInviteEmail(args: {
   to: string;
   orgName: string;

@@ -32,11 +32,31 @@ import type {
   PostCustomerMessageResponse,
 } from "@shared/dto/customer-access.dto.ts";
 import {
+  notifyAssigneeAccessRequest,
   notifyCustomerInviteSent,
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsNewCustomerMessage,
 } from "@supabase-shared/notification-workflow.service.ts";
-import { fetchProfileDisplayName } from "@supabase-shared/in-app-alerts.ts";
+import {
+  fetchProfileDisplayName,
+  listOrgAdminUserIds,
+  notifyCustomerInviteReceived,
+} from "@supabase-shared/in-app-alerts.ts";
+import { fetchProfileIdByEmail } from "@models/profiles.ts";
+import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
+import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
+import { fetchActiveAccessForProfileEmailOnShipment } from "@models/shipment_customer_access.ts";
+import {
+  fetchAccessRequestById,
+  fetchPendingAccessRequestByEmailForShipment,
+  insertShipmentCustomerAccessRequest,
+  updateAccessRequest,
+} from "@models/shipment_customer_access_requests.ts";
+import type {
+  CheckPortalAccessEmailResponse,
+  PreviewCustomerInviteResponse,
+  ResolveCustomerAccessRequestResponse,
+} from "@shared/dto/customer-access.dto.ts";
 
 // ---------------------------------------------------------------------------
 // Crypto helpers
@@ -145,6 +165,16 @@ export async function createCustomerInvite(
       orgName,
       inviteUrl: invite_url,
     });
+    const { data: existingProfile } = await fetchProfileIdByEmail(admin, emailRaw);
+    if (existingProfile?.id) {
+      await notifyCustomerInviteReceived(admin, {
+        organizationId: orgId,
+        shipmentId,
+        recipientUserId: existingProfile.id as string,
+        invitedByUserId: userId,
+        inviteUrl: invite_url,
+      });
+    }
   }
 
   return {
@@ -512,5 +542,251 @@ export async function postCustomerMessage(
       created_at: inserted.created_at as string,
       author_kind: inserted.author_kind as string,
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// check-portal-access-email (anonymous gate)
+// ---------------------------------------------------------------------------
+
+const GENERIC_PORTAL_EMAIL_MESSAGE =
+  "If this email is invited to this shipment, sign in or create an account to continue. Otherwise your request has been sent to the team.";
+
+export async function checkPortalAccessEmail(
+  admin: SupabaseClient,
+  input: { shipment_id: string; email: string },
+): Promise<{ ok: true } & CheckPortalAccessEmailResponse | Err> {
+  const shipmentId = input.shipment_id.trim();
+  const emailRaw = input.email.trim().toLowerCase();
+
+  if (!shipmentId || !UUID_RE.test(shipmentId)) {
+    return { ok: false, status: 400, error: "Invalid shipment_id" };
+  }
+  if (!emailRaw || !emailRaw.includes("@")) {
+    return { ok: false, status: 400, error: "Valid email required" };
+  }
+
+  const { data: row } = await fetchShipmentIdAndOrganization(admin, shipmentId);
+  if (!row) {
+    return {
+      ok: true,
+      message: GENERIC_PORTAL_EMAIL_MESSAGE,
+      outcome: "request_sent",
+    };
+  }
+
+  const orgId = row.organization_id as string;
+
+  const { data: pendingInvite } = await fetchPendingInviteByEmailForShipment(
+    admin,
+    shipmentId,
+    emailRaw,
+  );
+  const { data: activeAccess } = await fetchActiveAccessForProfileEmailOnShipment(
+    admin,
+    shipmentId,
+    emailRaw,
+  );
+
+  if (pendingInvite || activeAccess?.id) {
+    return {
+      ok: true,
+      message: "This email is invited. Sign in or create an account to open the customer portal.",
+      outcome: "invited",
+    };
+  }
+
+  const { data: existingRequest } = await fetchPendingAccessRequestByEmailForShipment(
+    admin,
+    shipmentId,
+    emailRaw,
+  );
+  if (existingRequest?.id) {
+    return {
+      ok: true,
+      message: GENERIC_PORTAL_EMAIL_MESSAGE,
+      outcome: "already_requested",
+    };
+  }
+
+  const { data: shipRow } = await fetchShipmentPortalOperatorRow(admin, shipmentId);
+  const { data: accessRequest, error: insErr } = await insertShipmentCustomerAccessRequest(admin, {
+    organization_id: orgId,
+    shipment_id: shipmentId,
+    requester_email: emailRaw,
+    status: "pending",
+  });
+  if (insErr) throw insErr;
+  if (!accessRequest) throw new Error("insertShipmentCustomerAccessRequest returned no row");
+
+  const { data: orgRow } = await fetchOrganizationForPortal(admin, orgId);
+  const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
+
+  let recipientId = (shipRow?.assignee_user_id as string | null | undefined) ?? null;
+  if (!recipientId) {
+    const admins = await listOrgAdminUserIds(admin, orgId);
+    recipientId = admins[0] ?? null;
+  }
+  if (recipientId) {
+    await notifyAssigneeAccessRequest(admin, {
+      organizationId: orgId,
+      shipmentId,
+      assigneeUserId: recipientId,
+      requesterEmail: emailRaw,
+      accessRequestId: accessRequest.id as string,
+      orgName,
+    });
+  }
+
+  return {
+    ok: true,
+    message: GENERIC_PORTAL_EMAIL_MESSAGE,
+    outcome: "request_sent",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// resolve-customer-access-request
+// ---------------------------------------------------------------------------
+
+async function userCanResolveAccessRequest(
+  userClient: SupabaseClient,
+  admin: SupabaseClient,
+  userId: string,
+  shipmentId: string,
+  organizationId: string,
+): Promise<boolean> {
+  const [{ data: ship }, { data: participant }, { data: profile }, { data: member }] =
+    await Promise.all([
+      fetchShipmentPortalOperatorRow(userClient, shipmentId),
+      fetchShipmentParticipantForUser(userClient, shipmentId, userId),
+      userClient.from("profiles").select("role").eq("id", userId).maybeSingle(),
+      userClient
+        .from("organization_members")
+        .select("role")
+        .eq("organization_id", organizationId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+
+  if (!ship) return false;
+  if ((profile?.role as string | undefined) === "superadmin") return true;
+  if ((ship.assignee_user_id as string | null) === userId) return true;
+  if (participant) return true;
+  if (member?.role === "admin") return true;
+  return false;
+}
+
+export async function resolveCustomerAccessRequest(
+  userClient: SupabaseClient,
+  admin: SupabaseClient,
+  userId: string,
+  input: { access_request_id: string; action: "approve" | "deny" },
+): Promise<{ ok: true } & ResolveCustomerAccessRequestResponse | Err> {
+  const requestId = input.access_request_id.trim();
+  const action = input.action;
+  if (!requestId || !UUID_RE.test(requestId)) {
+    return { ok: false, status: 400, error: "Invalid access_request_id" };
+  }
+  if (action !== "approve" && action !== "deny") {
+    return { ok: false, status: 400, error: "action must be approve or deny" };
+  }
+
+  const { data: request, error: reqErr } = await fetchAccessRequestById(admin, requestId);
+  if (reqErr) throw reqErr;
+  if (!request) return { ok: false, status: 404, error: "Access request not found" };
+  if (request.status !== "pending") {
+    return { ok: false, status: 409, error: "Request already resolved" };
+  }
+
+  const shipmentId = request.shipment_id as string;
+  const orgId = request.organization_id as string;
+
+  const allowed = await userCanResolveAccessRequest(userClient, admin, userId, shipmentId, orgId);
+  if (!allowed) return { ok: false, status: 403, error: "Not allowed to resolve this request" };
+
+  if (action === "deny") {
+    await updateAccessRequest(admin, requestId, {
+      status: "denied",
+      resolved_at: new Date().toISOString(),
+      resolved_by_user_id: userId,
+    });
+    return { ok: true, status: "denied", shipment_id: shipmentId };
+  }
+
+  const email = String(request.requester_email).trim().toLowerCase();
+  const inviteResult = await createCustomerInvite(userClient, admin, userId, {
+    organization_id: orgId,
+    shipment_id: shipmentId,
+    invited_email: email,
+    delivery_mode: "email_invite",
+  });
+  if (!inviteResult.ok) {
+    return { ok: false, status: inviteResult.status, error: inviteResult.error };
+  }
+
+  const { data: existingProfile } = await fetchProfileIdByEmail(admin, email);
+  if (existingProfile?.id && inviteResult.token) {
+    await acceptCustomerInvite(admin, existingProfile.id as string, email, inviteResult.token);
+  }
+
+  await updateAccessRequest(admin, requestId, {
+    status: "approved",
+    resolved_at: new Date().toISOString(),
+    resolved_by_user_id: userId,
+    invite_id: inviteResult.invite_id,
+  });
+
+  return {
+    ok: true,
+    status: "approved",
+    shipment_id: shipmentId,
+    invite_id: inviteResult.invite_id,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// preview-customer-invite (anonymous)
+// ---------------------------------------------------------------------------
+
+export async function previewCustomerInvite(
+  admin: SupabaseClient,
+  token: string,
+): Promise<{ ok: true } & PreviewCustomerInviteResponse | Err> {
+  if (!token.trim()) return { ok: false, status: 400, error: "token required" };
+
+  const tokenHash = await sha256Hex(token.trim());
+  const { data: invite, error: invErr } = await fetchCustomerInviteByTokenHash(admin, tokenHash);
+  if (invErr) throw invErr;
+  if (!invite) return { ok: false, status: 404, error: "Invalid or expired invite" };
+  if (invite.status !== "pending") {
+    return { ok: false, status: 410, error: "Invite is no longer valid" };
+  }
+  if (new Date(invite.expires_at as string) < new Date()) {
+    return { ok: false, status: 410, error: "This invite has expired" };
+  }
+
+  const orgId = invite.organization_id as string;
+  const shipmentId = invite.shipment_id as string;
+  const email = String(invite.invited_email).trim().toLowerCase();
+  const masked = email.replace(/(^.).*(@.*$)/, "$1***$2");
+
+  const { data: orgRow } = await fetchOrganizationForPortal(admin, orgId);
+  const { data: ship } = await admin
+    .from("shipments")
+    .select("order_number, container_number")
+    .eq("id", shipmentId)
+    .maybeSingle();
+
+  const order = (ship?.order_number as string | null | undefined)?.trim();
+  const container = (ship?.container_number as string | null | undefined)?.trim();
+  const shipmentLabel = order ? `Order ${order}` : container ? `Container ${container}` : "this shipment";
+
+  return {
+    ok: true,
+    invited_email: email,
+    invited_email_masked: masked,
+    org_name: (orgRow?.name as string | undefined) ?? "Your logistics team",
+    shipment_label: shipmentLabel,
   };
 }

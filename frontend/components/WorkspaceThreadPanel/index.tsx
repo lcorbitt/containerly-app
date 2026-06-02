@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Pencil, Reply, Trash2 } from "lucide-react";
+import { Check, Paperclip, Pencil, Reply, Trash2, X } from "lucide-react";
 import { useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
@@ -25,9 +25,11 @@ import {
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import {
   THREAD_MESSAGE_AVATAR_CLASS,
+  THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS,
+  THREAD_MESSAGE_EDIT_ACTIONS_CLASS,
   THREAD_OWN_COMPOSER_BG_CLASS,
   THREAD_PANEL_COMPOSER_ID,
 } from "./constants";
@@ -138,7 +140,9 @@ function ThreadMessageItem({
   );
 
   const messageContent = (
-    <div className={threadMessageContentPadClass(isOwnMessage)}>
+    <div
+      className={`${threadMessageContentPadClass(isOwnMessage)}${isEditing ? ` ${THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS}` : ""}`}
+    >
       <div
         className={`flex flex-wrap items-baseline gap-x-2 gap-y-0.5 ${isOwnMessage ? "justify-end" : ""}`}
       >
@@ -156,32 +160,15 @@ function ThreadMessageItem({
         </span>
       </div>
       {isEditing ? (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2">
           <RichMessageEditor
             value={editDraft}
             onChange={onEditDraftChange}
             onSubmit={() => onSaveEditMessage(node.id)}
             disabled={isSavingEdit}
+            autoFocus
             aria-label="Edit message"
           />
-          <div className={`flex flex-wrap gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
-            <button
-              type="button"
-              onClick={() => onSaveEditMessage(node.id)}
-              disabled={isSavingEdit || !editDraft.trim()}
-              className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSavingEdit ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={onCancelEditMessage}
-              disabled={isSavingEdit}
-              className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Cancel
-            </button>
-          </div>
         </div>
       ) : node.body.trim() ? (
         <MessageBody text={node.body} className="mt-2" />
@@ -200,6 +187,48 @@ function ThreadMessageItem({
       ) : null}
     </div>
   );
+
+  const editActions = isEditing ? (
+    <div className={THREAD_MESSAGE_EDIT_ACTIONS_CLASS}>
+      <ActionHoverTooltip label={isSavingEdit ? "Saving…" : "Save"}>
+        <button
+          type="button"
+          onClick={() => onSaveEditMessage(node.id)}
+          disabled={isSavingEdit || !editDraft.trim()}
+          aria-label={isSavingEdit ? "Saving message…" : "Save message"}
+          className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+        >
+          {isSavingEdit ? (
+            <span
+              className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent transition-colors duration-200"
+              aria-hidden
+            />
+          ) : (
+            <Check
+              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+              strokeWidth={2}
+              aria-hidden
+            />
+          )}
+        </button>
+      </ActionHoverTooltip>
+      <ActionHoverTooltip label="Cancel">
+        <button
+          type="button"
+          onClick={onCancelEditMessage}
+          disabled={isSavingEdit}
+          aria-label="Cancel editing"
+          className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+        >
+          <X
+            className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+            strokeWidth={2}
+            aria-hidden
+          />
+        </button>
+      </ActionHoverTooltip>
+    </div>
+  ) : null;
 
   const cornerActions = (
     <div className={threadMessageCornerActionsClass(isOwnMessage)}>
@@ -285,12 +314,14 @@ function ThreadMessageItem({
         {isOwnMessage ? (
           <>
             {cornerActions}
+            {editActions}
             {messageContent}
           </>
         ) : (
           <>
             {messageContent}
             {cornerActions}
+            {editActions}
           </>
         )}
     </div>

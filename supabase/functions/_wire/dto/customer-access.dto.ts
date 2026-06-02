@@ -84,3 +84,49 @@ export type PostCustomerMessageResponse = {
     author_kind: string;
   };
 };
+
+// ---------------------------------------------------------------------------
+// check-portal-access-email (anonymous)
+// ---------------------------------------------------------------------------
+
+export type CheckPortalAccessEmailBody = {
+  shipment_id: string;
+  email: string;
+};
+
+export type CheckPortalAccessEmailResponse = {
+  message: string;
+  outcome: "invited" | "request_sent" | "already_requested";
+};
+
+// ---------------------------------------------------------------------------
+// resolve-customer-access-request
+// ---------------------------------------------------------------------------
+
+export type ResolveCustomerAccessRequestBody = {
+  access_request_id: string;
+  action: "approve" | "deny";
+};
+
+export type ResolveCustomerAccessRequestResponse = {
+  ok: true;
+  status: "approved" | "denied";
+  shipment_id: string;
+  invite_id?: string;
+};
+
+// ---------------------------------------------------------------------------
+// preview-customer-invite (anonymous)
+// ---------------------------------------------------------------------------
+
+export type PreviewCustomerInviteBody = {
+  token: string;
+};
+
+export type PreviewCustomerInviteResponse = {
+  /** Full address; safe to return only when caller holds the invite token. */
+  invited_email: string;
+  invited_email_masked: string;
+  org_name: string;
+  shipment_label: string;
+};

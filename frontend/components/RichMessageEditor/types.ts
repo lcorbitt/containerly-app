@@ -6,4 +6,5 @@ export interface RichMessageEditorProps {
   placeholder?: string;
   className?: string;
   "aria-label"?: string;
+  autoFocus?: boolean;
 }

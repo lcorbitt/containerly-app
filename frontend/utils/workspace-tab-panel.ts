@@ -21,3 +21,7 @@ export function workspaceTabButtonClass(active: boolean): string {
       : "border-transparent font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
   }`;
 }
+
+export function formatWorkspaceTabLabel(label: string, count: number): string {
+  return `${label} (${count})`;
+}

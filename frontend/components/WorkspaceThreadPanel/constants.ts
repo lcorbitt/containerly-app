@@ -57,11 +57,17 @@ export const THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS = "min-w-0 pr-25";
 
 export const THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS = "min-w-0 pr-25";
 
+/** Extra bottom space while inline-editing so save/cancel icons sit clear of the editor. */
+export const THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS = "pb-8";
+
 export const THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS =
   "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
 
 export const THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS =
   "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
+
+export const THREAD_MESSAGE_EDIT_ACTIONS_CLASS =
+  "absolute bottom-1 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px]";
 
 /** Reply / edit — dark icon on hover in light mode (readable on pastel bubbles). */
 export const THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS =

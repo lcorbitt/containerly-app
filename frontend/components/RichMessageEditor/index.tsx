@@ -19,6 +19,7 @@ export function RichMessageEditor({
   placeholder = RICH_MESSAGE_EDITOR_PLACEHOLDER,
   className,
   "aria-label": ariaLabel = "Message",
+  autoFocus = false,
 }: RichMessageEditorProps) {
   const editor = useRichMessageEditor({
     value,
@@ -26,6 +27,7 @@ export function RichMessageEditor({
     onSubmit,
     disabled,
     placeholder,
+    autoFocus,
   });
 
   const bubble = useRichMessageFormattingBubble(editor, disabled);

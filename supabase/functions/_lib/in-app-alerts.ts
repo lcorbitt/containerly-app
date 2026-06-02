@@ -294,6 +294,57 @@ export async function notifyOperatorsCustomerAccessGranted(
   });
 }
 
+export async function notifyAssigneeCustomerAccessRequested(
+  client: SupabaseClient,
+  args: ShipmentAlertContext & {
+    assigneeUserId: string;
+    requesterEmail: string;
+    accessRequestId: string;
+  },
+): Promise<void> {
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
+  const masked = args.requesterEmail.replace(/(^.).*(@.*$)/, "$1***$2");
+  await insertAlert(client, {
+    organization_id: args.organizationId,
+    shipment_id: args.shipmentId,
+    container_id: args.containerId ?? null,
+    alert_type: "CUSTOMER_ACCESS_REQUESTED",
+    severity: "info",
+    message: `${masked} requested access to ${orderPhrase}.`,
+    recipient_user_id: args.assigneeUserId,
+    actor_user_id: null,
+    details: {
+      access_request_id: args.accessRequestId,
+      requester_email: args.requesterEmail,
+      shipment_id: args.shipmentId,
+    },
+  });
+}
+
+export async function notifyCustomerInviteReceived(
+  client: SupabaseClient,
+  args: ShipmentAlertContext & {
+    recipientUserId: string;
+    invitedByUserId: string;
+    inviteUrl: string;
+  },
+): Promise<void> {
+  if (isSelfNotification(args.recipientUserId, args.invitedByUserId)) return;
+  const actorName = await fetchProfileDisplayName(client, args.invitedByUserId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
+  await insertAlert(client, {
+    organization_id: args.organizationId,
+    shipment_id: args.shipmentId,
+    container_id: args.containerId ?? null,
+    alert_type: "CUSTOMER_INVITE_RECEIVED",
+    severity: "info",
+    message: `${actorName} invited you to ${orderPhrase}.`,
+    recipient_user_id: args.recipientUserId,
+    actor_user_id: args.invitedByUserId,
+    details: { invite_url: args.inviteUrl, shipment_id: args.shipmentId },
+  });
+}
+
 export async function notifyOperatorsCustomerDocumentUploaded(
   client: SupabaseClient,
   args: ShipmentAlertContext & {

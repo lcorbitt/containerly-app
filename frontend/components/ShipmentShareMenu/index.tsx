@@ -113,23 +113,6 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
                     <p className="text-sm text-zinc-500">No one has access yet.</p>
                   )}
 
-                  <div>
-                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">General access</p>
-                    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg px-1 py-1.5">
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
-                          <Globe className="h-4 w-4 text-zinc-600 dark:text-zinc-300" strokeWidth={2} aria-hidden />
-                        </span>
-                        <span className="min-w-0 text-sm text-zinc-800 dark:text-zinc-200">
-                          Anyone with the link
-                        </span>
-                      </span>
-                      <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                        Can view
-                        <ChevronDown className="h-3.5 w-3.5 opacity-60" strokeWidth={2} aria-hidden />
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex items-center justify-end border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">

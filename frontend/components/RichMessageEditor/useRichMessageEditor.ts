@@ -16,6 +16,7 @@ export function useRichMessageEditor(input: {
   onSubmit: () => void;
   disabled?: boolean;
   placeholder?: string;
+  autoFocus?: boolean;
 }) {
   const syncingRef = useRef(false);
   const onChangeRef = useRef(input.onChange);
@@ -45,6 +46,7 @@ export function useRichMessageEditor(input: {
     ],
     content: messageMarkupToTiptapDoc(input.value),
     editable: !input.disabled,
+    autofocus: input.autoFocus ? "end" : false,
     editorProps: {
       handleKeyDown: (_view, event) => {
         if (event.key === "Enter" && !event.shiftKey) {
@@ -66,6 +68,13 @@ export function useRichMessageEditor(input: {
     if (!editor) return;
     editor.setEditable(!input.disabled);
   }, [editor, input.disabled]);
+
+  useEffect(() => {
+    if (!editor || !input.autoFocus || input.disabled) return;
+    requestAnimationFrame(() => {
+      editor.commands.focus("end");
+    });
+  }, [editor, input.autoFocus, input.disabled]);
 
   useEffect(() => {
     if (!editor) return;

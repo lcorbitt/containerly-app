@@ -1,0 +1,28 @@
+import { createServiceClient } from "@supabase-shared/db.ts";
+import { checkPortalAccessEmail } from "@supabase-shared/customer-access.service.ts";
+import { edgeErrorMessage, jsonResponse } from "@supabase-shared/utils.ts";
+import type { CheckPortalAccessEmailBody } from "@shared/dto/customer-access.dto.ts";
+
+export async function handle(req: Request): Promise<Response> {
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+  }
+
+  try {
+    const admin = createServiceClient();
+    const body = (await req.json()) as CheckPortalAccessEmailBody;
+    const result = await checkPortalAccessEmail(admin, {
+      shipment_id: body.shipment_id ?? "",
+      email: body.email ?? "",
+    });
+    if (!result.ok) {
+      return jsonResponse({ error: result.error }, { status: result.status });
+    }
+    return jsonResponse({
+      message: result.message,
+      outcome: result.outcome,
+    });
+  } catch (e) {
+    return jsonResponse({ error: edgeErrorMessage(e) }, { status: 500 });
+  }
+}

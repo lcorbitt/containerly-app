@@ -12,7 +12,12 @@ import type {
   UpdateShipmentResponse,
 } from "@shared/dto/logistics.dto";
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
-import type { AcceptCustomerInviteResponse } from "@shared/dto/customer-access.dto";
+import type {
+  AcceptCustomerInviteResponse,
+  CheckPortalAccessEmailResponse,
+  PreviewCustomerInviteResponse,
+  ResolveCustomerAccessRequestResponse,
+} from "@shared/dto/customer-access.dto";
 import type { ServiceResult } from "@shared/dto/common.dto";
 import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +26,7 @@ import { profileDisplayName } from "@/utils/author-display-name";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
+  ShipmentCustomerAccessRequest,
   ShipmentParticipant,
   TrackingRequest,
 } from "@/types/database";
@@ -61,6 +67,28 @@ async function authFetch(
   const res = await fetch(url, { ...init, headers });
   const text = await res.text();
   return { res, text };
+}
+
+async function publicEdgeFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<{ res: Response; text: string } | { error: string; status: number }> {
+  const { base, anon } = requireEnv();
+  const url = `${base}/functions/v1/${path}`;
+  const headers = new Headers(init?.headers);
+  headers.set("apikey", anon);
+  headers.set("Authorization", `Bearer ${anon}`);
+  const res = await fetch(url, { ...init, headers });
+  const text = await res.text();
+  return { res, text };
+}
+
+function parseEdgeJson<T>(r: { res: Response; text: string }): T | null {
+  try {
+    return r.text ? (JSON.parse(r.text) as T) : null;
+  } catch {
+    return null;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -209,6 +237,7 @@ export type ShipmentAccessTabSnapshot = {
   profileImagePathByUserId: Record<string, string | null>;
   customerAccessRows: ShipmentCustomerAccess[];
   pendingInvites: CustomerInvite[];
+  pendingAccessRequests: ShipmentCustomerAccessRequest[];
   messageAuthorByUserId: Record<string, string>;
   tags: string[];
   orgTagSuggestions: string[];
@@ -501,6 +530,107 @@ export async function completeImporterPortalSetup(shipmentId: string): Promise<
       return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
     }
     return { ok: true };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function checkPortalAccessEmail(args: {
+  shipmentId: string;
+  email: string;
+}): Promise<
+  | ({ ok: true } & CheckPortalAccessEmailResponse)
+  | { ok: false; status: number; error: string }
+> {
+  try {
+    const r = await publicEdgeFetch(EDGE_FUNCTION_SLUGS.customers.checkPortalAccessEmail, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shipment_id: args.shipmentId,
+        email: args.email.trim().toLowerCase(),
+      }),
+    });
+    if ("error" in r) {
+      return { ok: false, status: r.status, error: r.error };
+    }
+    const body = parseEdgeJson<CheckPortalAccessEmailResponse & { error?: string }>(r);
+    if (!r.res.ok) {
+      return { ok: false, status: r.res.status, error: body?.error ?? r.res.statusText };
+    }
+    if (!body?.message || !body.outcome) {
+      return { ok: false, status: 500, error: "Invalid response" };
+    }
+    return { ok: true, message: body.message, outcome: body.outcome };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function resolveCustomerAccessRequest(args: {
+  accessRequestId: string;
+  action: "approve" | "deny";
+}): Promise<
+  | ({ ok: true } & ResolveCustomerAccessRequestResponse)
+  | { ok: false; status: number; error: string }
+> {
+  try {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.customers.resolveAccessRequest, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_request_id: args.accessRequestId,
+        action: args.action,
+      }),
+    });
+    if ("error" in r) {
+      return { ok: false, status: r.status, error: r.error };
+    }
+    const body = parseEdgeJson<ResolveCustomerAccessRequestResponse & { error?: string }>(r);
+    if (!r.res.ok) {
+      return { ok: false, status: r.res.status, error: body?.error ?? r.res.statusText };
+    }
+    if (!body?.ok) {
+      return { ok: false, status: 500, error: "Invalid response" };
+    }
+    return {
+      ok: true,
+      status: body.status,
+      shipment_id: body.shipment_id,
+      invite_id: body.invite_id,
+    };
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+
+export async function previewCustomerInvite(token: string): Promise<
+  | ({ ok: true } & PreviewCustomerInviteResponse)
+  | { ok: false; status: number; error: string }
+> {
+  try {
+    const r = await publicEdgeFetch(EDGE_FUNCTION_SLUGS.customers.previewInvite, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token.trim() }),
+    });
+    if ("error" in r) {
+      return { ok: false, status: r.status, error: r.error };
+    }
+    const body = parseEdgeJson<PreviewCustomerInviteResponse & { error?: string }>(r);
+    if (!r.res.ok) {
+      return { ok: false, status: r.res.status, error: body?.error ?? r.res.statusText };
+    }
+    if (!body?.invited_email || !body.invited_email_masked) {
+      return { ok: false, status: 500, error: "Invalid response" };
+    }
+    return {
+      ok: true,
+      invited_email: body.invited_email,
+      invited_email_masked: body.invited_email_masked,
+      org_name: body.org_name,
+      shipment_label: body.shipment_label,
+    };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
   }

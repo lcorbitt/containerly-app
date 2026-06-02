@@ -25,7 +25,7 @@ export function displayValue(value: string | null | undefined): string {
 
 export const SHIPMENT_DETAIL_FIELDS = [
   { key: "customer_name", label: "Customer", format: displayValue },
-  { key: "order_number", label: "Order No", format: displayValue },
+  { key: "order_number", label: "Order No.", format: displayValue },
   { key: "carrier_booking_number", label: "Carrier Booking No.", format: displayValue },
   { key: "container_number", label: "Container No.", format: displayValue, mono: true },
   { key: "country", label: "Country", format: displayValue },

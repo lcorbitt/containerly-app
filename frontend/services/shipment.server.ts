@@ -7,6 +7,7 @@ import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
+  ShipmentCustomerAccessRequest,
   ShipmentParticipant,
   TrackingRequest,
 } from "@/types/database";
@@ -385,6 +386,7 @@ export type ShipmentAccessTabSnapshot = {
   profileImagePathByUserId: Record<string, string | null>;
   customerAccessRows: ShipmentCustomerAccess[];
   pendingInvites: CustomerInvite[];
+  pendingAccessRequests: ShipmentCustomerAccessRequest[];
   messageAuthorByUserId: Record<string, string>;
   tags: string[];
   orgTagSuggestions: string[];
@@ -405,6 +407,7 @@ export async function fetchShipmentAccessTabSnapshot(
     { data: orgMemberRows },
     { data: accessRows },
     { data: invRows },
+    { data: accessReqRows },
     { data: orgTagRows },
     { data: notificationSub },
   ] = await Promise.all([
@@ -432,6 +435,12 @@ export async function fetchShipmentAccessTabSnapshot(
       .eq("shipment_id", input.shipmentId)
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("shipment_customer_access_requests")
+      .select("*")
+      .eq("shipment_id", input.shipmentId)
+      .eq("status", "pending")
+      .order("requested_at", { ascending: false }),
     supabase.from("shipments").select("tags").eq("organization_id", input.organizationId),
     supabase
       .from("shipment_notification_subscriptions")
@@ -446,6 +455,7 @@ export async function fetchShipmentAccessTabSnapshot(
   const participantRows = (parts as ShipmentParticipant[]) ?? [];
   const customerAccessRows = (accessRows as ShipmentCustomerAccess[]) ?? [];
   const pendingInvites = (invRows as CustomerInvite[]) ?? [];
+  const pendingAccessRequests = (accessReqRows as ShipmentCustomerAccessRequest[]) ?? [];
 
   const orgTagSuggestionSet = new Set<string>();
   for (const row of orgTagRows ?? []) {
@@ -506,6 +516,7 @@ export async function fetchShipmentAccessTabSnapshot(
     profileImagePathByUserId: imagePathByUser,
     customerAccessRows,
     pendingInvites,
+    pendingAccessRequests,
     messageAuthorByUserId,
     tags,
     orgTagSuggestions,

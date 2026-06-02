@@ -22,6 +22,11 @@ import type { PortalDetailsTabId } from "../PortalDetailsTabs";
 import { formatFreshness } from "../utils";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import {
+  countShipmentScopeDocuments,
+  countShipmentScopeMessages,
+  countShipmentScopeTrackingEvents,
+} from "@/utils/workspace-tab-counts";
+import {
   buildPortalAttachmentsByMessageId,
   buildPortalMessageAuthorMap,
   portalThreadMessageToReportMessage,
@@ -91,6 +96,18 @@ export function usePublicContainerReport({
   const attachmentsByMessageId = useMemo(
     () => buildPortalAttachmentsByMessageId(attachments),
     [attachments],
+  );
+
+  const tabCounts = useMemo(
+    () => ({
+      tracking: countShipmentScopeTrackingEvents({
+        activityEvents: payload.activity_events ?? [],
+        carrierEvents: timeline,
+      }),
+      documents: countShipmentScopeDocuments(attachments),
+      messages: countShipmentScopeMessages(threadMessages),
+    }),
+    [attachments, payload.activity_events, threadMessages, timeline],
   );
 
   useEffect(() => {
@@ -307,6 +324,7 @@ export function usePublicContainerReport({
     sending,
     dashboardTab,
     setDashboardTab,
+    tabCounts,
     setupDismissBusy,
     currentUserId,
     messageAuthorByUserId,

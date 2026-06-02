@@ -60,6 +60,7 @@ export function PublicContainerReport({
     sending,
     dashboardTab,
     setDashboardTab,
+    tabCounts,
     setupDismissBusy,
     currentUserId,
     messageAuthorByUserId,
@@ -169,6 +170,7 @@ export function PublicContainerReport({
             <PortalDetailsTabs
               activeTab={dashboardTab}
               onTabChange={setDashboardTab}
+              tabCounts={tabCounts}
               trackingPanel={
                 <PortalTrackingPanel
                   shipmentId={shipmentId}

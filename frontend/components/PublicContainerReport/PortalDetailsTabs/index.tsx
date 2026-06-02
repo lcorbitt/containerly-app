@@ -16,12 +16,13 @@ import {
   WorkspaceMessagesTabIcon,
   WorkspaceTrackingTabIcon,
 } from "@/components/WorkspaceTabShell/tab-icons";
-import { workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
+import { formatWorkspaceTabLabel, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import type { PortalDetailsTabId, PortalDetailsTabsProps } from "./types";
 
 export function PortalDetailsTabs({
   activeTab,
   onTabChange,
+  tabCounts,
   trackingPanel,
   documentsPanel,
   messagesPanel,
@@ -43,7 +44,7 @@ export function PortalDetailsTabs({
           onClick={() => onTabChange("tracking")}
         >
           <WorkspaceTrackingTabIcon />
-          Tracking
+          {formatWorkspaceTabLabel("Tracking", tabCounts.tracking)}
         </button>
         <button
           type="button"
@@ -55,7 +56,7 @@ export function PortalDetailsTabs({
           onClick={() => onTabChange("documents")}
         >
           <WorkspaceDocumentsTabIcon />
-          Documents
+          {formatWorkspaceTabLabel("Documents", tabCounts.documents)}
         </button>
         <button
           type="button"
@@ -67,7 +68,7 @@ export function PortalDetailsTabs({
           onClick={() => onTabChange("messages")}
         >
           <WorkspaceMessagesTabIcon />
-          Messages
+          {formatWorkspaceTabLabel("Messages", tabCounts.messages)}
         </button>
       </div>
 

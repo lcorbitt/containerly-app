@@ -7,7 +7,7 @@ import {
   WorkspaceMessagesTabIcon,
   WorkspaceTrackingTabIcon,
 } from "@/components/WorkspaceTabShell/tab-icons";
-import { workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
+import { formatWorkspaceTabLabel, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import { ShipmentMessagesPanel } from "../ShipmentMessagesPanel";
 import { ShipmentTrackingPanel } from "../ShipmentTrackingPanel";
 import { ShipmentWorkspaceScopePanel } from "../ShipmentWorkspaceScopePanel";
@@ -22,6 +22,7 @@ import {
   SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS,
 } from "./constants";
 import type { ShipmentDetailsTabId, ShipmentDetailsTabsProps } from "./types";
+import { useShipmentDetailsTabs } from "./useShipmentDetailsTabs";
 
 export function ShipmentDetailsTabs({
   shipmentId,
@@ -50,6 +51,12 @@ export function ShipmentDetailsTabs({
   const isDocumentsTab = activeTab === "documents";
   const isMessagesTab = activeTab === "messages";
 
+  const { trackingCount, documentsCount, messagesCount } = useShipmentDetailsTabs({
+    shipmentId,
+    organizationId,
+    activityEvents,
+  });
+
   return (
     <div className={SHIPMENT_DETAILS_TAB_PANEL_CLASS}>
       <div className={SHIPMENT_DETAILS_TAB_LIST_CLASS} role="tablist" aria-label="Shipment workspace">
@@ -63,7 +70,7 @@ export function ShipmentDetailsTabs({
           onClick={() => selectTab("tracking")}
         >
           <WorkspaceTrackingTabIcon />
-          Tracking
+          {formatWorkspaceTabLabel("Tracking", trackingCount)}
         </button>
         <button
           type="button"
@@ -75,7 +82,7 @@ export function ShipmentDetailsTabs({
           onClick={() => selectTab("documents")}
         >
           <WorkspaceDocumentsTabIcon />
-          Documents
+          {formatWorkspaceTabLabel("Documents", documentsCount)}
         </button>
         <button
           type="button"
@@ -87,7 +94,7 @@ export function ShipmentDetailsTabs({
           onClick={() => selectTab("messages")}
         >
           <WorkspaceMessagesTabIcon />
-          Messages
+          {formatWorkspaceTabLabel("Messages", messagesCount)}
         </button>
       </div>
 

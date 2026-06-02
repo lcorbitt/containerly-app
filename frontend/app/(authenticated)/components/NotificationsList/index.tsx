@@ -6,7 +6,9 @@ import { formatTimestamp } from "@/utils/datetime";
 import type { Alert } from "@/types/database";
 import { acknowledgeAlert } from "@/services/alert.service";
 import { orgAlertsQueryKeyRoot } from "@/hooks/queries/useAlert";
+import { useResolveCustomerAccessRequest } from "@/hooks/mutations/useResolveCustomerAccessRequest";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useToast } from "@/contexts/toast";
 import { alertTypeIconConfig } from "./utils";
 
 function alertHref(alert: Alert): string | null {
@@ -15,17 +17,29 @@ function alertHref(alert: Alert): string | null {
   return null;
 }
 
+function accessRequestIdFromAlert(alert: Alert): string | null {
+  const id = alert.details?.access_request_id;
+  return typeof id === "string" ? id : null;
+}
+
 function AlertRowBody({
   alert: a,
   onAcknowledge,
   acknowledging,
+  onApproveAccess,
+  onDenyAccess,
+  resolvingAccess,
 }: {
   alert: Alert;
   onAcknowledge?: () => void;
   acknowledging?: boolean;
+  onApproveAccess?: () => void;
+  onDenyAccess?: () => void;
+  resolvingAccess?: boolean;
 }) {
   const { Icon, className: iconColor } = alertTypeIconConfig(a.alert_type);
   const unacked = !a.acknowledged_at;
+  const isAccessRequest = a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && unacked;
 
   return (
     <>
@@ -43,23 +57,53 @@ function AlertRowBody({
           {a.message}
         </p>
       </div>
-      <div className="flex items-center justify-between gap-2">
-        <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-          <span>{formatTimestamp(a.created_at)}</span>
-        </p>
-        {unacked && onAcknowledge ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onAcknowledge();
-            }}
-            disabled={acknowledging}
-            className="mt-1 shrink-0 text-[10px] font-medium text-zinc-600 underline hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
-            {acknowledging ? "Saving…" : "Dismiss"}
-          </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+            <span>{formatTimestamp(a.created_at)}</span>
+          </p>
+          {unacked && onAcknowledge && !isAccessRequest ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAcknowledge();
+              }}
+              disabled={acknowledging}
+              className="mt-1 shrink-0 text-[10px] font-medium text-zinc-600 underline hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              {acknowledging ? "Saving…" : "Dismiss"}
+            </button>
+          ) : null}
+        </div>
+        {isAccessRequest && onApproveAccess && onDenyAccess ? (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={resolvingAccess}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onApproveAccess();
+              }}
+              className="flex-1 rounded-md bg-zinc-900 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              disabled={resolvingAccess}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDenyAccess();
+              }}
+              className="flex-1 rounded-md border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-700 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300"
+            >
+              Deny
+            </button>
+          </div>
         ) : null}
       </div>
     </>
@@ -73,6 +117,7 @@ export function NotificationsList({
   alerts: Alert[];
   onItemNavigate?: () => void;
 }) {
+  const { toast } = useToast();
   const { selectedOrgId } = useOrganizationWorkspace();
   const qc = useQueryClient();
   const acknowledgeMut = useMutation({
@@ -83,6 +128,21 @@ export function NotificationsList({
       }
     },
   });
+  const resolveMut = useResolveCustomerAccessRequest(selectedOrgId);
+
+  async function handleResolve(alert: Alert, action: "approve" | "deny") {
+    const requestId = accessRequestIdFromAlert(alert);
+    if (!requestId) return;
+    const r = await resolveMut.mutateAsync({ accessRequestId: requestId, action });
+    if (!r.ok) {
+      toast(r.error, "error");
+      return;
+    }
+    toast(action === "approve" ? "Access approved." : "Request denied.", "success");
+    if (!alert.acknowledged_at) {
+      acknowledgeMut.mutate(alert.id);
+    }
+  }
 
   if (alerts.length === 0) {
     return (
@@ -96,12 +156,22 @@ export function NotificationsList({
     <ul className="py-0.5">
       {alerts.map((a) => {
         const href = alertHref(a);
+        const requestId = accessRequestIdFromAlert(a);
         const rowProps = {
           alert: a,
           onAcknowledge: !a.acknowledged_at
             ? () => acknowledgeMut.mutate(a.id)
             : undefined,
           acknowledging: acknowledgeMut.isPending && acknowledgeMut.variables === a.id,
+          onApproveAccess:
+            a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && requestId
+              ? () => void handleResolve(a, "approve")
+              : undefined,
+          onDenyAccess:
+            a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && requestId
+              ? () => void handleResolve(a, "deny")
+              : undefined,
+          resolvingAccess: resolveMut.isPending && resolveMut.variables?.accessRequestId === requestId,
         };
 
         return (

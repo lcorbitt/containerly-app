@@ -46,7 +46,10 @@ export function alertTypeIconConfig(alertType: string): IconConfig {
     case "DOCUMENTS_MAILED":
       return { Icon: MailOpen, className: "text-violet-600 dark:text-violet-400" };
     case "CUSTOMER_INVITE_SENT":
+    case "CUSTOMER_INVITE_RECEIVED":
       return { Icon: Send, className: "text-sky-600 dark:text-sky-400" };
+    case "CUSTOMER_ACCESS_REQUESTED":
+      return { Icon: Mail, className: "text-amber-600 dark:text-amber-400" };
     case "ORG_INVITE_ACCEPTED":
     case "ORG_MEMBER_JOINED":
       return { Icon: BadgeCheck, className: "text-green-600 dark:text-green-400" };

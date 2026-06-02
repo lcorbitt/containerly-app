@@ -6,6 +6,7 @@ import {
   deleteShipmentParticipantRow,
   fetchShipmentAccessTabSnapshotForBrowser,
   insertShipmentParticipant,
+  resolveCustomerAccessRequest,
   revokeCustomerInviteRow,
   revokeShipmentCustomerAccessRow,
   updateShipmentAssignee,
@@ -16,6 +17,7 @@ import { useToast } from "@/contexts/toast";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
+  ShipmentCustomerAccessRequest,
   ShipmentParticipant,
 } from "@/types/database";
 import type { CustomSelectOption } from "@/components/CustomSelect";
@@ -43,9 +45,13 @@ export function useShipmentAccessTabContent({
   const [removingParticipantId, setRemovingParticipantId] = useState<string | null>(null);
   const [customerAccessRows, setCustomerAccessRows] = useState<ShipmentCustomerAccess[]>([]);
   const [pendingInvites, setPendingInvites] = useState<CustomerInvite[]>([]);
+  const [pendingAccessRequests, setPendingAccessRequests] = useState<ShipmentCustomerAccessRequest[]>(
+    [],
+  );
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteCreating, setInviteCreating] = useState(false);
+  const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
   const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">("email_invite");
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
   const [tags, setTags] = useState<string[]>([]);
@@ -69,6 +75,7 @@ export function useShipmentAccessTabContent({
       setParticipantRows(snap.participantRows);
       setCustomerAccessRows(snap.customerAccessRows);
       setPendingInvites(snap.pendingInvites);
+      setPendingAccessRequests(snap.pendingAccessRequests);
       setOrgPeers(snap.orgPeers);
       setProfileImagePathByUserId(snap.profileImagePathByUserId);
       setMessageAuthorByUserId(snap.messageAuthorByUserId);
@@ -282,6 +289,22 @@ export function useShipmentAccessTabContent({
     }
   }
 
+  async function resolveAccessRequestRow(accessRequestId: string, action: "approve" | "deny") {
+    setResolvingRequestId(accessRequestId);
+    try {
+      const r = await resolveCustomerAccessRequest({ accessRequestId, action });
+      if (!r.ok) {
+        toast(r.error, "error");
+        return;
+      }
+      toast(action === "approve" ? "Access approved and invite sent." : "Request denied.", "success");
+      await load();
+      onMetaChanged();
+    } finally {
+      setResolvingRequestId(null);
+    }
+  }
+
   async function revokeInviteRow(id: string): Promise<void> {
     await revokeCustomerInviteRow(id);
     await load();
@@ -319,6 +342,9 @@ export function useShipmentAccessTabContent({
     lastInviteUrl,
     setLastInviteUrl,
     pendingInvites,
+    pendingAccessRequests,
+    resolvingRequestId,
+    resolveAccessRequestRow,
     activeAccessWithLabels,
     origin,
     createInvite,
