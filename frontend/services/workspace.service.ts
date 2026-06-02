@@ -92,6 +92,21 @@ export async function loadContainerWorkspaceData(input: {
   );
 }
 
+export async function patchReportMessage(input: {
+  messageId: string;
+  body: string;
+}): Promise<ReportMessage> {
+  const { message } = await apiJson<{ message: ReportMessage }>(
+    `/api/report-messages/${encodeURIComponent(input.messageId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: input.body }),
+    },
+  );
+  return message;
+}
+
 export async function deleteContainerReportMessage(input: { messageId: string }): Promise<void> {
   await apiJson<{ ok: true }>(`/api/report-messages/${encodeURIComponent(input.messageId)}`, {
     method: "DELETE",

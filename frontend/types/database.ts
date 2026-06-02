@@ -149,6 +149,7 @@ export type Alert = {
   tracking_request_id: string | null;
   container_id: string | null;
   shipment_id: string | null;
+  report_message_id: string | null;
   alert_type: string;
   severity: string;
   message: string;
@@ -218,6 +219,7 @@ export type ReportMessage = {
   body: string;
   parent_message_id: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type ReportActivity = {

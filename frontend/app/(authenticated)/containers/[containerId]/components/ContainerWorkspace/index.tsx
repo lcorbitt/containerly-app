@@ -64,6 +64,13 @@ export function ContainerWorkspace({
     setReplyParentId,
     currentUserId,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
     composerPendingFiles,
     onComposerPickFiles,
     onRemoveComposerPendingFile,
@@ -345,7 +352,14 @@ export function ContainerWorkspace({
                   onClearReplyParent={() => setReplyParentId(null)}
                   currentUserId={currentUserId}
                   onDeleteMessage={(id) => void deleteMessage(id)}
+                  onStartEditMessage={startEditMessage}
+                  onCancelEditMessage={cancelEditMessage}
+                  onSaveEditMessage={(id) => void saveEditMessage(id)}
+                  editingMessageId={editingMessageId}
+                  editDraft={editDraft}
+                  onEditDraftChange={setEditDraft}
                   deletingMessageId={deletingMessageId}
+                  savingEditMessageId={savingEditMessageId}
                   emptyStateText={
                     shipmentEmbed
                       ? "No messages on this container yet."

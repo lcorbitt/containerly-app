@@ -47,6 +47,13 @@ export function ShipmentMessagesPanel({
     setReplyParentId,
     deleteMessage,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
   } = useShipmentMessagesPanel({ shipmentId });
 
   if (!selectedOrgId) {
@@ -107,7 +114,14 @@ export function ShipmentMessagesPanel({
           onClearReplyParent={() => setReplyParentId(null)}
           currentUserId={currentUserId}
           onDeleteMessage={(id) => void deleteMessage(id)}
+          onStartEditMessage={startEditMessage}
+          onCancelEditMessage={cancelEditMessage}
+          onSaveEditMessage={(id) => void saveEditMessage(id)}
+          editingMessageId={editingMessageId}
+          editDraft={editDraft}
+          onEditDraftChange={setEditDraft}
           deletingMessageId={deletingMessageId}
+          savingEditMessageId={savingEditMessageId}
           emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}
           threadStartBanner={<ShipmentThreadStartBanner shipmentLabel={shipmentLabel} />}
         />

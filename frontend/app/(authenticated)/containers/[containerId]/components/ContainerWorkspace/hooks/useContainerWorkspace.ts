@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import {
   ATTACHMENT_DISPLAY_NAME_MAX_LEN,
   MAX_ATTACHMENT_FILE_BYTES,
@@ -10,6 +12,7 @@ import {
 import { getBrowserAuthUserId } from "@/services/auth.service";
 import {
   deleteContainerReportMessage,
+  patchReportMessage,
   loadContainerWorkspaceData,
   openContainerWorkspaceAttachmentSignedUrl,
   postContainerWorkspaceMessage,
@@ -46,7 +49,13 @@ export function useContainerWorkspace({
 }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
+  const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
+
+  const invalidateOrgWorkspaceLists = useCallback(() => {
+    if (!selectedOrgId) return;
+    invalidateOrgReportMessageQueries(qc, selectedOrgId);
+  }, [qc, selectedOrgId]);
 
   const [request, setRequest] = useState<TrackingRequest | null>(null);
   const [messages, setMessages] = useState<ReportMessage[]>([]);
@@ -77,6 +86,9 @@ export function useContainerWorkspace({
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [savingEditMessageId, setSavingEditMessageId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<WorkspaceAttachment[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [removingAttachmentId, setRemovingAttachmentId] = useState<string | null>(null);
@@ -284,6 +296,45 @@ export function useContainerWorkspace({
 
   // --- Message actions ---
 
+  const startEditMessage = useCallback(
+    (messageId: string) => {
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg) return;
+      setEditingMessageId(messageId);
+      setEditDraft(msg.body);
+    },
+    [messages],
+  );
+
+  const cancelEditMessage = useCallback(() => {
+    setEditingMessageId(null);
+    setEditDraft("");
+  }, []);
+
+  const saveEditMessage = useCallback(
+    async (messageId: string) => {
+      const trimmed = editDraft.trim();
+      if (!trimmed) {
+        toast("Message cannot be empty.", "error");
+        return;
+      }
+      setSavingEditMessageId(messageId);
+      try {
+        const updated = await patchReportMessage({ messageId, body: trimmed });
+        setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
+        setEditingMessageId(null);
+        setEditDraft("");
+        invalidateOrgWorkspaceLists();
+        toast("Message updated", "success");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not update message", "error");
+      } finally {
+        setSavingEditMessageId(null);
+      }
+    },
+    [editDraft, invalidateOrgWorkspaceLists, toast],
+  );
+
   const deleteMessage = useCallback(
     async (messageId: string) => {
       const ok = await confirm({
@@ -301,6 +352,7 @@ export function useContainerWorkspace({
         await deleteContainerReportMessage({ messageId });
         setReplyParentId((prev) => (prev && idsToRemove.has(prev) ? null : prev));
         setMessages((prev) => prev.filter((m) => !idsToRemove.has(m.id)));
+        invalidateOrgWorkspaceLists();
         await load({ quiet: true });
         toast("Message deleted", "success");
       } catch (e) {
@@ -309,7 +361,7 @@ export function useContainerWorkspace({
         setDeletingMessageId(null);
       }
     },
-    [confirm, messages, load, toast],
+    [confirm, invalidateOrgWorkspaceLists, messages, load, toast],
   );
 
   const postMessage = useCallback(async () => {
@@ -507,6 +559,13 @@ export function useContainerWorkspace({
     setReplyParentId,
     currentUserId,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
     composerPendingFiles,
     onComposerPickFiles,
     onRemoveComposerPendingFile,

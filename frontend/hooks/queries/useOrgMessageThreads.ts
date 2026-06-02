@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useOrgReportMessagesRealtimeInvalidation } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import { fetchOrgShipmentMessageThreads } from "@/services/workspace.service";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 
@@ -12,8 +11,6 @@ function orgMessageThreadsQueryKey(organizationId: string) {
 }
 
 export function useOrgMessageThreadsQuery(organizationId: string | null) {
-  useOrgReportMessagesRealtimeInvalidation(organizationId);
-
   return useQuery({
     queryKey: organizationId
       ? orgMessageThreadsQueryKey(organizationId)

@@ -500,6 +500,7 @@ export async function postCustomerMessage(
     orgName: (orgRow?.name as string | undefined) ?? "Containerly",
     preview: text,
     customerUserId: userId,
+    reportMessageId: inserted.id as string,
   });
 
   return {

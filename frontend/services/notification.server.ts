@@ -111,6 +111,7 @@ export async function runOperatorShipmentMessageNotifications(input: {
   actorUserId: string;
   body: string;
   internalOnly: boolean;
+  reportMessageId: string;
 }): Promise<void> {
   if (input.internalOnly) return;
   const preview = stripMessageMarkup(input.body).trim();
@@ -122,6 +123,7 @@ export async function runOperatorShipmentMessageNotifications(input: {
     shipmentId: input.shipmentId,
     actorUserId: input.actorUserId,
     preview,
+    reportMessageId: input.reportMessageId,
   });
 
   await notifyCustomersOperatorReply(admin, {
@@ -129,6 +131,7 @@ export async function runOperatorShipmentMessageNotifications(input: {
     shipmentId: input.shipmentId,
     operatorUserId: input.actorUserId,
     preview,
+    reportMessageId: input.reportMessageId,
   });
 }
 

@@ -14,6 +14,10 @@ async function insertAlert(client: SupabaseClient, row: Record<string, unknown>)
   return client.from("alerts").insert(row);
 }
 
+function isSelfNotification(recipientUserId: string, actorUserId: string | null | undefined): boolean {
+  return Boolean(actorUserId && recipientUserId === actorUserId);
+}
+
 export async function listOrgAdminUserIds(
   client: SupabaseClient,
   organizationId: string,
@@ -71,7 +75,7 @@ export async function fetchProfileDisplayName(
   return "Someone";
 }
 
-export async function fetchShipmentOrderLabel(
+export async function fetchShipmentOrderPhrase(
   client: SupabaseClient,
   shipmentId: string,
 ): Promise<string> {
@@ -81,9 +85,29 @@ export async function fetchShipmentOrderLabel(
     .eq("id", shipmentId)
     .maybeSingle();
   const order = (data?.order_number as string | null | undefined)?.trim();
-  if (order) return order;
+  if (order) return `Order No. ${order}`;
   const container = (data?.container_number as string | null | undefined)?.trim();
-  return container || "shipment";
+  if (container) return `container ${container}`;
+  return "this shipment";
+}
+
+export function formatActorOnShipmentMessage(
+  actorName: string,
+  orderPhrase: string,
+  detail: string,
+): string {
+  return `${actorName} on ${orderPhrase}: ${detail}`;
+}
+
+/** Link MESSAGE_* alerts to a report_messages row (DB cascade + legacy details lookup on delete). */
+export function messageAlertLinkage(reportMessageId: string): {
+  report_message_id: string;
+  details: { message_id: string };
+} {
+  return {
+    report_message_id: reportMessageId,
+    details: { message_id: reportMessageId },
+  };
 }
 
 async function insertAlertsForRecipients(
@@ -91,7 +115,10 @@ async function insertAlertsForRecipients(
   recipientIds: string[],
   row: Omit<Record<string, unknown>, "recipient_user_id">,
 ): Promise<void> {
+  const actorId =
+    typeof row.actor_user_id === "string" ? row.actor_user_id : null;
   for (const userId of recipientIds) {
+    if (isSelfNotification(userId, actorId)) continue;
     await insertAlert(client, { ...row, recipient_user_id: userId });
   }
 }
@@ -136,14 +163,14 @@ export async function notifyUserAssignedAsAssignee(
 ): Promise<void> {
   if (args.assigneeUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await insertAlert(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
     alert_type: "ASSIGNMENT_ASSIGNEE",
     severity: "info",
-    message: `${actorName} made you the assignee of shipment ${label}.`,
+    message: `${actorName} made you the assignee of ${orderPhrase}.`,
     recipient_user_id: args.assigneeUserId,
     actor_user_id: args.actorUserId,
   });
@@ -159,10 +186,10 @@ export async function notifyUserUnassignedAsAssignee(
 ): Promise<void> {
   if (args.previousAssigneeUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   const message = args.newAssigneeUserId
-    ? `${actorName} reassigned shipment ${label} to someone else.`
-    : `${actorName} removed you as assignee of shipment ${label}.`;
+    ? `${actorName} reassigned ${orderPhrase} to someone else.`
+    : `${actorName} removed you as assignee of ${orderPhrase}.`;
   await insertAlert(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
@@ -184,14 +211,14 @@ export async function notifyUserAssignedAsParticipant(
 ): Promise<void> {
   if (args.participantUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await insertAlert(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
     alert_type: "ASSIGNMENT_PARTICIPANT",
     severity: "info",
-    message: `${actorName} added you as a participant on shipment ${label}.`,
+    message: `${actorName} added you as a participant on ${orderPhrase}.`,
     recipient_user_id: args.participantUserId,
     actor_user_id: args.actorUserId,
   });
@@ -206,14 +233,14 @@ export async function notifyUserRemovedAsParticipant(
 ): Promise<void> {
   if (args.participantUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await insertAlert(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
     alert_type: "ASSIGNMENT_REMOVED",
     severity: "info",
-    message: `${actorName} removed you as a participant on shipment ${label}.`,
+    message: `${actorName} removed you as a participant on ${orderPhrase}.`,
     recipient_user_id: args.participantUserId,
     actor_user_id: args.actorUserId,
   });
@@ -230,8 +257,9 @@ export async function notifyShipmentStakeholdersInApp(
     details?: Record<string, unknown> | null;
   },
 ): Promise<string[]> {
+  const actorToExclude = args.excludeUserId ?? args.actorUserId ?? null;
   const recipients = await shipmentStakeholderUserIds(client, args.shipmentId, {
-    excludeUserId: args.excludeUserId,
+    excludeUserId: actorToExclude,
   });
   await insertAlertsForRecipients(client, recipients, {
     organization_id: args.organizationId,
@@ -253,11 +281,12 @@ export async function notifyOperatorsCustomerAccessGranted(
     actorUserId?: string | null;
   },
 ): Promise<void> {
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await notifyShipmentStakeholdersInApp(client, {
     ...args,
     alertType: "CUSTOMER_ACCESS_GRANTED",
     severity: "info",
-    message: `${args.customerDisplayName} joined the customer portal for this shipment.`,
+    message: `${args.customerDisplayName} joined the customer portal for ${orderPhrase}.`,
     excludeUserId: args.actorUserId,
     actorUserId: args.actorUserId,
   });
@@ -289,11 +318,11 @@ export async function notifyOperatorsDraftsPublished(
   },
 ): Promise<void> {
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   const message =
     args.fileCount === 1
-      ? `${actorName} published draft documents on ${label} for customer review.`
-      : `${actorName} published ${args.fileCount} draft documents on ${label} for customer review.`;
+      ? `${actorName} published draft documents on ${orderPhrase} for customer review.`
+      : `${actorName} published ${args.fileCount} draft documents on ${orderPhrase} for customer review.`;
   await notifyShipmentStakeholdersInApp(client, {
     ...args,
     alertType: "DRAFTS_PUBLISHED",
@@ -330,17 +359,23 @@ export async function notifyOperatorsTeamMessage(
   args: ShipmentAlertContext & {
     actorUserId: string;
     preview: string;
+    reportMessageId: string;
   },
 ): Promise<void> {
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await notifyShipmentStakeholdersInApp(client, {
     ...args,
     alertType: "MESSAGE_TEAM",
     severity: "info",
-    message: `${actorName} on ${label}: ${args.preview.slice(0, 160)}`,
+    message: formatActorOnShipmentMessage(
+      actorName,
+      orderPhrase,
+      args.preview.slice(0, 160),
+    ),
     excludeUserId: args.actorUserId,
     actorUserId: args.actorUserId,
+    ...messageAlertLinkage(args.reportMessageId),
   });
 }
 
@@ -349,6 +384,7 @@ export async function notifyCustomersOperatorReply(
   args: ShipmentAlertContext & {
     operatorUserId: string;
     preview: string;
+    reportMessageId: string;
   },
 ): Promise<void> {
   const { data: rows } = await client
@@ -360,16 +396,25 @@ export async function notifyCustomersOperatorReply(
     .map((r) => r.customer_user_id as string | null)
     .filter((id): id is string => Boolean(id));
 
+  const operatorName = await fetchProfileDisplayName(client, args.operatorUserId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
+
   for (const customerUserId of customerIds) {
+    if (isSelfNotification(customerUserId, args.operatorUserId)) continue;
     await insertAlert(client, {
       organization_id: args.organizationId,
       shipment_id: args.shipmentId,
       container_id: args.containerId ?? null,
       alert_type: "MESSAGE_REPLY",
       severity: "info",
-      message: args.preview.slice(0, 200),
+      message: formatActorOnShipmentMessage(
+        operatorName,
+        orderPhrase,
+        args.preview.slice(0, 160),
+      ),
       recipient_user_id: customerUserId,
       actor_user_id: args.operatorUserId,
+      ...messageAlertLinkage(args.reportMessageId),
     });
   }
 }
@@ -379,17 +424,19 @@ export async function notifyOperatorsOperatorRepliedToCustomer(
   args: ShipmentAlertContext & {
     actorUserId: string;
     preview: string;
+    reportMessageId: string;
   },
 ): Promise<void> {
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await notifyShipmentStakeholdersInApp(client, {
     ...args,
     alertType: "MESSAGE_REPLY",
     severity: "info",
-    message: `${actorName} replied to the customer on ${label}: ${args.preview.slice(0, 120)}`,
+    message: `${actorName} replied to the customer on ${orderPhrase}: ${args.preview.slice(0, 120)}`,
     excludeUserId: args.actorUserId,
     actorUserId: args.actorUserId,
+    ...messageAlertLinkage(args.reportMessageId),
   });
 }
 
@@ -401,12 +448,12 @@ export async function notifyOperatorsTrackingLinked(
   },
 ): Promise<void> {
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const label = await fetchShipmentOrderLabel(client, args.shipmentId);
+  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   await notifyShipmentStakeholdersInApp(client, {
     ...args,
     alertType: "TRACKING_LINKED",
     severity: "info",
-    message: `${actorName} linked carrier tracking ${args.containerNumber} to ${label}.`,
+    message: `${actorName} linked carrier tracking ${args.containerNumber} to ${orderPhrase}.`,
     excludeUserId: args.actorUserId,
     actorUserId: args.actorUserId,
     details: { container_number: args.containerNumber },

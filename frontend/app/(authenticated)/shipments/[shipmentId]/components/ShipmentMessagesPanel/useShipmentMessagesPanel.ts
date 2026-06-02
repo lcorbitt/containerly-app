@@ -19,10 +19,11 @@ import {
   useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
-import { orgMessageThreadsQueryKeyRoot } from "@/hooks/queries/useOrgMessageThreads";
+import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import {
   createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
+  patchReportMessage,
   postShipmentScopeMessageWithAttachments,
 } from "@/services/workspace.service";
 
@@ -41,15 +42,16 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [savingEditMessageId, setSavingEditMessageId] = useState<string | null>(null);
   const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
 
   const invalidateThread = useCallback(() => {
     if (selectedOrgId) {
+      invalidateOrgReportMessageQueries(qc, selectedOrgId);
       void qc.invalidateQueries({
         queryKey: shipmentScopeThreadQueryKey(selectedOrgId, shipmentId),
-      });
-      void qc.invalidateQueries({
-        queryKey: [...orgMessageThreadsQueryKeyRoot, selectedOrgId],
       });
       void qc.invalidateQueries({
         queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
@@ -135,6 +137,44 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
       }
     },
     [toast],
+  );
+
+  const startEditMessage = useCallback(
+    (messageId: string) => {
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg) return;
+      setEditingMessageId(messageId);
+      setEditDraft(msg.body);
+    },
+    [messages],
+  );
+
+  const cancelEditMessage = useCallback(() => {
+    setEditingMessageId(null);
+    setEditDraft("");
+  }, []);
+
+  const saveEditMessage = useCallback(
+    async (messageId: string) => {
+      const trimmed = editDraft.trim();
+      if (!trimmed) {
+        toast("Message cannot be empty.", "error");
+        return;
+      }
+      setSavingEditMessageId(messageId);
+      try {
+        await patchReportMessage({ messageId, body: trimmed });
+        setEditingMessageId(null);
+        setEditDraft("");
+        invalidateThread();
+        toast("Message updated", "success");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not update message", "error");
+      } finally {
+        setSavingEditMessageId(null);
+      }
+    },
+    [editDraft, invalidateThread, toast],
   );
 
   const deleteMessage = useCallback(
@@ -236,5 +276,12 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     setReplyParentId,
     deleteMessage,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
   };
 }

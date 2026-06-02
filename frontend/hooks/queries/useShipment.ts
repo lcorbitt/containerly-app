@@ -1,8 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  shipmentScopeThreadOrgQueryKeyPrefix,
-  useOrgReportMessagesRealtimeInvalidation,
-} from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import { fetchShipmentWorkspaceRowForBrowser } from "@/services/shipment.service";
 import { loadShipmentScopeThread } from "@/services/workspace.service";
 
@@ -30,8 +27,6 @@ export function useShipmentWorkspaceRowQuery(input: {
 }
 
 export function useShipmentScopeThreadQuery(organizationId: string | null, shipmentId: string) {
-  useOrgReportMessagesRealtimeInvalidation(organizationId);
-
   return useQuery({
     queryKey: organizationId
       ? shipmentScopeThreadQueryKey(organizationId, shipmentId)

@@ -22,6 +22,12 @@ import {
   messageActivityActorKind,
   messageActivityEventType,
 } from "@/utils/message-activity-event";
+import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  deleteAlertsForReportMessageIds,
+  syncAlertsForEditedReportMessage,
+} from "@/services/alert.server";
 
 async function insertMessageActivityEventForUser(
   supabase: SupabaseClient,
@@ -87,10 +93,95 @@ export async function createWorkspaceStorageSignedUrlQuery(
   return data.signedUrl;
 }
 
+export async function updateReportMessageByIdForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  messageId: string,
+  body: string,
+): Promise<ReportMessage> {
+  const trimmed = body.trim();
+  if (!trimmed) {
+    throw new Error("Message cannot be empty.");
+  }
+
+  const { data: existing, error: fetchErr } = await supabase
+    .from("report_messages")
+    .select("id, author_user_id")
+    .eq("id", messageId)
+    .maybeSingle();
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!existing?.author_user_id || existing.author_user_id !== userId) {
+    throw new Error(
+      "Could not update this message. It may have been removed, or you can only edit messages you posted.",
+    );
+  }
+
+  const { data: updated, error } = await supabase
+    .from("report_messages")
+    .update({ body: trimmed })
+    .eq("id", messageId)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  if (!updated) {
+    throw new Error(
+      "Could not update this message. It may have been removed, or you can only edit messages you posted.",
+    );
+  }
+
+  try {
+    const admin = createAdminClient();
+    await syncAlertsForEditedReportMessage(admin, {
+      reportMessageId: messageId,
+      bodyPreview: stripMessageMarkup(trimmed).trim(),
+    });
+  } catch {
+    /* best-effort — alert row updates also trigger alerts realtime */
+  }
+
+  return updated as ReportMessage;
+}
+
 export async function deleteReportMessageByIdForUser(
   supabase: SupabaseClient,
   messageId: string,
 ): Promise<void> {
+  const { data: root, error: rootErr } = await supabase
+    .from("report_messages")
+    .select("id, parent_message_id, shipment_id, container_id")
+    .eq("id", messageId)
+    .maybeSingle();
+  if (rootErr) throw new Error(rootErr.message);
+  if (!root) {
+    throw new Error(
+      "Could not delete this message. It may have already been removed, or you can only delete messages you posted.",
+    );
+  }
+
+  let scopeQuery = supabase.from("report_messages").select("id, parent_message_id");
+  if (root.shipment_id) {
+    scopeQuery = scopeQuery.eq("shipment_id", root.shipment_id as string);
+  } else if (root.container_id) {
+    scopeQuery = scopeQuery.eq("container_id", root.container_id as string);
+  }
+
+  const { data: scopeMessages, error: scopeErr } = await scopeQuery;
+  if (scopeErr) throw new Error(scopeErr.message);
+
+  const subtreeIds = [
+    ...collectMessageSubtreeIds(
+      (scopeMessages ?? []) as Pick<ReportMessage, "id" | "parent_message_id">[],
+      messageId,
+    ),
+  ];
+
+  try {
+    const admin = createAdminClient();
+    await deleteAlertsForReportMessageIds(admin, subtreeIds);
+  } catch {
+    /* best-effort — DB cascade on report_message_id also removes linked alerts */
+  }
+
   const { data: deletedRows, error } = await supabase
     .from("report_messages")
     .delete()
@@ -638,6 +729,7 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
       actorUserId: userId,
       body: input.body,
       internalOnly: input.internalOnly,
+      reportMessageId: messageId,
     });
   } catch {
     /* best-effort */

@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
 import { orgMessageThreadsQueryKeyRoot } from "@/hooks/queries/useOrgMessageThreads";
+import { orgAlertsQueryKeyRoot } from "@/hooks/queries/useAlert";
 
 /** Partial key: invalidates every `["shipment-scope-thread", organizationId, …]` query. */
 export const shipmentScopeThreadOrgQueryKeyPrefix = "shipment-scope-thread" as const;
@@ -21,6 +22,9 @@ export function invalidateOrgReportMessageQueries(
   });
   void queryClient.invalidateQueries({
     queryKey: [shipmentScopeThreadOrgQueryKeyPrefix, organizationId],
+  });
+  void queryClient.invalidateQueries({
+    queryKey: [...orgAlertsQueryKeyRoot, organizationId],
   });
 }
 

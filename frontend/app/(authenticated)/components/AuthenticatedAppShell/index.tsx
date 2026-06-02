@@ -4,6 +4,7 @@ import { AuthenticatedTopNav } from "@/components/TopNav";
 import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
 import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
 import { AuthenticatedMainPane } from "../AuthenticatedMainPane";
+import { OrgWorkspaceRealtimeBridge } from "../OrgWorkspaceRealtimeBridge";
 import { SideNav } from "../SideNav";
 import {
   AUTHENTICATED_APP_SHELL_BODY_CLASS,
@@ -32,6 +33,7 @@ export function AuthenticatedAppShell({
       <SessionAvatarProvider initialProfileImagePath={initialProfileImagePath}>
         <NewShipmentModalProvider>
           <MockJourneyModalProvider>
+            <OrgWorkspaceRealtimeBridge />
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
               <AuthenticatedTopNav email={email} fullName={fullName} />
               <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>

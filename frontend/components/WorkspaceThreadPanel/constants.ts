@@ -36,17 +36,18 @@ export const THREAD_IMPORTER_QUOTE_BG_CLASS =
 export const THREAD_IMPORTER_REPLY_RING_CLASS =
   "ring-2 ring-rose-400/45 ring-offset-2 ring-offset-rose-100 dark:ring-rose-500/35 dark:ring-offset-rose-950";
 
-export const THREAD_MESSAGE_ROW_CLASS = "flex gap-3";
+export const THREAD_MESSAGE_ROW_CLASS = "flex w-full items-center gap-3";
 
-export const THREAD_MESSAGE_ROW_OWN_CLASS = "flex flex-row-reverse justify-end gap-3";
+export const THREAD_MESSAGE_ROW_OWN_CLASS = "flex w-full items-center justify-end gap-3";
 
 export const THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS = "max-w-[min(100%,28rem)]";
 
-export const THREAD_MESSAGE_BUBBLE_OTHER_CLASS =
-  `relative min-w-0 flex-1 ${THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS} text-sm`;
+export const THREAD_MESSAGE_BUBBLE_CLASS =
+  `relative min-w-0 w-fit ${THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS} text-sm`;
 
-export const THREAD_MESSAGE_BUBBLE_OWN_CLASS =
-  `relative min-w-0 ${THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS} text-sm`;
+export const THREAD_MESSAGE_BUBBLE_OTHER_CLASS = THREAD_MESSAGE_BUBBLE_CLASS;
+
+export const THREAD_MESSAGE_BUBBLE_OWN_CLASS = THREAD_MESSAGE_BUBBLE_CLASS;
 
 export const THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS =
   "mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md";
@@ -64,7 +65,7 @@ export const THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS =
 export const THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS =
   "absolute top-0 left-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
 
-export const THREAD_MESSAGE_AVATAR_CLASS = "mt-0.5";
+export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
 export const THREAD_MESSAGE_CARD_SHADOW_CLASS =
   "shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]";

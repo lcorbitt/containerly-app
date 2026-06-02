@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Reply, Trash2 } from "lucide-react";
+import { Paperclip, Pencil, Reply, Trash2 } from "lucide-react";
 import { useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
@@ -54,16 +54,24 @@ function ThreadMessageItem({
   replyParentId,
   onReply,
   onDeleteMessage,
+  onStartEditMessage,
+  onCancelEditMessage,
+  onSaveEditMessage,
+  editingMessageId,
+  editDraft,
+  onEditDraftChange,
   messageById,
   authorNameByUserId,
   authorAvatarUrlByUserId,
   uploaderDisplayByUserId,
   currentUserId,
   deletingMessageId,
+  savingEditMessageId,
   attachmentsByMessageId,
   onOpenAttachment,
   publicThreadMode = false,
   allowMessageDelete = true,
+  allowMessageEdit = true,
   allowReply = true,
 }: {
   node: ThreadNode<ReportMessage>;
@@ -71,16 +79,24 @@ function ThreadMessageItem({
   replyParentId: string | null;
   onReply: (id: string) => void;
   onDeleteMessage: (id: string) => void;
+  onStartEditMessage: (id: string) => void;
+  onCancelEditMessage: () => void;
+  onSaveEditMessage: (id: string) => void;
+  editingMessageId: string | null;
+  editDraft: string;
+  onEditDraftChange: (value: string) => void;
   messageById: Map<string, ReportMessage>;
   authorNameByUserId: Record<string, string>;
   authorAvatarUrlByUserId: Record<string, string | null>;
   uploaderDisplayByUserId: Record<string, string>;
   currentUserId: string | null;
   deletingMessageId: string | null;
+  savingEditMessageId: string | null;
   attachmentsByMessageId: Map<string, WorkspaceAttachment[]>;
   onOpenAttachment: (row: WorkspaceAttachment) => void;
   publicThreadMode?: boolean;
   allowMessageDelete?: boolean;
+  allowMessageEdit?: boolean;
   allowReply?: boolean;
 }) {
   const messageAttachments = attachmentsByMessageId.get(node.id) ?? [];
@@ -96,7 +112,10 @@ function ThreadMessageItem({
   const highlightOwnAsOperator =
     isOwnMessage && palette === "team" && (publicThreadMode || !isInternal);
   const isDeleting = deletingMessageId === node.id;
-  const actionsBusy = Boolean(deletingMessageId);
+  const isEditing = editingMessageId === node.id;
+  const isSavingEdit = savingEditMessageId === node.id;
+  const actionsBusy = Boolean(deletingMessageId) || Boolean(savingEditMessageId);
+  const showEdit = isOwnMessage && allowMessageEdit !== false;
   const authorLabel = threadMessageAuthorName(node, authorNameByUserId);
   const authorAvatarUrl = threadMessageAuthorAvatarUrl(node, authorAvatarUrlByUserId);
 
@@ -110,18 +129,19 @@ function ThreadMessageItem({
 
   const replyTargetRing = threadMessageReplyRingClass(palette);
 
-  return (
-    <li className="list-none">
-      <div className={threadMessageRowClass(isOwnMessage)}>
-        <UserAvatar
-          imageUrl={authorAvatarUrl}
-          label={authorLabel}
-          size="lg"
-          className={avatarClass}
-        />
-        <div
-          className={`${threadMessageBubbleClass(isOwnMessage)} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
-        >
+  const avatar = (
+    <UserAvatar
+      imageUrl={authorAvatarUrl}
+      label={authorLabel}
+      size="lg"
+      className={avatarClass}
+    />
+  );
+
+  const bubble = (
+    <div
+      className={`${threadMessageBubbleClass(isOwnMessage)} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
+    >
         {parent ? (
           <div
             className={`${threadMessageQuoteShellClass(isOwnMessage)} ${threadMessageQuoteClass(
@@ -158,11 +178,41 @@ function ThreadMessageItem({
               {formatTimestamp(node.created_at)}
             </span>
           </div>
-          {node.body.trim() ? (
+          {isEditing ? (
+            <div className="mt-2 space-y-2">
+              <RichMessageEditor
+                value={editDraft}
+                onChange={onEditDraftChange}
+                onSubmit={() => onSaveEditMessage(node.id)}
+                disabled={isSavingEdit}
+                aria-label="Edit message"
+              />
+              <div className={`flex flex-wrap gap-2 ${isOwnMessage ? "justify-end" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => onSaveEditMessage(node.id)}
+                  disabled={isSavingEdit || !editDraft.trim()}
+                  className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSavingEdit ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancelEditMessage}
+                  disabled={isSavingEdit}
+                  className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : node.body.trim() ? (
             <MessageBody text={node.body} className="mt-2" />
           ) : null}
           {messageAttachments.length > 0 ? (
-            <ul className="mt-2 flex min-w-0 flex-col gap-3">
+            <ul
+              className={`mt-2 flex min-w-0 flex-col gap-3 ${isOwnMessage ? "items-end" : ""}`}
+            >
               {messageAttachments.map((att) => (
                 <StoredMessageAttachmentPreview
                   key={att.id}
@@ -175,13 +225,14 @@ function ThreadMessageItem({
           ) : null}
         </div>
         <div className={threadMessageCornerActionsClass(isOwnMessage)}>
-          {allowReply ? (
+          {allowReply && !isEditing ? (
             <ActionHoverTooltip label="Reply">
               <button
                 type="button"
                 onClick={() => onReply(node.id)}
+                disabled={actionsBusy || Boolean(editingMessageId)}
                 aria-label="Reply to this message"
-                className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 dark:text-zinc-500 dark:hover:text-zinc-50"
+                className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-500 dark:hover:text-zinc-50"
               >
                 <Reply
                   className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
@@ -191,7 +242,24 @@ function ThreadMessageItem({
               </button>
             </ActionHoverTooltip>
           ) : null}
-          {isOwnMessage && allowMessageDelete !== false ? (
+          {showEdit && !isEditing ? (
+            <ActionHoverTooltip label="Edit">
+              <button
+                type="button"
+                onClick={() => onStartEditMessage(node.id)}
+                disabled={actionsBusy || Boolean(editingMessageId)}
+                aria-label="Edit message"
+                className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-500 dark:hover:text-zinc-50"
+              >
+                <Pencil
+                  className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </button>
+            </ActionHoverTooltip>
+          ) : null}
+          {isOwnMessage && allowMessageDelete !== false && !isEditing ? (
             <ActionHoverTooltip label={isDeleting ? "Deleting…" : "Delete"}>
               <button
                 type="button"
@@ -216,7 +284,23 @@ function ThreadMessageItem({
             </ActionHoverTooltip>
           ) : null}
         </div>
-        </div>
+    </div>
+  );
+
+  return (
+    <li className="list-none w-full">
+      <div className={threadMessageRowClass(isOwnMessage)}>
+        {isOwnMessage ? (
+          <>
+            {bubble}
+            {avatar}
+          </>
+        ) : (
+          <>
+            {avatar}
+            {bubble}
+          </>
+        )}
       </div>
       {node.children.length > 0 ? (
         <ul className="relative mt-4 flex flex-col gap-4 border-l-2 border-zinc-300 pl-5 dark:border-zinc-600">
@@ -228,16 +312,24 @@ function ThreadMessageItem({
               replyParentId={replyParentId}
               onReply={onReply}
               onDeleteMessage={onDeleteMessage}
+              onStartEditMessage={onStartEditMessage}
+              onCancelEditMessage={onCancelEditMessage}
+              onSaveEditMessage={onSaveEditMessage}
+              editingMessageId={editingMessageId}
+              editDraft={editDraft}
+              onEditDraftChange={onEditDraftChange}
               messageById={messageById}
               authorNameByUserId={authorNameByUserId}
               authorAvatarUrlByUserId={authorAvatarUrlByUserId}
               uploaderDisplayByUserId={uploaderDisplayByUserId}
               currentUserId={currentUserId}
               deletingMessageId={deletingMessageId}
+              savingEditMessageId={savingEditMessageId}
               attachmentsByMessageId={attachmentsByMessageId}
               onOpenAttachment={onOpenAttachment}
               publicThreadMode={publicThreadMode}
               allowMessageDelete={allowMessageDelete}
+              allowMessageEdit={allowMessageEdit}
               allowReply={allowReply}
             />
           ))}
@@ -263,7 +355,14 @@ export function ThreadPanel({
   onClearReplyParent,
   currentUserId,
   onDeleteMessage,
+  onStartEditMessage,
+  onCancelEditMessage,
+  onSaveEditMessage,
+  editingMessageId = null,
+  editDraft = "",
+  onEditDraftChange,
   deletingMessageId,
+  savingEditMessageId = null,
   attachmentsByMessageId,
   onOpenAttachment,
   composerPendingFiles,
@@ -277,6 +376,7 @@ export function ThreadPanel({
   publicThreadMode = false,
   /** When false, hide delete on the user's own messages (e.g. customer portal). */
   allowMessageDelete = true,
+  allowMessageEdit = true,
   composerHidden = false,
   allowReply = true,
   pinToLatest = true,
@@ -301,7 +401,14 @@ export function ThreadPanel({
   onClearReplyParent: () => void;
   currentUserId: string | null;
   onDeleteMessage: (id: string) => void;
+  onStartEditMessage?: (id: string) => void;
+  onCancelEditMessage?: () => void;
+  onSaveEditMessage?: (id: string) => void;
+  editingMessageId?: string | null;
+  editDraft?: string;
+  onEditDraftChange?: (value: string) => void;
   deletingMessageId: string | null;
+  savingEditMessageId?: string | null;
   /** Shown when there are no messages (e.g. scope hint). */
   emptyStateText?: string | null;
   /** Always-visible content rendered at the top of the scroll area (Discord-style "beginning of thread"). */
@@ -309,12 +416,19 @@ export function ThreadPanel({
   showInternalComposerToggle?: boolean;
   publicThreadMode?: boolean;
   allowMessageDelete?: boolean;
+  allowMessageEdit?: boolean;
   /** Hide the composer (e.g. portal preview). Reply buttons follow `allowReply`. */
   composerHidden?: boolean;
   allowReply?: boolean;
   /** Pin the scroll viewport to the newest message when the tab is shown or messages grow. */
   pinToLatest?: boolean;
 }) {
+  const noop = () => {};
+  const handleStartEdit = onStartEditMessage ?? noop;
+  const handleCancelEdit = onCancelEditMessage ?? noop;
+  const handleSaveEdit = onSaveEditMessage ?? noop;
+  const handleEditDraftChange = onEditDraftChange ?? noop;
+
   const tree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
@@ -370,16 +484,24 @@ export function ThreadPanel({
                 replyParentId={replyParentId}
                 onReply={onReplyParent}
                 onDeleteMessage={onDeleteMessage}
+                onStartEditMessage={handleStartEdit}
+                onCancelEditMessage={handleCancelEdit}
+                onSaveEditMessage={handleSaveEdit}
+                editingMessageId={editingMessageId}
+                editDraft={editDraft}
+                onEditDraftChange={handleEditDraftChange}
                 messageById={messageById}
                 authorNameByUserId={authorNameByUserId}
                 authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                 uploaderDisplayByUserId={uploaderDisplayByUserId}
                 currentUserId={currentUserId}
                 deletingMessageId={deletingMessageId}
+                savingEditMessageId={savingEditMessageId}
                 attachmentsByMessageId={attachmentsByMessageId}
                 onOpenAttachment={onOpenAttachment}
                 publicThreadMode={publicThreadMode}
                 allowMessageDelete={allowMessageDelete}
+                allowMessageEdit={allowMessageEdit}
                 allowReply={allowReply}
               />
             ))}

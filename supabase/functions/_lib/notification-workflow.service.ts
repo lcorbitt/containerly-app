@@ -3,6 +3,10 @@
  */
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  fetchProfileDisplayName,
+  fetchShipmentOrderPhrase,
+  formatActorOnShipmentMessage,
+  messageAlertLinkage,
   notifyOperatorsBolImported,
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsCustomerDocumentUploaded,
@@ -181,10 +185,13 @@ export async function notifyOperatorsNewCustomerMessage(
     orgName: string;
     preview: string;
     customerUserId: string;
+    reportMessageId: string;
   },
 ): Promise<void> {
   const emailRecipients = await operatorEmailRecipientIds(admin, args.shipmentId);
   const url = `${siteUrl()}/shipments/${args.shipmentId}`;
+  const customerName = await fetchProfileDisplayName(admin, args.customerUserId);
+  const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
 
   await notifyShipmentStakeholdersInApp(admin, {
     organizationId: args.organizationId,
@@ -192,9 +199,14 @@ export async function notifyOperatorsNewCustomerMessage(
     containerId: args.containerId,
     alertType: "MESSAGE_NEW",
     severity: "warning",
-    message: args.preview.slice(0, 200),
+    message: formatActorOnShipmentMessage(
+      customerName,
+      orderPhrase,
+      args.preview.slice(0, 160),
+    ),
     excludeUserId: args.customerUserId,
     actorUserId: args.customerUserId,
+    ...messageAlertLinkage(args.reportMessageId),
   });
 
   for (const userId of emailRecipients) {
@@ -220,25 +232,36 @@ export async function notifyCustomerOperatorReply(
     orgName: string;
     preview: string;
     operatorUserId: string;
+    reportMessageId: string;
   },
 ): Promise<void> {
   const url = `${siteUrl()}/shipments/hub/${args.shipmentId}`;
+  const operatorName = await fetchProfileDisplayName(admin, args.operatorUserId);
+  const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
 
-  await insertAlert(admin, {
-    organization_id: args.organizationId,
-    shipment_id: args.shipmentId,
-    alert_type: "MESSAGE_REPLY",
-    severity: "info",
-    message: args.preview.slice(0, 200),
-    recipient_user_id: args.customerUserId,
-    actor_user_id: args.operatorUserId,
-  });
+  if (args.customerUserId !== args.operatorUserId) {
+    await insertAlert(admin, {
+      organization_id: args.organizationId,
+      shipment_id: args.shipmentId,
+      alert_type: "MESSAGE_REPLY",
+      severity: "info",
+      message: formatActorOnShipmentMessage(
+        operatorName,
+        orderPhrase,
+        args.preview.slice(0, 160),
+      ),
+      recipient_user_id: args.customerUserId,
+      actor_user_id: args.operatorUserId,
+      ...messageAlertLinkage(args.reportMessageId),
+    });
+  }
 
   await notifyOperatorsOperatorRepliedToCustomer(admin, {
     organizationId: args.organizationId,
     shipmentId: args.shipmentId,
     actorUserId: args.operatorUserId,
     preview: args.preview,
+    reportMessageId: args.reportMessageId,
   });
 
   const { data: profile } = await fetchProfileEmailByUserId(admin, args.customerUserId);

@@ -15,6 +15,7 @@ export function portalThreadMessageToReportMessage(m: ThreadMessage): ReportMess
     body: m.body,
     parent_message_id: m.parent_message_id,
     created_at: m.created_at,
+    updated_at: m.created_at,
   };
 }
 

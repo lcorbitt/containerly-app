@@ -226,6 +226,7 @@ export function PublicContainerReport({
                       deletingMessageId={null}
                       publicThreadMode
                       allowMessageDelete={false}
+                      allowMessageEdit={false}
                       composerHidden={threadReadOnly}
                       allowReply={!threadReadOnly}
                       emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}

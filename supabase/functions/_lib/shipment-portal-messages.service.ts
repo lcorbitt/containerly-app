@@ -100,12 +100,14 @@ async function postOrgMemberPortalMessage(
       shipmentId: input.shipmentId,
       actorUserId: userId,
       preview,
+      reportMessageId: inserted.id as string,
     });
     await notifyCustomersOperatorReply(admin, {
       organizationId: input.organizationId,
       shipmentId: input.shipmentId,
       operatorUserId: userId,
       preview,
+      reportMessageId: inserted.id as string,
     });
   } catch {
     /* best-effort */
