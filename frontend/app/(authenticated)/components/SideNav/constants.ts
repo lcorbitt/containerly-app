@@ -7,9 +7,10 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
-import { AUTHENTICATED_TOP_NAV_UTILITY_BUTTON_EMPHASIZED_SURFACE_CLASS } from "@/components/TopNav/AuthenticatedTopNav/constants";
+/** Sidenav active + hover — same border and background in both states. */
+export const SIDE_NAV_LINK_SURFACE_CLASS =
+  "border-zinc-200 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-950";
 
-/** Sidenav hover — same borders as top-nav utility buttons, slightly darker fill than zinc-50 / zinc-900. */
 export const SIDE_NAV_LINK_HOVER_SURFACE_CLASS =
   "border border-transparent bg-transparent hover:border-zinc-200 hover:bg-zinc-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-950";
 
@@ -57,7 +58,7 @@ export const adminNavItems = [
   { href: "/admin/organizations", label: "Organizations", icon: Building2 },
 ] as const;
 
-export const SIDE_NAV_LINK_ACTIVE_CLASS = `text-zinc-700 dark:text-zinc-200 ${AUTHENTICATED_TOP_NAV_UTILITY_BUTTON_EMPHASIZED_SURFACE_CLASS}`;
+export const SIDE_NAV_LINK_ACTIVE_CLASS = `text-zinc-700 dark:text-zinc-200 border ${SIDE_NAV_LINK_SURFACE_CLASS}`;
 
 export const SIDE_NAV_LINK_INACTIVE_CLASS = `text-zinc-600 dark:text-zinc-400 ${SIDE_NAV_LINK_HOVER_SURFACE_CLASS}`;
 
