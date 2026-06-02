@@ -50,7 +50,8 @@ export {
   notifyOperatorsTeamMessage,
   notifyOperatorsOperatorRepliedToCustomer,
   notifyOperatorsOriginalsMailed,
-};
+  notifyCustomersOperatorReply,
+} from "@supabase-shared/in-app-alerts.ts";
 
 function siteUrl(): string {
   return Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";

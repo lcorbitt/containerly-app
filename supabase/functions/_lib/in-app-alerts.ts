@@ -258,9 +258,11 @@ export async function notifyShipmentStakeholdersInApp(
   },
 ): Promise<string[]> {
   const actorToExclude = args.excludeUserId ?? args.actorUserId ?? null;
-  const recipients = await shipmentStakeholderUserIds(client, args.shipmentId, {
-    excludeUserId: actorToExclude,
-  });
+  const recipients = (
+    await shipmentStakeholderUserIds(client, args.shipmentId, {
+      excludeUserId: actorToExclude,
+    })
+  ).filter((id) => !actorToExclude || id !== actorToExclude);
   await insertAlertsForRecipients(client, recipients, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,

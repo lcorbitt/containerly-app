@@ -23,7 +23,13 @@ import {
   type ThreadNode,
 } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
-import { THREAD_MESSAGE_AVATAR_CLASS, THREAD_OWN_COMPOSER_BG_CLASS } from "./constants";
+import {
+  THREAD_MESSAGE_AVATAR_CLASS,
+  THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS,
+  THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS,
+  THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS,
+  THREAD_OWN_COMPOSER_BG_CLASS,
+} from "./constants";
 import {
   threadMessageAuthorAvatarUrl,
   threadMessageAuthorName,
@@ -203,10 +209,10 @@ function ThreadMessageItem({
             onClick={() => onReply(node.id)}
             disabled={actionsBusy || Boolean(editingMessageId)}
             aria-label="Reply to this message"
-            className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-500 dark:hover:text-zinc-50"
+            className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
           >
             <Reply
-              className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
+              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
               strokeWidth={2}
               aria-hidden
             />
@@ -220,10 +226,10 @@ function ThreadMessageItem({
             onClick={() => onStartEditMessage(node.id)}
             disabled={actionsBusy || Boolean(editingMessageId)}
             aria-label="Edit message"
-            className="group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-500 dark:hover:text-zinc-50"
+            className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
           >
             <Pencil
-              className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
+              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
               strokeWidth={2}
               aria-hidden
             />
@@ -237,7 +243,7 @@ function ThreadMessageItem({
             aria-label={isDeleting ? "Deleting message…" : "Delete message"}
             disabled={actionsBusy}
             onClick={() => onDeleteMessage(node.id)}
-            className="group/msg-act inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-600 transition-colors duration-200 ease-out hover:text-red-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-red-600 dark:text-red-500 dark:hover:text-red-100 dark:disabled:hover:text-red-500"
+            className={THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS}
           >
             {isDeleting ? (
               <span
@@ -246,7 +252,7 @@ function ThreadMessageItem({
               />
             ) : (
               <Trash2
-                className="h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]"
+                className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
                 strokeWidth={2}
                 aria-hidden
               />

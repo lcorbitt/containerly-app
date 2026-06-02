@@ -63,6 +63,16 @@ export const THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS =
 export const THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS =
   "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
 
+/** Reply / edit — dark icon on hover in light mode (readable on pastel bubbles). */
+export const THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS =
+  "group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:bg-zinc-900/10 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-50";
+
+export const THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS =
+  "group/msg-act inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-600 transition-colors duration-200 ease-out hover:bg-red-950/10 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-red-600 dark:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-200 dark:disabled:hover:text-red-500";
+
+export const THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS =
+  "h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]";
+
 export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
 export const THREAD_MESSAGE_CARD_SHADOW_CLASS =

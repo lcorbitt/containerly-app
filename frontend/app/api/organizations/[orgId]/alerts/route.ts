@@ -18,6 +18,6 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const alerts = await fetchOrgAlertsPage(supabase, orgId, limit);
+  const alerts = await fetchOrgAlertsPage(supabase, orgId, user.id, limit);
   return NextResponse.json({ alerts });
 }
