@@ -15,6 +15,10 @@ import {
   XCircle,
 } from "lucide-react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import {
+  messageActivityCommunicationTitle,
+  truncateMessageActivityPreview,
+} from "@/utils/message-activity-event";
 import { formatTimestamp } from "@/utils/datetime";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type { ShipmentTimelineDisplayEvent, TimelineDocumentMeta, TimelineDocumentMetaItem, TimelineTone } from "./types";
@@ -71,7 +75,10 @@ export function eventHeading(
   ev: ShipmentTimelineDisplayEvent,
 ): { title: string; subtitle: string | null } {
   if (ev.displayTitle?.trim()) {
-    return { title: ev.displayTitle.trim(), subtitle: null };
+    return {
+      title: ev.displayTitle.trim(),
+      subtitle: ev.displaySubtitle?.trim() ?? null,
+    };
   }
 
   const et = ev.event_type.trim();
@@ -263,9 +270,14 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
     case "tracking_linked":
       return "Carrier tracking linked";
     case "customer_message":
-      return "Customer message posted";
-    case "operator_message":
-      return "Team message posted";
+    case "operator_message": {
+      const meta =
+        event.metadata && typeof event.metadata === "object" && !Array.isArray(event.metadata)
+          ? event.metadata
+          : {};
+      const name = readMetadataString(meta, "author_display_name") ?? (event.event_type === "customer_message" ? "Customer" : "Team member");
+      return messageActivityCommunicationTitle(name);
+    }
     default:
       break;
   }
@@ -284,6 +296,11 @@ export function mapActivityEventToTimelineEvent(
   attachmentDisplayNamesById?: Record<string, string>,
 ): ShipmentTimelineDisplayEvent {
   const parsedMeta = parseActivityDocumentMeta(event.metadata);
+  const messagePreview =
+    readMetadataString(event.metadata ?? {}, "message_preview") ??
+    (event.event_type === "customer_message" || event.event_type === "operator_message"
+      ? truncateMessageActivityPreview(event.body)
+      : null);
   return {
     id: event.id,
     event_type: event.event_type,
@@ -292,6 +309,7 @@ export function mapActivityEventToTimelineEvent(
     occurred_at: event.occurred_at,
     source: "activity",
     displayTitle: activityEventTitle(event),
+    displaySubtitle: messagePreview,
     documentMeta: enrichTimelineDocumentMeta(
       parsedMeta,
       event.metadata ?? {},
@@ -342,7 +360,7 @@ export function inferTimelineVisual(
     return { tone: "system", Icon: Activity, label: "Tracking" };
   }
   if (/customer_message|operator_message|message/.test(t)) {
-    return { tone: "milestone", Icon: MessageSquare, label: "Message" };
+    return { tone: "milestone", Icon: MessageSquare, label: "Communication" };
   }
 
   if (/custom|clearance|hold|inspect|exam|cfs|bond|quarantine|detain/.test(t)) {

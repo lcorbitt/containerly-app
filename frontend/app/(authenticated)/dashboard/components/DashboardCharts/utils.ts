@@ -1,5 +1,5 @@
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
-import { TRIAGE_BUCKET_LABELS, type DayCount, type OrgDashboardMetrics, type PersonalMetrics } from "@/utils/dashboard-metrics";
+import type { DayCount, OrgDashboardMetrics, PersonalMetrics } from "@/utils/dashboard-metrics";
 import type { ChartBarItem, DashboardChartsData, TrendPoint } from "./types";
 
 function formatDayLabel(ts: number): string {
@@ -11,18 +11,6 @@ function dayCountsToTrendPoints(series: DayCount[]): TrendPoint[] {
     label: formatDayLabel(d.start),
     count: d.count,
   }));
-}
-
-function triageCountsToBars(
-  triageCounts: Record<string, number>,
-): ChartBarItem[] {
-  return Object.entries(triageCounts)
-    .filter(([, value]) => value > 0)
-    .map(([key, value]) => ({
-      key,
-      label: TRIAGE_BUCKET_LABELS[key as keyof typeof TRIAGE_BUCKET_LABELS] ?? key,
-      value,
-    }));
 }
 
 function workflowCountsToBars(workflowCounts: Record<string, number>): ChartBarItem[] {
@@ -52,14 +40,6 @@ export function buildDashboardChartsData(
 
   if (!personalMetrics) return null;
 
-  const triageCounts = {
-    exceptions: 0,
-    eta: 0,
-    docs: 0,
-    customer: 0,
-  };
-  // Personal distribution uses triage from metrics needsAttention broken down via status for bar #2
-  // Use sync status breakdown for member bar chart
   const statusItems: ChartBarItem[] = personalMetrics.statusOrder
     .map((key) => ({
       key,
@@ -71,7 +51,7 @@ export function buildDashboardChartsData(
   return {
     trendPoints: dayCountsToTrendPoints(personalMetrics.createdByDay),
     trendTitle: "New carrier lines (14 days)",
-    distributionItems: statusItems.length > 0 ? statusItems : triageCountsToBars(triageCounts),
+    distributionItems: statusItems,
     distributionTitle: "Carrier sync status",
   };
 }

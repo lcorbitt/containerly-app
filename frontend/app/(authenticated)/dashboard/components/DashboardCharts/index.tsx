@@ -38,7 +38,7 @@ export function DashboardCharts({ isAdminView, personalMetrics, orgMetrics }: Da
   const { trendPoints, trendTitle, distributionItems, distributionTitle } = data;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid gap-4 lg:grid-cols-2">
       <section className={DASHBOARD_CHART_CARD_CLASS}>
         <h3 className={DASHBOARD_CHART_TITLE_CLASS}>{trendTitle}</h3>
         <p className={DASHBOARD_CHART_SUBTITLE_CLASS}>

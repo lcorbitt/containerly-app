@@ -22,9 +22,11 @@ import { useConfirm } from "@/contexts/confirm-dialog";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
 import {
+  buildShipmentTimelineEvents,
   formatTimelineWhen,
   useShipmentTimelineOrder,
 } from "@/components/ShipmentTimeline";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { computePublicReportInsights } from "@/utils/report-insights";
 import { getShipmentDetailRows, shipperReceiverFromLocation } from "@/utils/jsoncargo-display";
@@ -53,8 +55,13 @@ export function useContainerWorkspace({
     Record<string, string | null>
   >({});
   const [activity, setActivity] = useState<ReportActivity[]>([]);
+  const [activityEvents, setActivityEvents] = useState<ShipmentActivityEvent[]>([]);
   const [timeline, setTimeline] = useState<PublicTimelineEvent[]>([]);
-  const timelineOrder = useShipmentTimelineOrder(timeline);
+  const mergedTimelineEvents = useMemo(
+    () => buildShipmentTimelineEvents({ carrierEvents: timeline, activityEvents }),
+    [timeline, activityEvents],
+  );
+  const timelineOrder = useShipmentTimelineOrder(mergedTimelineEvents);
   const [containerRow, setContainerRow] = useState<ContainerWorkspaceSnapshot | null>(null);
   const [bolGroupSiblings, setBolGroupSiblings] = useState<
     { id: string; container_number: string }[]
@@ -175,6 +182,7 @@ export function useContainerWorkspace({
           setBolGroupSiblings([]);
           setMessages([]);
           setActivity([]);
+          setActivityEvents([]);
           setTimeline([]);
           setAttachments([]);
           setMessageAuthorByUserId({});
@@ -188,6 +196,7 @@ export function useContainerWorkspace({
         setMessageAuthorByUserId(result.messageAuthorByUserId);
         setProfileImagePathByUserId(result.profileImagePathByUserId);
         setActivity(result.activity);
+        setActivityEvents(result.activityEvents);
         setTimeline(result.timeline);
         setAttachments(result.attachments);
         if (result.quietAttachmentWarning && !quiet) {

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { NavBrand } from "../NavBrand";
-import { NavBrandTagline } from "../NavBrandTagline";
 import { TopNavShell } from "../TopNavShell";
 import {
   PUBLIC_TOP_NAV_CTA_CLASS,
@@ -23,7 +22,7 @@ import {
 import { usePublicTopNav } from "./usePublicTopNav";
 
 export function PublicTopNav() {
-  const { hideMarketingLinks, mobileOpen, showBrandTagline, toggleMobile, closeMobile } = usePublicTopNav();
+  const { hideMarketingLinks, mobileOpen, toggleMobile, closeMobile } = usePublicTopNav();
 
   return (
     <>
@@ -31,7 +30,6 @@ export function PublicTopNav() {
         <div className={PUBLIC_TOP_NAV_LAYOUT_CLASS}>
           <div className={`${PUBLIC_TOP_NAV_LEFT_CLASS} gap-3 sm:gap-4`}>
             <NavBrand href="/" variant="marketing" />
-            {showBrandTagline ? <NavBrandTagline variant="marketing" /> : null}
           </div>
 
           {!hideMarketingLinks ? (

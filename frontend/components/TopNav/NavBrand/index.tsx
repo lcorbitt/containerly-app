@@ -11,7 +11,9 @@ export const NavBrand = memo(function NavBrand({ href, variant }: NavBrandProps)
     <Link href={href} className={NAV_BRAND_CLASS[variant]} aria-label="Containerly home">
       <div className="flex shrink-0 items-center gap-2">
         <NavBrandLogo />
-        <span className={NAV_BRAND_TEXT_CLASS[variant]}>Containerly</span>
+        {variant === "marketing" ? (
+          <span className={NAV_BRAND_TEXT_CLASS[variant]}>Containerly</span>
+        ) : null}
       </div>
     </Link>
   );

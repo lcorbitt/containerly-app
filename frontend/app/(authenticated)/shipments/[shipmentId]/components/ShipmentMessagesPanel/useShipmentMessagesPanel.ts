@@ -16,6 +16,7 @@ import { useToast } from "@/contexts/toast";
 import type { WorkspaceAttachment } from "@/types/database";
 import {
   shipmentScopeThreadQueryKey,
+  shipmentWorkspaceRowQueryKeyRoot,
   useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
@@ -52,6 +53,9 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
       });
       void qc.invalidateQueries({
         queryKey: [...orgMessageThreadsQueryKeyRoot, selectedOrgId],
+      });
+      void qc.invalidateQueries({
+        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
       });
     }
   }, [qc, selectedOrgId, shipmentId]);

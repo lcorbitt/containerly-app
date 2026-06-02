@@ -8,6 +8,7 @@ import {
 } from "@models/customer_invites.ts";
 import { countMembershipsForUser } from "@models/organization_members.ts";
 import { insertReportActivity } from "@models/report_activity.ts";
+import { recordMessageActivityEvent } from "@supabase-shared/message-activity.service.ts";
 import {
   fetchReportMessageParentForReply,
   insertReportMessage,
@@ -476,6 +477,20 @@ export async function postCustomerMessage(
     action: "customer_message",
     metadata: { message_id: inserted.id },
   });
+
+  try {
+    await recordMessageActivityEvent(admin, {
+      shipmentId,
+      messageId: inserted.id as string,
+      body: text,
+      authorKind: "customer",
+      authorDisplayName: name,
+      authorUserId: userId,
+      containerId: shipmentScoped ? null : containerId,
+    });
+  } catch {
+    /* best-effort */
+  }
 
   const { data: orgRow } = await fetchOrganizationForPortal(admin, access.organization_id as string);
   await notifyOperatorsNewCustomerMessage(admin, {

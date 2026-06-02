@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { orgMessageThreadsQueryKeyRoot, useOrgMessageThreadsQuery } from "@/hooks/queries/useOrgMessageThreads";
 import { trackingDashboardQueryKeyRoot, useTrackingDashboardQuery } from "@/hooks/queries/useTracking";
 import { canManageOrganizationSettings } from "@/utils/org-role";
 import { isRequestInMyScope } from "@/utils/dashboard-scope";
@@ -16,12 +15,10 @@ export function useTrackingDashboard(): UseTrackingDashboardResult {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const qc = useQueryClient();
   const dashboardQuery = useTrackingDashboardQuery(selectedOrgId);
-  const messagesQuery = useOrgMessageThreadsQuery(selectedOrgId);
 
   useEffect(() => {
     const onCreated = () => {
       void qc.invalidateQueries({ queryKey: trackingDashboardQueryKeyRoot });
-      void qc.invalidateQueries({ queryKey: orgMessageThreadsQueryKeyRoot });
     };
     window.addEventListener(TRACKING_CREATED_EVENT, onCreated);
     return () => window.removeEventListener(TRACKING_CREATED_EVENT, onCreated);
@@ -101,7 +98,5 @@ export function useTrackingDashboard(): UseTrackingDashboardResult {
     snapshot: snap,
     personalMetrics,
     triageBuckets,
-    messageThreads: messagesQuery.data ?? [],
-    messagesLoading: messagesQuery.isLoading && Boolean(selectedOrgId),
   };
 }

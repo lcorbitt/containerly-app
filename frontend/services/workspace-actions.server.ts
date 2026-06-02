@@ -15,6 +15,52 @@ import {
   runOperatorDraftsPublishedNotification,
   runOperatorShipmentMessageNotifications,
 } from "@/services/notification.server";
+import {
+  buildMessageActivityMetadata,
+  messageActivityActorKind,
+  messageActivityEventType,
+} from "@/utils/message-activity-event";
+
+async function insertMessageActivityEventForUser(
+  supabase: SupabaseClient,
+  input: {
+    shipmentId: string;
+    messageId: string;
+    body: string;
+    authorKind: string;
+    authorDisplayName: string;
+    authorUserId: string | null;
+    containerId?: string | null;
+  },
+): Promise<void> {
+  const { error } = await supabase.from("shipment_activity_events").insert({
+    shipment_id: input.shipmentId,
+    event_type: messageActivityEventType(input.authorKind),
+    body: input.body.trim(),
+    actor_kind: messageActivityActorKind(input.authorKind),
+    actor_user_id: input.authorUserId,
+    metadata: buildMessageActivityMetadata({
+      messageId: input.messageId,
+      authorDisplayName: input.authorDisplayName,
+      body: input.body,
+      containerId: input.containerId,
+    }),
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function resolveContainerShipmentId(
+  supabase: SupabaseClient,
+  containerId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("containers")
+    .select("shipment_id")
+    .eq("id", containerId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.shipment_id as string | null) ?? null;
+}
 
 export async function createWorkspaceStorageSignedUrlQuery(
   supabase: SupabaseClient,
@@ -149,6 +195,21 @@ export async function postContainerWorkspaceMessageForUser(
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
   const message = inserted as ReportMessage;
+
+  if (!input.internalOnly && input.body.trim()) {
+    const shipmentId = await resolveContainerShipmentId(supabase, input.containerId);
+    if (shipmentId) {
+      await insertMessageActivityEventForUser(supabase, {
+        shipmentId,
+        messageId: message.id,
+        body: input.body,
+        authorKind: message.author_kind,
+        authorDisplayName: displayName,
+        authorUserId: userId,
+        containerId: input.containerId,
+      });
+    }
+  }
 
   const attachmentErrors: string[] = [];
   for (const file of input.files) {
@@ -507,7 +568,21 @@ export async function insertShipmentScopeReportMessageForUser(
     .single();
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
-  return (inserted as ReportMessage).id;
+  const message = inserted as ReportMessage;
+
+  if (!input.internalOnly && input.body.trim()) {
+    await insertMessageActivityEventForUser(supabase, {
+      shipmentId: input.shipmentId,
+      messageId: message.id,
+      body: input.body,
+      authorKind: message.author_kind,
+      authorDisplayName: displayName,
+      authorUserId: userId,
+      containerId: null,
+    });
+  }
+
+  return message.id;
 }
 
 export async function postShipmentScopeMessageWithAttachmentsForUser(

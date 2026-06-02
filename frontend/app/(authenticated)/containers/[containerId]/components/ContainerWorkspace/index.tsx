@@ -297,7 +297,7 @@ export function ContainerWorkspace({
                       Map
                     </button>
                   </div>
-                  {trackingSubview === "timeline" && timeline.length > 0 ? (
+                  {trackingSubview === "timeline" && timelineOrder.displayEvents.length > 0 ? (
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <TimelineOrderToggle
                         newestFirst={timelineOrder.newestFirst}
@@ -309,7 +309,6 @@ export function ContainerWorkspace({
                 {trackingSubview === "timeline" ? (
                   <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4 sm:pb-4">
                     <ShipmentTimelineView
-                      events={timeline}
                       order={timelineOrder}
                       className="shadow-none!"
                     />

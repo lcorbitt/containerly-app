@@ -1,4 +1,5 @@
 import type { ReportActivity, ReportMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
 export type ContainerWorkspaceSnapshot = {
@@ -19,6 +20,7 @@ export type ContainerWorkspaceLoadResult =
       messageAuthorByUserId: Record<string, string>;
       profileImagePathByUserId: Record<string, string | null>;
       activity: ReportActivity[];
+      activityEvents: ShipmentActivityEvent[];
       timeline: PublicTimelineEvent[];
       containerRow: ContainerWorkspaceSnapshot;
       bolGroupSiblings: { id: string; container_number: string }[];

@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
-import { DashboardMessageThreads } from "../DashboardMessageThreads";
 import { DashboardSpotlightShipment } from "../DashboardSpotlightShipment";
+import { DashboardSyncHealth } from "../DashboardSyncHealth";
 import {
   TRACKING_DASHBOARD_GRID_CLASS,
   TRACKING_DASHBOARD_HEADER_COPY_CLASS,
@@ -40,8 +40,6 @@ export function TrackingDashboard() {
     snapshot,
     personalMetrics,
     triageBuckets,
-    messageThreads,
-    messagesLoading,
   } = useTrackingDashboard();
 
   return (
@@ -51,7 +49,10 @@ export function TrackingDashboard() {
         <p className={TRACKING_DASHBOARD_HEADER_COPY_CLASS}>
           {isAdminView ? (
             <>
-              Org-wide metrics for <span className="font-medium text-zinc-800 dark:text-zinc-200">{selectedOrgName ?? "your organization"}</span>
+              Org-wide metrics for{" "}
+              <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                {selectedOrgName ?? "your organization"}
+              </span>
               , with personal action items below. Browse every shipment under{" "}
               <Link href="/shipments" className="font-medium text-zinc-800 underline dark:text-zinc-200">
                 Shipments
@@ -72,7 +73,9 @@ export function TrackingDashboard() {
 
       {isError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
-          <p className="text-sm text-red-800 dark:text-red-200">Could not load dashboard data. Try refreshing the page.</p>
+          <p className="text-sm text-red-800 dark:text-red-200">
+            Could not load dashboard data. Try refreshing the page.
+          </p>
         </div>
       ) : null}
 
@@ -98,6 +101,7 @@ export function TrackingDashboard() {
               isAdminView={isAdminView}
               orgMetrics={snapshot?.orgMetrics}
               personalMetrics={personalMetrics}
+              loading={loading}
             />
           </div>
 
@@ -110,38 +114,21 @@ export function TrackingDashboard() {
             />
           </div>
 
-          {isAdminView ? (
-            <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
+          <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
+            {isAdminView ? (
               <DashboardSpotlightShipment spotlight={snapshot?.spotlightShipment} />
-            </div>
-          ) : (
-            <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
-              <DashboardCharts
-                isAdminView={false}
-                personalMetrics={personalMetrics}
-                orgMetrics={snapshot?.orgMetrics}
-              />
-            </div>
-          )}
+            ) : (
+              <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
+            )}
+          </div>
 
-          {isAdminView ? (
-            <>
-              <div className={TRACKING_DASHBOARD_SPAN_MAIN}>
-                <DashboardCharts
-                  isAdminView
-                  personalMetrics={personalMetrics}
-                  orgMetrics={snapshot?.orgMetrics}
-                />
-              </div>
-              <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
-                <DashboardMessageThreads threads={messageThreads} loading={messagesLoading} />
-              </div>
-            </>
-          ) : (
-            <div className={TRACKING_DASHBOARD_SPAN_FULL}>
-              <DashboardMessageThreads threads={messageThreads} loading={messagesLoading} />
-            </div>
-          )}
+          <div className={TRACKING_DASHBOARD_SPAN_FULL}>
+            <DashboardCharts
+              isAdminView={isAdminView}
+              personalMetrics={personalMetrics}
+              orgMetrics={snapshot?.orgMetrics}
+            />
+          </div>
         </div>
       ) : null}
     </div>

@@ -18,6 +18,5 @@ export const NAV_BRAND_CLASS: Record<TopNavVariant, string> = {
 
 export const NAV_BRAND_TEXT_CLASS: Record<TopNavVariant, string> = {
   marketing: "text-2xl font-bold",
-  /** Hidden below `md` so the app top nav is logo-only on small screens. */
-  app: "hidden text-2xl font-bold md:inline",
+  app: "",
 };

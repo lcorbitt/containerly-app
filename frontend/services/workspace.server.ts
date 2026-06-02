@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { ReportActivity, ReportMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type {
@@ -10,6 +11,29 @@ import type {
 } from "@/types/workspace-load";
 
 export type { ContainerWorkspaceLoadResult, ContainerWorkspaceSnapshot, WorkspaceQuickSearchRow };
+
+function mapActivityEventRow(row: Record<string, unknown>): ShipmentActivityEvent {
+  return {
+    id: row.id as string,
+    event_type: row.event_type as string,
+    body: row.body as string,
+    actor_kind: row.actor_kind as string,
+    occurred_at: row.occurred_at as string,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+  };
+}
+
+function activityEventMatchesContainer(
+  event: ShipmentActivityEvent,
+  containerId: string,
+): boolean {
+  if (event.event_type !== "customer_message" && event.event_type !== "operator_message") {
+    return false;
+  }
+  const meta = event.metadata ?? {};
+  const scopedContainerId = meta.container_id;
+  return typeof scopedContainerId === "string" && scopedContainerId === containerId;
+}
 
 export async function loadContainerWorkspaceDataForUser(
   supabase: SupabaseClient,
@@ -61,7 +85,7 @@ export async function loadContainerWorkspaceDataForUser(
           .order("container_number", { ascending: true })
       : Promise.resolve({ data: [] as { id: string; container_number: string }[], error: null });
 
-  const [{ data: msg }, { data: act }, { data: tev }, attRes, siblingResult] = await Promise.all([
+  const [{ data: msg }, { data: act }, { data: tev }, attRes, siblingResult, activityRes] = await Promise.all([
     supabase
       .from("report_messages")
       .select("*")
@@ -87,6 +111,14 @@ export async function loadContainerWorkspaceDataForUser(
       .eq("container_id", input.containerId)
       .order("created_at", { ascending: false }),
     siblingQuery,
+    shipmentIdForSiblings
+      ? supabase
+          .from("shipment_activity_events")
+          .select("id, event_type, body, actor_kind, occurred_at, metadata")
+          .eq("shipment_id", shipmentIdForSiblings)
+          .in("event_type", ["customer_message", "operator_message"])
+          .order("occurred_at", { ascending: true })
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ]);
 
   const msgList = (msg as ReportMessage[]) ?? [];
@@ -143,6 +175,10 @@ export async function loadContainerWorkspaceDataForUser(
         : null,
   };
 
+  const activityEvents = ((activityRes.data as Record<string, unknown>[] | null) ?? [])
+    .map(mapActivityEventRow)
+    .filter((event) => activityEventMatchesContainer(event, input.containerId));
+
   return {
     ok: true,
     request: tr as TrackingRequest,
@@ -150,6 +186,7 @@ export async function loadContainerWorkspaceDataForUser(
     messageAuthorByUserId: nameByUser,
     profileImagePathByUserId,
     activity: (act as ReportActivity[]) ?? [],
+    activityEvents,
     timeline: [...((tev as PublicTimelineEvent[] | null) ?? [])],
     containerRow,
     bolGroupSiblings,

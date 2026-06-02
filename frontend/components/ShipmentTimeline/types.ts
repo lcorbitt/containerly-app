@@ -29,6 +29,8 @@ export type ShipmentTimelineDisplayEvent = PublicTimelineEvent & {
   source?: "carrier" | "activity";
   /** Override title for workflow / activity milestones. */
   displayTitle?: string | null;
+  /** Secondary line under the title (e.g. message preview). */
+  displaySubtitle?: string | null;
   /** Parsed document metadata for activity-sourced events. */
   documentMeta?: TimelineDocumentMeta | null;
 };
