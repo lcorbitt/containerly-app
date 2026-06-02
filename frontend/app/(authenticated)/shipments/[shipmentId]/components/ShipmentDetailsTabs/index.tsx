@@ -142,7 +142,7 @@ export function ShipmentDetailsTabs({
         >
           <Reveal show={isMessagesTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
             <div className={SHIPMENT_DETAILS_TAB_MESSAGES_PANEL_CLASS}>
-              <ShipmentMessagesPanel shipmentId={shipmentId} />
+              <ShipmentMessagesPanel shipmentId={shipmentId} pinToLatest={isMessagesTab} />
             </div>
           </Reveal>
         </div>

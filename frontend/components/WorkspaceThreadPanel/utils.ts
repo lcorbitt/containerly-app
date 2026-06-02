@@ -17,6 +17,16 @@ import {
   THREAD_TEAM_REPLY_BG_CLASS,
   THREAD_TEAM_REPLY_RING_CLASS,
   THREAD_TEAM_ROOT_BG_CLASS,
+  THREAD_MESSAGE_ROW_CLASS,
+  THREAD_MESSAGE_ROW_OWN_CLASS,
+  THREAD_MESSAGE_BUBBLE_OWN_CLASS,
+  THREAD_MESSAGE_BUBBLE_OTHER_CLASS,
+  THREAD_MESSAGE_QUOTE_SHELL_OWN_CLASS,
+  THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS,
+  THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS,
+  THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS,
+  THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS,
+  THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS,
 } from "./constants";
 
 export function buildAuthorAvatarUrlByUserId(
@@ -61,6 +71,32 @@ export function threadMessageQuoteClass(palette: ThreadMessagePalette): string {
 
 export function threadMessageReplyRingClass(palette: ThreadMessagePalette): string {
   return palette === "team" ? THREAD_TEAM_REPLY_RING_CLASS : THREAD_IMPORTER_REPLY_RING_CLASS;
+}
+
+export function threadMessageRowClass(isOwnMessage: boolean): string {
+  return isOwnMessage ? THREAD_MESSAGE_ROW_OWN_CLASS : THREAD_MESSAGE_ROW_CLASS;
+}
+
+export function threadMessageBubbleClass(isOwnMessage: boolean): string {
+  return isOwnMessage ? THREAD_MESSAGE_BUBBLE_OWN_CLASS : THREAD_MESSAGE_BUBBLE_OTHER_CLASS;
+}
+
+export function threadMessageQuoteShellClass(isOwnMessage: boolean): string {
+  return isOwnMessage
+    ? THREAD_MESSAGE_QUOTE_SHELL_OWN_CLASS
+    : THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS;
+}
+
+export function threadMessageContentPadClass(isOwnMessage: boolean): string {
+  return isOwnMessage
+    ? THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS
+    : THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS;
+}
+
+export function threadMessageCornerActionsClass(isOwnMessage: boolean): string {
+  return isOwnMessage
+    ? THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS
+    : THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS;
 }
 
 export function threadMessageShellClass({
@@ -145,4 +181,33 @@ export function threadMessageAuthorName(
   const stored = m.author_display_name?.trim();
   if (stored) return stored;
   return "Team member";
+}
+
+export function scrollThreadToLatest(
+  container: HTMLElement | null,
+  anchor: HTMLElement | null,
+  behavior: ScrollBehavior = "auto",
+): void {
+  if (anchor) {
+    anchor.scrollIntoView({ block: "end", behavior });
+    return;
+  }
+  if (container) {
+    container.scrollTo({ top: container.scrollHeight, behavior });
+  }
+}
+
+/** Re-run scroll after layout, Reveal transitions, and late-resizing content. */
+export function flushScrollThreadToLatest(
+  container: HTMLElement | null,
+  anchor: HTMLElement | null,
+  behavior: ScrollBehavior = "auto",
+): void {
+  scrollThreadToLatest(container, anchor, behavior);
+  requestAnimationFrame(() => {
+    scrollThreadToLatest(container, anchor, behavior);
+    requestAnimationFrame(() => scrollThreadToLatest(container, anchor, behavior));
+  });
+  window.setTimeout(() => scrollThreadToLatest(container, anchor, behavior), 50);
+  window.setTimeout(() => scrollThreadToLatest(container, anchor, behavior), 350);
 }

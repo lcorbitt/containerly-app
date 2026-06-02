@@ -17,7 +17,14 @@ import {
 } from "./constants";
 import { useShipmentMessagesPanel } from "./useShipmentMessagesPanel";
 
-export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
+export function ShipmentMessagesPanel({
+  shipmentId,
+  pinToLatest = true,
+}: {
+  shipmentId: string;
+  /** Pass false when the messages tab is hidden so we re-pin when it opens (e.g. `?tab=messages`). */
+  pinToLatest?: boolean;
+}) {
   const {
     selectedOrgId,
     loading,
@@ -78,6 +85,7 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
         <ThreadPanel
           key={shipmentId}
           messages={threadMessages}
+          pinToLatest={pinToLatest}
           authorNameByUserId={messageAuthorByUserId}
           authorAvatarUrlByUserId={authorAvatarUrlByUserId}
           uploaderDisplayByUserId={messageAuthorByUserId}

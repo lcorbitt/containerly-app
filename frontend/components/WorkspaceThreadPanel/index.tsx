@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip, Reply, Trash2 } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -25,7 +25,6 @@ import {
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import {
   THREAD_MESSAGE_AVATAR_CLASS,
-  THREAD_MESSAGE_ROW_CLASS,
   THREAD_OWN_COMPOSER_BG_CLASS,
   THREAD_TEAM_COMPOSER_BG_CLASS,
 } from "./constants";
@@ -34,12 +33,18 @@ import {
   threadMessageAuthorName,
   threadMessageAvatarClass,
   threadMessageAuthorHeadingClass,
+  threadMessageBubbleClass,
+  threadMessageContentPadClass,
+  threadMessageCornerActionsClass,
   threadMessageIsOwn,
   threadMessagePalette,
   threadMessageQuoteClass,
+  threadMessageQuoteShellClass,
   threadMessageReplyRingClass,
+  threadMessageRowClass,
   threadMessageShellClass,
 } from "./utils";
+import { useThreadScrollToLatest } from "./useThreadScrollToLatest";
 
 export { threadMessageAuthorName };
 
@@ -105,22 +110,21 @@ function ThreadMessageItem({
 
   const replyTargetRing = threadMessageReplyRingClass(palette);
 
-  const cornerActionsClass =
-    "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
-
   return (
     <li className="list-none">
-      <div className={THREAD_MESSAGE_ROW_CLASS}>
+      <div className={threadMessageRowClass(isOwnMessage)}>
         <UserAvatar
           imageUrl={authorAvatarUrl}
           label={authorLabel}
           size="lg"
           className={avatarClass}
         />
-        <div className={`relative min-w-0 flex-1 text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
+        <div
+          className={`${threadMessageBubbleClass(isOwnMessage)} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
+        >
         {parent ? (
           <div
-            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${threadMessageQuoteClass(
+            className={`${threadMessageQuoteShellClass(isOwnMessage)} ${threadMessageQuoteClass(
               threadMessagePalette({ authorKind: parent.author_kind }),
             )}`}
           >
@@ -132,8 +136,10 @@ function ThreadMessageItem({
             </p>
           </div>
         ) : null}
-        <div className="min-w-0 pr-25">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <div className={threadMessageContentPadClass(isOwnMessage)}>
+          <div
+            className={`flex flex-wrap items-baseline gap-x-2 gap-y-0.5 ${isOwnMessage ? "justify-end" : ""}`}
+          >
             <span
               className={threadMessageAuthorHeadingClass({
                 palette,
@@ -168,7 +174,7 @@ function ThreadMessageItem({
             </ul>
           ) : null}
         </div>
-        <div className={cornerActionsClass}>
+        <div className={threadMessageCornerActionsClass(isOwnMessage)}>
           {allowReply ? (
             <ActionHoverTooltip label="Reply">
               <button
@@ -273,6 +279,7 @@ export function ThreadPanel({
   allowMessageDelete = true,
   composerHidden = false,
   allowReply = true,
+  pinToLatest = true,
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
@@ -305,53 +312,21 @@ export function ThreadPanel({
   /** Hide the composer (e.g. portal preview). Reply buttons follow `allowReply`. */
   composerHidden?: boolean;
   allowReply?: boolean;
+  /** Pin the scroll viewport to the newest message when the tab is shown or messages grow. */
+  pinToLatest?: boolean;
 }) {
   const tree = useMemo(() => buildMessageTree(messages), [messages]);
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerFileInputRef = useRef<HTMLInputElement>(null);
-  const prevMessageCount = useRef<number | null>(null);
-  const [messagesOverflow, setMessagesOverflow] = useState(false);
 
-  useEffect(() => {
-    const el = messagesScrollRef.current;
-    if (!el) return;
-
-    const updateOverflow = () => {
-      setMessagesOverflow(el.scrollHeight > el.clientHeight + 1);
-    };
-
-    updateOverflow();
-    const observer = new ResizeObserver(updateOverflow);
-    observer.observe(el);
-
-    return () => observer.disconnect();
-  }, [messages]);
-
-  useLayoutEffect(() => {
-    const el = messagesScrollRef.current;
-    if (!el) return;
-
-    const scrollToBottom = (behavior: ScrollBehavior) => {
-      el.scrollTo({ top: el.scrollHeight, behavior });
-    };
-
-    const previousCount = prevMessageCount.current;
-
-    if (previousCount === null) {
-      prevMessageCount.current = messages.length;
-      if (messages.length > 0) {
-        scrollToBottom("auto");
-        requestAnimationFrame(() => scrollToBottom("auto"));
-      }
-      return;
-    }
-
-    if (messages.length > previousCount) {
-      scrollToBottom("smooth");
-    }
-    prevMessageCount.current = messages.length;
-  }, [messages]);
+  useThreadScrollToLatest({
+    messagesScrollRef,
+    messagesEndRef,
+    messageCount: messages.length,
+    pinToLatest,
+  });
 
   const replyPreview = useMemo(() => {
     if (!replyParentId) return null;
@@ -369,7 +344,7 @@ export function ThreadPanel({
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div
         ref={messagesScrollRef}
-        className={`flex min-h-0 flex-1 flex-col p-5 sm:p-6 ${messagesOverflow ? "overflow-y-auto overscroll-y-auto" : "overflow-y-hidden"}`}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-auto p-5 sm:p-6"
       >
         {threadStartBanner ? <div className="mb-5">{threadStartBanner}</div> : null}
 
@@ -410,6 +385,7 @@ export function ThreadPanel({
             ))}
           </ul>
         )}
+        <div ref={messagesEndRef} aria-hidden className="h-px w-full shrink-0" />
       </div>
       {composerHidden ? null : (
       <div className="shrink-0 space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">

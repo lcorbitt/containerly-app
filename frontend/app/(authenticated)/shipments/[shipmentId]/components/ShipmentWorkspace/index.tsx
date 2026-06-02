@@ -27,6 +27,7 @@ import { canManageOrganizationSettings } from "@/utils/org-role";
 import { TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import {
   shipmentWorkspaceRowQueryKeyRoot,
+  useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
 
@@ -106,6 +107,11 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   const activeDetailsTab = useMemo(
     () => parseShipmentDetailsTabParam(searchParams.get("tab")),
     [searchParams],
+  );
+
+  useShipmentScopeThreadQuery(
+    activeDetailsTab === "messages" ? selectedOrgId : null,
+    shipmentId,
   );
 
   const replaceSearchParams = useCallback(
