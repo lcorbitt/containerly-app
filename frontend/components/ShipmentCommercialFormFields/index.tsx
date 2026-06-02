@@ -6,7 +6,7 @@ import {
   SHIPMENT_COMMERCIAL_GRID_FIELD_DEFS,
   SHIPMENT_COMMERCIAL_LABEL_CLASS,
   SHIPMENT_COMMERCIAL_TITLE_FIELD_DEFS,
-} from "./utils";
+} from "./constants";
 
 export function ShipmentCommercialFormFields({
   values,

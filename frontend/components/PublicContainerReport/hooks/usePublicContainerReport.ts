@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/utils";
+import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/constants";
 import { useToast } from "@/contexts/toast";
 import { MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
 import { uploadShipmentScopeStandaloneFiles } from "@/services/workspace.service";

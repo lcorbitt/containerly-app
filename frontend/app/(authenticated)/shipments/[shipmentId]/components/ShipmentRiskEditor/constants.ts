@@ -2,7 +2,7 @@ import type { CustomSelectOption } from "@/components/CustomSelect";
 import {
   SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS,
   SHIPMENT_DETAIL_LABEL_CLASS,
-} from "@/components/ShipmentCommercialHeader/utils";
+} from "@/components/ShipmentCommercialHeader/constants";
 
 export { SHIPMENT_DETAIL_LABEL_CLASS };
 

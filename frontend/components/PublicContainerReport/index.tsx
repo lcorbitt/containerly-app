@@ -27,7 +27,7 @@ import {
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
-import { MARKETING_SITE_URL } from "@/lib/site-metadata";
+import { SITE_URL } from "@/lib/site-metadata";
 
 export function PublicContainerReport({
   shipmentId,
@@ -252,7 +252,7 @@ export function PublicContainerReport({
         <footer className="mt-10 border-t border-zinc-200/80 pt-8 text-center text-xs text-zinc-500 dark:border-zinc-800">
           Powered by{" "}
           <a
-            href={MARKETING_SITE_URL}
+            href={SITE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"

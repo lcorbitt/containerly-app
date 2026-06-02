@@ -9,9 +9,7 @@ import {
   matchesAdminOrgMemberSearch,
   sortAdminOrgMemberRows,
 } from "../utils";
-
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
-export const ROLE_OPTIONS: OrganizationMemberRole[] = ["admin", "member"];
+import { PAGE_SIZE_OPTIONS } from "../constants";
 
 export function useAdminOrgMembersTable() {
   const { data: rows = [], isLoading: loading, error: queryError, refetch } = useAdminOrgMembersQuery();

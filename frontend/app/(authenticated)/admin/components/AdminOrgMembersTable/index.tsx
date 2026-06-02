@@ -9,15 +9,9 @@ import {
 } from "@/components/AdminTableSection";
 import { TextInput } from "@/components/TextInput";
 import type { OrganizationMemberRole } from "@/types/database";
-import {
-  ADMIN_ORG_MEMBER_INVITE_STATUS_CLASS,
-  adminOrgMemberInviteStatusTitle,
-} from "./utils";
-import {
-  PAGE_SIZE_OPTIONS,
-  ROLE_OPTIONS,
-  useAdminOrgMembersTable,
-} from "./hooks/useAdminOrgMembersTable";
+import { ADMIN_ORG_MEMBER_INVITE_STATUS_CLASS, PAGE_SIZE_OPTIONS, ROLE_OPTIONS } from "./constants";
+import { adminOrgMemberInviteStatusTitle } from "./utils";
+import { useAdminOrgMembersTable } from "./hooks/useAdminOrgMembersTable";
 import { orgMemberInviteStatusLabel } from "@/utils/org-member-invite-status";
 
 export function AdminOrgMembersTable() {

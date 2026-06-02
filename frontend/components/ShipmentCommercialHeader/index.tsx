@@ -8,7 +8,6 @@ import {
   SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROW_CLASS,
   SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS,
   SHIPMENT_COMMERCIAL_HEADER_SUMMARY_TITLE_COL_CLASS,
-  SHIPMENT_DETAIL_GRID_FIELDS,
   SHIPMENT_DETAIL_LABEL_CLASS,
   SHIPMENT_DETAIL_VALUE_CLASS,
   SHIPMENT_DOCUMENTS_STATUS_LABEL,
@@ -17,8 +16,8 @@ import {
   SHIPMENT_TITLE_PRIMARY_GRID_CLASS,
   SHIPMENT_TITLE_SECONDARY_ROW_CLASS,
   SHIPMENT_TITLE_VALUE_CLASS,
-  shipmentTitleParts,
-} from "./utils";
+} from "./constants";
+import { SHIPMENT_DETAIL_GRID_FIELDS, shipmentTitleParts } from "./utils";
 
 export function ShipmentCommercialHeader({ source, workflowStatus }: ShipmentCommercialHeaderProps) {
   const titleParts = shipmentTitleParts(source);

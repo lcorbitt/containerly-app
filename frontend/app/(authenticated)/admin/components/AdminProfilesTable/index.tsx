@@ -9,11 +9,8 @@ import {
 } from "@/components/AdminTableSection";
 import { TextInput } from "@/components/TextInput";
 import type { Profile } from "@/types/database";
-import {
-  PAGE_SIZE_OPTIONS,
-  ROLE_OPTIONS,
-  useAdminProfilesTable,
-} from "./hooks/useAdminProfilesTable";
+import { PAGE_SIZE_OPTIONS, ROLE_OPTIONS } from "./constants";
+import { useAdminProfilesTable } from "./hooks/useAdminProfilesTable";
 import type { AdminProfileRow } from "./utils";
 
 export type { AdminProfileRow };

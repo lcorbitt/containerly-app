@@ -1,6 +1,5 @@
+import { pillBase, pillCompactBase } from "./constants";
 import {
-  pillBase,
-  pillCompactBase,
   shipmentWorkflowDisplayLabel,
   shipmentWorkflowPillClass,
   trackingWorkflowPillClass,

@@ -1,8 +1,4 @@
 export {
-  displayValue,
-  formatShipmentDate,
-  SHIPMENT_DETAIL_FIELDS,
-  SHIPMENT_DETAIL_GRID_FIELDS,
   SHIPMENT_DETAIL_LABEL_CLASS,
   SHIPMENT_DETAIL_VALUE_CLASS,
   SHIPMENT_DOCUMENTS_STATUS_LABEL,
@@ -11,5 +7,11 @@ export {
   SHIPMENT_TITLE_PRIMARY_GRID_CLASS,
   SHIPMENT_TITLE_SECONDARY_ROW_CLASS,
   SHIPMENT_TITLE_VALUE_CLASS,
+} from "@/components/ShipmentCommercialHeader/constants";
+export {
+  displayValue,
+  formatShipmentDate,
+  SHIPMENT_DETAIL_FIELDS,
+  SHIPMENT_DETAIL_GRID_FIELDS,
   shipmentTitleParts,
 } from "@/components/ShipmentCommercialHeader/utils";

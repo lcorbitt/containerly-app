@@ -1,7 +1,7 @@
-import { SHIPMENT_COMMERCIAL_LABEL_CLASS } from "@/components/ShipmentCommercialFormFields/utils";
+import { SHIPMENT_COMMERCIAL_LABEL_CLASS } from "@/components/ShipmentCommercialFormFields/constants";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS =
-  "grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4";
+  "grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4 text-center";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ORIGIN_CLASS = "min-w-0";
 

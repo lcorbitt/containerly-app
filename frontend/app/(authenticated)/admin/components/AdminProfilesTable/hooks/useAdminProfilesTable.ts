@@ -8,9 +8,7 @@ import {
   sortAdminProfileRows,
   type AdminProfileRow,
 } from "../utils";
-
-export const ROLE_OPTIONS: Profile["role"][] = ["user", "superadmin"];
-export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
+import { PAGE_SIZE_OPTIONS } from "../constants";
 
 export function useAdminProfilesTable(initialProfiles: AdminProfileRow[], currentUserId: string) {
   const [profiles, setProfiles] = useState<AdminProfileRow[]>(initialProfiles);

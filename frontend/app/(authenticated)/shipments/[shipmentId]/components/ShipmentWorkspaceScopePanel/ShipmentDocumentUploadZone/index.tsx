@@ -8,16 +8,17 @@ import {
   MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH,
 } from "@/utils/workspace-files";
 import {
+  DOCUMENT_GROUP_SELECT_OPTIONS,
+  DOCUMENT_TYPE_SELECT_OPTIONS,
+  UPLOAD_ZONE_BODY_CLASS,
   UPLOAD_ZONE_BUTTON_CLASS,
   UPLOAD_ZONE_DRAG_CLASS,
   UPLOAD_ZONE_DROP_CLASS,
   UPLOAD_ZONE_IDLE_CLASS,
   UPLOAD_ZONE_METADATA_CLASS,
   UPLOAD_ZONE_SELECT_SHELL_CLASS,
-  UPLOAD_ZONE_BODY_CLASS,
 } from "./constants";
 import type { ShipmentDocumentUploadZoneProps } from "./types";
-import { DOCUMENT_GROUP_SELECT_OPTIONS, DOCUMENT_TYPE_SELECT_OPTIONS } from "./utils";
 
 export type { ShipmentDocumentUploadGroup, ShipmentDocumentUploadZoneProps } from "./types";
 
