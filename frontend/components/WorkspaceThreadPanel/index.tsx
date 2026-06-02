@@ -429,7 +429,7 @@ export function ThreadPanel({
           {!publicThreadMode && internalOnly ? (
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Internal note</p>
           ) : null}
-          <div className="flex min-w-0 items-start gap-0.5">
+          <div className="flex min-w-0 justify-center items-center gap-0.5">
             <input
               ref={composerFileInputRef}
               type="file"

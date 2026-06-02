@@ -3,7 +3,7 @@ export const AUTHENTICATED_TOP_NAV_ACTION_CLASS =
 
 /** Bulk import — brand orange fill (slightly opaque), white label. */
 export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS =
-  "inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary-orange/90 bg-primary-orange/[0.80] text-sm font-semibold text-white shadow-sm transition hover:border-primary-orange hover:bg-primary-orange focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary-orange/50 md:h-auto md:w-auto md:px-4 md:py-2 dark:border-primary-orange dark:bg-primary-orange/[0.82] dark:shadow-[0_0_20px_rgba(255,78,0,0.22)] dark:hover:border-primary-orange dark:hover:bg-primary-orange dark:hover:shadow-[0_0_24px_rgba(255,78,0,0.32)] dark:focus-visible:ring-primary-orange/55";
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-primary-orange/90 bg-primary-orange/[0.80] text-sm font-semibold text-white shadow-sm transition hover:border-primary-orange hover:bg-primary-orange/90 focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary-orange/50 md:h-auto md:w-auto md:px-4 md:py-2 dark:border-primary-orange dark:bg-primary-orange/[0.82] dark:shadow-[0_0_20px_rgba(255,78,0,0.22)] dark:hover:border-primary-orange dark:hover:bg-primary-orange dark:hover:shadow-[0_0_24px_rgba(255,78,0,0.32)] dark:focus-visible:ring-primary-orange/55";
 
 export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS = "text-white";
 

@@ -37,28 +37,36 @@ function StoredFileThumbnailInner({
 }: StoredFileThumbnailProps) {
   const directHref = href?.trim() && !storagePath?.trim() ? href.trim() : null;
 
-  const preview = useWorkspaceAttachmentPreview({
+  const {
+    ref,
+    isLoading,
+    showImage,
+    showPdf,
+    imageUrl,
+    pdfPreviewUrl,
+  } = useWorkspaceAttachmentPreview({
     storagePath: storagePath ?? "",
     contentType,
     fileName: name,
     displayVariant: "thumb",
-    lazy: true,
+    // Thumbnails are shown inside scroll containers; avoid relying on IntersectionObserver.
+    lazy: false,
   });
 
   const boxClass = className ?? STORED_FILE_THUMB_BOX_CLASS;
-  const previewSrc = directHref ?? (preview.showImage ? preview.imageUrl : preview.pdfPreviewUrl);
+  const previewSrc = directHref ?? (showImage ? imageUrl : pdfPreviewUrl);
 
-  if (preview.isLoading && !directHref) {
+  if (isLoading && !directHref) {
     return (
-      <div ref={preview.ref} className={`${boxClass} flex items-center justify-center`}>
+      <div ref={ref} className={`${boxClass} flex items-center justify-center`}>
         <Loader2 className="h-4 w-4 animate-spin text-zinc-400" aria-hidden />
       </div>
     );
   }
 
-  if (previewSrc && (directHref || preview.showImage || preview.showPdf)) {
+  if (previewSrc && (directHref || showImage || showPdf)) {
     return (
-      <div ref={preview.ref} className={boxClass}>
+      <div ref={ref} className={boxClass}>
         {/* eslint-disable-next-line @next/next/no-img-element -- signed URL or canvas data URL */}
         <img
           src={previewSrc}
@@ -73,7 +81,7 @@ function StoredFileThumbnailInner({
   }
 
   return (
-    <div ref={preview.ref} className={boxClass}>
+    <div ref={ref} className={boxClass}>
       <FileIconPlaceholder className="h-full w-full" contentType={contentType} fileName={name} />
     </div>
   );
