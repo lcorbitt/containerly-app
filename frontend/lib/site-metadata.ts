@@ -11,11 +11,12 @@ export const SITE_LOGO_HEIGHT = 928;
 export const SITE_NAV_LOGO_PATH = "/containerly-logo-nav.png";
 
 export const SITE_DESCRIPTION =
-  "Real-time shipment status and carrier updates in one place—so logistics teams spend less time searching and more time managing.";
+  "Containerly turns every shipment into a live, customer-facing portal with status, documents, and approvals. One link replaces twenty email threads.";
 
-export const SITE_TITLE = "Containerly — Real-time shipment visibility";
+export const SITE_TITLE = "Containerly · Send one link instead";
 
-export const SITE_LANDING_TITLE = "Containerly — Track every shipment in one place";
+export const SITE_LANDING_TITLE =
+  "Containerly · Stop emailing shipment updates, send one link";
 
 /** Public site origin for links (no trailing slash). */
 export const SITE_URL =

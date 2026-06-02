@@ -3,6 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { normalizeShipmentTagList } from "@/utils/shipment-tags";
+import {
+  OPERATOR_SHIPMENT_SORT_COLUMNS,
+  normalizeOperatorShipmentSortColumn,
+  type OperatorShipmentSortColumn,
+} from "@/utils/operator-shipment-sort";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type {
   CustomerInvite,
@@ -24,21 +29,11 @@ export type SortDirection = "asc" | "desc";
 
 export type OperatorShipmentScope = "all" | "mine" | "unassigned" | "participating";
 
-export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
-  "last_sync_at",
-  "created_at",
-  "order_number",
-  "bill_of_lading",
-] as const;
-
-export type OperatorShipmentSortColumn = (typeof OPERATOR_SHIPMENT_SORT_COLUMNS)[number];
-
-export function normalizeOperatorShipmentSortColumn(raw: string | null): OperatorShipmentSortColumn {
-  if (raw && (OPERATOR_SHIPMENT_SORT_COLUMNS as readonly string[]).includes(raw)) {
-    return raw as OperatorShipmentSortColumn;
-  }
-  return "last_sync_at";
-}
+export {
+  OPERATOR_SHIPMENT_SORT_COLUMNS,
+  normalizeOperatorShipmentSortColumn,
+  type OperatorShipmentSortColumn,
+};
 
 export type ShipmentOverviewTrackingRow = Pick<
   TrackingRequest,

@@ -6,11 +6,15 @@ import { Loader2, Trash2 } from "lucide-react";
 import {
   deleteCommercialShipment,
   loadOperatorShipmentsOverviewPageBrowser,
-  normalizeOperatorShipmentSortColumn,
   type OperatorShipmentScope,
-  type OperatorShipmentSortColumn,
   type ShipmentOverviewRow,
 } from "@/services/shipment.service";
+import {
+  DEFAULT_OPERATOR_SHIPMENT_SORT_COLUMN,
+  defaultSortDirectionForOperatorShipmentColumn,
+  normalizeOperatorShipmentSortColumn,
+  type OperatorShipmentSortColumn,
+} from "@/utils/operator-shipment-sort";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useToast } from "@/contexts/toast";
@@ -41,7 +45,9 @@ export function useOperatorShipmentsOverview() {
   const [peopleLabels, setPeopleLabels] = useState<Record<string, string>>({});
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
-  const [sortColumn, setSortColumn] = useState<OperatorShipmentSortColumn>("last_sync_at");
+  const [sortColumn, setSortColumn] = useState<OperatorShipmentSortColumn>(
+    DEFAULT_OPERATOR_SHIPMENT_SORT_COLUMN,
+  );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -120,7 +126,7 @@ export function useOperatorShipmentsOverview() {
         setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
       } else {
         setSortColumn(col);
-        setSortDirection(col === "order_number" || col === "bill_of_lading" ? "asc" : "desc");
+        setSortDirection(defaultSortDirectionForOperatorShipmentColumn(col));
       }
     },
     [sortColumn],
@@ -166,6 +172,7 @@ export function useOperatorShipmentsOverview() {
       {
         id: "customer_name",
         header: "Customer",
+        sortable: true,
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
@@ -186,6 +193,7 @@ export function useOperatorShipmentsOverview() {
       {
         id: "port_of_loading",
         header: "Origin",
+        sortable: true,
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -198,6 +206,7 @@ export function useOperatorShipmentsOverview() {
       {
         id: "port_of_destination",
         header: "Destination",
+        sortable: true,
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -208,17 +217,9 @@ export function useOperatorShipmentsOverview() {
         ),
       },
       {
-        id: "container_number",
-        header: "Container No.",
-        cell: (r) => (
-          <span className="font-mono text-xs text-zinc-800 dark:text-zinc-200">
-            {displayOverviewText(r.container_number)}
-          </span>
-        ),
-      },
-      {
         id: "assignee",
         header: "Assignee",
+        sortable: true,
         cell: (r) => {
           const label = r.assignee_user_id ? peopleLabels[r.assignee_user_id] : null;
           if (!label) return <span className="text-zinc-500">Unassigned</span>;
@@ -232,6 +233,7 @@ export function useOperatorShipmentsOverview() {
       {
         id: "workflow_status",
         header: "Documents",
+        sortable: true,
         className: "min-w-[7.75rem] max-w-[9.5rem]",
         headerClassName: "whitespace-nowrap",
         cell: (r) =>
@@ -244,6 +246,7 @@ export function useOperatorShipmentsOverview() {
       {
         id: "estimated_arrival_at",
         header: "Est. arrival",
+        sortable: true,
         cell: (r) => (
           <span className="whitespace-nowrap text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
             {formatOverviewDate(r.estimated_arrival_at)}

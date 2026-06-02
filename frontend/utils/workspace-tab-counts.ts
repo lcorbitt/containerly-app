@@ -1,5 +1,5 @@
 import { buildShipmentTimelineEvents } from "@/components/ShipmentTimeline/utils";
-import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import type { PortalAttachment, ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
@@ -13,7 +13,9 @@ export function countShipmentScopeTrackingEvents(input: {
   }).length;
 }
 
-export function countShipmentScopeDocuments(attachments: WorkspaceAttachment[]): number {
+export function countShipmentScopeDocuments(
+  attachments: WorkspaceAttachment[] | PortalAttachment[],
+): number {
   return attachments.length;
 }
 

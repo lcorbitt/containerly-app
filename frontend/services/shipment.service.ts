@@ -23,6 +23,11 @@ import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto";
 import { createClient } from "@/lib/supabase/client";
 import { apiJson } from "@/utils/api-client";
 import { profileDisplayName } from "@/utils/author-display-name";
+import {
+  OPERATOR_SHIPMENT_SORT_COLUMNS,
+  normalizeOperatorShipmentSortColumn,
+  type OperatorShipmentSortColumn,
+} from "@/utils/operator-shipment-sort";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -103,21 +108,11 @@ export type SortDirection = "asc" | "desc";
 
 export type OperatorShipmentScope = "all" | "mine" | "unassigned" | "participating";
 
-export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
-  "last_sync_at",
-  "created_at",
-  "order_number",
-  "bill_of_lading",
-] as const;
-
-export type OperatorShipmentSortColumn = (typeof OPERATOR_SHIPMENT_SORT_COLUMNS)[number];
-
-export function normalizeOperatorShipmentSortColumn(raw: string | null): OperatorShipmentSortColumn {
-  if (raw && (OPERATOR_SHIPMENT_SORT_COLUMNS as readonly string[]).includes(raw)) {
-    return raw as OperatorShipmentSortColumn;
-  }
-  return "created_at";
-}
+export {
+  OPERATOR_SHIPMENT_SORT_COLUMNS,
+  normalizeOperatorShipmentSortColumn,
+  type OperatorShipmentSortColumn,
+};
 
 export type ShipmentOverviewTrackingRow = Pick<
   TrackingRequest,
