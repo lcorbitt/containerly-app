@@ -12,21 +12,6 @@ export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS = "text-white";
 
 export const AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS = "hidden md:inline";
 
-export const AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS =
-  "relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-sm font-medium text-zinc-800 ring-2 ring-transparent transition hover:bg-zinc-300 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus-visible:ring-zinc-500";
-
-export const AUTHENTICATED_TOP_NAV_MENU_REVEAL_CLASS = "absolute right-0 z-50 mt-2 w-56";
-
-export const AUTHENTICATED_TOP_NAV_MENU_CLASS =
-  "origin-top-right rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950";
-
-export const AUTHENTICATED_TOP_NAV_MENU_ITEM_CLASS =
-  "w-full cursor-pointer rounded-bl-xl rounded-br-xl p-4 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900";
-
-export const AUTHENTICATED_TOP_NAV_LOGOUT_LABEL = "Log out";
-
-export const AUTHENTICATED_TOP_NAV_SIGNING_OUT_LABEL = "Signing out...";
-
 export const AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS = "flex min-w-0 items-center gap-3 sm:gap-4";
 
 export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS =

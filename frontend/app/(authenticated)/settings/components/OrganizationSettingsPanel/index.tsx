@@ -2,6 +2,7 @@
 
 import type { OrganizationMemberRole } from "@/types/database";
 import { OrganizationImageSettings } from "../OrganizationImageSettings";
+import { OrganizationPerformanceSettings } from "../OrganizationPerformanceSettings";
 import {
   ADMIN_TABLE_HEAD_ROW,
   ADMIN_TABLE_ROW,
@@ -105,6 +106,8 @@ export function OrganizationSettingsPanel({ embedded = false }: OrganizationSett
               }}
             />
           </div>
+
+          <OrganizationPerformanceSettings />
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Name &amp; URL slug</h3>

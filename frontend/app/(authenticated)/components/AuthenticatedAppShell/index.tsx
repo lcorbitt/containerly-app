@@ -35,9 +35,9 @@ export function AuthenticatedAppShell({
           <MockJourneyModalProvider>
             <OrgWorkspaceRealtimeBridge />
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
-              <AuthenticatedTopNav email={email} fullName={fullName} />
+              <AuthenticatedTopNav />
               <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>
-                <SideNav isSuperAdmin={isSuperAdmin} />
+                <SideNav isSuperAdmin={isSuperAdmin} email={email} fullName={fullName} />
                 <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS}>
                   <div className={AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS}>
                     <AuthenticatedMainPane>{children}</AuthenticatedMainPane>

@@ -1,0 +1,226 @@
+/**
+ * Pure shipment metrics for Edge handlers. Mirrors `frontend/utils/shipment-metrics.ts`.
+ */
+
+import type {
+  DocTurnaroundInsight,
+  PerformanceInsights,
+  ResponseTimeInsight,
+  TriageDriverInsight,
+  WaitingCustomerRow,
+  WorkflowStepDwell,
+} from "@shared/dto/performance.dto.ts";
+import type { TriageBucketKey } from "@shared/dto/performance.types.ts";
+
+const TRIAGE_BUCKET_KEYS: TriageBucketKey[] = ["exceptions", "eta", "docs", "customer"];
+
+const TRIAGE_BUCKET_LABELS: Record<TriageBucketKey, string> = {
+  exceptions: "Exceptions",
+  eta: "ETAs slipping",
+  docs: "Missing docs",
+  customer: "Customer threads",
+};
+
+const WORKFLOW_LABELS: Record<string, string> = {
+  pending_drafts: "Pending Drafts",
+  awaiting_review: "Awaiting Review",
+  approved: "Approved",
+  rejected: "Rejected",
+  originals_sent: "Originals Sent",
+};
+
+type MessageRow = {
+  author_kind: string;
+  created_at: string;
+  is_internal?: boolean;
+};
+
+type WorkflowShipmentRow = {
+  workflow_status: string | null;
+  created_at: string;
+};
+
+type ActivityEventRow = {
+  event_type: string;
+  occurred_at: string;
+  shipment_id?: string;
+};
+
+type ThreadRow = {
+  shipment_id: string;
+  order_number: string | null;
+  customer_name?: string | null;
+  last_message_at: string;
+  last_message_preview: string;
+  last_author_kind: string;
+};
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+function hoursBetween(startIso: string, endIso: string): number {
+  const start = Date.parse(startIso);
+  const end = Date.parse(endIso);
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 0;
+  return (end - start) / 3_600_000;
+}
+
+function daysBetween(startIso: string, endIso: string): number {
+  return hoursBetween(startIso, endIso) / 24;
+}
+
+function workflowLabel(status: string): string {
+  return WORKFLOW_LABELS[status] ?? status.replace(/_/g, " ");
+}
+
+export function computeMedianResponseTimeHours(messages: readonly MessageRow[]): ResponseTimeInsight {
+  const sorted = [...messages]
+    .filter((m) => !m.is_internal)
+    .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+
+  const gaps: number[] = [];
+  let pendingCustomerAt: string | null = null;
+
+  for (const msg of sorted) {
+    const kind = msg.author_kind;
+    if (kind === "customer") {
+      if (!pendingCustomerAt) pendingCustomerAt = msg.created_at;
+      continue;
+    }
+    if ((kind === "operator" || kind === "team") && pendingCustomerAt) {
+      gaps.push(hoursBetween(pendingCustomerAt, msg.created_at));
+      pendingCustomerAt = null;
+    }
+  }
+
+  const medianHours = median(gaps);
+  return {
+    median_hours: medianHours != null ? Math.round(medianHours * 10) / 10 : null,
+    sample_count: gaps.length,
+  };
+}
+
+export function computeWorkflowDwellByStatus(
+  shipments: readonly WorkflowShipmentRow[],
+  nowMs: number = Date.now(),
+): WorkflowStepDwell[] {
+  const buckets = new Map<string, { totalDays: number; count: number }>();
+
+  for (const row of shipments) {
+    const status = row.workflow_status?.trim() || "unknown";
+    const created = Date.parse(row.created_at);
+    if (Number.isNaN(created)) continue;
+    const days = (nowMs - created) / 86_400_000;
+    const existing = buckets.get(status) ?? { totalDays: 0, count: 0 };
+    existing.totalDays += days;
+    existing.count += 1;
+    buckets.set(status, existing);
+  }
+
+  return [...buckets.entries()]
+    .map(([status, agg]) => ({
+      status,
+      label: workflowLabel(status),
+      avg_days: Math.round((agg.totalDays / agg.count) * 10) / 10,
+      sample_count: agg.count,
+    }))
+    .sort((a, b) => b.avg_days - a.avg_days);
+}
+
+export function buildTopDelayDrivers(
+  triageCounts: Record<TriageBucketKey, number>,
+): TriageDriverInsight[] {
+  const total = TRIAGE_BUCKET_KEYS.reduce((n, key) => n + (triageCounts[key] ?? 0), 0);
+  if (total === 0) return [];
+
+  return TRIAGE_BUCKET_KEYS.map((bucket_key) => {
+    const count = triageCounts[bucket_key] ?? 0;
+    return {
+      bucket_key,
+      label: TRIAGE_BUCKET_LABELS[bucket_key],
+      count,
+      percentage: Math.round((count / total) * 100),
+    };
+  })
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+}
+
+export function buildWaitingCustomers(
+  threads: readonly ThreadRow[],
+  nowMs: number = Date.now(),
+  limit = 5,
+): WaitingCustomerRow[] {
+  return threads
+    .filter((t) => t.last_author_kind === "customer")
+    .map((t) => ({
+      shipment_id: t.shipment_id,
+      order_number: t.order_number,
+      customer_name: t.customer_name ?? null,
+      waiting_hours: Math.round(hoursBetween(t.last_message_at, new Date(nowMs).toISOString()) * 10) / 10,
+      last_message_preview: t.last_message_preview,
+    }))
+    .sort((a, b) => b.waiting_hours - a.waiting_hours)
+    .slice(0, limit);
+}
+
+export function computeDocTurnaround(events: readonly ActivityEventRow[]): DocTurnaroundInsight {
+  let approvalCount = 0;
+  let rejectionCount = 0;
+  const approvalDurations: number[] = [];
+  const draftTimesByShipment = new Map<string, string>();
+
+  for (const event of events) {
+    const shipmentId = event.shipment_id;
+    if (event.event_type === "drafts_attached" && shipmentId) {
+      draftTimesByShipment.set(shipmentId, event.occurred_at);
+    }
+    if (event.event_type === "documents_approved") {
+      approvalCount += 1;
+      if (shipmentId) {
+        const draftAt = draftTimesByShipment.get(shipmentId);
+        if (draftAt) approvalDurations.push(daysBetween(draftAt, event.occurred_at));
+      }
+    }
+    if (event.event_type === "documents_rejected") rejectionCount += 1;
+  }
+
+  const totalReviewed = approvalCount + rejectionCount;
+  const avgApproval =
+    approvalDurations.length > 0
+      ? Math.round((approvalDurations.reduce((a, b) => a + b, 0) / approvalDurations.length) * 10) / 10
+      : null;
+
+  return {
+    approval_count: approvalCount,
+    rejection_count: rejectionCount,
+    rejection_rate_percent:
+      totalReviewed > 0 ? Math.round((rejectionCount / totalReviewed) * 100) : 0,
+    avg_approval_days: avgApproval,
+  };
+}
+
+export function buildPerformanceInsights(input: {
+  triageCounts: Record<TriageBucketKey, number>;
+  shipments: readonly WorkflowShipmentRow[];
+  messages: readonly MessageRow[];
+  activityEvents: readonly ActivityEventRow[];
+  messageThreads: readonly ThreadRow[];
+  nowMs?: number;
+}): PerformanceInsights {
+  const nowMs = input.nowMs ?? Date.now();
+  const dwells = computeWorkflowDwellByStatus(input.shipments, nowMs);
+
+  return {
+    top_delay_drivers: buildTopDelayDrivers(input.triageCounts),
+    slowest_workflow_step: dwells[0] ?? null,
+    waiting_customers: buildWaitingCustomers(input.messageThreads, nowMs),
+    doc_turnaround: computeDocTurnaround(input.activityEvents),
+    response_time: computeMedianResponseTimeHours(input.messages),
+  };
+}

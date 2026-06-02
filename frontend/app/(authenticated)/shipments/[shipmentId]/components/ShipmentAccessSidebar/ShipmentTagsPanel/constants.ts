@@ -13,3 +13,6 @@ export const SHIPMENT_TAG_SUGGESTION_CLASS =
 export const SHIPMENT_TAG_SUGGESTIONS_MAX = 8;
 
 export const SHIPMENT_TAG_SUGGESTIONS_LIST_ID = "shipment-tag-suggestions";
+
+export const SHIPMENT_TAG_PRESET_BTN_CLASS =
+  "rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900";

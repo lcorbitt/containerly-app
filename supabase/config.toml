@@ -103,3 +103,6 @@ verify_jwt = false
 
 [functions.preview-customer-invite]
 verify_jwt = false
+
+[functions.send-stale-shipment-reminders]
+verify_jwt = false

@@ -11,6 +11,12 @@ import type {
   UpdateShipmentRiskResponse,
   UpdateShipmentResponse,
 } from "@shared/dto/logistics.dto";
+import type {
+  ShipmentContextSummary,
+  ShipmentInsightCard,
+  ShipmentMetricsSummary,
+  ShipmentRootCause,
+} from "@shared/dto/performance.dto";
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import type {
   AcceptCustomerInviteResponse,
@@ -35,6 +41,7 @@ import type {
   ShipmentParticipant,
   TrackingRequest,
 } from "@/types/database";
+import type { PublicTimelineEvent } from "@/types/public-report";
 import { loadOperatorTrackingRequestsPageBrowser as loadOperatorTrackingRequestsViaApi } from "@/services/tracking.service";
 import type {
   OperatorRequestScope,
@@ -280,6 +287,22 @@ export async function updateShipmentTags(input: {
   return r.tags;
 }
 
+export async function updateShipmentRootCause(input: {
+  shipmentId: string;
+  organizationId: string;
+  rootCause: ShipmentRootCause | null;
+}): Promise<ShipmentRootCause | null> {
+  const r = await apiJson<{ ok: true; root_cause: ShipmentRootCause | null }>(
+    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/root-cause`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ root_cause: input.rootCause }),
+    },
+  );
+  return r.root_cause;
+}
+
 export async function updateShipmentNotificationSubscription(input: {
   shipmentId: string;
   organizationId: string;
@@ -385,6 +408,12 @@ export type ShipmentWorkspaceRow = {
   risk_level: string | null;
   risk_message: string | null;
   primary_carrier_status: string | null;
+  tags: string[];
+  root_cause: ShipmentRootCause | null;
+  carrier_timeline: PublicTimelineEvent[];
+  metrics: ShipmentMetricsSummary;
+  context: ShipmentContextSummary;
+  insight_cards: ShipmentInsightCard[];
   tracking_requests: ShipmentOverviewTrackingRow[];
   activity_events: ShipmentActivityEvent[];
 };

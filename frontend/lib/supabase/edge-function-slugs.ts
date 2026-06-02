@@ -38,4 +38,7 @@ export const EDGE_FUNCTION_SLUGS = {
     getPublic: "get-public-report",
     postMessage: "post-report-message",
   },
+  performance: {
+    sendStaleReminders: "send-stale-shipment-reminders",
+  },
 } as const;

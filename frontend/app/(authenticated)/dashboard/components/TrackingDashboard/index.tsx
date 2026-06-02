@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
+import { DashboardPerformanceInsights } from "../DashboardPerformanceInsights";
 import { DashboardSpotlightShipment } from "../DashboardSpotlightShipment";
 import { DashboardSyncHealth } from "../DashboardSyncHealth";
 import {
@@ -93,6 +94,15 @@ export function TrackingDashboard() {
             ) : (
               <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
             )}
+          </div>
+
+          <div className={TRACKING_DASHBOARD_SPAN_FULL}>
+            {isAdminView ? (
+              <DashboardPerformanceInsights
+                insights={snapshot?.performanceInsights}
+                loading={loading}
+              />
+            ) : null}
           </div>
 
           <div className={TRACKING_DASHBOARD_SPAN_FULL}>

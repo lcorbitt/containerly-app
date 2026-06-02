@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
@@ -25,6 +26,8 @@ export function ShipmentMessagesPanel({
   /** Pass false when the messages tab is hidden so we re-pin when it opens (e.g. `?tab=messages`). */
   pinToLatest?: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const initialDraft = searchParams.get("draft");
   const {
     selectedOrgId,
     loading,
@@ -54,7 +57,7 @@ export function ShipmentMessagesPanel({
     cancelEditMessage,
     saveEditMessage,
     savingEditMessageId,
-  } = useShipmentMessagesPanel({ shipmentId });
+  } = useShipmentMessagesPanel({ shipmentId, initialDraft });
 
   if (!selectedOrgId) {
     return (

@@ -4,6 +4,8 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionProfile } from "@/services/auth-server.service";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
+import type { OrgPerformanceSettings } from "@shared/dto/performance.dto";
+import { parseOrgPerformanceSettings } from "@/utils/org-performance-settings";
 import type { OrganizationMemberRole } from "@/types/database";
 import type { OrgMembershipRow } from "@/types/organization-workspace";
 import type { OrgMemberRow } from "@/types/organization-directory";
@@ -73,6 +75,35 @@ export async function fetchOrganizationMetrics(
     shipments: sh.count ?? null,
     members: mem.count ?? null,
   };
+}
+
+export async function fetchOrganizationPerformanceSettings(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<OrgPerformanceSettings> {
+  const { data, error } = await supabase
+    .from("organizations")
+    .select("performance_settings")
+    .eq("id", organizationId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return parseOrgPerformanceSettings(data?.performance_settings);
+}
+
+export async function updateOrganizationPerformanceSettings(
+  supabase: SupabaseClient,
+  input: {
+    organizationId: string;
+    settings: OrgPerformanceSettings;
+  },
+): Promise<OrgPerformanceSettings> {
+  const normalized = parseOrgPerformanceSettings(input.settings);
+  const { error } = await supabase
+    .from("organizations")
+    .update({ performance_settings: normalized })
+    .eq("id", input.organizationId);
+  if (error) throw new Error(error.message);
+  return normalized;
 }
 
 export async function fetchOrganizationMemberRows(

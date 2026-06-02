@@ -11,6 +11,8 @@ import {
   triageCountsFromBuckets,
   type OrgDashboardMetrics,
 } from "@/utils/dashboard-metrics";
+import { buildPerformanceInsights } from "@/utils/shipment-metrics";
+import type { PerformanceInsights } from "@shared/dto/performance.dto";
 import type {
   OperatorRequestScope,
   OperatorRequestSortColumn,
@@ -20,10 +22,97 @@ import type {
 export type { TrackingDashboardSnapshot };
 export type { OperatorRequestScope, OperatorRequestSortColumn, SortDirection };
 
+async function buildOrgPerformanceInsights(
+  supabase: SupabaseClient,
+  organizationId: string,
+  triageCounts: Record<import("@/utils/dashboard-metrics").TriageBucketKey, number>,
+): Promise<PerformanceInsights> {
+  const [
+    { data: shipmentRows },
+    { data: activityRows },
+    { data: msgRows },
+  ] = await Promise.all([
+    supabase
+      .from("shipments")
+      .select("id, workflow_status, created_at, order_number, customer_name")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("shipment_activity_events")
+      .select("shipment_id, event_type, occurred_at")
+      .eq("organization_id", organizationId)
+      .in("event_type", ["drafts_attached", "documents_approved", "documents_rejected"])
+      .order("occurred_at", { ascending: true })
+      .limit(5000),
+    supabase
+      .from("report_messages")
+      .select("shipment_id, container_id, author_kind, created_at, is_internal, body")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true })
+      .limit(5000),
+  ]);
+
+  const byShipment = new Map<
+    string,
+    {
+      order_number: string | null;
+      customer_name: string | null;
+      last_message_at: string;
+      last_message_preview: string;
+      last_author_kind: string;
+    }
+  >();
+
+  for (const row of msgRows ?? []) {
+    const shipmentId = row.shipment_id as string | null;
+    if (!shipmentId || row.container_id) continue;
+    if (row.is_internal) continue;
+    const existing = byShipment.get(shipmentId);
+    if (existing) continue;
+    byShipment.set(shipmentId, {
+      order_number: null,
+      customer_name: null,
+      last_message_at: row.created_at as string,
+      last_message_preview: typeof row.body === "string" ? row.body.slice(0, 120) : "",
+      last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
+    });
+  }
+
+  for (const row of shipmentRows ?? []) {
+    const id = row.id as string;
+    const agg = byShipment.get(id);
+    if (agg) {
+      agg.order_number = (row.order_number as string | null) ?? null;
+      agg.customer_name = (row.customer_name as string | null) ?? null;
+    }
+  }
+
+  const messageThreads = [...byShipment.entries()].map(([shipment_id, agg]) => ({
+    shipment_id,
+    ...agg,
+  }));
+
+  return buildPerformanceInsights({
+    triageCounts,
+    shipments: (shipmentRows ?? []).map((row) => ({
+      id: row.id as string,
+      workflow_status: (row.workflow_status as string | null) ?? null,
+      created_at: row.created_at as string,
+    })),
+    messages: (msgRows ?? []) as ReportMessage[],
+    activityEvents: (activityRows ?? []).map((row) => ({
+      shipment_id: row.shipment_id as string,
+      event_type: row.event_type as string,
+      occurred_at: row.occurred_at as string,
+      metadata: {},
+    })),
+    messageThreads: messageThreads.map((t) => ({ ...t, message_count: 1 })),
+  });
+}
+
 async function buildOrgDashboardMetrics(
   supabase: SupabaseClient,
   organizationId: string,
-): Promise<OrgDashboardMetrics> {
+): Promise<{ metrics: OrgDashboardMetrics; performanceInsights: PerformanceInsights }> {
   const now = Date.now();
   const dayStarts = buildDaySeries(now, 14);
   const sinceIso = new Date(dayStarts[0]).toISOString();
@@ -168,15 +257,24 @@ async function buildOrgDashboardMetrics(
   const triageCounts = triageCountsFromBuckets(orgBuckets);
   const needsAttention = Object.values(triageCounts).reduce((n, c) => n + c, 0);
 
-  return {
-    shipmentCount: shipmentCount ?? 0,
-    activeLines: activeLines ?? 0,
-    completedLines: completedLines ?? 0,
-    needsAttention,
+  const performanceInsights = await buildOrgPerformanceInsights(
+    supabase,
+    organizationId,
     triageCounts,
-    workflowCounts,
-    shipmentsCreatedByDay: countByDay((shipmentRows ?? []) as { created_at: string }[], dayStarts),
-    linesCreatedByDay: countByDay((lineRows ?? []) as { created_at: string }[], dayStarts),
+  );
+
+  return {
+    metrics: {
+      shipmentCount: shipmentCount ?? 0,
+      activeLines: activeLines ?? 0,
+      completedLines: completedLines ?? 0,
+      needsAttention,
+      triageCounts,
+      workflowCounts,
+      shipmentsCreatedByDay: countByDay((shipmentRows ?? []) as { created_at: string }[], dayStarts),
+      linesCreatedByDay: countByDay((lineRows ?? []) as { created_at: string }[], dayStarts),
+    },
+    performanceInsights,
   };
 }
 
@@ -204,12 +302,12 @@ export async function buildTrackingDashboardSnapshot(
   const alerts = (al as Alert[]) ?? [];
 
   const includeOrgMetrics = options?.includeOrgMetrics ?? false;
-  const orgMetricsPromise = includeOrgMetrics
+  const orgBundlePromise = includeOrgMetrics
     ? buildOrgDashboardMetrics(supabase, organizationId)
     : Promise.resolve(undefined);
 
   if (list.length === 0) {
-    const orgMetrics = await orgMetricsPromise;
+    const orgBundle = await orgBundlePromise;
     return {
       currentUserId: uid,
       requests: list,
@@ -220,7 +318,8 @@ export async function buildTrackingDashboardSnapshot(
       participatingShipmentIds: [],
       shipmentOwnerByShipmentId: {},
       shipmentAssigneeByShipmentId: {},
-      orgMetrics,
+      orgMetrics: orgBundle?.metrics,
+      performanceInsights: orgBundle?.performanceInsights,
       spotlightShipment: null,
     };
   }
@@ -372,7 +471,7 @@ export async function buildTrackingDashboardSnapshot(
     }
   }
 
-  const orgMetrics = await orgMetricsPromise;
+  const orgBundle = await orgBundlePromise;
 
   return {
     currentUserId: uid,
@@ -384,7 +483,8 @@ export async function buildTrackingDashboardSnapshot(
     participatingShipmentIds,
     shipmentOwnerByShipmentId: owners,
     shipmentAssigneeByShipmentId: assignees,
-    orgMetrics,
+    orgMetrics: orgBundle?.metrics,
+    performanceInsights: orgBundle?.performanceInsights,
     spotlightShipment: pickSpotlightFromTriage(personalBuckets, shipmentCommercialById, map),
   };
 }

@@ -4,11 +4,23 @@ import { profileDisplayName } from "@/utils/author-display-name";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { normalizeShipmentTagList } from "@/utils/shipment-tags";
 import {
+  buildShipmentContextSummary,
+  buildShipmentInsightCards,
+  computeShipmentMetrics,
+} from "@/utils/shipment-metrics";
+import {
   OPERATOR_SHIPMENT_SORT_COLUMNS,
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import type {
+  ShipmentContextSummary,
+  ShipmentInsightCard,
+  ShipmentMetricsSummary,
+  ShipmentRootCause,
+} from "@shared/dto/performance.dto";
+import type { PublicTimelineEvent } from "@/types/public-report";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -562,6 +574,24 @@ export async function updateShipmentTagsQuery(
   if (error) throw new Error(error.message);
   return normalized;
 }
+
+export async function updateShipmentRootCauseQuery(
+  supabase: SupabaseClient,
+  input: {
+    shipmentId: string;
+    organizationId: string;
+    rootCause: ShipmentRootCause | null;
+  },
+): Promise<ShipmentRootCause | null> {
+  const { error } = await supabase
+    .from("shipments")
+    .update({ root_cause: input.rootCause })
+    .eq("id", input.shipmentId)
+    .eq("organization_id", input.organizationId);
+  if (error) throw new Error(error.message);
+  return input.rootCause;
+}
+
 export async function fetchShipmentAssigneeQuery(
   supabase: SupabaseClient,
   shipmentId: string,
@@ -738,6 +768,12 @@ export type ShipmentWorkspaceRow = {
   risk_message: string | null;
   /** Primary container carrier-reported status (for default portal risk). */
   primary_carrier_status: string | null;
+  tags: string[];
+  root_cause: ShipmentRootCause | null;
+  carrier_timeline: PublicTimelineEvent[];
+  metrics: ShipmentMetricsSummary;
+  context: ShipmentContextSummary;
+  insight_cards: ShipmentInsightCard[];
   tracking_requests: ShipmentOverviewTrackingRow[];
   activity_events: ShipmentActivityEvent[];
 };
@@ -777,6 +813,10 @@ export async function fetchShipmentWorkspaceRow(
           trade_terms,
           workflow_status,
           physical_mail_tracking_number,
+          risk_level,
+          risk_message,
+          tags,
+          root_cause,
           containers (
             id,
             container_number,
@@ -829,6 +869,8 @@ export async function fetchShipmentWorkspaceRow(
     physical_mail_tracking_number: string | null;
     risk_level: string | null;
     risk_message: string | null;
+    tags?: string[] | null;
+    root_cause?: string | null;
     containers?: Array<{
       id: string;
       container_number: string;
@@ -838,6 +880,7 @@ export async function fetchShipmentWorkspaceRow(
   };
   const containers = raw.containers ?? [];
   const primaryCarrierStatus = containers[0]?.status ?? null;
+  const containerIds = containers.map((c) => c.id);
 
   const lines: ShipmentOverviewTrackingRow[] = [];
   for (const c of containers) {
@@ -846,27 +889,109 @@ export async function fetchShipmentWorkspaceRow(
     else if (trs) lines.push(trs);
   }
 
+  const [
+    creatorProfileResult,
+    activityResult,
+    trackingEventsResult,
+    messagesResult,
+    orgMessageStatsResult,
+  ] = await Promise.all([
+    raw.created_by
+      ? supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", raw.created_by)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("shipment_activity_events")
+      .select("id, event_type, body, actor_kind, occurred_at, metadata")
+      .eq("shipment_id", input.shipmentId)
+      .order("occurred_at", { ascending: true }),
+    containerIds.length > 0
+      ? supabase
+          .from("tracking_events")
+          .select(
+            "id, event_type, status, location, occurred_at, created_at, container_id, tracking_request_id, raw_payload",
+          )
+          .in("container_id", containerIds)
+          .order("occurred_at", { ascending: true })
+          .limit(200)
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
+    supabase
+      .from("report_messages")
+      .select("shipment_id, container_id, author_kind, created_at, is_internal, body")
+      .eq("shipment_id", input.shipmentId)
+      .is("container_id", null)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("report_messages")
+      .select("shipment_id, container_id, author_kind, created_at, is_internal")
+      .eq("organization_id", input.organizationId)
+      .is("container_id", null)
+      .eq("is_internal", false)
+      .limit(5000),
+  ]);
+
+  if (activityResult.error) return { ok: false, error: activityResult.error.message };
+
   let creatorDisplayName: string | null = null;
-  if (raw.created_by) {
-    const { data: creatorProfile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", raw.created_by)
-      .maybeSingle();
-    if (creatorProfile) {
-      creatorDisplayName = profileDisplayName({
-        full_name: creatorProfile.full_name as string | null,
-        email: creatorProfile.email as string | null,
-      });
-    }
+  const creatorProfile = creatorProfileResult.data;
+  if (creatorProfile) {
+    creatorDisplayName = profileDisplayName({
+      full_name: creatorProfile.full_name as string | null,
+      email: creatorProfile.email as string | null,
+    });
   }
 
-  const { data: activityRows, error: activityErr } = await supabase
-    .from("shipment_activity_events")
-    .select("id, event_type, body, actor_kind, occurred_at, metadata")
-    .eq("shipment_id", input.shipmentId)
-    .order("occurred_at", { ascending: true });
-  if (activityErr) return { ok: false, error: activityErr.message };
+  const carrierTimeline = ((trackingEventsResult.data ?? []) as PublicTimelineEvent[]) ?? [];
+
+  const shipmentMessages = (messagesResult.data ?? []) as Array<{
+    shipment_id: string | null;
+    container_id: string | null;
+    author_kind: string;
+    created_at: string;
+    is_internal: boolean;
+    body: string;
+  }>;
+
+  const metrics = computeShipmentMetrics({
+    shipmentId: input.shipmentId,
+    workflowStatus: raw.workflow_status,
+    workflowStatusSince: raw.created_at,
+    messages: shipmentMessages,
+  });
+
+  const orgMessages = (orgMessageStatsResult.data ?? []) as Array<{ shipment_id: string | null }>;
+  const orgShipmentMessageCounts = new Map<string, number>();
+  for (const msg of orgMessages) {
+    const sid = msg.shipment_id;
+    if (!sid) continue;
+    orgShipmentMessageCounts.set(sid, (orgShipmentMessageCounts.get(sid) ?? 0) + 1);
+  }
+  const orgAvgMessages =
+    orgShipmentMessageCounts.size > 0
+      ? [...orgShipmentMessageCounts.values()].reduce((a, b) => a + b, 0) /
+        orgShipmentMessageCounts.size
+      : 0;
+
+  const tags = normalizeShipmentTagList(raw.tags ?? []);
+  const rootCause = (raw.root_cause as ShipmentRootCause | null) ?? null;
+
+  const context = buildShipmentContextSummary({
+    tags,
+    risk_level: raw.risk_level,
+    risk_message: raw.risk_message,
+    triage_bucket_key: null,
+    metrics,
+  });
+
+  const insightCards = buildShipmentInsightCards({
+    metrics,
+    orgAvgMessages,
+    orgMedianResponseHours: null,
+    triageBucketKey: null,
+  });
 
   return {
     ok: true,
@@ -899,8 +1024,14 @@ export async function fetchShipmentWorkspaceRow(
       risk_level: raw.risk_level,
       risk_message: raw.risk_message,
       primary_carrier_status: primaryCarrierStatus,
+      tags,
+      root_cause: rootCause,
+      carrier_timeline: carrierTimeline,
+      metrics,
+      context,
+      insight_cards: insightCards,
       tracking_requests: lines,
-      activity_events: (activityRows ?? []).map((row) => ({
+      activity_events: (activityResult.data ?? []).map((row) => ({
         id: row.id as string,
         event_type: row.event_type as string,
         body: row.body as string,

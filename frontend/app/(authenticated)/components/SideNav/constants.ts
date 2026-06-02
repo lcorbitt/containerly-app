@@ -21,6 +21,7 @@ export const howItWorksNavItem = {
 } as const;
 
 export const reportsNavItem = {
+  href: "/reports",
   label: "Reports",
   icon: BarChart2,
 } as const;

@@ -1,19 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigationProgress } from "@/components/NavigationProgress";
-import { shouldShowMockJourneyPanel } from "@/components/MockJourneySimulator";
-import { useMockJourneyModal } from "@/contexts/mock-journey-modal";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useSessionAvatar } from "@/contexts/session-avatar";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
 import { useOrgAlerts } from "@/hooks/queries/useAlert";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
-import { signOutBrowser } from "@/services/auth.service";
 import { fetchShipment } from "@/services/shipment.service";
-import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
 import {
   activeNavSegmentFromPathname,
   fallbackSubTabLabel,
@@ -23,29 +17,12 @@ import {
 import { CUSTOMER_PORTAL_BREADCRUMB_LABEL } from "../TopNavBreadcrumb/constants";
 import type { BreadcrumbSegment } from "../TopNavBreadcrumb/types";
 import { AUTHENTICATED_TOP_NAV_ORG_HREF } from "./constants";
-import { profileInitials } from "@/utils/display-initials";
-import { profileMenuLabels } from "./utils";
 
-export function useAuthenticatedTopNav({
-  email,
-  fullName,
-}: {
-  email: string;
-  fullName?: string | null;
-}) {
-  const router = useRouter();
+export function useAuthenticatedTopNav() {
   const pathname = usePathname();
-  const { startNavigation } = useNavigationProgress();
-  const [signingOut, setSigningOut] = useState(false);
   const { openNewShipmentModal, openBulkImportModal } = useNewShipmentModal();
-  const { openMockJourneyModal } = useMockJourneyModal();
-  const showMockJourney = shouldShowMockJourneyPanel();
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
-  const { profileImagePath } = useSessionAvatar();
-  const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const alerts = useOrgAlerts(selectedOrgId);
 
@@ -131,49 +108,18 @@ export function useAuthenticatedTopNav({
 
   const hubLeafLabel = isHubRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
 
-  const initials = profileInitials({ full_name: fullName, email });
-  const { primary: accountPrimaryLabel, secondary: accountSecondaryLabel } = useMemo(
-    () => profileMenuLabels(fullName, email),
-    [email, fullName],
-  );
-
   useEffect(() => {
-    if (!accountMenuOpen && !notificationsMenuOpen) return;
+    if (!notificationsMenuOpen) return;
     function onPointerDown(e: MouseEvent) {
       const target = e.target as Node;
-      if (accountMenuRef.current?.contains(target)) return;
       if (notificationsMenuRef.current?.contains(target)) return;
-      setAccountMenuOpen(false);
       setNotificationsMenuOpen(false);
     }
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [accountMenuOpen, notificationsMenuOpen]);
-
-  const logout = useCallback(async () => {
-    if (signingOut) return;
-
-    setSigningOut(true);
-    setAccountMenuOpen(false);
-    setNotificationsMenuOpen(false);
-    startNavigation({ message: "Signing out..." });
-
-    try {
-      await signOutBrowser();
-      router.push("/login");
-      router.refresh();
-    } catch {
-      setSigningOut(false);
-    }
-  }, [router, signingOut, startNavigation]);
-
-  const toggleAccountMenu = useCallback(() => {
-    setNotificationsMenuOpen(false);
-    setAccountMenuOpen((value) => !value);
-  }, []);
+  }, [notificationsMenuOpen]);
 
   const toggleNotificationsMenu = useCallback(() => {
-    setAccountMenuOpen(false);
     setNotificationsMenuOpen((value) => !value);
   }, []);
 
@@ -182,8 +128,6 @@ export function useAuthenticatedTopNav({
   }, []);
 
   return {
-    accountMenuOpen,
-    accountMenuRef,
     notificationsMenuOpen,
     notificationsMenuRef,
     selectedOrgId,
@@ -195,18 +139,9 @@ export function useAuthenticatedTopNav({
     hubSubTabLabel,
     hubSubTabHref,
     hubLeafLabel,
-    initials,
-    avatarUrl,
-    accountPrimaryLabel,
-    accountSecondaryLabel,
-    showMockJourney,
     openNewShipmentModal,
     openBulkImportModal,
-    openMockJourneyModal,
-    toggleAccountMenu,
     toggleNotificationsMenu,
     closeNotificationsMenu,
-    logout,
-    signingOut,
   };
 }

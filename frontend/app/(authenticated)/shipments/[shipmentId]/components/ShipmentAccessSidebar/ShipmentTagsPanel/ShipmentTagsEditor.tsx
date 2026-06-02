@@ -5,6 +5,7 @@ import { TextInput } from "@/components/TextInput";
 import {
   SHIPMENT_TAG_CHIP_CLASS,
   SHIPMENT_TAG_INPUT_CLASS,
+  SHIPMENT_TAG_PRESET_BTN_CLASS,
   SHIPMENT_TAG_REMOVE_BTN_CLASS,
   SHIPMENT_TAG_SUGGESTION_CLASS,
   SHIPMENT_TAG_SUGGESTIONS_LIST_ID,
@@ -20,6 +21,7 @@ export function ShipmentTagsEditor({ state }: { state: ShipmentTagsPanelState })
     saving,
     showSuggestions,
     suggestions,
+    presets,
     containerRef,
     handleInputFocus,
     handleInputChange,
@@ -34,6 +36,21 @@ export function ShipmentTagsEditor({ state }: { state: ShipmentTagsPanelState })
   return (
     <div aria-label="Edit shipment tags">
       <p className={SIDEBAR_SETTINGS_POPOVER_HINT_CLASS}>Add labels to organize and filter shipments.</p>
+      {presets.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {presets.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              disabled={saving}
+              className={SHIPMENT_TAG_PRESET_BTN_CLASS}
+              onClick={() => void addTag(preset)}
+            >
+              + {preset}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {tags.length > 0 ? (
         <ul className="flex flex-wrap gap-1.5">
           {tags.map((tag) => (

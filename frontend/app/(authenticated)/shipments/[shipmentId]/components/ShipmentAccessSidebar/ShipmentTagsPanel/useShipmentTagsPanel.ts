@@ -9,7 +9,7 @@ import {
   removeShipmentTag,
   SHIPMENT_TAG_MAX_COUNT,
 } from "@/utils/shipment-tags";
-import { filterTagSuggestions, hasTagSuggestions, tagFromDraftInput } from "./utils";
+import { filterTagSuggestions, hasTagSuggestions, tagFromDraftInput, availableTagPresets } from "./utils";
 
 export function useShipmentTagsPanel({
   shipmentId,
@@ -61,6 +61,8 @@ export function useShipmentTagsPanel({
     () => filterTagSuggestions(orgTagSuggestions, tags, draft),
     [draft, orgTagSuggestions, tags],
   );
+
+  const presets = useMemo(() => availableTagPresets(tags), [tags]);
 
   const showSuggestions = suggestionsOpen && suggestions.length > 0 && !saving;
 
@@ -171,6 +173,7 @@ export function useShipmentTagsPanel({
     saving,
     showSuggestions,
     suggestions,
+    presets,
     containerRef,
     handleInputFocus,
     handleInputChange,

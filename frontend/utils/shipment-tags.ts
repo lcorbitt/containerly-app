@@ -1,6 +1,16 @@
 export const SHIPMENT_TAG_MAX_COUNT = 20;
 export const SHIPMENT_TAG_MAX_LENGTH = 40;
 
+/** Curated operator presets for common issue labels (internal triage). */
+export const SHIPMENT_TAG_PRESETS = [
+  "Delay",
+  "Missing Docs",
+  "Customs Risk",
+  "Customer Confusion",
+] as const;
+
+export type ShipmentTagPreset = (typeof SHIPMENT_TAG_PRESETS)[number];
+
 const TAG_PATTERN = /^[\p{L}\p{N}\s\-_.]+$/u;
 
 /** Normalize a single tag for storage (trim, collapse spaces, validate). */

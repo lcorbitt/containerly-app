@@ -27,7 +27,13 @@ import {
   postShipmentScopeMessageWithAttachments,
 } from "@/services/workspace.service";
 
-export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
+export function useShipmentMessagesPanel({
+  shipmentId,
+  initialDraft,
+}: {
+  shipmentId: string;
+  initialDraft?: string | null;
+}) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const qc = useQueryClient();
@@ -38,7 +44,7 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     organizationId: selectedOrgId,
   });
 
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(initialDraft ?? "");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);

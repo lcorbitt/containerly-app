@@ -30,6 +30,8 @@ export function ShipmentDetailsTabs({
   workflowStatus,
   physicalMailTrackingNumber,
   activityEvents = [],
+  carrierEvents = [],
+  metrics,
   detailsContent,
   activeTab: controlledActiveTab,
   onTabChange,
@@ -55,6 +57,7 @@ export function ShipmentDetailsTabs({
     shipmentId,
     organizationId,
     activityEvents,
+    carrierEvents,
   });
 
   return (
@@ -115,6 +118,8 @@ export function ShipmentDetailsTabs({
                 workflowStatus={workflowStatus}
                 physicalMailTrackingNumber={physicalMailTrackingNumber}
                 activityEvents={activityEvents}
+                carrierEvents={carrierEvents}
+                metrics={metrics}
                 onEnabled={onTrackingEnabled}
               />
               {detailsContent ? (

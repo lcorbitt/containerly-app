@@ -1,7 +1,8 @@
 import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
 import type { OrgDashboardMetrics, SpotlightShipment, TriageBucketKey } from "@/utils/dashboard-metrics";
+import type { PerformanceInsights } from "@shared/dto/performance.dto";
 
-export type { OrgDashboardMetrics, SpotlightShipment, TriageBucketKey };
+export type { OrgDashboardMetrics, SpotlightShipment, TriageBucketKey, PerformanceInsights };
 
 /** Dashboard bundle built on the server; safe to import from browser services for typing only. */
 export type TrackingDashboardSnapshot = {
@@ -16,6 +17,8 @@ export type TrackingDashboardSnapshot = {
   shipmentAssigneeByShipmentId: Record<string, string | null>;
   /** Present when caller is org admin or platform superadmin. */
   orgMetrics?: OrgDashboardMetrics;
+  /** Org-level performance insights (admin view). */
+  performanceInsights?: PerformanceInsights;
   /** Highest-priority personal triage item with commercial route fields. */
   spotlightShipment?: SpotlightShipment | null;
 };

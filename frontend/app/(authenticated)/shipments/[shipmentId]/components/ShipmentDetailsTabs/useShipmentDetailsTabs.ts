@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import type { PublicTimelineEvent } from "@/types/public-report";
 import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
 import {
   countShipmentScopeDocuments,
@@ -13,16 +14,18 @@ export function useShipmentDetailsTabs({
   shipmentId,
   organizationId,
   activityEvents,
+  carrierEvents = [],
 }: {
   shipmentId: string;
   organizationId: string;
   activityEvents: ShipmentActivityEvent[];
+  carrierEvents?: PublicTimelineEvent[];
 }) {
   const threadQuery = useShipmentScopeThreadQuery(organizationId, shipmentId);
 
   const trackingCount = useMemo(
-    () => countShipmentScopeTrackingEvents({ activityEvents }),
-    [activityEvents],
+    () => countShipmentScopeTrackingEvents({ activityEvents, carrierEvents }),
+    [activityEvents, carrierEvents],
   );
 
   const documentsCount = useMemo(() => {

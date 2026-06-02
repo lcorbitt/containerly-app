@@ -259,6 +259,8 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           workflowStatus={row.workflow_status ?? undefined}
           physicalMailTrackingNumber={row.physical_mail_tracking_number}
           activityEvents={row.activity_events ?? []}
+          carrierEvents={row.carrier_timeline ?? []}
+          metrics={row.metrics}
           activeTab={activeDetailsTab}
           onTabChange={selectDetailsTab}
           onTrackingEnabled={refetchShipment}

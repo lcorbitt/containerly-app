@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import type { ShipmentMetricsSummary } from "@shared/dto/performance.dto";
+import { ShipmentTimelineKpiStrip } from "@/components/ShipmentTimelineKpiStrip";
 import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
@@ -20,6 +22,7 @@ export function ShipmentTrackingPanel({
   physicalMailTrackingNumber,
   activityEvents = [],
   carrierEvents = [],
+  metrics,
   attachmentDisplayNamesById: attachmentDisplayNamesByIdProp,
   readOnly = false,
   onEnabled,
@@ -31,6 +34,7 @@ export function ShipmentTrackingPanel({
   activityEvents?: ShipmentActivityEvent[];
   /** Carrier milestone events (portal payload timeline). */
   carrierEvents?: PublicTimelineEvent[];
+  metrics?: ShipmentMetricsSummary;
   /** When set, skips workspace scope query (customer portal). */
   attachmentDisplayNamesById?: Record<string, string>;
   readOnly?: boolean;
@@ -58,6 +62,8 @@ export function ShipmentTrackingPanel({
         readOnly={readOnly}
         onSaved={onEnabled}
       />
+
+      {metrics ? <ShipmentTimelineKpiStrip metrics={metrics} /> : null}
 
       <ShipmentTimeline
         events={carrierEvents}
