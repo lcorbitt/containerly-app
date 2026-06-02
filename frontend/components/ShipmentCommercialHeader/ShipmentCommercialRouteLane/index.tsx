@@ -5,6 +5,7 @@ import {
   SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_DESTINATION_CLASS,
+  SHIPMENT_COMMERCIAL_ROUTE_LANE_ETA_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_LABEL_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_LINE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_ORIGIN_CLASS,
@@ -13,11 +14,22 @@ import {
 import type { ShipmentCommercialRouteLaneProps } from "./types";
 import { shipmentRouteEndpoints } from "./utils";
 
-export function ShipmentCommercialRouteLane({ origin, destination }: ShipmentCommercialRouteLaneProps) {
-  const { originLabel, destinationLabel } = shipmentRouteEndpoints({ origin, destination });
+export function ShipmentCommercialRouteLane({
+  origin,
+  destination,
+  estimatedDepartureAt,
+  estimatedArrivalAt,
+  className,
+}: ShipmentCommercialRouteLaneProps) {
+  const { originLabel, destinationLabel, originEta, destinationEta } = shipmentRouteEndpoints({
+    origin,
+    destination,
+    estimatedDepartureAt,
+    estimatedArrivalAt,
+  });
 
   return (
-    <div className={SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS}>
+    <div className={className ? `${SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS} ${className}` : SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS}>
       <div className={SHIPMENT_COMMERCIAL_ROUTE_LANE_ORIGIN_CLASS}>
         <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_LABEL_CLASS}>Origin</p>
         <p
@@ -26,6 +38,11 @@ export function ShipmentCommercialRouteLane({ origin, destination }: ShipmentCom
         >
           {originLabel}
         </p>
+        {originEta ? (
+          <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_ETA_CLASS} title={originEta}>
+            {originEta}
+          </p>
+        ) : null}
       </div>
 
       <div className={SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS} aria-hidden>
@@ -44,6 +61,11 @@ export function ShipmentCommercialRouteLane({ origin, destination }: ShipmentCom
         >
           {destinationLabel}
         </p>
+        {destinationEta ? (
+          <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_ETA_CLASS} title={destinationEta}>
+            {destinationEta}
+          </p>
+        ) : null}
       </div>
     </div>
   );

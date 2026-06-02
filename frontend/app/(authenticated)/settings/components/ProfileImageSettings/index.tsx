@@ -6,8 +6,8 @@ import { useProfileImageSettings } from "./hooks/useProfileImageSettings";
 
 type Props = {
   initialProfileImagePath: string | null;
-  /** For placeholder initials when no photo */
-  displayLabel: string;
+  fullName: string;
+  email: string;
   /**
    * When true, vertical stack (avatar above actions) for use beside account fields;
    * omits the large "Profile photo" heading.
@@ -17,7 +17,8 @@ type Props = {
 
 export function ProfileImageSettings({
   initialProfileImagePath,
-  displayLabel,
+  fullName,
+  email,
   accountColumn = false,
 }: Props) {
   const {
@@ -29,7 +30,7 @@ export function ProfileImageSettings({
     onPickFile,
     removePhoto,
     triggerFilePicker,
-  } = useProfileImageSettings({ initialProfileImagePath, displayLabel });
+  } = useProfileImageSettings({ initialProfileImagePath, fullName, email });
 
   const controls = (
     <>

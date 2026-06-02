@@ -46,7 +46,8 @@ export function SettingsPageTabs({
       <div className="mt-6 flex flex-col gap-8 sm:flex-row sm:gap-10">
         <ProfileImageSettings
           initialProfileImagePath={profileImagePath}
-          displayLabel={displayLabel}
+          fullName={fullName}
+          email={email}
           accountColumn
         />
         <div className="min-w-0 flex-1 space-y-5 text-sm">

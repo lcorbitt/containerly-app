@@ -23,7 +23,8 @@ import {
 import { CUSTOMER_PORTAL_BREADCRUMB_LABEL } from "../TopNavBreadcrumb/constants";
 import type { BreadcrumbSegment } from "../TopNavBreadcrumb/types";
 import { AUTHENTICATED_TOP_NAV_ORG_HREF } from "./constants";
-import { initialsFromEmail, profileMenuLabels } from "./utils";
+import { profileInitials } from "@/utils/display-initials";
+import { profileMenuLabels } from "./utils";
 
 export function useAuthenticatedTopNav({
   email,
@@ -130,7 +131,7 @@ export function useAuthenticatedTopNav({
 
   const hubLeafLabel = isHubRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
 
-  const initials = initialsFromEmail(email);
+  const initials = profileInitials({ full_name: fullName, email });
   const { primary: accountPrimaryLabel, secondary: accountSecondaryLabel } = useMemo(
     () => profileMenuLabels(fullName, email),
     [email, fullName],

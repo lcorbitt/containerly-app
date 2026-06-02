@@ -26,17 +26,23 @@ export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-0.5 text-sm text-zinc-900 dark:te
 export const SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS = "grid gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-4";
 
 export const SHIPMENT_TITLE_VALUE_CLASS =
-  "mt-1 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
+  "mt-0.5 text-lg font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
 
-export const SHIPMENT_TITLE_GRID_CLASS = "grid w-full min-w-0 grid-cols-3 gap-x-6";
+export const SHIPMENT_TITLE_PRIMARY_GRID_CLASS =
+  "grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-0";
+
+export const SHIPMENT_TITLE_SECONDARY_ROW_CLASS = "min-w-0";
 
 export const SHIPMENT_TITLE_CELL_CLASS = "min-w-0";
 
-export const SHIPMENT_COMMERCIAL_HEADER_TITLE_WRAP_CLASS =
-  "border-b border-zinc-100 pb-3 dark:border-zinc-800";
+export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROW_CLASS =
+  "grid grid-cols-1 gap-5 border-b border-zinc-100 pb-4 dark:border-zinc-800 md:grid-cols-2 md:items-center md:gap-6";
 
-export const SHIPMENT_COMMERCIAL_HEADER_ROUTE_WRAP_CLASS =
-  "border-b border-zinc-100 py-4 dark:border-zinc-800";
+export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_TITLE_COL_CLASS =
+  "flex min-w-0 flex-col gap-3";
+
+export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS =
+  "flex min-w-0 flex-col justify-center md:border-l md:border-zinc-100 md:pl-6 dark:md:border-zinc-800";
 
 export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
 
@@ -63,10 +69,13 @@ export const SHIPMENT_TITLE_FIELD_KEYS = ["customer_name", "order_number"] as co
 
 export const SHIPMENT_ROUTE_FIELD_KEYS = ["port_of_loading", "port_of_destination"] as const;
 
+export const SHIPMENT_ETA_FIELD_KEYS = ["estimated_departure_at", "estimated_arrival_at"] as const;
+
 export const SHIPMENT_DETAIL_GRID_FIELDS = SHIPMENT_DETAIL_FIELDS.filter(
   (field) =>
     !(SHIPMENT_TITLE_FIELD_KEYS as readonly string[]).includes(field.key) &&
-    !(SHIPMENT_ROUTE_FIELD_KEYS as readonly string[]).includes(field.key),
+    !(SHIPMENT_ROUTE_FIELD_KEYS as readonly string[]).includes(field.key) &&
+    !(SHIPMENT_ETA_FIELD_KEYS as readonly string[]).includes(field.key),
 );
 
 export function shipmentTitleParts(source: Pick<ShipmentCommercialHeaderSource, "customer_name" | "order_number">) {

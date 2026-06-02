@@ -3,6 +3,8 @@ export const DASHBOARD_KPI_GRID_CLASS = "grid gap-3 sm:grid-cols-2 xl:grid-cols-
 export const DASHBOARD_KPI_CARD_BASE_CLASS =
   "rounded-xl border bg-white p-4 shadow-sm dark:bg-zinc-950";
 
+export const DASHBOARD_KPI_LOADING_CLASS = "py-8 text-center";
+
 export function dashboardKpiCardRingClass(tone: "neutral" | "warn" | "bad" | "good"): string {
   switch (tone) {
     case "bad":

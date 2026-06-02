@@ -10,13 +10,16 @@ import {
   fetchProfileImagePath,
   uploadProfileImageAndSetPath,
 } from "@/services/profile.service";
+import { profileInitials } from "@/utils/display-initials";
 
 export function useProfileImageSettings({
   initialProfileImagePath,
-  displayLabel,
+  fullName,
+  email,
 }: {
   initialProfileImagePath: string | null;
-  displayLabel: string;
+  fullName: string;
+  email: string;
 }) {
   const { toast } = useToast();
   const sessionAvatar = useOptionalSessionAvatar();
@@ -25,7 +28,7 @@ export function useProfileImageSettings({
   const [busy, setBusy] = useState(false);
 
   const publicUrl = getProfileImagePublicUrlBrowser(path);
-  const initials = (displayLabel.trim().slice(0, 2) || "?").toUpperCase();
+  const initials = profileInitials({ full_name: fullName, email });
 
   const refreshPathFromDb = useCallback(async () => {
     const next = await fetchProfileImagePath();

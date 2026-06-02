@@ -11,6 +11,7 @@ import {
 import {
   DASHBOARD_KPI_CARD_BASE_CLASS,
   DASHBOARD_KPI_GRID_CLASS,
+  DASHBOARD_KPI_LOADING_CLASS,
   DASHBOARD_KPI_LABEL_CLASS,
   DASHBOARD_KPI_SUB_CLASS,
   DASHBOARD_KPI_VALUE_CLASS,
@@ -55,7 +56,7 @@ export function DashboardKpiStrip({
 }: DashboardKpiStripProps) {
   if (loading) {
     return (
-      <div className={DASHBOARD_KPI_CARD_BASE_CLASS}>
+      <div className={DASHBOARD_KPI_LOADING_CLASS}>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading metrics...</p>
       </div>
     );

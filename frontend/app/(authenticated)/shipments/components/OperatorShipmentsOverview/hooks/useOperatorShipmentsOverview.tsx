@@ -164,14 +164,6 @@ export function useOperatorShipmentsOverview() {
     () => {
       const base: DataTableColumn<ShipmentOverviewRow>[] = [
       {
-        id: "order_number",
-        header: "Order no.",
-        sortable: true,
-        cell: (r) => (
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">{r.order_number}</span>
-        ),
-      },
-      {
         id: "customer_name",
         header: "Customer",
         cell: (r) => (
@@ -181,6 +173,14 @@ export function useOperatorShipmentsOverview() {
           >
             {displayOverviewText(r.customer_name)}
           </span>
+        ),
+      },
+      {
+        id: "order_number",
+        header: "Order no.",
+        sortable: true,
+        cell: (r) => (
+          <span className="font-medium text-zinc-900 dark:text-zinc-50">{r.order_number}</span>
         ),
       },
       {

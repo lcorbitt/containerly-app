@@ -1,16 +1,19 @@
 import { SHIPMENT_COMMERCIAL_LABEL_CLASS } from "@/components/ShipmentCommercialFormFields/utils";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS =
-  "grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-x-4 sm:gap-x-6";
+  "grid w-full min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-x-3 sm:gap-x-4";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ORIGIN_CLASS = "min-w-0";
 
-export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DESTINATION_CLASS = "min-w-0 text-right";
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DESTINATION_CLASS = "min-w-0";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_LABEL_CLASS = SHIPMENT_COMMERCIAL_LABEL_CLASS;
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_VALUE_CLASS =
   "mt-1 truncate text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ETA_CLASS =
+  "mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS =
   "flex w-full items-center gap-2 px-1 sm:gap-2.5 sm:px-2";
