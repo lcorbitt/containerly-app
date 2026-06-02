@@ -84,9 +84,6 @@ function ThreadMessageItem({
   const isRoot = depth === 0;
   const isInternal = !publicThreadMode && node.is_internal;
   const palette = threadMessagePalette({ authorKind: node.author_kind });
-  const parentPalette = parent
-    ? threadMessagePalette({ authorKind: parent.author_kind })
-    : null;
   const isOwnMessage = threadMessageIsOwn({
     currentUserId,
     authorUserId: node.author_user_id,
@@ -123,7 +120,9 @@ function ThreadMessageItem({
         <div className={`relative min-w-0 flex-1 text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
         {parent ? (
           <div
-            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${threadMessageQuoteClass(parentPalette)}`}
+            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${threadMessageQuoteClass(
+              threadMessagePalette({ authorKind: parent.author_kind }),
+            )}`}
           >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Replying to {threadMessageAuthorName(parent, authorNameByUserId)}

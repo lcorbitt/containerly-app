@@ -17,9 +17,13 @@ export const SITE_TITLE = "Containerly — Real-time shipment visibility";
 
 export const SITE_LANDING_TITLE = "Containerly — Track every shipment in one place";
 
+/** Public site origin for links (no trailing slash). */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, "") ||
+  "http://localhost:3000";
+
 export function siteMetadataBase(): URL {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
-  return new URL(raw.endsWith("/") ? raw : `${raw}/`);
+  return new URL(`${SITE_URL}/`);
 }
 
 const openGraphImages: NonNullable<Metadata["openGraph"]>["images"] = [
