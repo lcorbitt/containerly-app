@@ -8,7 +8,7 @@ export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS =
 export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS =
   "relative z-[3] inline-flex items-center justify-center gap-1.5";
 
-export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS = "text-white drop-shadow-sm";
+export const AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS = "text-white";
 
 export const AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS = "hidden md:inline";
 

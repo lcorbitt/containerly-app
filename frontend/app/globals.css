@@ -225,10 +225,15 @@ input[type="reset"]:disabled {
     animation-duration: 0.15s;
   }
 
+  .nav-bulk-import-btn::before,
   .nav-bulk-import-btn:hover::after {
     animation: none;
-    opacity: 0.35;
-    transform: translateX(0) skewX(-14deg);
+    transition-duration: 0ms;
+  }
+
+  .nav-bulk-import-btn:hover::after {
+    opacity: 0.12;
+    transform: translateX(0) skewX(-10deg);
   }
 
   button,
@@ -236,7 +241,10 @@ input[type="reset"]:disabled {
   input[type="submit"],
   input[type="reset"],
   a,
-  .color-fade {
+  .color-fade,
+  .nav-bulk-import-btn,
+  .nav-bulk-import-btn::before,
+  .nav-bulk-import-btn::after {
     transition-duration: 0ms;
   }
 }
@@ -262,13 +270,13 @@ input[type="search"]::-webkit-search-results-button {
   }
 }
 
-/* Top nav — bulk import CTA (light orange → primary gradient + hover shimmer). */
+/* Top nav — bulk import: light primary (default) → darker primary + shimmer (hover). */
 @keyframes nav-bulk-import-shimmer {
   0% {
-    transform: translateX(-130%) skewX(-14deg);
+    transform: translateX(-125%) skewX(-10deg);
   }
   100% {
-    transform: translateX(240%) skewX(-14deg);
+    transform: translateX(225%) skewX(-10deg);
   }
 }
 
@@ -276,91 +284,122 @@ input[type="search"]::-webkit-search-results-button {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid color-mix(in srgb, var(--color-primary-orange) 55%, white);
+  border: 1px solid color-mix(in srgb, var(--color-primary-orange) 58%, white);
   background: linear-gradient(
-    128deg,
-    #ffd4b8 0%,
-    #ffb07a 22%,
-    #ff8f4d 42%,
-    var(--color-primary-orange) 68%,
-    #e84a00 100%
+    118deg,
+    color-mix(in srgb, var(--color-primary-orange) 62%, white) 0%,
+    color-mix(in srgb, var(--color-primary-orange) 74%, white) 46%,
+    color-mix(in srgb, var(--color-primary-orange) 68%, white) 100%
   );
   color: #fff;
-  text-shadow: 0 1px 1px color-mix(in srgb, #7a2200 35%, transparent);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    0 0 18px color-mix(in srgb, var(--color-primary-orange) 22%, transparent);
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.35s ease,
-    filter 0.25s ease;
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  /* Extend app `color-fade` — do not replace duration/easing (gradients fade via ::before). */
+  transition-property:
+    color,
+    background-color,
+    border-color,
+    text-decoration-color,
+    fill,
+    stroke,
+    box-shadow;
+  transition-duration: var(--duration-color-fade);
+  transition-timing-function: var(--ease-color-fade);
 }
 
+/* Darker primary overlay — opacity uses same ease-in-out as other buttons. */
 .nav-bulk-import-btn::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 48%);
+  border-radius: inherit;
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--color-primary-orange) 94%, #d94a08) 0%,
+    var(--color-primary-orange) 44%,
+    color-mix(in srgb, var(--color-primary-orange) 92%, #c94100) 100%
+  );
+  opacity: 0;
   pointer-events: none;
   z-index: 1;
+  transition: opacity var(--duration-color-fade) var(--ease-color-fade);
 }
 
 .nav-bulk-import-btn::after {
   content: "";
   position: absolute;
-  top: -12%;
-  bottom: -12%;
+  top: -10%;
+  bottom: -10%;
   left: 0;
-  width: 42%;
+  width: 54%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.1) 32%,
-    rgba(255, 255, 255, 0.45) 50%,
-    rgba(255, 255, 255, 0.1) 68%,
+    rgba(255, 255, 255, 0.03) 18%,
+    rgba(255, 255, 255, 0.07) 32%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.07) 68%,
+    rgba(255, 255, 255, 0.03) 82%,
     transparent 100%
   );
-  transform: translateX(-130%) skewX(-14deg);
+  transform: translateX(-125%) skewX(-10deg);
   opacity: 0;
   pointer-events: none;
   z-index: 2;
-  transition: opacity 0.4s ease;
+  transition: opacity var(--duration-color-fade) var(--ease-color-fade);
 }
 
 .nav-bulk-import-btn:hover {
-  border-color: color-mix(in srgb, var(--color-primary-orange) 75%, white);
-  filter: brightness(1.04);
+  border-color: color-mix(in srgb, var(--color-primary-orange) 88%, #c94100);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    0 0 26px color-mix(in srgb, var(--color-primary-orange) 38%, transparent);
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 10px color-mix(in srgb, var(--color-primary-orange) 14%, transparent);
+}
+
+.nav-bulk-import-btn:hover::before {
+  opacity: 1;
 }
 
 .nav-bulk-import-btn:hover::after {
   opacity: 1;
-  animation: nav-bulk-import-shimmer 2.75s ease-in-out infinite;
+  animation: nav-bulk-import-shimmer 3.25s ease-in-out infinite;
 }
 
 .nav-bulk-import-btn:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px var(--background),
-    0 0 0 4px color-mix(in srgb, var(--color-primary-orange) 55%, transparent),
-    0 0 22px color-mix(in srgb, var(--color-primary-orange) 30%, transparent);
+    0 0 0 4px color-mix(in srgb, var(--color-primary-orange) 40%, transparent);
 }
 
 html.dark .nav-bulk-import-btn {
-  border-color: color-mix(in srgb, var(--color-primary-orange) 80%, white);
+  border-color: color-mix(in srgb, var(--color-primary-orange) 62%, white);
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--color-primary-orange) 78%, white) 0%,
+    color-mix(in srgb, var(--color-primary-orange) 86%, white) 48%,
+    color-mix(in srgb, var(--color-primary-orange) 82%, white) 100%
+  );
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 0 22px rgba(255, 78, 0, 0.28);
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+html.dark .nav-bulk-import-btn::before {
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--color-primary-orange) 96%, #d94a08) 0%,
+    var(--color-primary-orange) 46%,
+    color-mix(in srgb, var(--color-primary-orange) 94%, #b83c00) 100%
+  );
 }
 
 html.dark .nav-bulk-import-btn:hover {
+  border-color: color-mix(in srgb, var(--color-primary-orange) 90%, #b83c00);
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    0 0 32px rgba(255, 78, 0, 0.42);
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 12px rgba(255, 78, 0, 0.16);
 }
