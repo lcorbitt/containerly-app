@@ -385,7 +385,6 @@ export function useContainerWorkspace({
         containerId,
         organizationId: selectedOrgId,
         body: t,
-        internalOnly: false,
         replyParentId,
         files,
       });

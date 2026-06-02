@@ -213,9 +213,6 @@ export function PublicContainerReport({
                       onRemoveComposerPendingFile={() => {}}
                       body={body}
                       onBodyChange={setBody}
-                      internalOnly={false}
-                      onInternalOnlyChange={() => {}}
-                      showInternalComposerToggle={false}
                       posting={sending}
                       onPostMessage={() => void postMessage()}
                       replyParentId={replyParentId}
@@ -224,7 +221,6 @@ export function PublicContainerReport({
                       currentUserId={currentUserId}
                       onDeleteMessage={() => {}}
                       deletingMessageId={null}
-                      publicThreadMode
                       allowMessageDelete={false}
                       allowMessageEdit={false}
                       composerHidden={threadReadOnly}

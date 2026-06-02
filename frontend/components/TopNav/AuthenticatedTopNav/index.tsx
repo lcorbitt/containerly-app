@@ -16,6 +16,7 @@ import {
   AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS,
   AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS,
   AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS,
+  AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS,
   AUTHENTICATED_TOP_NAV_AVATAR_BUTTON_CLASS,
   AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS,
   AUTHENTICATED_TOP_NAV_MENU_CLASS,
@@ -88,8 +89,14 @@ export function AuthenticatedTopNav({ email, fullName }: AuthenticatedTopNavProp
             aria-label="Bulk import"
             aria-haspopup="dialog"
           >
-            <Import className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS}`} strokeWidth={2} aria-hidden />
-            <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
+            <span className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS}>
+              <Import
+                className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS}`}
+                strokeWidth={2}
+                aria-hidden
+              />
+              <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
+            </span>
           </button>
         </div>
 

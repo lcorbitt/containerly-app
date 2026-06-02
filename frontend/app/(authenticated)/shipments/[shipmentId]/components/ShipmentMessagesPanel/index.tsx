@@ -103,10 +103,6 @@ export function ShipmentMessagesPanel({
           onRemoveComposerPendingFile={onRemoveComposerPendingFile}
           body={body}
           onBodyChange={setBody}
-          internalOnly={false}
-          onInternalOnlyChange={() => {}}
-          showInternalComposerToggle={false}
-          publicThreadMode
           posting={posting}
           onPostMessage={() => void postMessage()}
           replyParentId={replyParentId}

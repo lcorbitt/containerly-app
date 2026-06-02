@@ -227,7 +227,6 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
         organizationId: selectedOrgId,
         shipmentId,
         body: t,
-        internalOnly: false,
         replyParentId,
         files,
       });

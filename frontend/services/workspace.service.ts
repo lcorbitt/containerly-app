@@ -117,13 +117,12 @@ export async function postContainerWorkspaceMessage(input: {
   containerId: string;
   organizationId: string;
   body: string;
-  internalOnly: boolean;
   replyParentId: string | null;
   files: File[];
 }): Promise<{ message: ReportMessage; attachmentErrors: string[] }> {
   const formData = new FormData();
   formData.set("body", input.body);
-  formData.set("internalOnly", input.internalOnly ? "true" : "false");
+  formData.set("internalOnly", "false");
   formData.set("replyParentId", input.replyParentId ?? "");
   for (const f of input.files) {
     formData.append("file", f);
@@ -211,13 +210,12 @@ export async function postShipmentScopeMessageWithAttachments(input: {
   organizationId: string;
   shipmentId: string;
   body: string;
-  internalOnly: boolean;
   replyParentId: string | null;
   files: File[];
 }): Promise<{ messageId: string; attachmentErrors: string[] }> {
   const formData = new FormData();
   formData.set("body", input.body);
-  formData.set("internalOnly", input.internalOnly ? "true" : "false");
+  formData.set("internalOnly", "false");
   formData.set("replyParentId", input.replyParentId ?? "");
   for (const f of input.files) {
     formData.append("file", f);
