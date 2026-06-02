@@ -35,14 +35,15 @@ export const SHIPMENT_TITLE_SECONDARY_ROW_CLASS = "min-w-0";
 
 export const SHIPMENT_TITLE_CELL_CLASS = "min-w-0";
 
-export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROW_CLASS =
-  "grid grid-cols-1 gap-5 border-b border-zinc-100 pb-4 dark:border-zinc-800 md:grid-cols-2 md:items-center md:gap-6";
+/** Matches ShipmentDetailsCard outer border (`border-zinc-200` / `dark:border-zinc-800`). */
+export const SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS = "border-zinc-200 dark:border-zinc-800";
+
+export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROW_CLASS = `grid grid-cols-1 gap-5 border-b pb-4 md:grid-cols-2 md:items-center md:gap-6 ${SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS}`;
 
 export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_TITLE_COL_CLASS =
   "flex min-w-0 flex-col gap-3";
 
-export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS =
-  "flex min-w-0 flex-col justify-center md:border-l md:border-zinc-100 md:pl-6 dark:md:border-zinc-800";
+export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS = `flex min-w-0 flex-col justify-center md:border-l md:pl-6 ${SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS}`;
 
 export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
 
