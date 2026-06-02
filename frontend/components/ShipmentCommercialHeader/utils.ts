@@ -36,7 +36,7 @@ export const SHIPMENT_COMMERCIAL_HEADER_TITLE_WRAP_CLASS =
   "border-b border-zinc-100 pb-3 dark:border-zinc-800";
 
 export const SHIPMENT_COMMERCIAL_HEADER_ROUTE_WRAP_CLASS =
-  "border-b border-zinc-100 py-3 dark:border-zinc-800";
+  "border-b border-zinc-100 py-4 dark:border-zinc-800";
 
 export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-3";
 
