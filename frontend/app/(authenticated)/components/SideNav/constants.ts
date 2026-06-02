@@ -7,6 +7,11 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import { AUTHENTICATED_TOP_NAV_UTILITY_BUTTON_EMPHASIZED_SURFACE_CLASS } from "@/components/TopNav/AuthenticatedTopNav/constants";
+
+/** Sidenav hover — same borders as top-nav utility buttons, slightly darker fill than zinc-50 / zinc-900. */
+export const SIDE_NAV_LINK_HOVER_SURFACE_CLASS =
+  "border border-transparent bg-transparent hover:border-zinc-200 hover:bg-zinc-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-950";
 
 export const howItWorksNavItem = {
   href: "/container-details",
@@ -52,11 +57,9 @@ export const adminNavItems = [
   { href: "/admin/organizations", label: "Organizations", icon: Building2 },
 ] as const;
 
-export const SIDE_NAV_LINK_ACTIVE_CLASS =
-  "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50";
+export const SIDE_NAV_LINK_ACTIVE_CLASS = `text-zinc-700 dark:text-zinc-200 ${AUTHENTICATED_TOP_NAV_UTILITY_BUTTON_EMPHASIZED_SURFACE_CLASS}`;
 
-export const SIDE_NAV_LINK_INACTIVE_CLASS =
-  "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100";
+export const SIDE_NAV_LINK_INACTIVE_CLASS = `text-zinc-600 dark:text-zinc-400 ${SIDE_NAV_LINK_HOVER_SURFACE_CLASS}`;
 
 export const SIDE_NAV_LINK_DISABLED_CLASS =
-  "cursor-not-allowed opacity-45 hover:bg-transparent hover:text-zinc-600 dark:hover:text-zinc-400";
+  "cursor-not-allowed opacity-45 hover:border-transparent hover:bg-transparent dark:hover:border-transparent";

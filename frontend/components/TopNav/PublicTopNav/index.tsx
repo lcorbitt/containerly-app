@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavShell } from "../TopNavShell";
 import {
@@ -18,6 +19,7 @@ import {
   PUBLIC_TOP_NAV_MOBILE_OVERLAY_CLASS,
   PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS,
   PUBLIC_TOP_NAV_SECONDARY_LINK_CLASS,
+  PUBLIC_TOP_NAV_THEME_TOGGLE_CLASS,
 } from "./constants";
 import { usePublicTopNav } from "./usePublicTopNav";
 
@@ -63,6 +65,8 @@ export function PublicTopNav() {
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
+
+            <ThemeToggle className={PUBLIC_TOP_NAV_THEME_TOGGLE_CLASS} />
           </div>
         </div>
       </TopNavShell>

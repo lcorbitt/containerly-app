@@ -28,6 +28,9 @@ export const PUBLIC_TOP_NAV_DESKTOP_ACTIONS_CLASS = "hidden items-center gap-3 m
 export const PUBLIC_TOP_NAV_RIGHT_CLUSTER_CLASS =
   "flex min-w-0 flex-1 items-center justify-end gap-2 md:gap-3";
 
+export const PUBLIC_TOP_NAV_THEME_TOGGLE_CLASS =
+  "relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent text-zinc-700 transition hover:border-zinc-200 hover:bg-zinc-50 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-900 dark:focus-visible:ring-zinc-500/40";
+
 export const PUBLIC_TOP_NAV_LINKS = [
   { href: "/#features", label: "Features" },
   { href: "/how-it-works", label: "How it works" },
