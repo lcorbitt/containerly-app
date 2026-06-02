@@ -78,6 +78,7 @@ export type ShipmentOverviewRow = {
   owner_user_id: string | null;
   /** Primary operator (`shipments.assignee_user_id`). */
   assignee_user_id: string | null;
+  tags: string[];
   tracking_requests: ShipmentOverviewTrackingRow[] | ShipmentOverviewTrackingRow | null;
 };
 
@@ -99,6 +100,7 @@ type RpcOverviewRow = {
   created_at: string;
   owner_user_id: string | null;
   assignee_user_id: string | null;
+  tags: string[] | null;
   tracking_requests: unknown;
 };
 
@@ -133,6 +135,7 @@ function toOverviewRow(r: RpcOverviewRow): ShipmentOverviewRow {
     created_at: r.created_at,
     owner_user_id: r.owner_user_id,
     assignee_user_id: r.assignee_user_id,
+    tags: Array.isArray(r.tags) ? r.tags : [],
     tracking_requests: parseTrackingRequestsJson(r.tracking_requests),
   };
 }
@@ -147,6 +150,7 @@ export async function fetchOperatorShipmentsOverviewPage(
     userId: string | null;
     scope: OperatorShipmentScope;
     search: string;
+    tagFilter?: string | null;
     sortColumn: OperatorShipmentSortColumn;
     sortDirection: SortDirection;
     page: number;
@@ -158,6 +162,7 @@ export async function fetchOperatorShipmentsOverviewPage(
     userId,
     scope,
     search,
+    tagFilter,
     sortColumn,
     sortDirection,
     page,
@@ -175,6 +180,7 @@ export async function fetchOperatorShipmentsOverviewPage(
     p_sort_asc: sortDirection === "asc",
     p_limit: pageSize,
     p_offset: offset,
+    p_tag_filter: tagFilter?.trim() || null,
   });
 
   if (error) throw new Error(error.message);

@@ -6,6 +6,7 @@ import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snaps
 import {
   buildDaySeries,
   buildTriageBuckets,
+  collectDelayedCarrierLines,
   countByDay,
   pickSpotlightFromTriage,
   triageCountsFromBuckets,
@@ -25,7 +26,7 @@ export type { OperatorRequestScope, OperatorRequestSortColumn, SortDirection };
 async function buildOrgPerformanceInsights(
   supabase: SupabaseClient,
   organizationId: string,
-  triageCounts: Record<import("@/utils/dashboard-metrics").TriageBucketKey, number>,
+  delayedCarrierLines: import("@/utils/dashboard-metrics").DelayCarrierLineRow[],
 ): Promise<PerformanceInsights> {
   const [
     { data: shipmentRows },
@@ -92,7 +93,7 @@ async function buildOrgPerformanceInsights(
   }));
 
   return buildPerformanceInsights({
-    triageCounts,
+    delayedCarrierLines,
     shipments: (shipmentRows ?? []).map((row) => ({
       id: row.id as string,
       workflow_status: (row.workflow_status as string | null) ?? null,
@@ -177,20 +178,52 @@ async function buildOrgDashboardMetrics(
 
   const orgContainersById: Record<
     string,
-    Pick<Container, "id" | "status" | "location" | "shipment_id">
+    Pick<Container, "id" | "status" | "location" | "shipment_id" | "carrier">
   > = {};
   if (orgContainerIds.length > 0) {
     const { data: contRows } = await supabase
       .from("containers")
-      .select("id, status, location, shipment_id")
+      .select("id, status, location, shipment_id, carrier")
       .in("id", orgContainerIds);
     for (const row of (contRows ?? []) as Pick<
       Container,
-      "id" | "status" | "location" | "shipment_id"
+      "id" | "status" | "location" | "shipment_id" | "carrier"
     >[]) {
       orgContainersById[row.id] = row;
     }
   }
+
+  const orgShipmentIds = [
+    ...new Set(
+      Object.values(orgContainersById)
+        .map((c) => c.shipment_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const shipmentCarriersById: Record<
+    string,
+    { freight_booking_carrier: string | null; shipping_line: string | null }
+  > = {};
+  if (orgShipmentIds.length > 0) {
+    const { data: carrierRows } = await supabase
+      .from("shipments")
+      .select("id, freight_booking_carrier, shipping_line")
+      .in("id", orgShipmentIds);
+    for (const row of carrierRows ?? []) {
+      shipmentCarriersById[row.id as string] = {
+        freight_booking_carrier: (row.freight_booking_carrier as string | null) ?? null,
+        shipping_line: (row.shipping_line as string | null) ?? null,
+      };
+    }
+  }
+
+  const delayedCarrierLines = collectDelayedCarrierLines({
+    requests: orgList,
+    containersById: orgContainersById,
+    alerts: orgAlertList,
+    shipmentCarriersById,
+  });
 
   let orgAttachmentCounts: Record<string, number> = {};
   let orgMessages: ReportMessage[] = [];
@@ -211,14 +244,6 @@ async function buildOrgDashboardMetrics(
       counts[rid] = (counts[rid] ?? 0) + 1;
     }
     orgAttachmentCounts = counts;
-
-    const orgShipmentIds = [
-      ...new Set(
-        orgContainerIds
-          .map((cid) => orgContainersById[cid]?.shipment_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ];
 
     const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
       supabase
@@ -260,7 +285,7 @@ async function buildOrgDashboardMetrics(
   const performanceInsights = await buildOrgPerformanceInsights(
     supabase,
     organizationId,
-    triageCounts,
+    delayedCarrierLines,
   );
 
   return {

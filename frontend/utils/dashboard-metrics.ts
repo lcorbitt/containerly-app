@@ -69,6 +69,88 @@ export function isWorkflowActiveStatus(status: string): boolean {
   return status === "pending" || status === "syncing" || status === "active";
 }
 
+export function resolveShipmentCarrierLabel(input: {
+  containerCarrier: string | null;
+  freightBookingCarrier: string | null;
+  shippingLine: string | null;
+}): string {
+  const tracked = input.containerCarrier?.trim();
+  if (tracked) return tracked;
+  const booked = input.freightBookingCarrier?.trim();
+  if (booked) return booked;
+  const line = input.shippingLine?.trim();
+  if (line) return line;
+  return "Unknown carrier";
+}
+
+export type DelayCarrierLineRow = {
+  carrier_label: string;
+};
+
+/** Active tracking lines with carrier-reported delay signals, one row per container. */
+export function collectDelayedCarrierLines(input: {
+  requests: readonly Pick<TrackingRequest, "status" | "container_id">[];
+  containersById: Record<
+    string,
+    Pick<Container, "id" | "status" | "location" | "carrier" | "shipment_id">
+  >;
+  alerts: readonly Pick<Alert, "container_id" | "alert_type" | "severity">[];
+  shipmentCarriersById: Record<
+    string,
+    { freight_booking_carrier: string | null; shipping_line: string | null }
+  >;
+}): DelayCarrierLineRow[] {
+  const delayedAlertContainerIds = new Set<string>();
+  const exceptionAlertContainerIds = new Set<string>();
+
+  for (const alert of input.alerts) {
+    const containerId = alert.container_id;
+    if (!containerId) continue;
+    if (alert.alert_type === "SHIPMENT_DELAYED") {
+      delayedAlertContainerIds.add(containerId);
+    }
+    if (alert.alert_type === "STATUS_EXCEPTION" || alert.severity === "critical") {
+      exceptionAlertContainerIds.add(containerId);
+    }
+  }
+
+  const lines: DelayCarrierLineRow[] = [];
+  const seenContainerIds = new Set<string>();
+
+  for (const request of input.requests) {
+    const containerId = request.container_id;
+    if (!containerId || !isWorkflowActiveStatus(request.status)) continue;
+    if (seenContainerIds.has(containerId)) continue;
+
+    const container = input.containersById[containerId];
+    if (!container) continue;
+
+    const status = (container.status ?? "").toUpperCase();
+    const isDelayed =
+      status.includes("DELAY") ||
+      status.includes("EXCEPTION") ||
+      delayedAlertContainerIds.has(containerId) ||
+      exceptionAlertContainerIds.has(containerId) ||
+      locationEtaSlipped(container.location);
+
+    if (!isDelayed) continue;
+    seenContainerIds.add(containerId);
+
+    const shipmentId = container.shipment_id;
+    const shipmentCarriers = shipmentId ? input.shipmentCarriersById[shipmentId] : undefined;
+
+    lines.push({
+      carrier_label: resolveShipmentCarrierLabel({
+        containerCarrier: container.carrier ?? null,
+        freightBookingCarrier: shipmentCarriers?.freight_booking_carrier ?? null,
+        shippingLine: shipmentCarriers?.shipping_line ?? null,
+      }),
+    });
+  }
+
+  return lines;
+}
+
 function startOfUtcDay(d: Date): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
@@ -98,7 +180,7 @@ export function countByDay(
   });
 }
 
-function locationEtaSlipped(location: Record<string, unknown> | null | undefined): boolean {
+export function locationEtaSlipped(location: Record<string, unknown> | null | undefined): boolean {
   if (!location || typeof location !== "object") return false;
   const now = Date.now();
   for (const key of ["eta_final_destination", "eta_next_destination"] as const) {

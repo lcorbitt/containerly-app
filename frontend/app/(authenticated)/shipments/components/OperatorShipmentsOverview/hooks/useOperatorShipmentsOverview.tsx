@@ -29,6 +29,7 @@ import {
   SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
   SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS,
 } from "../constants";
+import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
 import { displayOverviewText, formatOverviewDate } from "../utils";
 
 export function useOperatorShipmentsOverview() {
@@ -51,6 +52,7 @@ export function useOperatorShipmentsOverview() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [deletingShipmentId, setDeletingShipmentId] = useState<string | null>(null);
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
@@ -66,7 +68,7 @@ export function useOperatorShipmentsOverview() {
 
   useEffect(() => {
     setPage(0);
-  }, [listFilter, pageSize, sortColumn, sortDirection]);
+  }, [listFilter, pageSize, sortColumn, sortDirection, tagFilter]);
 
   const load = useCallback(async () => {
     if (!selectedOrgId) return;
@@ -77,6 +79,7 @@ export function useOperatorShipmentsOverview() {
         organizationId: selectedOrgId,
         scope: listFilter,
         search: debouncedSearch,
+        tagFilter,
         sortColumn,
         sortDirection,
         page,
@@ -98,7 +101,7 @@ export function useOperatorShipmentsOverview() {
     } finally {
       setLoading(false);
     }
-  }, [selectedOrgId, listFilter, debouncedSearch, sortColumn, sortDirection, page, pageSize]);
+  }, [selectedOrgId, listFilter, debouncedSearch, tagFilter, sortColumn, sortDirection, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -131,6 +134,21 @@ export function useOperatorShipmentsOverview() {
     },
     [sortColumn],
   );
+
+  const handleTagFilter = useCallback(
+    (tag: string | null) => {
+      setTagFilter(tag);
+      if (tag) {
+        setSortColumn("tags");
+        setSortDirection("asc");
+      }
+    },
+    [],
+  );
+
+  const clearTagFilter = useCallback(() => {
+    setTagFilter(null);
+  }, []);
 
   const handleDeleteShipment = useCallback(
     async (row: ShipmentOverviewRow) => {
@@ -231,6 +249,20 @@ export function useOperatorShipmentsOverview() {
         },
       },
       {
+        id: "tags",
+        header: "Tags",
+        sortable: true,
+        className: "max-w-[12rem] w-[12rem]",
+        headerClassName: "whitespace-nowrap",
+        cell: (r) => (
+          <ShipmentOverviewTagsCell
+            tags={r.tags ?? []}
+            activeTagFilter={tagFilter}
+            onTagFilter={handleTagFilter}
+          />
+        ),
+      },
+      {
         id: "workflow_status",
         header: "Documents",
         sortable: true,
@@ -286,7 +318,7 @@ export function useOperatorShipmentsOverview() {
 
       return base;
     },
-    [canDeleteShipments, deletingShipmentId, handleDeleteShipment, peopleLabels],
+    [canDeleteShipments, deletingShipmentId, handleDeleteShipment, handleTagFilter, peopleLabels, tagFilter],
   );
 
   const navigateToShipment = useCallback(
@@ -312,6 +344,8 @@ export function useOperatorShipmentsOverview() {
     sortDirection,
     searchInput,
     setSearchInput,
+    tagFilter,
+    clearTagFilter,
     load,
     handleSortChange,
     columns,

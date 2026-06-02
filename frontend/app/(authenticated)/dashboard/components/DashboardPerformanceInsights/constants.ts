@@ -1,25 +1,44 @@
-export const DASHBOARD_PERFORMANCE_SECTION_CLASS =
-  "rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950";
+import {
+  DASHBOARD_DIVIDE_CLASS,
+  DASHBOARD_EMPTY_CLASS,
+  DASHBOARD_LINK_CLASS,
+  DASHBOARD_LOADING_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS,
+  DASHBOARD_PANEL_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS,
+  DASHBOARD_SECTION_TITLE_CLASS,
+  DASHBOARD_STAT_VALUE_CLASS,
+} from "../../constants";
 
-export const DASHBOARD_PERFORMANCE_GRID_CLASS =
-  "mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
+export {
+  DASHBOARD_PANEL_CLASS as DASHBOARD_PERFORMANCE_PANEL_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS as DASHBOARD_PERFORMANCE_PANEL_BODY_CLASS,
+  DASHBOARD_SECTION_TITLE_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS,
+  DASHBOARD_EMPTY_CLASS as DASHBOARD_PERFORMANCE_EMPTY_CLASS,
+  DASHBOARD_LOADING_CLASS as DASHBOARD_PERFORMANCE_LOADING_CLASS,
+  DASHBOARD_STAT_VALUE_CLASS as DASHBOARD_PERFORMANCE_CARD_VALUE_CLASS,
+};
 
-export const DASHBOARD_PERFORMANCE_CARD_CLASS =
-  "rounded-lg border border-zinc-100 bg-zinc-50/80 p-3 dark:border-zinc-800 dark:bg-zinc-900/40";
+export const DASHBOARD_PERFORMANCE_GRID_CLASS = `grid sm:grid-cols-2 xl:grid-cols-4 divide-y xl:divide-y-0 xl:divide-x ${DASHBOARD_DIVIDE_CLASS}`;
 
-export const DASHBOARD_PERFORMANCE_CARD_TITLE_CLASS =
-  "text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400";
+export const DASHBOARD_PERFORMANCE_CELL_CLASS = "p-5 xl:p-6";
 
-export const DASHBOARD_PERFORMANCE_CARD_VALUE_CLASS =
-  "mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50";
+export const DASHBOARD_PERFORMANCE_CELL_TITLE_CLASS =
+  "text-xs text-zinc-500 dark:text-zinc-400";
 
-export const DASHBOARD_PERFORMANCE_CARD_DETAIL_CLASS =
-  "mt-1 text-xs text-zinc-600 dark:text-zinc-400";
+export const DASHBOARD_PERFORMANCE_CELL_DETAIL_CLASS =
+  "mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400";
 
-export const DASHBOARD_PERFORMANCE_LIST_CLASS = "mt-2 space-y-2";
+export const DASHBOARD_PERFORMANCE_LIST_CLASS = "mt-3 space-y-2.5";
 
 export const DASHBOARD_PERFORMANCE_ROW_CLASS =
-  "flex items-start justify-between gap-2 text-xs text-zinc-700 dark:text-zinc-300";
+  "flex items-start justify-between gap-3 text-sm text-zinc-700 dark:text-zinc-300";
 
-export const DASHBOARD_PERFORMANCE_EMPTY_CLASS =
-  "text-xs text-zinc-500 dark:text-zinc-400";
+export const DASHBOARD_PERFORMANCE_ROW_LINK_CLASS =
+  "block rounded-lg px-2 py-1.5 -mx-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60";
+
+export const DASHBOARD_PERFORMANCE_ROW_PREVIEW_CLASS =
+  "mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400";
+
+export { DASHBOARD_LINK_CLASS as DASHBOARD_PERFORMANCE_LINK_CLASS };

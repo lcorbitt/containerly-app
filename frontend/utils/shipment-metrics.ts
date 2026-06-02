@@ -1,19 +1,18 @@
 import type {
+  DelayCarrierInsight,
   DocTurnaroundInsight,
   PerformanceInsights,
   ResponseTimeInsight,
   ShipmentContextSummary,
   ShipmentInsightCard,
   ShipmentMetricsSummary,
-  TriageDriverInsight,
   WaitingCustomerRow,
   WorkflowStepDwell,
 } from "@shared/dto/performance.dto";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { ReportMessage } from "@/types/database";
 import {
-  TRIAGE_BUCKET_KEYS,
-  TRIAGE_BUCKET_LABELS,
+  type DelayCarrierLineRow,
   type TriageBucketKey,
 } from "@/utils/dashboard-metrics";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
@@ -116,22 +115,31 @@ export function pickSlowestWorkflowStep(dwells: readonly WorkflowStepDwell[]): W
   return dwells[0] ?? null;
 }
 
-export function buildTopDelayDrivers(
-  triageCounts: Record<TriageBucketKey, number>,
-): TriageDriverInsight[] {
-  const total = TRIAGE_BUCKET_KEYS.reduce((n, key) => n + (triageCounts[key] ?? 0), 0);
+export function buildTopDelayCarriers(
+  lines: readonly DelayCarrierLineRow[],
+): DelayCarrierInsight[] {
+  const total = lines.length;
   if (total === 0) return [];
 
-  return TRIAGE_BUCKET_KEYS.map((bucket_key) => {
-    const count = triageCounts[bucket_key] ?? 0;
-    return {
-      bucket_key,
-      label: TRIAGE_BUCKET_LABELS[bucket_key],
-      count,
-      percentage: Math.round((count / total) * 100),
-    };
-  })
-    .filter((row) => row.count > 0)
+  const buckets = new Map<string, { label: string; count: number }>();
+  for (const line of lines) {
+    const label = line.carrier_label.trim() || "Unknown carrier";
+    const key = label.toLowerCase();
+    const existing = buckets.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      buckets.set(key, { label, count: 1 });
+    }
+  }
+
+  return [...buckets.entries()]
+    .map(([carrier_key, agg]) => ({
+      carrier_key,
+      label: agg.label,
+      count: agg.count,
+      percentage: Math.round((agg.count / total) * 100),
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
 }
@@ -194,7 +202,7 @@ export function computeDocTurnaround(events: readonly ActivityEventRow[]): DocTu
 }
 
 export function buildPerformanceInsights(input: {
-  triageCounts: Record<TriageBucketKey, number>;
+  delayedCarrierLines: readonly DelayCarrierLineRow[];
   shipments: readonly WorkflowShipmentRow[];
   messages: readonly MessageRow[];
   activityEvents: readonly ActivityEventRow[];
@@ -205,7 +213,7 @@ export function buildPerformanceInsights(input: {
   const dwells = computeWorkflowDwellByStatus(input.shipments, nowMs);
 
   return {
-    top_delay_drivers: buildTopDelayDrivers(input.triageCounts),
+    top_delay_carriers: buildTopDelayCarriers(input.delayedCarrierLines),
     slowest_workflow_step: pickSlowestWorkflowStep(dwells),
     waiting_customers: buildWaitingCustomers(input.messageThreads, nowMs),
     doc_turnaround: computeDocTurnaround(input.activityEvents),

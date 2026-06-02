@@ -9,7 +9,7 @@ export function formatHoursLabel(hours: number): string {
 export function performanceInsightsHasData(insights: PerformanceInsights | null | undefined): boolean {
   if (!insights) return false;
   return (
-    insights.top_delay_drivers.length > 0 ||
+    insights.top_delay_carriers.length > 0 ||
     insights.slowest_workflow_step != null ||
     insights.waiting_customers.length > 0 ||
     insights.doc_turnaround.approval_count > 0 ||

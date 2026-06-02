@@ -152,6 +152,7 @@ export type ShipmentOverviewRow = {
   owner_user_id: string | null;
   /** Primary operator (`shipments.assignee_user_id`). */
   assignee_user_id: string | null;
+  tags: string[];
   tracking_requests: ShipmentOverviewTrackingRow[] | ShipmentOverviewTrackingRow | null;
 };
 
@@ -822,6 +823,7 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
   organizationId: string;
   scope: OperatorShipmentScope;
   search: string;
+  tagFilter?: string | null;
   sortColumn: OperatorShipmentSortColumn;
   sortDirection: SortDirection;
   page: number;
@@ -835,6 +837,9 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
     sortColumn: args.sortColumn,
     sortDirection: args.sortDirection,
   });
+  if (args.tagFilter?.trim()) {
+    params.set("tagFilter", args.tagFilter.trim());
+  }
   return apiJson<{ rows: ShipmentOverviewRow[]; totalCount: number }>(
     `/api/organizations/${encodeURIComponent(args.organizationId)}/operator-shipments?${params}`,
   );

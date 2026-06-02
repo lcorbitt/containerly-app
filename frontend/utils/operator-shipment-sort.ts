@@ -22,6 +22,7 @@ export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
   "assignee",
   "workflow_status",
   "estimated_arrival_at",
+  "tags",
 ] as const;
 
 export type OperatorShipmentSortColumn = (typeof OPERATOR_SHIPMENT_SORT_COLUMNS)[number];
@@ -32,6 +33,17 @@ export const DEFAULT_OPERATOR_SHIPMENT_SORT_COLUMN: OperatorShipmentSortColumn =
 const DESCENDING_BY_DEFAULT: ReadonlySet<OperatorShipmentSortColumn> = new Set([
   "last_sync_at",
   "created_at",
+]);
+
+/** Columns that default to A→Z when first selected. */
+const ASCENDING_BY_DEFAULT: ReadonlySet<OperatorShipmentSortColumn> = new Set([
+  "tags",
+  "customer_name",
+  "order_number",
+  "port_of_loading",
+  "port_of_destination",
+  "assignee",
+  "workflow_status",
 ]);
 
 export function normalizeOperatorShipmentSortColumn(raw: string | null): OperatorShipmentSortColumn {
@@ -45,5 +57,7 @@ export function normalizeOperatorShipmentSortColumn(raw: string | null): Operato
 export function defaultSortDirectionForOperatorShipmentColumn(
   column: OperatorShipmentSortColumn,
 ): SortDirection {
-  return DESCENDING_BY_DEFAULT.has(column) ? "desc" : "asc";
+  if (DESCENDING_BY_DEFAULT.has(column)) return "desc";
+  if (ASCENDING_BY_DEFAULT.has(column)) return "asc";
+  return "asc";
 }

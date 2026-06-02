@@ -1,13 +1,26 @@
-export const DASHBOARD_SPOTLIGHT_PANEL_CLASS =
-  "flex h-full flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
+import {
+  DASHBOARD_EYEBROW_CLASS,
+  DASHBOARD_LINK_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS,
+  DASHBOARD_PANEL_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS,
+} from "../../constants";
 
-export const DASHBOARD_SPOTLIGHT_EYEBROW_CLASS =
-  "text-[10px] font-semibold uppercase tracking-wide text-primary-orange";
+export {
+  DASHBOARD_PANEL_CLASS as DASHBOARD_SPOTLIGHT_PANEL_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS as DASHBOARD_SPOTLIGHT_PANEL_BODY_CLASS,
+  DASHBOARD_EYEBROW_CLASS as DASHBOARD_SPOTLIGHT_EYEBROW_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS as DASHBOARD_SPOTLIGHT_DETAIL_CLASS,
+  DASHBOARD_LINK_CLASS as DASHBOARD_SPOTLIGHT_LINK_CLASS,
+};
+
+export const DASHBOARD_SPOTLIGHT_PANEL_URGENT_CLASS =
+  "border-l-2 border-l-primary-orange pl-[calc(1.5rem-2px)]";
 
 export const DASHBOARD_SPOTLIGHT_TITLE_CLASS =
-  "mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-50";
+  "mt-1 text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-50";
 
-export const DASHBOARD_SPOTLIGHT_DETAIL_CLASS = "mt-2 text-sm text-zinc-600 dark:text-zinc-400";
+export const DASHBOARD_SPOTLIGHT_CONTAINER_CLASS =
+  "mt-1 font-mono text-xs text-zinc-400 dark:text-zinc-500";
 
-export const DASHBOARD_SPOTLIGHT_LINK_CLASS =
-  "mt-4 inline-flex items-center gap-1 text-sm font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100";
+export const DASHBOARD_SPOTLIGHT_ACTIONS_CLASS = "mt-auto flex flex-wrap gap-x-5 gap-y-2 pt-6";

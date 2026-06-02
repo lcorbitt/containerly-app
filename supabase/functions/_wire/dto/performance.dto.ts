@@ -4,8 +4,8 @@
 
 import type { TriageBucketKey } from "./performance.types.ts";
 
-export type TriageDriverInsight = {
-  bucket_key: TriageBucketKey;
+export type DelayCarrierInsight = {
+  carrier_key: string;
   label: string;
   count: number;
   percentage: number;
@@ -39,7 +39,7 @@ export type ResponseTimeInsight = {
 };
 
 export type PerformanceInsights = {
-  top_delay_drivers: TriageDriverInsight[];
+  top_delay_carriers: DelayCarrierInsight[];
   slowest_workflow_step: WorkflowStepDwell | null;
   waiting_customers: WaitingCustomerRow[];
   doc_turnaround: DocTurnaroundInsight;

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { Reveal } from "@/components/Reveal";
 import { TablePagination } from "@/components/TablePagination";
@@ -14,6 +14,8 @@ import {
   SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS,
   SHIPMENT_OVERVIEW_TOOLBAR_CLASS,
   SHIPMENT_OVERVIEW_REFRESH_BUTTON_CLASS,
+  SHIPMENT_OVERVIEW_TAG_FILTER_CLASS,
+  SHIPMENT_OVERVIEW_TAG_FILTER_CLEAR_CLASS,
   shipmentOverviewFilterButtonClass,
 } from "./constants";
 import { useOperatorShipmentsOverview } from "./hooks/useOperatorShipmentsOverview";
@@ -43,6 +45,8 @@ export function OperatorShipmentsOverview({
     sortDirection,
     searchInput,
     setSearchInput,
+    tagFilter,
+    clearTagFilter,
     load,
     handleSortChange,
     columns,
@@ -84,7 +88,7 @@ export function OperatorShipmentsOverview({
                   <TextInput
                     id="shipments-overview-search"
                     type="search"
-                    placeholder="Search order no., customer, container, etc…"
+                    placeholder="Search order no., customer, container, tag…"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     disabled={loading}
@@ -126,6 +130,22 @@ export function OperatorShipmentsOverview({
                   </div>
                 </div>
 
+                {tagFilter ? (
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className={SHIPMENT_OVERVIEW_TAG_FILTER_CLASS}>
+                      Tag: {tagFilter}
+                      <button
+                        type="button"
+                        aria-label="Clear tag filter"
+                        className={SHIPMENT_OVERVIEW_TAG_FILTER_CLEAR_CLASS}
+                        onClick={clearTagFilter}
+                      >
+                        <X className="h-3 w-3" aria-hidden />
+                      </button>
+                    </span>
+                  </div>
+                ) : null}
+
                 {error ? <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 
                 <DataTable
@@ -137,9 +157,11 @@ export function OperatorShipmentsOverview({
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
                 emptyMessage={
-                  listFilter === "all"
-                    ? "No shipments yet."
-                    : "No shipments match this filter."
+                  tagFilter
+                    ? `No shipments tagged “${tagFilter}”.`
+                    : listFilter === "all"
+                      ? "No shipments yet."
+                      : "No shipments match this filter."
                 }
                 onRowClick={navigateToShipment}
                 />

@@ -1,21 +1,34 @@
-export const DASHBOARD_CHART_CARD_CLASS =
-  "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
+import {
+  DASHBOARD_LOADING_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS,
+  DASHBOARD_PANEL_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS,
+  DASHBOARD_SECTION_TITLE_CLASS,
+} from "../../constants";
 
-export const DASHBOARD_CHART_TITLE_CLASS = "text-sm font-semibold text-zinc-900 dark:text-zinc-100";
+export {
+  DASHBOARD_PANEL_CLASS as DASHBOARD_CHART_PANEL_CLASS,
+  DASHBOARD_PANEL_BODY_CLASS as DASHBOARD_CHART_PANEL_BODY_CLASS,
+  DASHBOARD_SECTION_TITLE_CLASS as DASHBOARD_CHART_TITLE_CLASS,
+  DASHBOARD_SECTION_DESC_CLASS as DASHBOARD_CHART_SUBTITLE_CLASS,
+  DASHBOARD_LOADING_CLASS as DASHBOARD_CHART_LOADING_CLASS,
+};
 
-export const DASHBOARD_CHART_SUBTITLE_CLASS = "mt-0.5 text-xs text-zinc-500 dark:text-zinc-400";
+export const DASHBOARD_CHARTS_GRID_CLASS = "grid gap-6 lg:grid-cols-2";
+
+export const DASHBOARD_CHART_HEIGHT_CLASS = "mt-5 h-48 w-full";
 
 export const CHART_PRIMARY_ORANGE = "#FF4E00";
 
-export const CHART_GRID_STROKE = "rgba(161, 161, 170, 0.25)";
+export const CHART_GRID_STROKE = "rgba(161, 161, 170, 0.2)";
 
-export const CHART_AXIS_TICK = "#71717a";
+export const CHART_AXIS_TICK = "#a1a1aa";
 
 export const CHART_BAR_COLORS = [
   CHART_PRIMARY_ORANGE,
   "#a1a1aa",
-  "#f59e0b",
-  "#10b981",
-  "#0ea5e9",
-  "#8b5cf6",
+  "#d4d4d8",
+  "#71717a",
+  "#52525b",
+  "#3f3f46",
 ] as const;

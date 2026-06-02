@@ -28,6 +28,10 @@ import {
   deleteAlertsForReportMessageIds,
   syncAlertsForEditedReportMessage,
 } from "@/services/alert.server";
+import {
+  deleteActivityEventsForReportMessageIds,
+  syncActivityEventsForEditedReportMessage,
+} from "@/services/message-activity.server";
 
 async function insertMessageActivityEventForUser(
   supabase: SupabaseClient,
@@ -135,8 +139,12 @@ export async function updateReportMessageByIdForUser(
       reportMessageId: messageId,
       bodyPreview: stripMessageMarkup(trimmed).trim(),
     });
+    await syncActivityEventsForEditedReportMessage(admin, {
+      reportMessageId: messageId,
+      body: trimmed,
+    });
   } catch {
-    /* best-effort — alert row updates also trigger alerts realtime */
+    /* best-effort — alert/activity row updates also trigger realtime */
   }
 
   return updated as ReportMessage;
@@ -178,6 +186,7 @@ export async function deleteReportMessageByIdForUser(
   try {
     const admin = createAdminClient();
     await deleteAlertsForReportMessageIds(admin, subtreeIds);
+    await deleteActivityEventsForReportMessageIds(admin, subtreeIds);
   } catch {
     /* best-effort — DB cascade on report_message_id also removes linked alerts */
   }

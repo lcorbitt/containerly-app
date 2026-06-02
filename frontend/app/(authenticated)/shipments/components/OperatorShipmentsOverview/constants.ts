@@ -29,3 +29,9 @@ export const shipmentOverviewFilterButtonClass = (active: boolean) =>
 
 export const SHIPMENT_OVERVIEW_REFRESH_BUTTON_CLASS =
   "inline-flex rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200";
+
+export const SHIPMENT_OVERVIEW_TAG_FILTER_CLASS =
+  "inline-flex items-center gap-1.5 rounded-full bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900";
+
+export const SHIPMENT_OVERVIEW_TAG_FILTER_CLEAR_CLASS =
+  "rounded-full p-0.5 opacity-80 transition-opacity hover:opacity-100";

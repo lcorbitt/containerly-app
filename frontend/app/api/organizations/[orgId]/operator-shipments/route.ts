@@ -28,12 +28,14 @@ export async function GET(
   const sortColumn = normalizeOperatorShipmentSortColumn(searchParams.get("sortColumn"));
   const sortDirection = (searchParams.get("sortDirection") === "asc" ? "asc" : "desc") as SortDirection;
   const search = searchParams.get("search") ?? "";
+  const tagFilter = searchParams.get("tagFilter")?.trim() || null;
 
   const result = await fetchOperatorShipmentsOverviewPage(supabase, {
     organizationId: orgId,
     userId: user.id,
     scope,
     search,
+    tagFilter,
     sortColumn,
     sortDirection,
     page,
