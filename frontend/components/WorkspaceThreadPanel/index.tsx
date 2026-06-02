@@ -29,6 +29,7 @@ import {
   THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS,
   THREAD_OWN_COMPOSER_BG_CLASS,
+  THREAD_PANEL_COMPOSER_ID,
 } from "./constants";
 import {
   threadMessageAuthorAvatarUrl,
@@ -381,6 +382,7 @@ export function ThreadPanel({
   composerHidden = false,
   allowReply = true,
   pinToLatest = true,
+  scrollComposerIntoView = false,
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
@@ -419,6 +421,8 @@ export function ThreadPanel({
   allowReply?: boolean;
   /** Pin the scroll viewport to the newest message when the tab is shown or messages grow. */
   pinToLatest?: boolean;
+  /** Scroll the page so the tabs card / composer are visible (e.g. shipment `?tab=messages`). */
+  scrollComposerIntoView?: boolean;
 }) {
   const noop = () => {};
   const handleStartEdit = onStartEditMessage ?? noop;
@@ -437,6 +441,7 @@ export function ThreadPanel({
     messagesEndRef,
     messageCount: messages.length,
     pinToLatest,
+    scrollComposerIntoView,
   });
 
   const replyPreview = useMemo(() => {
@@ -504,7 +509,10 @@ export function ThreadPanel({
         <div ref={messagesEndRef} aria-hidden className="h-px w-full shrink-0" />
       </div>
       {composerHidden ? null : (
-      <div className="shrink-0 space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div
+        id={THREAD_PANEL_COMPOSER_ID}
+        className="shrink-0 space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-5 dark:border-zinc-800 dark:bg-zinc-900/40"
+      >
         {replyPreview ? (
           <div className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-xs dark:border-zinc-700 dark:bg-zinc-950">
             <div className="min-w-0">

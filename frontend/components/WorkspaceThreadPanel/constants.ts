@@ -75,6 +75,9 @@ export const THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS =
 
 export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
+/** Scroll target for page-level focus when opening the messages tab (composer footer). */
+export const THREAD_PANEL_COMPOSER_ID = "workspace-thread-composer";
+
 export const THREAD_MESSAGE_CARD_SHADOW_CLASS =
   "shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]";
 export const THREAD_REPLY_CARD_SHADOW_CLASS =

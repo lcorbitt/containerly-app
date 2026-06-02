@@ -1,1 +1,4 @@
-export { WORKSPACE_TABS_SECTION_CLASS as SHIPMENT_DETAILS_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
+export {
+  WORKSPACE_TABS_SECTION_CLASS as SHIPMENT_DETAILS_TABS_SECTION_CLASS,
+  WORKSPACE_TABS_SECTION_ID as SHIPMENT_DETAILS_TABS_SECTION_ID,
+} from "@/components/WorkspaceTabShell/constants";

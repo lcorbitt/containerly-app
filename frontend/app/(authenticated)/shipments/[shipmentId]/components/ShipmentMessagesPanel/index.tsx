@@ -93,6 +93,7 @@ export function ShipmentMessagesPanel({
           key={shipmentId}
           messages={threadMessages}
           pinToLatest={pinToLatest}
+          scrollComposerIntoView={pinToLatest}
           authorNameByUserId={messageAuthorByUserId}
           authorAvatarUrlByUserId={authorAvatarUrlByUserId}
           uploaderDisplayByUserId={messageAuthorByUserId}

@@ -185,29 +185,50 @@ export function threadMessageAuthorName(
 
 export function scrollThreadToLatest(
   container: HTMLElement | null,
-  anchor: HTMLElement | null,
+  _anchor: HTMLElement | null,
   behavior: ScrollBehavior = "auto",
 ): void {
-  if (anchor) {
-    anchor.scrollIntoView({ block: "end", behavior });
-    return;
-  }
-  if (container) {
-    container.scrollTo({ top: container.scrollHeight, behavior });
-  }
+  if (!container) return;
+  const top = Math.max(0, container.scrollHeight - container.clientHeight);
+  container.scrollTo({ top, behavior });
 }
 
-/** Re-run scroll after layout, Reveal transitions, and late-resizing content. */
+/** Scroll the page so the tabs card and composer are in view (`?tab=messages`). */
+export function scrollMessagesTabChromeIntoView(
+  behavior: ScrollBehavior = "auto",
+  opts?: { composerId?: string; tabsSectionId?: string },
+): void {
+  const composerId = opts?.composerId ?? "workspace-thread-composer";
+  const tabsSectionId = opts?.tabsSectionId ?? "shipment-workspace-tabs";
+  const target =
+    document.getElementById(composerId) ?? document.getElementById(tabsSectionId);
+  if (!target) return;
+  target.scrollIntoView({ block: "end", behavior, inline: "nearest" });
+}
+
+function runFlushSteps(run: () => void): void {
+  run();
+  requestAnimationFrame(() => {
+    run();
+    requestAnimationFrame(run);
+  });
+  window.setTimeout(run, 50);
+  window.setTimeout(run, 350);
+  window.setTimeout(run, 550);
+}
+
+/** Re-run scroll after layout, Reveal transitions (500ms), and late-resizing content. */
 export function flushScrollThreadToLatest(
   container: HTMLElement | null,
   anchor: HTMLElement | null,
   behavior: ScrollBehavior = "auto",
 ): void {
-  scrollThreadToLatest(container, anchor, behavior);
-  requestAnimationFrame(() => {
-    scrollThreadToLatest(container, anchor, behavior);
-    requestAnimationFrame(() => scrollThreadToLatest(container, anchor, behavior));
-  });
-  window.setTimeout(() => scrollThreadToLatest(container, anchor, behavior), 50);
-  window.setTimeout(() => scrollThreadToLatest(container, anchor, behavior), 350);
+  runFlushSteps(() => scrollThreadToLatest(container, anchor, behavior));
+}
+
+export function flushScrollMessagesTabChromeIntoView(
+  behavior: ScrollBehavior = "auto",
+  opts?: { composerId?: string; tabsSectionId?: string },
+): void {
+  runFlushSteps(() => scrollMessagesTabChromeIntoView(behavior, opts));
 }

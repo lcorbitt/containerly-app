@@ -3,6 +3,9 @@
 export const WORKSPACE_TABS_SECTION_CLASS =
   "min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
 
+/** Page scroll anchor for `?tab=messages` — the bordered tabs card on shipment workspace. */
+export const WORKSPACE_TABS_SECTION_ID = "shipment-workspace-tabs";
+
 export const WORKSPACE_TAB_LIST_CLASS =
   "flex shrink-0 overflow-x-auto border-b border-zinc-200 px-4 sm:px-6 dark:border-zinc-800";
 
