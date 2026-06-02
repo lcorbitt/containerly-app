@@ -5,8 +5,6 @@ import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { ShipmentRiskMessageModal } from "./ShipmentRiskMessageModal";
 import {
   SHIPMENT_RISK_EDITOR_LABEL_CLASS,
-  SHIPMENT_RISK_EDITOR_MESSAGE_TRIGGER_CLASS,
-  SHIPMENT_RISK_EDITOR_MESSAGE_TRIGGER_EMPTY_CLASS,
   SHIPMENT_RISK_EDITOR_PILL_CLASS,
   SHIPMENT_RISK_EDITOR_ROW_CLASS,
   SHIPMENT_RISK_EDITOR_SECTION_CLASS,
@@ -21,15 +19,14 @@ export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
   const {
     riskSelect,
     displayRisk,
+    currentRisk,
+    destinationRisk,
     handleRiskSelectChange,
     messageModalOpen,
-    openMessageModal,
     closeMessageModal,
     modalMessage,
     setModalMessage,
     saveMessageFromModal,
-    messageTriggerLabel,
-    hasSavedMessage,
     saving,
   } = useShipmentRiskEditor(props);
 
@@ -41,7 +38,7 @@ export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
           <div className={SHIPMENT_RISK_EDITOR_SELECT_SHELL_CLASS}>
             <CustomSelect
               value={riskSelect}
-              onValueChange={(value) => void handleRiskSelectChange(shipmentRiskSelectFromValue(value))}
+              onValueChange={(value) => handleRiskSelectChange(shipmentRiskSelectFromValue(value))}
               options={SHIPMENT_RISK_SELECT_OPTIONS}
               showAvatars={false}
               disabled={saving}
@@ -55,24 +52,13 @@ export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
           >
             {displayRisk.toUpperCase()} risk
           </span>
-          <button
-            type="button"
-            onClick={openMessageModal}
-            disabled={saving}
-            className={
-              hasSavedMessage
-                ? SHIPMENT_RISK_EDITOR_MESSAGE_TRIGGER_CLASS
-                : SHIPMENT_RISK_EDITOR_MESSAGE_TRIGGER_EMPTY_CLASS
-            }
-            title={hasSavedMessage ? messageTriggerLabel : undefined}
-          >
-            {messageTriggerLabel}
-          </button>
         </div>
       </section>
 
       <ShipmentRiskMessageModal
         open={messageModalOpen}
+        currentRisk={currentRisk}
+        destinationRisk={destinationRisk}
         message={modalMessage}
         saving={saving}
         onMessageChange={setModalMessage}

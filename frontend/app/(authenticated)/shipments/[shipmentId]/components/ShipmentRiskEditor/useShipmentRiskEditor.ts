@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react";
 import { useToast } from "@/contexts/toast";
 import { useUpdateShipmentRiskMutation } from "@/hooks/mutations/useShipmentRisk";
-import type { ShipmentRiskLevel } from "@shared/dto/logistics.dto";
 import { shipmentRiskSelectValue } from "./utils";
 import type { ShipmentRiskEditorProps, ShipmentRiskSelectValue } from "./types";
 
@@ -32,7 +31,7 @@ export function useShipmentRiskEditor({
     async (level: ShipmentRiskSelectValue, message: string) => {
       const trimmed = message.trim();
       if (!trimmed) {
-        toast("Risk message is required", "error");
+        toast("Risk message is required when changing risk status", "error");
         return false;
       }
 
@@ -56,55 +55,48 @@ export function useShipmentRiskEditor({
     [mutation, onSaved, organizationId, shipmentId, toast],
   );
 
-  const openMessageModal = useCallback(() => {
-    setModalMessage(savedMessage);
-    setMessageModalOpen(true);
-  }, [savedMessage]);
-
   const closeMessageModal = useCallback(() => {
     if (mutation.isPending) return;
     setMessageModalOpen(false);
-    setModalMessage(savedMessage);
+    setModalMessage("");
     setPendingRiskSelect(null);
-  }, [mutation.isPending, savedMessage]);
+  }, [mutation.isPending]);
 
   const handleRiskSelectChange = useCallback(
-    async (next: ShipmentRiskSelectValue) => {
-      setPendingRiskSelect(next);
-      if (!savedMessage) {
-        openMessageModal();
+    (next: ShipmentRiskSelectValue) => {
+      if (next === serverRiskSelect) {
+        setPendingRiskSelect(null);
         return;
       }
 
-      const ok = await persistRisk(next, savedMessage);
-      if (!ok) {
-        setPendingRiskSelect(null);
-      }
+      setPendingRiskSelect(next);
+      setModalMessage(savedMessage);
+      setMessageModalOpen(true);
     },
-    [openMessageModal, persistRisk, savedMessage],
+    [savedMessage, serverRiskSelect],
   );
 
   const saveMessageFromModal = useCallback(async () => {
     const ok = await persistRisk(riskSelect, modalMessage);
     if (ok) {
       setMessageModalOpen(false);
+      setModalMessage("");
     }
   }, [modalMessage, persistRisk, riskSelect]);
 
-  const messageTriggerLabel = savedMessage ? savedMessage : "Add message";
+  const destinationRisk = pendingRiskSelect ?? serverRiskSelect;
 
   return {
     riskSelect,
     displayRisk,
+    currentRisk: serverRiskSelect,
+    destinationRisk,
     handleRiskSelectChange,
     messageModalOpen,
-    openMessageModal,
     closeMessageModal,
     modalMessage,
     setModalMessage,
     saveMessageFromModal,
-    messageTriggerLabel,
-    hasSavedMessage: savedMessage.length > 0,
     saving: mutation.isPending,
   };
 }
