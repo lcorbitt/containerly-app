@@ -139,7 +139,7 @@ export function LandingPage() {
           aria-hidden
         />
 
-        <div className="relative mx-auto max-w-5xl text-center">
+        <Reveal whenInView className="relative mx-auto max-w-5xl text-center">
           <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary-orange">
             Exporter-to-Importer Shipment Intelligence
           </p>
@@ -175,11 +175,11 @@ export function LandingPage() {
               </div>
             ))}
           </dl>
-        </div>
+        </Reveal>
       </section>
 
       <section id="problem" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               Fragmented information creates expensive conversations.
@@ -199,11 +199,11 @@ export function LandingPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
       </section>
 
       <section id="features" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">Platform capabilities</h2>
             <p className="mt-3 text-zinc-600 dark:text-zinc-400">
@@ -224,14 +224,14 @@ export function LandingPage() {
               </article>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section
         id="customer-portal"
         className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] bg-zinc-100 dark:bg-black/40 px-4 py-20 md:px-8"
       >
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               The customer portal your program deserves
@@ -253,11 +253,11 @@ export function LandingPage() {
               </li>
             ))}
           </ol>
-        </div>
+        </Reveal>
       </section>
 
       <section id="automation" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl">
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
@@ -286,14 +286,14 @@ export function LandingPage() {
               </article>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section
         id="how-it-works"
         className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] bg-zinc-100 dark:bg-black/40 px-4 py-20 md:px-8"
       >
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How it works</h2>
@@ -318,11 +318,11 @@ export function LandingPage() {
               </li>
             ))}
           </ol>
-        </div>
+        </Reveal>
       </section>
 
       <section id="team" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto max-w-6xl">
+        <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
               One workspace for everyone who owns the answer
@@ -332,11 +332,11 @@ export function LandingPage() {
               billing as you move from pilot teams to full departments.
             </p>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section id="security" className="scroll-mt-20 border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center md:justify-between">
+        <Reveal whenInView className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               <ShieldCheck className="h-3.5 w-3.5 text-primary-orange" aria-hidden />
@@ -360,11 +360,11 @@ export function LandingPage() {
               <span className="font-medium text-zinc-600 dark:text-zinc-300">Publish deliberately</span>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="border-t border-zinc-200 dark:border-white/[0.06] px-4 py-20 md:px-8">
-        <div className="mx-auto max-w-4xl rounded-3xl border border-primary-orange/25 bg-gradient-to-br from-primary-orange/10 via-transparent to-transparent px-8 py-14 text-center md:px-16">
+        <Reveal whenInView className="mx-auto max-w-4xl rounded-3xl border border-primary-orange/25 bg-gradient-to-br from-primary-orange/10 via-transparent to-transparent px-8 py-14 text-center md:px-16">
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
             Launch your documentation portal first
           </h2>
@@ -380,11 +380,11 @@ export function LandingPage() {
               Sign In
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <footer className="border-t border-zinc-200 dark:border-white/[0.06] px-4 py-10 md:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
+        <Reveal whenInView className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
           <p>© {new Date().getFullYear()} Containerly</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <Link href="/#problem" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
@@ -403,7 +403,7 @@ export function LandingPage() {
               App
             </Link>
           </div>
-        </div>
+        </Reveal>
       </footer>
     </>
   );

@@ -27,6 +27,12 @@ export function useRevealInView(options?: {
     if (!enabled || !node) return;
     if (triggerOnce && inView) return;
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setInView(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
@@ -34,7 +40,7 @@ export function useRevealInView(options?: {
         setInView(true);
         if (triggerOnce) observer.disconnect();
       },
-      { rootMargin, threshold: [0, threshold] },
+      { rootMargin, threshold },
     );
 
     observer.observe(node);
