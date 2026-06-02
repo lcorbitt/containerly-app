@@ -116,10 +116,10 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
               tabIndex={-1}
               className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
             >
-              <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+              <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
                 <h2
                   id={titleId}
-                  className="min-w-0 flex-1 pr-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+                  className="min-w-0 flex-1 pr-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50"
                 >
                   {options.title}
                 </h2>
