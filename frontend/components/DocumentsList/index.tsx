@@ -247,15 +247,11 @@ export function DocumentsList({
                               ) : null}
                             </span>
                           ) : null}
-                          {f.uploadedByLabel?.trim() || f.uploadedByKind ? (
+                          {f.uploadedByLabel?.trim() || f.uploadedByKind === "customer" ? (
                             <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-                              {f.uploadedByKind ? (
+                              {f.uploadedByKind === "customer" ? (
                                 <span
-                                  className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                                    f.uploadedByKind === "customer"
-                                      ? "bg-sky-100 text-sky-900 dark:bg-sky-950/60 dark:text-sky-200"
-                                      : "bg-zinc-200/80 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                                  }`}
+                                  className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-900 dark:bg-sky-950/60 dark:text-sky-200"
                                 >
                                   {attachmentUploaderKindLabel(f.uploadedByKind)}
                                 </span>

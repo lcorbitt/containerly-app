@@ -10,7 +10,7 @@ export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DESTINATION_CLASS = "min-w-0";
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_LABEL_CLASS = SHIPMENT_COMMERCIAL_LABEL_CLASS;
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_VALUE_CLASS =
-  "mt-1 truncate text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50";
+  "mt-1 truncate text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ETA_CLASS =
   "mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400";

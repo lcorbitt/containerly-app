@@ -29,7 +29,10 @@ export function isPdfThumbnailCandidate(contentType: string | null, fileName: st
 }
 
 /** Renders the first PDF page to a JPEG data URL for list thumbnails. */
-export async function renderPdfThumbnailDataUrl(pdfUrl: string): Promise<string | null> {
+export async function renderPdfThumbnailDataUrl(
+  pdfUrl: string,
+  maxWidth = 128,
+): Promise<string | null> {
   try {
     const pdfjs = await import("pdfjs-dist");
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -40,7 +43,7 @@ export async function renderPdfThumbnailDataUrl(pdfUrl: string): Promise<string 
     const pdf = await pdfjs.getDocument({ url: pdfUrl, withCredentials: false }).promise;
     const page = await pdf.getPage(1);
     const baseViewport = page.getViewport({ scale: 1 });
-    const scale = 128 / Math.max(baseViewport.width, 1);
+    const scale = maxWidth / Math.max(baseViewport.width, 1);
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
     canvas.width = Math.floor(viewport.width);

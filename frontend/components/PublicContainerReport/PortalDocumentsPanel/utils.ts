@@ -12,7 +12,9 @@ export function isPortalDocumentReviewable(
 
 export function portalDocumentMetadataLine(attachment: PortalAttachment): string {
   return [
-    attachment.uploaded_by_kind ? attachmentUploaderKindLabel(attachment.uploaded_by_kind) : null,
+    attachment.uploaded_by_kind === "customer"
+      ? attachmentUploaderKindLabel(attachment.uploaded_by_kind)
+      : null,
     attachment.document_type,
     attachment.document_group,
     attachment.approval_status,

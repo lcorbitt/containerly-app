@@ -10,9 +10,20 @@ export function commercialDetailsToHeaderSource(
 
   return {
     customer_name: details.customer_name,
-    order_number: summary.order_number?.trim() || line?.order_number?.trim() || null,
-    carrier_booking_number: line?.carrier_booking_number?.trim() || null,
-    container_number: summary.container_number?.trim() || line?.container_number?.trim() || null,
+    order_number:
+      details.order_number?.trim() ||
+      summary.order_number?.trim() ||
+      line?.order_number?.trim() ||
+      null,
+    carrier_booking_number:
+      details.carrier_booking_number?.trim() ||
+      line?.carrier_booking_number?.trim() ||
+      null,
+    container_number:
+      details.container_number?.trim() ||
+      summary.container_number?.trim() ||
+      line?.container_number?.trim() ||
+      null,
     country: details.country ?? line?.country ?? null,
     port_of_loading: details.port_of_loading ?? line?.port_of_loading ?? null,
     port_of_destination: details.port_of_destination ?? line?.port_of_destination ?? null,

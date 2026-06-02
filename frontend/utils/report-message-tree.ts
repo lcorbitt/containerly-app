@@ -2,6 +2,8 @@ export type ThreadNode<T extends { id: string; parent_message_id: string | null;
   children: ThreadNode<T>[];
 };
 
+import { stripMessageMarkup } from "@/utils/message-markup";
+
 /** All message ids in the subtree rooted at `rootId` (including `rootId`), using parent links in `flat`. */
 export function collectMessageSubtreeIds<
   T extends { id: string; parent_message_id: string | null },
@@ -52,7 +54,7 @@ export function buildMessageTree<
 
 /** Collapse whitespace and truncate for inline reply-reference preview (Discord-style). */
 export function truncatedReplyPreview(text: string, maxLen = 72): string {
-  const t = text.replace(/\s+/g, " ").trim();
+  const t = stripMessageMarkup(text).replace(/\s+/g, " ").trim();
   if (!t) return "…";
   if (t.length <= maxLen) return t;
   return `${t.slice(0, maxLen - 1)}…`;

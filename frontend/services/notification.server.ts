@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { stripMessageMarkup } from "@/utils/message-markup";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   fetchProfileDisplayName,
@@ -112,7 +113,7 @@ export async function runOperatorShipmentMessageNotifications(input: {
   internalOnly: boolean;
 }): Promise<void> {
   if (input.internalOnly) return;
-  const preview = input.body.trim();
+  const preview = stripMessageMarkup(input.body).trim();
   if (!preview) return;
 
   const admin = adminClient();

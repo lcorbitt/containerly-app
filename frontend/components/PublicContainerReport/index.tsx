@@ -62,7 +62,6 @@ export function PublicContainerReport({
     setDashboardTab,
     setupDismissBusy,
     currentUserId,
-    composerAuthorLabel,
     messageAuthorByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
@@ -209,8 +208,6 @@ export function PublicContainerReport({
                       uploaderDisplayByUserId={messageAuthorByUserId}
                       attachmentsByMessageId={attachmentsByMessageId}
                       onOpenAttachment={(row) => void handleDocumentOpen(row.storage_path)}
-                      onRenameAttachment={async () => {}}
-                      renamingAttachmentId={null}
                       composerPendingFiles={[]}
                       onComposerPickFiles={() => {}}
                       onRemoveComposerPendingFile={() => {}}
@@ -227,7 +224,6 @@ export function PublicContainerReport({
                       currentUserId={currentUserId}
                       onDeleteMessage={() => {}}
                       deletingMessageId={null}
-                      composerAuthorLabel={composerAuthorLabel}
                       publicThreadMode
                       allowMessageDelete={false}
                       composerHidden={threadReadOnly}

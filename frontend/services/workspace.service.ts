@@ -1,4 +1,5 @@
 import { apiJson } from "@/utils/api-client";
+import type { WorkspaceStoragePreviewVariant } from "@/utils/workspace-storage-preview";
 import { readApiJson } from "@/utils/json-api";
 import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
@@ -25,13 +26,49 @@ export type {
 export async function createWorkspaceStorageSignedUrl(
   storagePath: string,
   expiresSec = 3600,
+  options?: { downloadFileName?: string; previewVariant?: WorkspaceStoragePreviewVariant },
 ): Promise<string> {
   const { url } = await apiJson<{ url: string }>("/api/workspace/signed-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ storagePath, expiresSec }),
+    body: JSON.stringify({
+      storagePath,
+      expiresSec,
+      downloadFileName: options?.downloadFileName,
+      previewVariant: options?.previewVariant,
+    }),
   });
   return url;
+}
+
+/** Cached-friendly fetch; falls back to full-size URL if transform signing fails. */
+export async function fetchWorkspaceStorageSignedUrl(
+  storagePath: string,
+  previewVariant: WorkspaceStoragePreviewVariant = "original",
+): Promise<string> {
+  try {
+    return await createWorkspaceStorageSignedUrl(storagePath, 3600, { previewVariant });
+  } catch (firstError) {
+    if (previewVariant === "original") throw firstError;
+    return createWorkspaceStorageSignedUrl(storagePath, 3600, { previewVariant: "original" });
+  }
+}
+
+/** Triggers a browser download for a workspace attachment (any authenticated user with access). */
+export async function downloadWorkspaceAttachment(
+  storagePath: string,
+  fileName: string,
+): Promise<void> {
+  const url = await createWorkspaceStorageSignedUrl(storagePath, 3600, {
+    downloadFileName: fileName.trim() || "download",
+  });
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.rel = "noopener noreferrer";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export async function openContainerWorkspaceAttachmentSignedUrl(storagePath: string): Promise<string> {

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
+import { stripMessageMarkup } from "@/utils/message-markup";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type { OrgShipmentMessageThreadsResult, ShipmentScopeLoadResult } from "@/types/workspace-load";
 import {
@@ -10,6 +11,7 @@ import {
   MAX_ATTACHMENT_SIZE_LABEL,
   WORKSPACE_FILES_BUCKET,
 } from "@/utils/workspace-files";
+import { persistShipmentWorkflowStatus } from "@/services/document-workflow.server";
 import {
   runCustomerDocumentUploadNotification,
   runOperatorDraftsPublishedNotification,
@@ -66,10 +68,21 @@ export async function createWorkspaceStorageSignedUrlQuery(
   supabase: SupabaseClient,
   storagePath: string,
   expiresSec = 3600,
+  options?: {
+    downloadFileName?: string;
+    transform?: { width: number; height: number; quality?: number; resize?: "contain" | "cover" | "fill" };
+  },
 ): Promise<string> {
+  const download = options?.downloadFileName?.trim();
+  const signOptions = download
+    ? { download }
+    : options?.transform
+      ? { transform: options.transform }
+      : undefined;
+
   const { data, error } = await supabase.storage
     .from(WORKSPACE_FILES_BUCKET)
-    .createSignedUrl(storagePath, expiresSec);
+    .createSignedUrl(storagePath, expiresSec, signOptions);
   if (error || !data?.signedUrl) throw new Error(error?.message ?? "Could not open file");
   return data.signedUrl;
 }
@@ -750,6 +763,19 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
     }
   }
 
+  const uploadedGroup = input.documentGroup?.trim().toLowerCase();
+  const hasReviewableUpload =
+    out.length > 0 &&
+    (uploadedGroup === "draft" ||
+      uploadedGroup === "revision" ||
+      out.some((row) => {
+        const g = row.document_group?.trim().toLowerCase();
+        return g === "draft" || g === "revision";
+      }));
+  if (hasReviewableUpload) {
+    await persistShipmentWorkflowStatus(supabase, input.shipmentId);
+  }
+
   return out;
 }
 
@@ -794,7 +820,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
     }
     byShipment.set(shipmentId, {
       last_message_at: row.created_at as string,
-      last_message_preview: typeof row.body === "string" ? row.body.trim() : "",
+      last_message_preview: typeof row.body === "string" ? stripMessageMarkup(row.body).trim() : "",
       last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
       last_author_user_id: (row.author_user_id as string | null | undefined) ?? null,
       message_count: 1,

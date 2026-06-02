@@ -29,8 +29,6 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
     currentUserId,
     attachmentsByMessageId,
     openAttachment,
-    renameAttachment,
-    renamingAttachmentId,
     composerPendingFiles,
     onComposerPickFiles,
     onRemoveComposerPendingFile,
@@ -85,8 +83,6 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
           uploaderDisplayByUserId={messageAuthorByUserId}
           attachmentsByMessageId={attachmentsByMessageId}
           onOpenAttachment={(row) => void openAttachment(row)}
-          onRenameAttachment={(id, name) => renameAttachment(id, name)}
-          renamingAttachmentId={renamingAttachmentId}
           composerPendingFiles={composerPendingFiles}
           onComposerPickFiles={onComposerPickFiles}
           onRemoveComposerPendingFile={onRemoveComposerPendingFile}
@@ -104,11 +100,6 @@ export function ShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
           currentUserId={currentUserId}
           onDeleteMessage={(id) => void deleteMessage(id)}
           deletingMessageId={deletingMessageId}
-          composerAuthorLabel={
-            currentUserId && messageAuthorByUserId[currentUserId]
-              ? messageAuthorByUserId[currentUserId]!
-              : ""
-          }
           emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}
           threadStartBanner={<ShipmentThreadStartBanner shipmentLabel={shipmentLabel} />}
         />

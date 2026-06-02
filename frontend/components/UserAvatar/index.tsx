@@ -7,14 +7,16 @@ export function UserAvatar({
 }: {
   imageUrl: string | null;
   label: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   className?: string;
 }) {
   const initial = (label.trim().at(0) ?? "?").toUpperCase();
   const box =
-    size === "md"
-      ? "h-8 w-8 text-xs"
-      : "h-6 w-6 text-[10px]";
+    size === "lg"
+      ? "h-10 w-10 text-sm"
+      : size === "md"
+        ? "h-8 w-8 text-xs"
+        : "h-6 w-6 text-[10px]";
 
   return (
     <span

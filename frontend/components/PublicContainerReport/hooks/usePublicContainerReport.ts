@@ -17,7 +17,6 @@ import {
 } from "@/services/shipment.service";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
 import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
-import { profileDisplayName } from "@/utils/author-display-name";
 import type { PublicReportPayload } from "@/types/public-report";
 import type { PortalDetailsTabId } from "../PortalDetailsTabs";
 import { formatFreshness } from "../utils";
@@ -49,7 +48,6 @@ export function usePublicContainerReport({
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [composerAuthorLabel, setComposerAuthorLabel] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [documentType, setDocumentType] = useState(DOCUMENT_TYPE_NONE_VALUE);
   const [documentGroup, setDocumentGroup] = useState<"draft" | "revision" | "original">("draft");
@@ -65,7 +63,9 @@ export function usePublicContainerReport({
   const hasTracking = containerLines.length > 0 && timeline.length > 0;
 
   const threadReadOnly = readOnlyMessaging || payload.preview === true;
-  const documentsUploadEnabled = !payload.preview && Boolean(organizationId);
+  /** Customers upload via messages only; documents tab is review-only for importers. */
+  const documentsUploadEnabled =
+    !payload.preview && Boolean(organizationId) && payload.viewer !== "importer";
 
   const visibleMessages = useMemo(() => {
     const list = payload.messages ?? [];
@@ -97,26 +97,9 @@ export function usePublicContainerReport({
     let cancelled = false;
     void createClient()
       .auth.getUser()
-      .then(async ({ data }) => {
+      .then(({ data }) => {
         if (cancelled) return;
-        const user = data.user;
-        setCurrentUserId(user?.id ?? null);
-        if (!user?.id) {
-          setComposerAuthorLabel("");
-          return;
-        }
-        const { data: profile } = await createClient()
-          .from("profiles")
-          .select("full_name, email")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        setComposerAuthorLabel(
-          profileDisplayName({
-            full_name: profile?.full_name as string | null,
-            email: (profile?.email as string | null) ?? user.email ?? null,
-          }),
-        );
+        setCurrentUserId(data.user?.id ?? null);
       });
     return () => {
       cancelled = true;
@@ -326,7 +309,6 @@ export function usePublicContainerReport({
     setDashboardTab,
     setupDismissBusy,
     currentUserId,
-    composerAuthorLabel,
     messageAuthorByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,

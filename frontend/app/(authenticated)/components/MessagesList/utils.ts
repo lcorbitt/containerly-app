@@ -1,7 +1,8 @@
+import { stripMessageMarkup } from "@/utils/message-markup";
 import { MESSAGE_PREVIEW_MAX_LEN, MESSAGES_LIST_ORDER_FALLBACK } from "./constants";
 
 export function truncateMessagePreview(body: string, maxLen = MESSAGE_PREVIEW_MAX_LEN): string {
-  const trimmed = body.trim();
+  const trimmed = stripMessageMarkup(body).trim();
   if (trimmed.length <= maxLen) return trimmed;
   return `${trimmed.slice(0, maxLen - 1)}…`;
 }

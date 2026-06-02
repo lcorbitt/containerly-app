@@ -1,134 +1,85 @@
 "use client";
 
-import { FileText } from "lucide-react";
-import { memo, useEffect, useMemo, useState } from "react";
-import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
+import { Loader2 } from "lucide-react";
+import { memo } from "react";
 import {
-  isPdfThumbnailCandidate,
-  renderPdfThumbnailDataUrl,
-  resolveAttachmentContentType,
-} from "@/utils/attachment-thumbnail";
-import { isImageThumbnailCandidate } from "@/utils/workspace-files";
+  AttachmentGenericFileIconPlaceholder,
+  AttachmentPdfIconPlaceholder,
+} from "@/components/MessageAttachmentPreviews/AttachmentFileIcons";
+import { attachmentIsPdf } from "@/components/MessageAttachmentPreviews/utils";
+import { useWorkspaceAttachmentPreview } from "@/hooks/useWorkspaceAttachmentPreview";
 import { STORED_FILE_THUMB_BOX_CLASS } from "./constants";
 import type { StoredFileThumbnailProps } from "./types";
 
 export type { StoredFileThumbnailProps } from "./types";
 
-function FileIconPlaceholder({ className }: { className?: string }) {
-  return (
-    <div className={`flex items-center justify-center ${className ?? ""}`}>
-      <FileText className="h-5 w-5 text-zinc-400" strokeWidth={2} aria-hidden />
-    </div>
-  );
+function FileIconPlaceholder({
+  className,
+  contentType,
+  fileName,
+}: {
+  className?: string;
+  contentType?: string | null;
+  fileName: string;
+}) {
+  if (attachmentIsPdf(contentType, fileName)) {
+    return <AttachmentPdfIconPlaceholder className={className} />;
+  }
+  return <AttachmentGenericFileIconPlaceholder className={className} />;
 }
 
 function StoredFileThumbnailInner({
   storagePath,
   href,
   className,
-  tryImage,
-  tryPdf,
-}: {
-  storagePath?: string | null;
-  href?: string | null;
-  className?: string;
-  tryImage: boolean;
-  tryPdf: boolean;
-}) {
-  const directUrl = useMemo(() => {
-    if (!tryImage && !tryPdf) return null;
-    const direct = href?.trim();
-    const path = storagePath?.trim();
-    if (direct && !path) return direct;
-    return null;
-  }, [tryImage, tryPdf, href, storagePath]);
+  contentType,
+  name,
+}: StoredFileThumbnailProps) {
+  const directHref = href?.trim() && !storagePath?.trim() ? href.trim() : null;
 
-  const [fetchedUrl, setFetchedUrl] = useState<string | null>(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
+  const preview = useWorkspaceAttachmentPreview({
+    storagePath: storagePath ?? "",
+    contentType,
+    fileName: name,
+    displayVariant: "thumb",
+    lazy: true,
+  });
 
-  useEffect(() => {
-    if (directUrl) return;
-    if (!tryImage && !tryPdf) return;
-
-    const path = storagePath?.trim();
-    if (!path) return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const url = await createWorkspaceStorageSignedUrl(path, 3600);
-        if (!cancelled) setFetchedUrl(url);
-      } catch {
-        if (!cancelled) setLoadFailed(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [directUrl, tryImage, tryPdf, storagePath]);
-
-  const signedUrl = directUrl ?? fetchedUrl;
-  const imagePreviewUrl = tryImage && signedUrl ? signedUrl : null;
-
-  useEffect(() => {
-    if (!tryPdf || tryImage || !signedUrl) return;
-
-    let cancelled = false;
-    void (async () => {
-      const dataUrl = await renderPdfThumbnailDataUrl(signedUrl);
-      if (cancelled) return;
-      if (dataUrl) setPdfPreviewUrl(dataUrl);
-      else setLoadFailed(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tryPdf, tryImage, signedUrl]);
-
-  const previewUrl = imagePreviewUrl ?? pdfPreviewUrl;
-  const showPreview = (tryImage || tryPdf) && Boolean(previewUrl) && !loadFailed;
   const boxClass = className ?? STORED_FILE_THUMB_BOX_CLASS;
+  const previewSrc = directHref ?? (preview.showImage ? preview.imageUrl : preview.pdfPreviewUrl);
+
+  if (preview.isLoading && !directHref) {
+    return (
+      <div ref={preview.ref} className={`${boxClass} flex items-center justify-center`}>
+        <Loader2 className="h-4 w-4 animate-spin text-zinc-400" aria-hidden />
+      </div>
+    );
+  }
+
+  if (previewSrc && (directHref || preview.showImage || preview.showPdf)) {
+    return (
+      <div ref={preview.ref} className={boxClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- signed URL or canvas data URL */}
+        <img
+          src={previewSrc}
+          alt=""
+          decoding="async"
+          loading="lazy"
+          fetchPriority="low"
+          className="h-full w-full object-cover object-top"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className={boxClass}>
-      {showPreview && previewUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element -- signed URL or canvas data URL
-        <img
-          src={previewUrl}
-          alt=""
-          className="h-full w-full object-cover object-top"
-          onError={() => setLoadFailed(true)}
-        />
-      ) : (
-        <FileIconPlaceholder className="h-full w-full" />
-      )}
+    <div ref={preview.ref} className={boxClass}>
+      <FileIconPlaceholder className="h-full w-full" contentType={contentType} fileName={name} />
     </div>
   );
 }
 
-export const StoredFileThumbnail = memo(function StoredFileThumbnail({
-  name,
-  contentType,
-  storagePath,
-  href,
-  className,
-}: StoredFileThumbnailProps) {
-  const resolvedType = resolveAttachmentContentType(contentType, name);
-  const tryImage = isImageThumbnailCandidate(resolvedType, name);
-  const tryPdf = isPdfThumbnailCandidate(contentType ?? null, name);
-  const remountKey = [contentType ?? "", storagePath ?? "", href ?? ""].join("\0");
-
-  return (
-    <StoredFileThumbnailInner
-      key={remountKey}
-      storagePath={storagePath}
-      href={href}
-      className={className}
-      tryImage={tryImage}
-      tryPdf={tryPdf}
-    />
-  );
+export const StoredFileThumbnail = memo(function StoredFileThumbnail(props: StoredFileThumbnailProps) {
+  const remountKey = [props.contentType ?? "", props.storagePath ?? "", props.href ?? ""].join("\0");
+  return <StoredFileThumbnailInner key={remountKey} {...props} />;
 });

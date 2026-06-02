@@ -329,8 +329,6 @@ export function ContainerWorkspace({
                   uploaderDisplayByUserId={messageAuthorByUserId}
                   attachmentsByMessageId={attachmentsByMessageId}
                   onOpenAttachment={(row) => void openAttachment(row)}
-                  onRenameAttachment={(id, name) => renameAttachment(id, name)}
-                  renamingAttachmentId={renamingAttachmentId}
                   composerPendingFiles={composerPendingFiles}
                   onComposerPickFiles={onComposerPickFiles}
                   onRemoveComposerPendingFile={onRemoveComposerPendingFile}
@@ -348,11 +346,6 @@ export function ContainerWorkspace({
                   currentUserId={currentUserId}
                   onDeleteMessage={(id) => void deleteMessage(id)}
                   deletingMessageId={deletingMessageId}
-                  composerAuthorLabel={
-                    currentUserId && messageAuthorByUserId[currentUserId]
-                      ? messageAuthorByUserId[currentUserId]!
-                      : ""
-                  }
                   emptyStateText={
                     shipmentEmbed
                       ? "No messages on this container yet."

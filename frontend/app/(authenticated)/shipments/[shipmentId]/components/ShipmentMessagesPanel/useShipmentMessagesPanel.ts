@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ATTACHMENT_DISPLAY_NAME_MAX_LEN,
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,
   MAX_ATTACHMENTS_PER_MESSAGE,
@@ -25,7 +24,6 @@ import {
   createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
   postShipmentScopeMessageWithAttachments,
-  renameWorkspaceAttachmentDisplayName,
 } from "@/services/workspace.service";
 
 export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string }) {
@@ -43,7 +41,6 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
-  const [renamingAttachmentId, setRenamingAttachmentId] = useState<string | null>(null);
   const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
 
   const invalidateThread = useCallback(() => {
@@ -140,35 +137,6 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     [toast],
   );
 
-  const renameAttachment = useCallback(
-    async (attachmentId: string, rawName: string) => {
-      const trimmed = rawName.trim();
-      if (!trimmed) {
-        toast("Enter a file name.", "error");
-        throw new Error("empty name");
-      }
-      if (trimmed.length > ATTACHMENT_DISPLAY_NAME_MAX_LEN) {
-        toast(`File name is too long (max ${ATTACHMENT_DISPLAY_NAME_MAX_LEN} characters).`, "error");
-        throw new Error("name too long");
-      }
-      const row = attachments.find((a) => a.id === attachmentId);
-      if (!row) throw new Error("Attachment not found");
-      if (row.file_name === trimmed) return;
-      setRenamingAttachmentId(attachmentId);
-      try {
-        await renameWorkspaceAttachmentDisplayName(attachmentId, trimmed);
-        invalidateThread();
-        toast("File name updated", "success");
-      } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not rename file", "error");
-        throw e;
-      } finally {
-        setRenamingAttachmentId(null);
-      }
-    },
-    [attachments, invalidateThread, toast],
-  );
-
   const deleteMessage = useCallback(
     async (messageId: string) => {
       const ok = await confirm({
@@ -257,8 +225,6 @@ export function useShipmentMessagesPanel({ shipmentId }: { shipmentId: string })
     currentUserId,
     attachmentsByMessageId,
     openAttachment,
-    renameAttachment,
-    renamingAttachmentId,
     composerPendingFiles,
     onComposerPickFiles,
     onRemoveComposerPendingFile,

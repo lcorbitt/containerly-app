@@ -5,10 +5,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { UserAvatar } from "@/components/UserAvatar";
-import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
+import { MessageBody } from "@/components/MessageBody";
+import { RichMessageEditor } from "@/components/RichMessageEditor";
 import {
   ComposerPendingAttachmentChip,
-  StoredMessageAttachmentButton,
+  StoredMessageAttachmentPreview,
 } from "@/components/MessageAttachmentPreviews";
 import { WorkspacePostSpinner } from "@/components/WorkspacePostSpinner";
 import {
@@ -25,12 +26,9 @@ import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import {
   THREAD_CUSTOMER_COMPOSER_BG_CLASS,
   THREAD_CUSTOMER_QUOTE_BG_CLASS,
-  THREAD_CUSTOMER_REPLY_BG_CLASS,
   THREAD_CUSTOMER_REPLY_RING_CLASS,
-  THREAD_CUSTOMER_ROOT_BG_CLASS,
   THREAD_INTERNAL_COMPOSER_BG_CLASS,
   THREAD_INTERNAL_QUOTE_BG_CLASS,
-  THREAD_INTERNAL_REPLY_BG_CLASS,
   THREAD_INTERNAL_REPLY_RING_CLASS,
   THREAD_MESSAGE_AVATAR_CLASS,
   THREAD_MESSAGE_ROW_CLASS,
@@ -59,8 +57,6 @@ function ThreadMessageItem({
   deletingMessageId,
   attachmentsByMessageId,
   onOpenAttachment,
-  onRenameAttachment,
-  renamingAttachmentId,
   publicThreadMode = false,
   allowMessageDelete = true,
   allowReply = true,
@@ -78,8 +74,6 @@ function ThreadMessageItem({
   deletingMessageId: string | null;
   attachmentsByMessageId: Map<string, WorkspaceAttachment[]>;
   onOpenAttachment: (row: WorkspaceAttachment) => void;
-  onRenameAttachment: (attachmentId: string, newName: string) => Promise<void>;
-  renamingAttachmentId: string | null;
   publicThreadMode?: boolean;
   allowMessageDelete?: boolean;
   allowReply?: boolean;
@@ -117,7 +111,7 @@ function ThreadMessageItem({
         <UserAvatar
           imageUrl={authorAvatarUrl}
           label={authorLabel}
-          size="md"
+          size="lg"
           className={avatarClass}
         />
         <div className={`relative min-w-0 flex-1 text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
@@ -150,21 +144,16 @@ function ThreadMessageItem({
             </span>
           </div>
           {node.body.trim() ? (
-            <p className="mt-2 whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200">
-              {node.body}
-            </p>
+            <MessageBody text={node.body} className="mt-2" />
           ) : null}
           {messageAttachments.length > 0 ? (
-            <ul className="mt-2 flex flex-col gap-1.5">
+            <ul className="mt-2 flex min-w-0 flex-col gap-3">
               {messageAttachments.map((att) => (
-                <StoredMessageAttachmentButton
+                <StoredMessageAttachmentPreview
                   key={att.id}
                   row={att}
                   uploaderLabel={uploaderDisplayByUserId[att.uploaded_by]?.trim() || "Unknown user"}
-                  currentUserId={currentUserId}
-                  renamingAttachmentId={renamingAttachmentId}
                   onOpen={() => onOpenAttachment(att)}
-                  onRename={(newName) => onRenameAttachment(att.id, newName)}
                 />
               ))}
             </ul>
@@ -232,8 +221,6 @@ function ThreadMessageItem({
               deletingMessageId={deletingMessageId}
               attachmentsByMessageId={attachmentsByMessageId}
               onOpenAttachment={onOpenAttachment}
-              onRenameAttachment={onRenameAttachment}
-              renamingAttachmentId={renamingAttachmentId}
               publicThreadMode={publicThreadMode}
               allowMessageDelete={allowMessageDelete}
               allowReply={allowReply}
@@ -262,11 +249,8 @@ export function ThreadPanel({
   currentUserId,
   onDeleteMessage,
   deletingMessageId,
-  composerAuthorLabel,
   attachmentsByMessageId,
   onOpenAttachment,
-  onRenameAttachment,
-  renamingAttachmentId,
   composerPendingFiles,
   onComposerPickFiles,
   onRemoveComposerPendingFile,
@@ -287,8 +271,6 @@ export function ThreadPanel({
   uploaderDisplayByUserId: Record<string, string>;
   attachmentsByMessageId: Map<string, WorkspaceAttachment[]>;
   onOpenAttachment: (row: WorkspaceAttachment) => void;
-  onRenameAttachment: (attachmentId: string, newName: string) => Promise<void>;
-  renamingAttachmentId: string | null;
   composerPendingFiles: File[];
   onComposerPickFiles: (files: FileList | null) => void;
   onRemoveComposerPendingFile: (index: number) => void;
@@ -304,7 +286,6 @@ export function ThreadPanel({
   currentUserId: string | null;
   onDeleteMessage: (id: string) => void;
   deletingMessageId: string | null;
-  composerAuthorLabel: string;
   /** Shown when there are no messages (e.g. scope hint). */
   emptyStateText?: string | null;
   /** Always-visible content rendered at the top of the scroll area (Discord-style "beginning of thread"). */
@@ -415,8 +396,6 @@ export function ThreadPanel({
                 deletingMessageId={deletingMessageId}
                 attachmentsByMessageId={attachmentsByMessageId}
                 onOpenAttachment={onOpenAttachment}
-                onRenameAttachment={onRenameAttachment}
-                renamingAttachmentId={renamingAttachmentId}
                 publicThreadMode={publicThreadMode}
                 allowMessageDelete={allowMessageDelete}
                 allowReply={allowReply}
@@ -447,17 +426,8 @@ export function ThreadPanel({
           </div>
         ) : null}
         <div className={`text-sm ${composerShell}`}>
-          {composerAuthorLabel.trim() || (!publicThreadMode && internalOnly) ? (
-            <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              {composerAuthorLabel.trim() ? (
-                <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                  {composerAuthorLabel}
-                </span>
-              ) : null}
-              {!publicThreadMode && internalOnly ? (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">Internal note</span>
-              ) : null}
-            </div>
+          {!publicThreadMode && internalOnly ? (
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Internal note</p>
           ) : null}
           <div className="flex min-w-0 items-start gap-0.5">
             <input
@@ -484,18 +454,14 @@ export function ThreadPanel({
             >
               <Paperclip className="h-5 w-5" strokeWidth={2} aria-hidden />
             </button>
-            <AutoGrowTextarea
+            <RichMessageEditor
               value={body}
-              onChange={(e) => onBodyChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter" || e.shiftKey) return;
-                e.preventDefault();
+              onChange={onBodyChange}
+              onSubmit={() => {
                 if ((!body.trim() && composerPendingFiles.length === 0) || posting) return;
                 onPostMessage();
               }}
               disabled={posting}
-              className="min-w-0 flex-1 border-0 bg-transparent py-1.5 pl-1 text-sm leading-relaxed text-zinc-800 placeholder:text-zinc-400 outline-none ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-200 dark:placeholder:text-zinc-500"
-              placeholder="Message here…"
               aria-label="Message"
             />
           </div>
@@ -507,6 +473,7 @@ export function ThreadPanel({
                   file={f}
                   index={i}
                   disabled={posting}
+                  uploading={posting}
                   onRemove={onRemoveComposerPendingFile}
                 />
               ))}

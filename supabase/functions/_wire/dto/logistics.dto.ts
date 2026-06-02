@@ -161,6 +161,9 @@ export type ShipmentLineDto = {
 
 export type ShipmentCommercialDetails = {
   customer_name: string | null;
+  order_number: string | null;
+  carrier_booking_number: string | null;
+  container_number: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;

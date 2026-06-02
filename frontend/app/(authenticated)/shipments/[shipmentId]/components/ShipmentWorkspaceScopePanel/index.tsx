@@ -145,7 +145,7 @@ export function ShipmentWorkspaceScopePanel({
               storagePath: a.storage_path,
               uploadedByUserId: a.uploaded_by,
               uploadedByLabel: messageAuthorByUserId[a.uploaded_by]?.trim() || "Unknown user",
-              uploadedByKind: a.uploaded_by_kind ?? "operator",
+              uploadedByKind: a.uploaded_by_kind === "customer" ? "customer" : undefined,
               documentType: a.document_type,
               documentGroup: a.document_group,
               onOpen: () => void openAttachment(a),
