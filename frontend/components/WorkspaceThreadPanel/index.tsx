@@ -24,20 +24,20 @@ import {
 } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import {
-  THREAD_CUSTOMER_COMPOSER_BG_CLASS,
-  THREAD_CUSTOMER_QUOTE_BG_CLASS,
-  THREAD_CUSTOMER_REPLY_RING_CLASS,
-  THREAD_INTERNAL_COMPOSER_BG_CLASS,
-  THREAD_INTERNAL_QUOTE_BG_CLASS,
-  THREAD_INTERNAL_REPLY_RING_CLASS,
   THREAD_MESSAGE_AVATAR_CLASS,
   THREAD_MESSAGE_ROW_CLASS,
+  THREAD_OWN_COMPOSER_BG_CLASS,
+  THREAD_TEAM_COMPOSER_BG_CLASS,
 } from "./constants";
 import {
   threadMessageAuthorAvatarUrl,
   threadMessageAuthorName,
   threadMessageAvatarClass,
   threadMessageAuthorHeadingClass,
+  threadMessageIsOwn,
+  threadMessagePalette,
+  threadMessageQuoteClass,
+  threadMessageReplyRingClass,
   threadMessageShellClass,
 } from "./utils";
 
@@ -83,24 +83,30 @@ function ThreadMessageItem({
   const isReplyTarget = replyParentId === node.id;
   const isRoot = depth === 0;
   const isInternal = !publicThreadMode && node.is_internal;
-  const parentInternal = !publicThreadMode && Boolean(parent?.is_internal);
-  const isOwnMessage =
-    Boolean(currentUserId && node.author_user_id && node.author_user_id === currentUserId);
+  const palette = threadMessagePalette({ authorKind: node.author_kind });
+  const parentPalette = parent
+    ? threadMessagePalette({ authorKind: parent.author_kind })
+    : null;
+  const isOwnMessage = threadMessageIsOwn({
+    currentUserId,
+    authorUserId: node.author_user_id,
+  });
+  const highlightOwnAsOperator =
+    isOwnMessage && palette === "team" && (publicThreadMode || !isInternal);
   const isDeleting = deletingMessageId === node.id;
   const actionsBusy = Boolean(deletingMessageId);
   const authorLabel = threadMessageAuthorName(node, authorNameByUserId);
   const authorAvatarUrl = threadMessageAuthorAvatarUrl(node, authorAvatarUrlByUserId);
 
-  const shell = threadMessageShellClass({ isRoot, isInternal, isOwnMessage });
+  const shell = threadMessageShellClass({ isRoot, palette, isOwnMessage, highlightOwnAsOperator });
   const avatarClass = threadMessageAvatarClass({
-    isInternal,
     isOwnMessage,
+    highlightOwnAsOperator,
+    palette,
     baseClass: THREAD_MESSAGE_AVATAR_CLASS,
   });
 
-  const replyTargetRing = isInternal
-    ? THREAD_INTERNAL_REPLY_RING_CLASS
-    : THREAD_CUSTOMER_REPLY_RING_CLASS;
+  const replyTargetRing = threadMessageReplyRingClass(palette);
 
   const cornerActionsClass =
     "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
@@ -117,9 +123,7 @@ function ThreadMessageItem({
         <div className={`relative min-w-0 flex-1 text-sm ${shell} ${isReplyTarget ? replyTargetRing : ""}`}>
         {parent ? (
           <div
-            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${
-              parentInternal ? THREAD_INTERNAL_QUOTE_BG_CLASS : THREAD_CUSTOMER_QUOTE_BG_CLASS
-            }`}
+            className={`mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md ${threadMessageQuoteClass(parentPalette)}`}
           >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Replying to {threadMessageAuthorName(parent, authorNameByUserId)}
@@ -131,7 +135,13 @@ function ThreadMessageItem({
         ) : null}
         <div className="min-w-0 pr-25">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className={threadMessageAuthorHeadingClass({ isInternal, isOwnMessage })}>
+            <span
+              className={threadMessageAuthorHeadingClass({
+                palette,
+                isOwnMessage,
+                highlightOwnAsOperator,
+              })}
+            >
               {authorLabel}
             </span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -354,9 +364,7 @@ export function ThreadPanel({
     };
   }, [replyParentId, messages, authorNameByUserId]);
 
-  const composerShell = internalOnly
-    ? THREAD_INTERNAL_COMPOSER_BG_CLASS
-    : THREAD_CUSTOMER_COMPOSER_BG_CLASS;
+  const composerShell = internalOnly ? THREAD_TEAM_COMPOSER_BG_CLASS : THREAD_OWN_COMPOSER_BG_CLASS;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">

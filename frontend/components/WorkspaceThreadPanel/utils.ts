@@ -1,18 +1,22 @@
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
 import type { ReportMessage } from "@/types/database";
 import {
-  THREAD_CUSTOMER_OWN_AVATAR_RING_CLASS,
-  THREAD_CUSTOMER_OWN_REPLY_BG_CLASS,
-  THREAD_CUSTOMER_OWN_ROOT_BG_CLASS,
-  THREAD_CUSTOMER_REPLY_BG_CLASS,
-  THREAD_CUSTOMER_ROOT_BG_CLASS,
-  THREAD_INTERNAL_OWN_AVATAR_RING_CLASS,
-  THREAD_INTERNAL_OWN_REPLY_BG_CLASS,
-  THREAD_INTERNAL_OWN_ROOT_BG_CLASS,
-  THREAD_INTERNAL_REPLY_BG_CLASS,
-  THREAD_INTERNAL_ROOT_BG_CLASS,
+  THREAD_IMPORTER_QUOTE_BG_CLASS,
+  THREAD_IMPORTER_REPLY_BG_CLASS,
+  THREAD_IMPORTER_REPLY_RING_CLASS,
+  THREAD_IMPORTER_ROOT_BG_CLASS,
+  THREAD_OWN_AVATAR_RING_CLASS,
+  THREAD_OWN_HIGHLIGHT_REPLY_BG_CLASS,
+  THREAD_OWN_HIGHLIGHT_ROOT_BG_CLASS,
   THREAD_MESSAGE_CARD_SHADOW_CLASS,
   THREAD_REPLY_CARD_SHADOW_CLASS,
+  THREAD_TEAM_OWN_AVATAR_RING_CLASS,
+  THREAD_TEAM_OWN_REPLY_BG_CLASS,
+  THREAD_TEAM_OWN_ROOT_BG_CLASS,
+  THREAD_TEAM_QUOTE_BG_CLASS,
+  THREAD_TEAM_REPLY_BG_CLASS,
+  THREAD_TEAM_REPLY_RING_CLASS,
+  THREAD_TEAM_ROOT_BG_CLASS,
 } from "./constants";
 
 export function buildAuthorAvatarUrlByUserId(
@@ -33,58 +37,100 @@ export function threadMessageAuthorAvatarUrl(
   return authorAvatarUrlByUserId[message.author_user_id] ?? null;
 }
 
+/** Teammate (green) vs importer/customer (rose) lane for message chrome. */
+export type ThreadMessagePalette = "team" | "customer";
+
+export function threadMessagePalette(input: {
+  authorKind: string;
+}): ThreadMessagePalette {
+  return input.authorKind === "customer" ? "customer" : "team";
+}
+
+export function threadMessageIsOwn(input: {
+  currentUserId: string | null;
+  authorUserId: string | null | undefined;
+}): boolean {
+  return Boolean(
+    input.currentUserId && input.authorUserId && input.authorUserId === input.currentUserId,
+  );
+}
+
+export function threadMessageQuoteClass(palette: ThreadMessagePalette): string {
+  return palette === "team" ? THREAD_TEAM_QUOTE_BG_CLASS : THREAD_IMPORTER_QUOTE_BG_CLASS;
+}
+
+export function threadMessageReplyRingClass(palette: ThreadMessagePalette): string {
+  return palette === "team" ? THREAD_TEAM_REPLY_RING_CLASS : THREAD_IMPORTER_REPLY_RING_CLASS;
+}
+
 export function threadMessageShellClass({
   isRoot,
-  isInternal,
+  palette,
   isOwnMessage,
+  highlightOwnAsOperator,
 }: {
   isRoot: boolean;
-  isInternal: boolean;
+  palette: ThreadMessagePalette;
   isOwnMessage: boolean;
+  /** Operator viewing their own message in a shared thread — sky-blue highlight. */
+  highlightOwnAsOperator: boolean;
 }): string {
   const shadow = isRoot ? THREAD_MESSAGE_CARD_SHADOW_CLASS : THREAD_REPLY_CARD_SHADOW_CLASS;
   const radius = isRoot ? "rounded-2xl" : "rounded-xl";
 
   let bg: string;
-  if (isInternal) {
-    if (isOwnMessage) {
-      bg = isRoot ? THREAD_INTERNAL_OWN_ROOT_BG_CLASS : THREAD_INTERNAL_OWN_REPLY_BG_CLASS;
-    } else {
-      bg = isRoot ? THREAD_INTERNAL_ROOT_BG_CLASS : THREAD_INTERNAL_REPLY_BG_CLASS;
-    }
+  if (isOwnMessage && highlightOwnAsOperator) {
+    bg = isRoot ? THREAD_OWN_HIGHLIGHT_ROOT_BG_CLASS : THREAD_OWN_HIGHLIGHT_REPLY_BG_CLASS;
+  } else if (isOwnMessage && palette === "team") {
+    bg = isRoot ? THREAD_TEAM_OWN_ROOT_BG_CLASS : THREAD_TEAM_OWN_REPLY_BG_CLASS;
   } else if (isOwnMessage) {
-    bg = isRoot ? THREAD_CUSTOMER_OWN_ROOT_BG_CLASS : THREAD_CUSTOMER_OWN_REPLY_BG_CLASS;
+    bg = isRoot ? THREAD_IMPORTER_ROOT_BG_CLASS : THREAD_IMPORTER_REPLY_BG_CLASS;
+  } else if (palette === "team") {
+    bg = isRoot ? THREAD_TEAM_ROOT_BG_CLASS : THREAD_TEAM_REPLY_BG_CLASS;
   } else {
-    bg = isRoot ? THREAD_CUSTOMER_ROOT_BG_CLASS : THREAD_CUSTOMER_REPLY_BG_CLASS;
+    bg = isRoot ? THREAD_IMPORTER_ROOT_BG_CLASS : THREAD_IMPORTER_REPLY_BG_CLASS;
   }
 
   return `group/card ${radius} px-4 py-3 ${shadow} ${bg}`;
 }
 
 export function threadMessageAvatarClass({
-  isInternal,
   isOwnMessage,
+  highlightOwnAsOperator,
+  palette,
   baseClass,
 }: {
-  isInternal: boolean;
   isOwnMessage: boolean;
+  highlightOwnAsOperator: boolean;
+  palette: ThreadMessagePalette;
   baseClass: string;
 }): string {
   if (!isOwnMessage) return baseClass;
-  const ring = isInternal ? THREAD_INTERNAL_OWN_AVATAR_RING_CLASS : THREAD_CUSTOMER_OWN_AVATAR_RING_CLASS;
-  return `${baseClass} ${ring}`;
+  const ring = highlightOwnAsOperator
+    ? THREAD_OWN_AVATAR_RING_CLASS
+    : palette === "team"
+      ? THREAD_TEAM_OWN_AVATAR_RING_CLASS
+      : baseClass;
+  return ring === baseClass ? baseClass : `${baseClass} ${ring}`;
 }
 
 export function threadMessageAuthorHeadingClass({
-  isInternal,
+  palette,
   isOwnMessage,
+  highlightOwnAsOperator,
 }: {
-  isInternal: boolean;
+  palette: ThreadMessagePalette;
   isOwnMessage: boolean;
+  highlightOwnAsOperator: boolean;
 }): string {
-  if (!isOwnMessage) return "text-sm font-semibold text-zinc-900 dark:text-zinc-50";
-  if (isInternal) return "text-sm font-semibold text-emerald-950 dark:text-emerald-100";
-  return "text-sm font-semibold text-sky-950 dark:text-sky-100";
+  if (!isOwnMessage) {
+    return palette === "customer"
+      ? "text-sm font-semibold text-rose-950 dark:text-rose-100"
+      : "text-sm font-semibold text-zinc-900 dark:text-zinc-50";
+  }
+  if (highlightOwnAsOperator) return "text-sm font-semibold text-sky-950 dark:text-sky-100";
+  if (palette === "customer") return "text-sm font-semibold text-rose-950 dark:text-rose-100";
+  return "text-sm font-semibold text-emerald-950 dark:text-emerald-100";
 }
 
 export function threadMessageAuthorName(
@@ -93,8 +139,10 @@ export function threadMessageAuthorName(
 ): string {
   if (m.author_kind === "system") return "System";
   if (m.author_kind === "customer") return m.author_display_name?.trim() || "Importer";
+  if (m.author_user_id && nameByUserId[m.author_user_id]) {
+    return nameByUserId[m.author_user_id]!;
+  }
   const stored = m.author_display_name?.trim();
   if (stored) return stored;
-  if (m.author_user_id && nameByUserId[m.author_user_id]) return nameByUserId[m.author_user_id]!;
   return "Team member";
 }

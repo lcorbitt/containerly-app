@@ -53,7 +53,10 @@ export const rootSiteMetadata: Metadata = {
     images: [SITE_LOGO_PATH],
   },
   icons: {
-    icon: SITE_LOGO_PATH,
-    apple: SITE_LOGO_PATH,
+    icon: [
+      { url: SITE_NAV_LOGO_PATH, sizes: "32x32", type: "image/png" },
+      { url: SITE_LOGO_PATH, sizes: "1152x928", type: "image/png" },
+    ],
+    apple: SITE_NAV_LOGO_PATH,
   },
 };
