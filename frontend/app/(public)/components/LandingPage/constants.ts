@@ -33,7 +33,7 @@ export const featureCards: readonly FeatureCard[] = [
   {
     icon: Bell,
     title: "Branded portals customers open",
-    body: "Importers and partners see the same clear narrative you do. Optional alerts pull them back to the portal the moment something material changes.",
+    body: "Importers and partners get a clarity your competitors email as PDF attachments, so the experience becomes a reason to keep working with you instead of shopping the next quote.",
   },
   {
     icon: Workflow,
@@ -60,7 +60,7 @@ export const featureCards: readonly FeatureCard[] = [
 export const painBullets: readonly string[] = [
   "Status lives in inboxes, spreadsheets, and carrier sites all at the same time.",
   "Customers reopen the same questions by email and phone because they have nowhere durable to look.",
-  "Handoffs between modes and partners leave gaps that nobody owns.",
+  "A clunky update experience quietly downgrades you to 'just a vendor' the next time they shop the lane.",
   "Exceptions surface late because nobody gets notified with context.",
 ];
 
@@ -75,7 +75,7 @@ export const audienceCards: readonly AudienceCard[] = [
     label: "3PLs",
     headline: "One branded portal for every customer",
     pain: "Every customer wants updates differently, so account managers rebuild the same communication one email at a time.",
-    outcome: "Give every shipment a consistent customer experience layer that scales without more headcount.",
+    outcome: "Make the customer experience the reason accounts renew, with a consistent portal that scales without more headcount.",
   },
   {
     label: "Enterprise shippers",
@@ -88,23 +88,23 @@ export const audienceCards: readonly AudienceCard[] = [
 export const portalSteps: readonly Step[] = [
   {
     n: "01",
-    title: "Extend your workspace",
-    body: "Share a branded portal where customers review documents, approve exports, and follow activity, with optional carrier tracking when you turn it on.",
+    title: "Look like the most professional partner they work with",
+    body: "Hand customers a branded portal to review documents, approve exports, and follow activity, with optional carrier tracking when you turn it on. You set the bar their other suppliers get measured against.",
   },
   {
     n: "02",
-    title: "Low friction onboarding",
-    body: "Customers complete a short, verified sign up, so you keep accountability without a heavyweight IT project.",
+    title: "Cut the inbound that eats your day",
+    body: "Customers self serve status and documents after a short, verified sign up, so the 'where is it' and 'send me that doc again' messages stop landing in your inbox.",
   },
   {
     n: "03",
-    title: "One narrative",
-    body: "They return to the same timeline your operators trust instead of piecing together screenshots and forwards.",
+    title: "Become the supplier they do not want to leave",
+    body: "Every shipment lives on one durable record instead of scattered forwards and screenshots, so switching away from you means giving up the clarity they now expect.",
   },
   {
     n: "04",
-    title: "Stay aligned when it moves",
-    body: "Configure notifications that point back to the portal, so updates stay tied to evidence instead of ad hoc messages.",
+    title: "Stay top of mind when it moves",
+    body: "Notifications pull customers back to the portal the moment something material changes, so you stay visible and your updates stay tied to evidence.",
   },
 ];
 

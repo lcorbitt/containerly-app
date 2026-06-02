@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 import { TextInput } from "@/components/TextInput";
 import {
   LOGIN_FORM_BLURRED_CONTENT_CLASS,
@@ -28,7 +29,7 @@ export function LoginForm() {
   } = useLoginForm();
 
   return (
-    <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <Reveal show className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
       <div className={loading ? LOGIN_FORM_BLURRED_CONTENT_CLASS : ""}>
         <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Sign in</h1>
         <form
@@ -129,6 +130,6 @@ export function LoginForm() {
           </div>
         </div>
       ) : null}
-    </div>
+    </Reveal>
   );
 }

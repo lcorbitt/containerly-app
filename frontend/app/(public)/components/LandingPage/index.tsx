@@ -158,12 +158,12 @@ export function LandingPage() {
         <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
-              The customer portal your program deserves
+              Give customers an experience your competitors can&apos;t
             </h2>
             <p className="mt-3 text-zinc-600 dark:text-zinc-400">
-              Present importers and partners with the same depth you rely on internally. The experience
-              stays accurate, searchable, and anchored to each shipment, so communication stays
-              structured instead of improvised.
+              While other partners still email status updates and PDF drafts, you hand customers a
+              branded portal anchored to every shipment. It is the difference between being the
+              supplier they tolerate and the one they do not want to replace.
             </p>
           </div>
           <ol className="mt-12 grid gap-6 md:grid-cols-2">
@@ -301,12 +301,12 @@ export function LandingPage() {
       <section className="border-t border-zinc-200 px-4 py-20 dark:border-white/[0.06] md:px-8">
         <Reveal whenInView className="mx-auto max-w-4xl rounded-3xl border border-primary-orange/25 bg-gradient-to-br from-primary-orange/10 via-transparent to-transparent px-8 py-14 text-center md:px-16">
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
-            Give your next shipment a link instead of a thread
+            Become the partner your customers do not want to replace
           </h2>
           <p className="mx-auto mt-3 max-w-md text-zinc-600 dark:text-zinc-400">
             Create commercial shipments, route export documents for customer approval, and open a
-            branded portal. Add premium carrier tracking once documents are signed off and numbers are
-            published.
+            branded portal that makes every competitor still emailing PDFs look behind. Add premium
+            carrier tracking once documents are signed off and numbers are published.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/login" className={ACCENT_BTN_CLASS}>
