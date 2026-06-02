@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Settings,
-  Shield,
+  Users,
 } from "lucide-react";
 /** Sidenav active + hover — same border and background in both states. */
 export const SIDE_NAV_LINK_SURFACE_CLASS =
@@ -54,7 +54,7 @@ export const freightNavItems = [
 export const importerNavItems = [shipmentsNavItem, settingsNavItem] as const;
 
 export const adminNavItems = [
-  { href: "/admin", label: "Users", icon: Shield },
+  { href: "/admin", label: "Users", icon: Users },
   { href: "/admin/organizations", label: "Organizations", icon: Building2 },
 ] as const;
 

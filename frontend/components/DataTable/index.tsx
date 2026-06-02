@@ -43,7 +43,7 @@ export function DataTable<T>({
     <div className="overflow-x-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
       <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-50/80 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
+          <tr className="border-b border-zinc-200 bg-zinc-50/80 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-200">
             {columns.map((col) => {
               const sortable = Boolean(col.sortable && onSortChange);
               const active = sortColumn === col.id;
@@ -51,12 +51,12 @@ export function DataTable<T>({
                 <th
                   key={col.id}
                   scope="col"
-                  className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide ${col.headerClassName ?? ""}`}
+                  className={`px-4 py-3 text-xs font-bold uppercase tracking-wide ${col.headerClassName ?? ""}`}
                 >
                   {sortable ? (
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-zinc-100"
                       onClick={() => onSortChange?.(col.id)}
                     >
                       {col.header}
@@ -89,7 +89,7 @@ export function DataTable<T>({
                 key={getRowId(row)}
                 className={`bg-white dark:bg-zinc-950 ${
                   interactive
-                    ? "cursor-pointer transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50"
+                    ? "cursor-pointer transition-colors hover:bg-primary-orange/5 hover:shadow-[inset_3px_0_0_rgba(255,78,0,1)] dark:hover:bg-primary-orange/10"
                     : ""
                 }`}
                 onClick={interactive ? () => onRowClick?.(row) : undefined}
