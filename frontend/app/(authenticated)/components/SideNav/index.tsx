@@ -43,7 +43,7 @@ export function SideNav({
   const howItWorksActive = isSideNavLinkActive(pathname, howItWorksNavItem.href);
 
   return (
-    <aside className="box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
+    <aside className="relative z-[100] box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="flex h-full min-h-0 w-54 min-w-54 flex-col overflow-hidden">
         <div className="shrink-0 p-4">
           <WorkspaceQuickSearch />

@@ -7,8 +7,9 @@ export const SIDE_NAV_ACCOUNT_MENU_AVATAR_CLASS =
 export const SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS =
   "min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100";
 
-export const SIDE_NAV_ACCOUNT_MENU_REVEAL_CLASS =
-  "absolute bottom-full left-0 z-50 mb-2 w-full min-w-56";
+/** Fixed panel stacks above main content (see WorkspaceQuickSearch z-[200]). */
+export const SIDE_NAV_ACCOUNT_MENU_PANEL_FIXED_CLASS =
+  "fixed z-[200] min-w-56";
 
 export const SIDE_NAV_ACCOUNT_MENU_PANEL_CLASS =
   "origin-bottom-left rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950";
