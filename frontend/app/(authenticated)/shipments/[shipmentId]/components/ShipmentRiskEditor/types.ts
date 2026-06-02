@@ -10,7 +10,7 @@ export interface ShipmentRiskEditorProps {
   onSaved: () => void;
 }
 
-export type ShipmentRiskSelectValue = "" | ShipmentRiskLevel;
+export type ShipmentRiskSelectValue = ShipmentRiskLevel;
 
 export interface ShipmentRiskEditorFormState {
   riskSelect: ShipmentRiskSelectValue;

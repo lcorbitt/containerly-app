@@ -25,7 +25,6 @@ export const SHIPMENT_RISK_EDITOR_MESSAGE_TRIGGER_EMPTY_CLASS =
   "min-w-0 flex-1 text-left text-xs text-zinc-500 underline-offset-2 hover:text-zinc-800 hover:underline dark:text-zinc-500 dark:hover:text-zinc-300";
 
 export const SHIPMENT_RISK_SELECT_OPTIONS: CustomSelectOption[] = [
-  { value: "", label: "Auto" },
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },
   { value: "high", label: "High" },

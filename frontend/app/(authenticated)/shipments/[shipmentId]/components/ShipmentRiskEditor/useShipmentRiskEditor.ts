@@ -4,12 +4,8 @@ import { useCallback, useState } from "react";
 import { useToast } from "@/contexts/toast";
 import { useUpdateShipmentRiskMutation } from "@/hooks/mutations/useShipmentRisk";
 import type { ShipmentRiskLevel } from "@shared/dto/logistics.dto";
-import { displayRiskFromSelect, shipmentRiskSelectValue } from "./utils";
+import { shipmentRiskSelectValue } from "./utils";
 import type { ShipmentRiskEditorProps, ShipmentRiskSelectValue } from "./types";
-
-function riskLevelFromSelect(riskSelect: ShipmentRiskSelectValue): ShipmentRiskLevel | null {
-  return riskSelect === "low" || riskSelect === "medium" || riskSelect === "high" ? riskSelect : null;
-}
 
 export function useShipmentRiskEditor({
   shipmentId,
@@ -22,7 +18,7 @@ export function useShipmentRiskEditor({
   const { toast } = useToast();
   const mutation = useUpdateShipmentRiskMutation();
 
-  const serverRiskSelect = shipmentRiskSelectValue(riskLevel);
+  const serverRiskSelect = shipmentRiskSelectValue(riskLevel, primaryCarrierStatus);
   const savedMessage = riskMessage?.trim() ?? "";
 
   const [pendingRiskSelect, setPendingRiskSelect] = useState<ShipmentRiskSelectValue | null>(null);
@@ -30,7 +26,7 @@ export function useShipmentRiskEditor({
   const [modalMessage, setModalMessage] = useState("");
 
   const riskSelect = pendingRiskSelect ?? serverRiskSelect;
-  const displayRisk = displayRiskFromSelect(riskSelect, primaryCarrierStatus);
+  const displayRisk = riskSelect;
 
   const persistRisk = useCallback(
     async (level: ShipmentRiskSelectValue, message: string) => {
@@ -43,7 +39,7 @@ export function useShipmentRiskEditor({
       const result = await mutation.mutateAsync({
         organization_id: organizationId,
         shipment_id: shipmentId,
-        risk_level: riskLevelFromSelect(level),
+        risk_level: level,
         risk_message: trimmed,
       });
 

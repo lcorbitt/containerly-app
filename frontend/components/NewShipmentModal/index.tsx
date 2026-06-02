@@ -123,10 +123,7 @@ export function NewShipmentModalProvider({ children }: { children: React.ReactNo
                       <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-4 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-950/70">
                         <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
                         <div>
-                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Creating shipment…</p>
-                          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                            Saving your shipment and preparing the workspace.
-                          </p>
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Creating Shipment…</p>
                         </div>
                       </div>
                     </div>
