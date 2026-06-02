@@ -89,7 +89,7 @@ export function DataTable<T>({
                 key={getRowId(row)}
                 className={`bg-white dark:bg-zinc-950 ${
                   interactive
-                    ? "cursor-pointer transition-colors hover:bg-primary-orange/5 hover:shadow-[inset_3px_0_0_rgba(255,78,0,1)] dark:hover:bg-primary-orange/10"
+                    ? "color-fade cursor-pointer hover:bg-primary-orange/5 hover:shadow-[inset_3px_0_0_rgba(255,78,0,1)] dark:hover:bg-primary-orange/10"
                     : ""
                 }`}
                 onClick={interactive ? () => onRowClick?.(row) : undefined}
