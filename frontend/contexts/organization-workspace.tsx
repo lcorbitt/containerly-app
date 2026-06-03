@@ -21,7 +21,7 @@ type OrganizationWorkspaceValue = {
   isSuperAdmin: boolean;
 };
 
-const OrganizationWorkspaceContext = createContext<OrganizationWorkspaceValue | null>(null);
+export const OrganizationWorkspaceContext = createContext<OrganizationWorkspaceValue | null>(null);
 
 const STORAGE_KEY = "containerly:activeOrgId";
 

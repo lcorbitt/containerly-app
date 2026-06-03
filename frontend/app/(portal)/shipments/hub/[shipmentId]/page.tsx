@@ -108,7 +108,9 @@ export default function SharedShipmentTrackingPage({
       shipmentId={shipmentId}
       initial={data}
       headerActions={
-        data.viewer === "org_member" ? <CustomerPortalShareMenu shipmentId={shipmentId} /> : undefined
+        data.viewer === "org_member" && data.organization?.id ? (
+          <CustomerPortalShareMenu shipmentId={shipmentId} organizationId={data.organization.id} />
+        ) : undefined
       }
     />
   );
