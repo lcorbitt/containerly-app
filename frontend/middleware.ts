@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Hub portal is public; access is enforced in-page and via Edge. */
+/** Portal routes enforce auth in-page and via Edge; marketing routes are unauthenticated. */
 export async function middleware(_request: NextRequest) {
   return NextResponse.next();
 }

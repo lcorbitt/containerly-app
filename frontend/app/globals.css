@@ -98,7 +98,9 @@ html.dark *::-webkit-scrollbar-thumb:active {
 }
 
 /* Public marketing shell (theme-aware; landing page adds grid/glow locally). */
-.public-shell {
+.public-shell,
+.marketing-shell,
+.portal-shell {
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -157,7 +159,7 @@ html.dark .landing-hero-glow {
   );
 }
 
-/* Legacy alias — prefer .public-shell */
+/* Legacy alias — prefer .marketing-shell */
 .landing-root {
   min-height: 100%;
   display: flex;

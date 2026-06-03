@@ -28,7 +28,7 @@ Component → colocated hook → TanStack Query → frontend/services/*.service.
   → fetch /api/...              (privileged Next routes)
 ```
 
-- **Route UI** lives under `app/(authenticated)/...` and `app/(public)/...`
+- **Route UI** lives under `app/(authenticated)/...` (operator workspace), `app/(portal)/...` (customer/operator shipment portal), and `app/(marketing)/...` (landing, login)
 - **Shared components** — `components/` only when reused across routes
 - **Edge slugs** — `lib/supabase/edge-function-slugs.ts` (never hard-code URLs)
 - **Wire types** — `supabase/functions/_wire/dto/` (import as `@shared/dto/...`)
@@ -42,7 +42,8 @@ Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture
 | Dashboard triage | `/dashboard` |
 | Shipments list | `/shipments` |
 | Operator workspace | `/shipments/[shipmentId]` — commercial details, documents, mail tracking, optional container lines |
-| Customer portal | `/requests/[reportId]` — documents (approve/reject), activity, details, messages; tracking tab only when carrier sync is enabled |
+| Customer portal | `/shipments/hub/[shipmentId]` — invited customers and org members; auth + grant required |
+| Invite accept | `/invite/accept?token=...` — customer onboarding into portal |
 | New shipment | Header **New Shipment** — manual commercial entry; carrier sync from workspace after document approval |
 
 ## Scripts

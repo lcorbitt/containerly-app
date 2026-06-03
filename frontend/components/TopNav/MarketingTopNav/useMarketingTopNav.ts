@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PUBLIC_TOP_NAV_LOGIN_PATH } from "./constants";
+import { MARKETING_TOP_NAV_LOGIN_PATH } from "./constants";
 
-export function usePublicTopNav() {
+export function useMarketingTopNav() {
   const pathname = usePathname();
-  const hideMarketingLinks = pathname === PUBLIC_TOP_NAV_LOGIN_PATH;
+  const hideMarketingLinks = pathname === MARKETING_TOP_NAV_LOGIN_PATH;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
