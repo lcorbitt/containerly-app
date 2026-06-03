@@ -89,7 +89,7 @@ export function DataTable<T>({
                 key={getRowId(row)}
                 className={`bg-white dark:bg-zinc-950 ${
                   interactive
-                    ? "color-fade cursor-pointer hover:bg-primary-orange/5 hover:shadow-[inset_3px_0_0_rgba(255,78,0,1)] dark:hover:bg-primary-orange/10"
+                    ? "group color-fade cursor-pointer hover:bg-primary-orange/5 dark:hover:bg-primary-orange/10"
                     : ""
                 }`}
                 onClick={interactive ? () => onRowClick?.(row) : undefined}
@@ -97,8 +97,15 @@ export function DataTable<T>({
                 tabIndex={interactive ? 0 : undefined}
                 role={interactive ? "link" : undefined}
               >
-                {columns.map((col) => (
-                  <td key={col.id} className={`px-4 py-3 ${col.className ?? ""}`}>
+                {columns.map((col, colIndex) => (
+                  <td
+                    key={col.id}
+                    className={`px-4 py-3 ${col.className ?? ""} ${
+                      interactive && colIndex === 0
+                        ? "color-fade border-l-[3px] border-l-transparent group-hover:border-l-primary-orange"
+                        : ""
+                    }`}
+                  >
                     {col.cell(row)}
                   </td>
                 ))}
