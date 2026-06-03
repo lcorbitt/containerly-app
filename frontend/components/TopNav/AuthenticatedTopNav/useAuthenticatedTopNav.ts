@@ -77,11 +77,9 @@ export function useAuthenticatedTopNav() {
 
     if (subTabRoute.kind === "shipment-operator") {
       const row = workspaceRowQuery.data?.ok ? workspaceRowQuery.data.row : null;
-      return (
-        row?.order_number?.trim() ||
-        row?.container_number?.trim() ||
-        fallbackSubTabLabel(subTabRoute.shipmentId)
-      );
+      const orderNumber = row?.order_number?.trim();
+      if (orderNumber) return `Order No. ${orderNumber}`;
+      return row?.container_number?.trim() || fallbackSubTabLabel(subTabRoute.shipmentId);
     }
 
     if (subTabRoute.kind === "container") {

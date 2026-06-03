@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ScrollText,
   Send,
+  User,
   UserCheck,
   Users,
   XCircle,
@@ -53,8 +54,9 @@ export function alertTypeIconConfig(alertType: string): IconConfig {
     case "ORG_INVITE_ACCEPTED":
     case "ORG_MEMBER_JOINED":
       return { Icon: BadgeCheck, className: "text-green-600 dark:text-green-400" };
-    case "CUSTOMER_JOINED_ORG":
     case "CUSTOMER_ACCESS_GRANTED":
+      return { Icon: User, className: "text-teal-600 dark:text-teal-400" };
+    case "CUSTOMER_JOINED_ORG":
       return { Icon: Building2, className: "text-teal-600 dark:text-teal-400" };
     case "BOL_IMPORTED":
       return { Icon: ScrollText, className: "text-orange-600 dark:text-orange-400" };

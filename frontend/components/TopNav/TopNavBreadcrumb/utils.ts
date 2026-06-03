@@ -67,10 +67,10 @@ export function hubShipmentOrderBreadcrumbLabel(
   payload: ShipmentPortalPayload | null | undefined,
   shipmentId: string,
 ): string {
-  return (
+  const orderNumber =
     payload?.summary?.order_number?.trim() ||
-    payload?.commercial_details?.lines?.[0]?.order_number?.trim() ||
-    payload?.summary?.container_number?.trim() ||
-    fallbackSubTabLabel(shipmentId)
-  );
+    payload?.commercial_details?.lines?.[0]?.order_number?.trim();
+  if (orderNumber) return `Order No. ${orderNumber}`;
+
+  return payload?.summary?.container_number?.trim() || fallbackSubTabLabel(shipmentId);
 }
