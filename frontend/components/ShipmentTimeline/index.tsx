@@ -17,7 +17,7 @@ import type {
   ShipmentTimelineOrder,
   ShipmentTimelineViewProps,
 } from "./types";
-import { TONE_STYLES, STEP_CARD_BASE, STEP_CARD_INTERACTIVE } from "./constants";
+import { TONE_STYLES, STEP_CARD_BASE, STEP_CARD_INTERACTIVE, STEP_CARD_SURFACE, TIMELINE_COMMUNICATION_PREVIEW_CLASS, TIMELINE_DEFAULT_SUBTITLE_CLASS } from "./constants";
 import {
   buildShipmentTimelineEvents,
   formatTimelineWhen,
@@ -27,6 +27,8 @@ import {
   humanizeFieldKey,
   eventHeading,
   inferTimelineVisual,
+  isCommunicationTimelineEvent,
+  communicationTimelinePreview,
   formatValueForDisplay,
   formatLocationSnippet,
 } from "./utils";
@@ -129,9 +131,15 @@ function TimelineEventDetailModal({
     };
   }, [onClose]);
 
-  const { tone, Icon, label } = inferTimelineVisual(event.event_type, event.status);
+  const { tone, Icon, label } = inferTimelineVisual(
+    event.event_type,
+    event.status,
+    event.activityMetadata,
+  );
   const s = TONE_STYLES[tone];
   const { title, subtitle } = eventHeading(event);
+  const isCommunication = isCommunicationTimelineEvent(event.event_type);
+  const communicationPreview = isCommunication ? communicationTimelinePreview(subtitle) : null;
   const relative = formatRelativeWhen(event.occurred_at);
   const rawPayload = event.raw_payload;
   const hasRaw =
@@ -183,7 +191,11 @@ function TimelineEventDetailModal({
               <h2 id={titleId} className="mt-1.5 text-base font-semibold leading-snug tracking-tight text-zinc-50">
                 {title}
               </h2>
-              {subtitle ? <p className="mt-0.5 text-xs font-medium text-zinc-400">{subtitle}</p> : null}
+              {communicationPreview ? (
+                <p className={TIMELINE_COMMUNICATION_PREVIEW_CLASS}>{communicationPreview}</p>
+              ) : subtitle ? (
+                <p className={TIMELINE_DEFAULT_SUBTITLE_CLASS}>{subtitle}</p>
+              ) : null}
             </div>
           </div>
 
@@ -377,10 +389,18 @@ export function ShipmentTimelineView({
             >
             <ol className="relative list-none py-1">
               {displayEvents.map((ev, index) => {
-                const { tone, Icon, label } = inferTimelineVisual(ev.event_type, ev.status);
+                const { tone, Icon, label } = inferTimelineVisual(
+                  ev.event_type,
+                  ev.status,
+                  ev.activityMetadata,
+                );
                 const s = TONE_STYLES[tone];
                 const isLast = index === displayEvents.length - 1;
                 const { title, subtitle } = eventHeading(ev);
+                const isCommunication = isCommunicationTimelineEvent(ev.event_type);
+                const communicationPreview = isCommunication
+                  ? communicationTimelinePreview(subtitle)
+                  : null;
                 const locSnippet =
                   ev.location && Object.keys(ev.location).length > 0
                     ? formatLocationSnippet(ev.location)
@@ -413,7 +433,7 @@ export function ShipmentTimelineView({
                         <TimelineStepCard
                           interactive={interactiveDetail}
                           onOpenDetail={() => setDetailEvent(ev)}
-                          className={`w-full max-w-none ${s.cardBorder} ${s.cardBg}`}
+                          className={`w-full max-w-none ${STEP_CARD_SURFACE}`}
                         >
                         <div className="flex flex-wrap items-center gap-1 gap-y-0.5">
                           <span
@@ -425,10 +445,10 @@ export function ShipmentTimelineView({
                         <p className="mt-1 text-[13px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
                           {title}
                         </p>
-                        {subtitle ? (
-                          <p className="mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
-                            {subtitle}
-                          </p>
+                        {communicationPreview ? (
+                          <p className={TIMELINE_COMMUNICATION_PREVIEW_CLASS}>{communicationPreview}</p>
+                        ) : subtitle ? (
+                          <p className={TIMELINE_DEFAULT_SUBTITLE_CLASS}>{subtitle}</p>
                         ) : null}
                         {ev.documentMeta ? <TimelineDocumentMeta meta={ev.documentMeta} /> : null}
                         <p className="mt-1 font-mono text-[10px] leading-tight text-zinc-500 dark:text-zinc-500">

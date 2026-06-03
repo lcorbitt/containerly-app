@@ -11,6 +11,7 @@ import {
   updateShipmentCommercial,
 } from "@models/shipments.ts";
 import { insertShipmentLines, upsertShipmentLines } from "@models/shipment_lines.ts";
+import { recordShipmentCreated } from "@supabase-shared/document-workflow.service.ts";
 import type {
   CreateShipmentBody,
   CreateShipmentResponse,
@@ -98,6 +99,16 @@ export async function createCommercialShipment(
     input.lines,
   );
   if (lineErr) return { ok: false, status: 500, error: lineErr.message };
+
+  await recordShipmentCreated(userClient, shipmentId, userId, {
+    order_number: input.header.order_number.trim(),
+    customer_name: input.header.customer_name?.trim() || null,
+    container_number: input.header.container_number.trim(),
+    carrier_booking_number: input.header.carrier_booking_number.trim(),
+    port_of_loading: input.header.port_of_loading?.trim() || null,
+    port_of_destination: input.header.port_of_destination?.trim() || null,
+    line_count: input.lines.length,
+  });
 
   return {
     ok: true,

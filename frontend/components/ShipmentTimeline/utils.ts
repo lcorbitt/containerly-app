@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Anchor,
+  Barcode,
   Building2,
   CheckCircle2,
   FileText,
@@ -18,6 +19,7 @@ import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import {
   messageActivityCommunicationTitle,
   truncateMessageActivityPreview,
+  formatCommunicationTimelinePreview,
 } from "@/utils/message-activity-event";
 import { formatTimestamp } from "@/utils/datetime";
 import type { PublicTimelineEvent } from "@/types/public-report";
@@ -248,11 +250,44 @@ export function hasTimelineDocumentMeta(meta: TimelineDocumentMeta): boolean {
   );
 }
 
+export function formatShipmentCreatedSubtitle(metadata: Record<string, unknown>): string | null {
+  const parts: string[] = [];
+  const orderNumber = readMetadataString(metadata, "order_number");
+  if (orderNumber) parts.push(`Order ${orderNumber}`);
+  const customerName = readMetadataString(metadata, "customer_name");
+  if (customerName) parts.push(customerName);
+  const containerNumber = readMetadataString(metadata, "container_number");
+  if (containerNumber) parts.push(containerNumber);
+  const portOfLoading = readMetadataString(metadata, "port_of_loading");
+  const portOfDestination = readMetadataString(metadata, "port_of_destination");
+  if (portOfLoading && portOfDestination) {
+    parts.push(`${portOfLoading} → ${portOfDestination}`);
+  } else if (portOfLoading) {
+    parts.push(portOfLoading);
+  } else if (portOfDestination) {
+    parts.push(portOfDestination);
+  }
+  const lineCount = readMetadataNumber(metadata, "line_count");
+  if (lineCount != null && lineCount > 0) {
+    parts.push(`${lineCount} ${lineCount === 1 ? "line" : "lines"}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+export function isTrackingNumberActivityEvent(
+  eventType: string,
+  metadata: Record<string, unknown> | null | undefined,
+): boolean {
+  return eventType === "originals_mailed" && Boolean(readMetadataString(metadata ?? {}, "tracking_number"));
+}
+
 export function activityEventTitle(event: ShipmentActivityEvent): string {
   const documentMeta = parseActivityDocumentMeta(event.metadata);
   const showsFileInMeta = Boolean(documentMeta?.fileName?.trim());
 
   switch (event.event_type) {
+    case "shipment_created":
+      return "Shipment created";
     case "drafts_attached":
       return "Draft documents uploaded";
     case "documents_approved":
@@ -260,6 +295,9 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
     case "documents_rejected":
       return "Document rejected";
     case "originals_mailed": {
+      if (isTrackingNumberActivityEvent(event.event_type, event.metadata)) {
+        return "Tracking number added";
+      }
       const body = event.body?.trim();
       if (body) {
         const stripped = body.replace(/^\d{1,2}\/\d{1,2}\/\d{2}\s—\s*/, "").trim();
@@ -295,12 +333,18 @@ export function mapActivityEventToTimelineEvent(
   event: ShipmentActivityEvent,
   attachmentDisplayNamesById?: Record<string, string>,
 ): ShipmentTimelineDisplayEvent {
-  const parsedMeta = parseActivityDocumentMeta(event.metadata);
+  const metadata = event.metadata ?? {};
+  const parsedMeta = parseActivityDocumentMeta(metadata);
   const messagePreview =
-    readMetadataString(event.metadata ?? {}, "message_preview") ??
+    readMetadataString(metadata, "message_preview") ??
     (event.event_type === "customer_message" || event.event_type === "operator_message"
       ? truncateMessageActivityPreview(event.body)
       : null);
+  const shipmentCreatedSubtitle =
+    event.event_type === "shipment_created" ? formatShipmentCreatedSubtitle(metadata) : null;
+  const trackingNumberSubtitle = isTrackingNumberActivityEvent(event.event_type, metadata)
+    ? readMetadataString(metadata, "tracking_number")
+    : null;
   return {
     id: event.id,
     event_type: event.event_type,
@@ -309,12 +353,13 @@ export function mapActivityEventToTimelineEvent(
     occurred_at: event.occurred_at,
     source: "activity",
     displayTitle: activityEventTitle(event),
-    displaySubtitle: messagePreview,
+    displaySubtitle: messagePreview ?? shipmentCreatedSubtitle ?? trackingNumberSubtitle,
     documentMeta: enrichTimelineDocumentMeta(
       parsedMeta,
-      event.metadata ?? {},
+      metadata,
       attachmentDisplayNamesById,
     ),
+    activityMetadata: metadata,
   };
 }
 
@@ -341,9 +386,16 @@ export function buildShipmentTimelineEvents(input: {
 export function inferTimelineVisual(
   eventType: string,
   status: string | null,
+  metadata?: Record<string, unknown> | null,
 ): { tone: TimelineTone; Icon: LucideIcon; label: string } {
   const t = `${eventType} ${status ?? ""}`.toLowerCase();
 
+  if (/shipment_created/.test(t)) {
+    return { tone: "shipmentCreated", Icon: Package, label: "Created" };
+  }
+  if (isTrackingNumberActivityEvent(eventType, metadata)) {
+    return { tone: "trackingNumber", Icon: Barcode, label: "Tracking" };
+  }
   if (/drafts_attached|document.*upload|revision/.test(t)) {
     return { tone: "document", Icon: FileText, label: "Documents" };
   }
@@ -359,8 +411,14 @@ export function inferTimelineVisual(
   if (/tracking_linked|carrier/.test(t)) {
     return { tone: "system", Icon: Activity, label: "Tracking" };
   }
-  if (/customer_message|operator_message|message/.test(t)) {
-    return { tone: "milestone", Icon: MessageSquare, label: "Communication" };
+  if (/customer_message/.test(t)) {
+    return { tone: "customerMessage", Icon: MessageSquare, label: "Communication" };
+  }
+  if (/operator_message/.test(t)) {
+    return { tone: "operatorMessage", Icon: MessageSquare, label: "Communication" };
+  }
+  if (/message/.test(t)) {
+    return { tone: "operatorMessage", Icon: MessageSquare, label: "Communication" };
   }
 
   if (/custom|clearance|hold|inspect|exam|cfs|bond|quarantine|detain/.test(t)) {
@@ -386,6 +444,15 @@ export function inferTimelineVisual(
   }
 
   return { tone: "milestone", Icon: MapPin, label: "Milestone" };
+}
+
+export function isCommunicationTimelineEvent(eventType: string): boolean {
+  return /customer_message|operator_message/.test(eventType.trim());
+}
+
+export function communicationTimelinePreview(subtitle: string | null | undefined): string | null {
+  if (!subtitle?.trim()) return null;
+  return formatCommunicationTimelinePreview(subtitle);
 }
 
 export function formatValueForDisplay(v: unknown): string {

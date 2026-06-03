@@ -29,6 +29,7 @@ import {
   notifyOperatorsTrackingSyncFailed,
 } from "@supabase-shared/notification-workflow.service.ts";
 import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "@supabase-shared/tracking-sync.ts";
+import { recordShipmentCreated } from "@supabase-shared/document-workflow.service.ts";
 import type {
   CreateTrackingRequestBody,
   CreateTrackingRequestResponse,
@@ -102,6 +103,12 @@ export async function createTrackingRequest(
       if (shipErr) throw shipErr;
       if (!ship?.id) throw new Error("Could not create shipment for BOL batch");
       shipmentId = ship.id as string;
+      await recordShipmentCreated(userClient, shipmentId, userId, {
+        order_number: booking,
+        container_number: containerNum,
+        bill_of_lading: bol,
+        shipment_group_id: groupId,
+      });
     }
   } else if (attachShipmentId) {
     const { data: existing, error: exErr } = await fetchShipmentInOrganization(
@@ -132,6 +139,12 @@ export async function createTrackingRequest(
     if (shipErr) throw shipErr;
     if (!ship?.id) throw new Error("Could not create shipment");
     shipmentId = ship.id as string;
+    await recordShipmentCreated(userClient, shipmentId, userId, {
+      order_number: orderNum,
+      container_number: containerNum,
+      carrier_booking_number: booking,
+      bill_of_lading: bol,
+    });
   }
 
   const { data: containerRow, error: contErr } = await upsertContainerForTrackingRequest(userClient, {

@@ -1,7 +1,18 @@
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 
-export type TimelineTone = "vessel" | "port" | "land" | "customs" | "system" | "milestone" | "document";
+export type TimelineTone =
+  | "vessel"
+  | "port"
+  | "land"
+  | "customs"
+  | "system"
+  | "milestone"
+  | "document"
+  | "operatorMessage"
+  | "customerMessage"
+  | "trackingNumber"
+  | "shipmentCreated";
 
 /** One file within a batch upload activity event. */
 export interface TimelineDocumentMetaItem {
@@ -33,6 +44,8 @@ export type ShipmentTimelineDisplayEvent = PublicTimelineEvent & {
   displaySubtitle?: string | null;
   /** Parsed document metadata for activity-sourced events. */
   documentMeta?: TimelineDocumentMeta | null;
+  /** Raw activity metadata (for timeline visual inference). */
+  activityMetadata?: Record<string, unknown> | null;
 };
 
 export interface ShipmentTimelineProps {

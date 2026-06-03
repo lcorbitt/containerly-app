@@ -1213,8 +1213,20 @@ insert into public.shipment_activity_events (
   body,
   actor_kind,
   actor_user_id,
+  metadata,
   occurred_at
 ) values
+  (
+    'f0000001-0000-4000-8000-000000000000',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"PO-COSTCO-8891","customer_name":"Costco Wholesale","container_number":"MSCU1234567","carrier_booking_number":"MEDUSH914201","port_of_loading":"Shanghai, CN","port_of_destination":"Los Angeles, US","line_count":2}'::jsonb,
+    now() - interval '5 days'
+  ),
   (
     'f0000001-0000-4000-8000-000000000001',
     'c0000001-0000-4000-8000-000000000099',
@@ -1223,6 +1235,7 @@ insert into public.shipment_activity_events (
     'Draft export documents uploaded for customer review.',
     'operator',
     'a0000004-0000-4000-8000-000000000004',
+    '{}'::jsonb,
     now() - interval '4 hours'
   ),
   (
@@ -1233,6 +1246,7 @@ insert into public.shipment_activity_events (
     'Draft commercial invoice and health certificate sent for Costco review.',
     'operator',
     'a0000004-0000-4000-8000-000000000004',
+    '{}'::jsonb,
     now() - interval '2 hours'
   );
 

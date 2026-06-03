@@ -1,23 +1,28 @@
 "use client";
 
 import { ShipmentShareMenu } from "@/components/ShipmentShareMenu";
+import { workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import { useShipmentAccessTabContent } from "../ShipmentAccessTabContent/hooks/useShipmentAccessTabContent";
 import { ShipmentCustomerPortalLink } from "./ShipmentCustomerPortalLink";
-import { ShipmentNotificationsSection } from "./ShipmentNotificationsSection";
-import { ShipmentTagsSection } from "./ShipmentTagsSection";
-import { ShipmentPendingAccessRequests } from "../ShipmentPendingAccessRequests";
-import { ShipmentTeamFields } from "./ShipmentTeamFields";
+import { ShipmentCustomerTabContent } from "./ShipmentCustomerTabContent";
+import { ShipmentOperatorTabContent } from "./ShipmentOperatorTabContent";
+import { SHIPMENT_ACCESS_SIDEBAR_TAB_LIST_CLASS } from "./constants";
+import type { ShipmentAccessSidebarProps } from "./types";
+import { useShipmentAccessSidebar } from "./useShipmentAccessSidebar";
 
 export function ShipmentAccessSidebar({
   shipmentId,
   initialAssigneeUserId,
   onMetaChanged,
-}: {
-  shipmentId: string;
-  initialAssigneeUserId: string | null;
-  onMetaChanged: () => void;
-}) {
+}: ShipmentAccessSidebarProps) {
   const accessState = useShipmentAccessTabContent({ shipmentId, initialAssigneeUserId, onMetaChanged });
+  const {
+    setActiveTab,
+    isOperatorTab,
+    isCustomerTab,
+    operatorTabLabel,
+    customerTabLabel,
+  } = useShipmentAccessSidebar(accessState);
 
   return (
     <section
@@ -28,23 +33,55 @@ export function ShipmentAccessSidebar({
         <ShipmentCustomerPortalLink shipmentId={shipmentId} className="min-w-0 flex-1" />
         <ShipmentShareMenu shipmentId={shipmentId} state={accessState} variant="sidebar" />
       </div>
+
+      <div className={SHIPMENT_ACCESS_SIDEBAR_TAB_LIST_CLASS} role="tablist" aria-label="Shipment sidebar">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={isOperatorTab}
+          id="shipment-sidebar-tab-operator"
+          aria-controls="shipment-sidebar-tabpanel-operator"
+          className={workspaceTabButtonClass(isOperatorTab)}
+          onClick={() => setActiveTab("operator")}
+        >
+          {operatorTabLabel}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={isCustomerTab}
+          id="shipment-sidebar-tab-customer"
+          aria-controls="shipment-sidebar-tabpanel-customer"
+          className={workspaceTabButtonClass(isCustomerTab)}
+          onClick={() => setActiveTab("customer")}
+        >
+          {customerTabLabel}
+        </button>
+      </div>
+
       {accessState.loading ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : (
-        <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          <ShipmentPendingAccessRequests state={accessState} />
-          <ShipmentTeamFields state={accessState} />
-          <ShipmentTagsSection
-            shipmentId={shipmentId}
-            initialTags={accessState.tags}
-            orgTagSuggestions={accessState.orgTagSuggestions}
-            onTagsSaved={accessState.applySavedTags}
-          />
-          <ShipmentNotificationsSection
-            shipmentId={shipmentId}
-            initialSubscribed={accessState.emailNotificationsSubscribed}
-          />
-        </div>
+        <>
+          {isOperatorTab ? (
+            <div
+              role="tabpanel"
+              id="shipment-sidebar-tabpanel-operator"
+              aria-labelledby="shipment-sidebar-tab-operator"
+            >
+              <ShipmentOperatorTabContent shipmentId={shipmentId} state={accessState} />
+            </div>
+          ) : null}
+          {isCustomerTab ? (
+            <div
+              role="tabpanel"
+              id="shipment-sidebar-tabpanel-customer"
+              aria-labelledby="shipment-sidebar-tab-customer"
+            >
+              <ShipmentCustomerTabContent state={accessState} />
+            </div>
+          ) : null}
+        </>
       )}
     </section>
   );

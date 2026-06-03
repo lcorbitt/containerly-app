@@ -19,7 +19,16 @@ export function messageActivityActorKind(authorKind: string): "customer" | "oper
 
 export function messageActivityCommunicationTitle(authorDisplayName: string): string {
   const name = authorDisplayName.trim() || "Unknown sender";
-  return `Communication: Message from ${name}`;
+  return `Message from ${name}`;
+}
+
+export function formatCommunicationTimelinePreview(
+  body: string,
+  maxLen = MESSAGE_ACTIVITY_PREVIEW_MAX_LEN,
+): string {
+  const truncated = truncateMessageActivityPreview(body, maxLen);
+  if (!truncated) return "";
+  return `"${truncated}"`;
 }
 
 export function buildMessageActivityMetadata(input: {

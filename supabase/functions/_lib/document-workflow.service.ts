@@ -213,6 +213,22 @@ export async function publishDraftDocuments(
   }
 }
 
+export async function recordShipmentCreated(
+  client: SupabaseClient,
+  shipmentId: string,
+  userId: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  await insertShipmentActivityEvent(client, {
+    shipment_id: shipmentId,
+    event_type: "shipment_created",
+    body: "Shipment created",
+    actor_kind: "operator",
+    actor_user_id: userId,
+    metadata,
+  });
+}
+
 export async function recordOriginalsMailed(
   client: SupabaseClient,
   shipmentId: string,

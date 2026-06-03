@@ -10,6 +10,7 @@ import {
   type ShipmentPortalReportMeta,
 } from "./shipment-portal-payload.ts";
 import { fetchProfileRole } from "@models/profiles.ts";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
 import { fetchActiveAccessFull } from "@models/shipment_customer_access.ts";
 import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
 import { fetchShipmentIdAndOrganization, fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
@@ -31,17 +32,21 @@ export async function getShipmentForOperator(
   if (shErr) return { ok: false, status: 500, error: shErr.message };
   if (!shipment) return { ok: false, status: 404, error: "Shipment not found" };
 
-  const [{ data: participant }, { data: profile }] = await Promise.all([
+  const organizationId = shipment.organization_id as string;
+
+  const [{ data: participant }, { data: profile }, { data: membership }] = await Promise.all([
     fetchShipmentParticipantForUser(userClient, shipmentId, userId),
     fetchProfileRole(userClient, userId),
+    fetchMembershipByOrgAndUser(userClient, organizationId, userId),
   ]);
 
   const assigneeUserId = shipment.assignee_user_id as string | null | undefined;
   const isAssignee = assigneeUserId != null && assigneeUserId === userId;
   const isParticipant = participant != null;
+  const isOrgMember = membership != null;
   const isPlatformSuperadmin = (profile?.role as string | undefined) === "superadmin";
 
-  if (isPlatformSuperadmin || isAssignee || isParticipant) {
+  if (isPlatformSuperadmin || isOrgMember || isAssignee || isParticipant) {
     const reportMeta: ShipmentPortalReportMeta = {
       id: shipment.id as string,
       title: null,

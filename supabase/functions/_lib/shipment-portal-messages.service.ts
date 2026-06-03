@@ -4,6 +4,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { fetchProfileDisplayName } from "@supabase-shared/in-app-alerts.ts";
 import { fetchProfileRole } from "@models/profiles.ts";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
 import { fetchReportMessageParentForReply, insertReportMessage } from "@models/report_messages.ts";
 import { fetchAccessIdAndOrg } from "@models/shipment_customer_access.ts";
 import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
@@ -40,12 +41,16 @@ async function isOrgMemberOnShipment(
   userClient: SupabaseClient,
   userId: string,
   shipmentId: string,
+  organizationId: string,
   assigneeUserId: string | null | undefined,
 ): Promise<boolean> {
   const { data: profile } = await fetchProfileRole(userClient, userId);
   if ((profile?.role as string | undefined) === "superadmin") return true;
 
   if (assigneeUserId != null && assigneeUserId === userId) return true;
+
+  const { data: membership } = await fetchMembershipByOrgAndUser(userClient, organizationId, userId);
+  if (membership != null) return true;
 
   const { data: participant } = await fetchShipmentParticipantForUser(userClient, shipmentId, userId);
   return participant != null;
@@ -162,7 +167,13 @@ export async function postPortalShipmentMessage(
   const organizationId = shipment.organization_id as string;
   const assigneeUserId = shipment.assignee_user_id as string | null | undefined;
 
-  const isOrgMember = await isOrgMemberOnShipment(userClient, userId, shipmentId, assigneeUserId);
+  const isOrgMember = await isOrgMemberOnShipment(
+    userClient,
+    userId,
+    shipmentId,
+    organizationId,
+    assigneeUserId,
+  );
 
   if (isOrgMember) {
     if (!shipmentScoped) {
