@@ -37,6 +37,7 @@ import {
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsNewCustomerMessage,
 } from "@supabase-shared/notification-workflow.service.ts";
+import { sendPortalSignInLinkEmail } from "@supabase-shared/email.service.ts";
 import {
   fetchProfileDisplayName,
   listOrgAdminUserIds,
@@ -155,6 +156,11 @@ export async function createCustomerInvite(
   const siteUrl = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";
   const invitePath = `/invite/accept?token=${encodeURIComponent(token)}`;
   const invite_url = siteUrl ? `${siteUrl}${invitePath}` : invitePath;
+  // Email CTA points at the hub: the customer enters their email there and receives a
+  // passwordless sign-in link (low-friction). The token `invite_url` above is retained
+  // for the operator copy-link and the legacy /invite/accept route.
+  const hubPath = `/shipments/hub/${shipmentId}`;
+  const hub_url = siteUrl ? `${siteUrl}${hubPath}` : hubPath;
 
   const { data: orgRow } = await fetchOrganizationForPortal(admin, orgId);
   const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
@@ -163,7 +169,7 @@ export async function createCustomerInvite(
     const emailResult = await notifyCustomerInviteSent({
       to: emailRaw,
       orgName,
-      inviteUrl: invite_url,
+      inviteUrl: hub_url,
     });
     if (!emailResult.ok) {
       return {
@@ -557,7 +563,78 @@ export async function postCustomerMessage(
 // ---------------------------------------------------------------------------
 
 const GENERIC_PORTAL_EMAIL_MESSAGE =
-  "If this email is invited to this shipment, sign in or create an account to continue. Otherwise your request has been sent to the team.";
+  "If this email is invited to this shipment, check your inbox for a secure sign-in link. Otherwise, your request has been sent to the team.";
+
+const MAGIC_LINK_SENT_MESSAGE =
+  "Check your email for a secure sign-in link to open this shipment. No password required.";
+
+/** Order/container label used in portal sign-in emails. */
+async function fetchShipmentLabel(admin: SupabaseClient, shipmentId: string): Promise<string> {
+  const { data: ship } = await admin
+    .from("shipments")
+    .select("order_number, container_number")
+    .eq("id", shipmentId)
+    .maybeSingle();
+  const order = (ship?.order_number as string | null | undefined)?.trim();
+  const container = (ship?.container_number as string | null | undefined)?.trim();
+  return order ? `Order ${order}` : container ? `Container ${container}` : "your shipment";
+}
+
+/**
+ * Mint a passwordless sign-in for a whitelisted/invited email: ensure the customer
+ * auth user exists (email-only, confirmed), generate a Supabase magic link that
+ * redirects to the hub, and deliver it via the branded Resend pipeline. The hub then
+ * runs `claimShipmentAccess` to grant access on first arrival.
+ */
+async function issuePortalMagicLink(
+  admin: SupabaseClient,
+  args: { email: string; shipmentId: string; orgId: string },
+): Promise<void> {
+  const email = args.email.trim().toLowerCase();
+
+  const { data: existingProfile } = await fetchProfileIdByEmail(admin, email);
+  if (!existingProfile?.id) {
+    const { error: createErr } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+    });
+    if (createErr && !/already.*(registered|exists)/i.test(createErr.message)) {
+      throw new Error(`Could not create customer account: ${createErr.message}`);
+    }
+  }
+
+  const siteUrl = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";
+  const redirectTo = `${siteUrl}/shipments/hub/${args.shipmentId}`;
+
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+    options: { redirectTo },
+  });
+  if (linkErr || !linkData) {
+    throw new Error(`Could not generate sign-in link: ${linkErr?.message ?? "unknown"}`);
+  }
+
+  const props = linkData.properties as { action_link?: string } | undefined;
+  const actionLink = props?.action_link ?? (linkData as { action_link?: string }).action_link;
+  if (!actionLink) {
+    throw new Error("Sign-in link generation returned no action_link");
+  }
+
+  const { data: orgRow } = await fetchOrganizationForPortal(admin, args.orgId);
+  const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
+  const shipmentLabel = await fetchShipmentLabel(admin, args.shipmentId);
+
+  const emailResult = await sendPortalSignInLinkEmail({
+    to: email,
+    orgName,
+    signInUrl: actionLink,
+    shipmentLabel,
+  });
+  if (!emailResult.ok) {
+    throw new Error(`Sign-in link email could not be sent: ${emailResult.error}`);
+  }
+}
 
 export async function checkPortalAccessEmail(
   admin: SupabaseClient,
@@ -596,10 +673,19 @@ export async function checkPortalAccessEmail(
   );
 
   if (pendingInvite || activeAccess?.id) {
+    try {
+      await issuePortalMagicLink(admin, { email: emailRaw, shipmentId, orgId });
+    } catch (e) {
+      return {
+        ok: false,
+        status: 502,
+        error: e instanceof Error ? e.message : "Could not send sign-in link",
+      };
+    }
     return {
       ok: true,
-      message: "This email is invited. Sign in or create an account to open the customer portal.",
-      outcome: "invited",
+      message: MAGIC_LINK_SENT_MESSAGE,
+      outcome: "magic_link_sent",
     };
   }
 
@@ -795,5 +881,6 @@ export async function previewCustomerInvite(
     invited_email_masked: masked,
     org_name: (orgRow?.name as string | undefined) ?? "Your logistics team",
     shipment_label: shipmentLabel,
+    shipment_id: shipmentId,
   };
 }

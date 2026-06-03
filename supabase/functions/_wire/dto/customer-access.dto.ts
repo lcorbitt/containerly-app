@@ -96,7 +96,7 @@ export type CheckPortalAccessEmailBody = {
 
 export type CheckPortalAccessEmailResponse = {
   message: string;
-  outcome: "invited" | "request_sent" | "already_requested";
+  outcome: "magic_link_sent" | "request_sent" | "already_requested";
 };
 
 // ---------------------------------------------------------------------------
@@ -129,4 +129,6 @@ export type PreviewCustomerInviteResponse = {
   invited_email_masked: string;
   org_name: string;
   shipment_label: string;
+  /** Shipment id for this invite; used to request a passwordless sign-in link. */
+  shipment_id: string;
 };

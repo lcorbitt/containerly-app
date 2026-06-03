@@ -655,6 +655,7 @@ export async function previewCustomerInvite(token: string): Promise<
       invited_email_masked: body.invited_email_masked,
       org_name: body.org_name,
       shipment_label: body.shipment_label,
+      shipment_id: body.shipment_id,
     };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
