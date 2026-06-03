@@ -33,6 +33,7 @@ export function AuthenticatedTopNav() {
     hubSubTabLabel,
     hubSubTabHref,
     hubLeafLabel,
+    isFreight,
     openNewShipmentModal,
     openBulkImportModal,
     toggleNotificationsMenu,
@@ -53,36 +54,38 @@ export function AuthenticatedTopNav() {
       </div>
 
       <div className={AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS}>
-        <div className={AUTHENTICATED_TOP_NAV_ACTIONS_PRIMARY_GROUP_CLASS}>
-          <button
-            type="button"
-            onClick={() => openNewShipmentModal()}
-            className={AUTHENTICATED_TOP_NAV_ACTION_CLASS}
-            title="Create a new shipment"
-            aria-label="New shipment"
-            aria-haspopup="dialog"
-          >
-            <PackagePlus className="h-4 w-4 shrink-0 text-zinc-600 dark:text-zinc-300" strokeWidth={2} aria-hidden />
-            <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>New Shipment</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => openBulkImportModal()}
-            className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS}
-            title="Bulk import shipments from Excel or CSV"
-            aria-label="Bulk import"
-            aria-haspopup="dialog"
-          >
-            <span className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS}>
-              <Import
-                className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS}`}
-                strokeWidth={2}
-                aria-hidden
-              />
-              <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
-            </span>
-          </button>
-        </div>
+        {isFreight ? (
+          <div className={AUTHENTICATED_TOP_NAV_ACTIONS_PRIMARY_GROUP_CLASS}>
+            <button
+              type="button"
+              onClick={() => openNewShipmentModal()}
+              className={AUTHENTICATED_TOP_NAV_ACTION_CLASS}
+              title="Create a new shipment"
+              aria-label="New shipment"
+              aria-haspopup="dialog"
+            >
+              <PackagePlus className="h-4 w-4 shrink-0 text-zinc-600 dark:text-zinc-300" strokeWidth={2} aria-hidden />
+              <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>New Shipment</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openBulkImportModal()}
+              className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_ACTION_CLASS}
+              title="Bulk import shipments from Excel or CSV"
+              aria-label="Bulk import"
+              aria-haspopup="dialog"
+            >
+              <span className={AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS}>
+                <Import
+                  className={`h-4 w-4 shrink-0 ${AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS}`}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                <span className={AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS}>Bulk Import</span>
+              </span>
+            </button>
+          </div>
+        ) : null}
 
         <div className={AUTHENTICATED_TOP_NAV_ACTIONS_UTILITY_GROUP_CLASS}>
           <ThemeToggle className={AUTHENTICATED_TOP_NAV_UTILITY_ICON_BUTTON_CLASS} />

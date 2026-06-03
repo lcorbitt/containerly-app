@@ -53,8 +53,7 @@ export function OperatorShipmentsOverview({
     navigateToShipment,
   } = useOperatorShipmentsOverview();
 
-  const showPanel =
-    Boolean(selectedOrgId) && (!loading || rows.length > 0);
+  const showPanel = Boolean(selectedOrgId);
 
   return (
     <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10">

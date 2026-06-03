@@ -22,6 +22,7 @@ export function AuthenticatedAppShell({
   initialProfileImagePath,
   initialOrgs,
   isSuperAdmin,
+  isCustomer,
   children,
 }: AuthenticatedAppShellProps) {
   return (
@@ -37,7 +38,12 @@ export function AuthenticatedAppShell({
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
               <AuthenticatedTopNav />
               <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>
-                <SideNav isSuperAdmin={isSuperAdmin} email={email} fullName={fullName} />
+                <SideNav
+                  isSuperAdmin={isSuperAdmin}
+                  isCustomer={isCustomer}
+                  email={email}
+                  fullName={fullName}
+                />
                 <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS}>
                   <div className={AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS}>
                     <AuthenticatedMainPane>{children}</AuthenticatedMainPane>

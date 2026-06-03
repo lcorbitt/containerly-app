@@ -13,7 +13,11 @@ export default async function AuthenticatedLayout({
     redirect("/login");
   }
 
-  const { user, profile, isSuperAdmin, initialOrgs } = session;
+  if (session.isCustomer) {
+    redirect("/my-shipments");
+  }
+
+  const { user, profile, isSuperAdmin, initialOrgs, isCustomer } = session;
 
   return (
     <AuthenticatedAppShell
@@ -23,6 +27,7 @@ export default async function AuthenticatedLayout({
       initialProfileImagePath={profile?.profile_image_path ?? null}
       initialOrgs={initialOrgs}
       isSuperAdmin={isSuperAdmin}
+      isCustomer={isCustomer}
     >
       {children}
     </AuthenticatedAppShell>

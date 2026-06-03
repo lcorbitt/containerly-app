@@ -83,6 +83,15 @@ export function DataTable<T>({
                 Loading…
               </td>
             </tr>
+          ) : rows.length === 0 ? (
+            <tr className="bg-white dark:bg-zinc-950">
+              <td
+                colSpan={columns.length}
+                className="px-4 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400"
+              >
+                {emptyMessage}
+              </td>
+            </tr>
           ) : (
             rows.map((row) => (
               <tr
@@ -114,11 +123,6 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      {!loading && rows.length === 0 ? (
-        <p className="border-t border-zinc-100 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-800">
-          {emptyMessage}
-        </p>
-      ) : null}
     </div>
   );
 }

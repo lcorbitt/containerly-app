@@ -131,6 +131,7 @@ export function useAuthenticatedTopNav() {
     selectedOrgId,
     alerts,
     unackedCount,
+    isFreight,
     orgSegment,
     tabSegment,
     activeSubTabName,

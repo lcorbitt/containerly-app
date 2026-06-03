@@ -9,6 +9,7 @@ import { useSessionAvatar } from "@/contexts/session-avatar";
 import { signOutBrowser } from "@/services/auth.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
 import { profileInitials } from "@/utils/display-initials";
+import { accountRoleLabel } from "@/utils/account-role";
 import type { SideNavAccountMenuPanelPosition, SideNavAccountMenuProps } from "./types";
 
 const PANEL_GAP_PX = 8;
@@ -23,10 +24,10 @@ function measurePanelPosition(trigger: HTMLElement): SideNavAccountMenuPanelPosi
   };
 }
 
-export function useSideNavAccountMenu({ email, fullName }: SideNavAccountMenuProps) {
+export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccountMenuProps) {
   const router = useRouter();
   const { startNavigation } = useNavigationProgress();
-  const { orgs, selectedOrgId } = useOrganizationWorkspace();
+  const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const { profileImagePath } = useSessionAvatar();
   const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -41,10 +42,22 @@ export function useSideNavAccountMenu({ email, fullName }: SideNavAccountMenuPro
     setPanelPosition(measurePanelPosition(trigger));
   }, []);
 
-  const orgName = useMemo(() => {
-    const selected = orgs.find((r) => r.organizations?.id === selectedOrgId);
-    return selected?.organizations?.name?.trim() ?? null;
-  }, [orgs, selectedOrgId]);
+  const selectedOrg = useMemo(
+    () => orgs.find((r) => r.organizations?.id === selectedOrgId) ?? null,
+    [orgs, selectedOrgId],
+  );
+
+  const orgName = selectedOrg?.organizations?.name?.trim() ?? null;
+
+  const roleLabel = useMemo(
+    () =>
+      accountRoleLabel({
+        isSuperAdmin,
+        membershipRole: selectedOrg?.role,
+        isCustomer,
+      }),
+    [isSuperAdmin, selectedOrg, isCustomer],
+  );
 
   const initials = profileInitials({ full_name: fullName, email });
   const { primary: accountPrimaryLabel } = useMemo(
@@ -116,6 +129,7 @@ export function useSideNavAccountMenu({ email, fullName }: SideNavAccountMenuPro
     initials,
     accountPrimaryLabel,
     orgName,
+    roleLabel,
     toggleAccountMenu,
     logout,
     signingOut,

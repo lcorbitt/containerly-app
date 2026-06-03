@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile, type SessionProfile } from "@/services/auth-server.service";
 import { fetchOrgMembershipRows } from "@/services/organization.server";
 import { isSuperadminRole } from "@/utils/profile-role";
+import { isCustomerAccount } from "@/utils/account-kind";
 import type { OrgMembershipRow } from "@/types/organization-workspace";
 
 export interface AuthenticatedLayoutSession {
@@ -13,6 +14,8 @@ export interface AuthenticatedLayoutSession {
   profile: SessionProfile | null;
   isSuperAdmin: boolean;
   initialOrgs: OrgMembershipRow[];
+  /** Strict customer classification (no org membership + account_kind customer + not superadmin). */
+  isCustomer: boolean;
 }
 
 /** Per-request session for `(authenticated)` and nested layouts (deduped via `cache`). */
@@ -28,7 +31,13 @@ export const loadAuthenticatedLayoutSession = cache(
     const profile = await getSessionProfile(supabase, user.id);
     const isSuperAdmin = isSuperadminRole(profile?.role);
     const initialOrgs = await fetchOrgMembershipRows(supabase, user.id, isSuperAdmin);
+    const hasOrgMembership = initialOrgs.some((r) => r.organizations?.id != null);
+    const isCustomer = isCustomerAccount({
+      accountKind: profile?.account_kind,
+      isSuperAdmin,
+      hasOrgMembership,
+    });
 
-    return { user, profile, isSuperAdmin, initialOrgs };
+    return { user, profile, isSuperAdmin, initialOrgs, isCustomer };
   },
 );

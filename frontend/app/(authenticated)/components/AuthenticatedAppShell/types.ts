@@ -7,5 +7,6 @@ export interface AuthenticatedAppShellProps {
   initialProfileImagePath: string | null;
   initialOrgs: OrgMembershipRow[];
   isSuperAdmin: boolean;
+  isCustomer: boolean;
   children: React.ReactNode;
 }

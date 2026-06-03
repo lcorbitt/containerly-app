@@ -9,13 +9,14 @@ import {
   SIDE_NAV_ACCOUNT_MENU_PANEL_CLASS,
   SIDE_NAV_ACCOUNT_MENU_PANEL_FIXED_CLASS,
   SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS,
+  SIDE_NAV_ACCOUNT_MENU_ROLE_LABEL_CLASS,
   SIDE_NAV_ACCOUNT_MENU_SIGNING_OUT_LABEL,
   SIDE_NAV_ACCOUNT_MENU_TRIGGER_CLASS,
 } from "./constants";
 import { useSideNavAccountMenu } from "./useSideNavAccountMenu";
 import type { SideNavAccountMenuProps } from "./types";
 
-export function SideNavAccountMenu({ email, fullName }: SideNavAccountMenuProps) {
+export function SideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccountMenuProps) {
   const {
     accountMenuOpen,
     panelPosition,
@@ -25,10 +26,11 @@ export function SideNavAccountMenu({ email, fullName }: SideNavAccountMenuProps)
     initials,
     accountPrimaryLabel,
     orgName,
+    roleLabel,
     toggleAccountMenu,
     logout,
     signingOut,
-  } = useSideNavAccountMenu({ email, fullName });
+  } = useSideNavAccountMenu({ email, fullName, isCustomer });
 
   const panel =
     accountMenuOpen && panelPosition && typeof document !== "undefined"
@@ -48,6 +50,7 @@ export function SideNavAccountMenu({ email, fullName }: SideNavAccountMenuProps)
                 <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
                   {accountPrimaryLabel}
                 </p>
+                <p className={SIDE_NAV_ACCOUNT_MENU_ROLE_LABEL_CLASS}>{roleLabel}</p>
                 {orgName ? (
                   <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">{orgName}</p>
                 ) : null}

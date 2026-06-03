@@ -16,7 +16,12 @@ import {
 } from "./constants";
 import { usePortalTopNav } from "./usePortalTopNav";
 
-export function PortalTopNav() {
+export interface PortalTopNavProps {
+  /** Destination for the "Shared with me" link. Defaults to the operator shipments path. */
+  sharedShipmentsHref?: string;
+}
+
+export function PortalTopNav({ sharedShipmentsHref = PORTAL_TOP_NAV_SHARED_SHIPMENTS_PATH }: PortalTopNavProps = {}) {
   const { signedIn, sessionReady, brandHref, signOut } = usePortalTopNav();
 
   return (
@@ -30,7 +35,7 @@ export function PortalTopNav() {
           {sessionReady ? (
             signedIn ? (
               <>
-                <Link href={PORTAL_TOP_NAV_SHARED_SHIPMENTS_PATH} className={PORTAL_TOP_NAV_LINK_CLASS}>
+                <Link href={sharedShipmentsHref} className={PORTAL_TOP_NAV_LINK_CLASS}>
                   Shared with me
                 </Link>
                 <button

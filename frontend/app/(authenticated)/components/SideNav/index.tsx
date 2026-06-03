@@ -22,10 +22,12 @@ import { isSideNavLinkActive } from "./utils";
 
 export function SideNav({
   isSuperAdmin,
+  isCustomer,
   email,
   fullName,
 }: {
   isSuperAdmin: boolean;
+  isCustomer: boolean;
   email: string;
   fullName?: string | null;
 }) {
@@ -126,7 +128,7 @@ export function SideNav({
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
-          <SideNavAccountMenu email={email} fullName={fullName} />
+          <SideNavAccountMenu email={email} fullName={fullName} isCustomer={isCustomer} />
         </div>
       </div>
 
