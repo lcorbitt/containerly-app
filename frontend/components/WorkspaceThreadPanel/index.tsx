@@ -143,9 +143,7 @@ function ThreadMessageItem({
     <div
       className={`${threadMessageContentPadClass(isOwnMessage)}${isEditing ? ` ${THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS}` : ""}`}
     >
-      <div
-        className={`flex flex-wrap items-baseline gap-x-2 gap-y-0.5 ${isOwnMessage ? "justify-end" : ""}`}
-      >
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <span
           className={threadMessageAuthorHeadingClass({
             palette,

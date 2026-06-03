@@ -27,7 +27,11 @@ export function usePortalAccessGate(shipmentId: string) {
         return;
       }
 
-      if (r.outcome === "signed_in" && r.token_hash) {
+      if (r.outcome === "signed_in") {
+        if (!r.token_hash) {
+          setMessage("Sign-in could not be completed. Please try again or contact the team.");
+          return;
+        }
         setMessage(r.message);
         const { error } = await verifyEmailOtp(r.token_hash, r.token_type ?? "magiclink");
         if (error) {
@@ -42,7 +46,10 @@ export function usePortalAccessGate(shipmentId: string) {
       if (r.outcome === "request_sent" || r.outcome === "already_requested") {
         setMessage(r.message);
         setOutcome(r.outcome);
+        return;
       }
+
+      setMessage(r.message || "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }

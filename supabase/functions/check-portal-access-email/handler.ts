@@ -21,6 +21,8 @@ export async function handle(req: Request): Promise<Response> {
     return jsonResponse({
       message: result.message,
       outcome: result.outcome,
+      token_hash: result.token_hash,
+      token_type: result.token_type,
     });
   } catch (e) {
     return jsonResponse({ error: edgeErrorMessage(e) }, { status: 500 });
