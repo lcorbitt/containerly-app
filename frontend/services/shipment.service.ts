@@ -586,7 +586,13 @@ export async function checkPortalAccessEmail(args: {
     if (!body?.message || !body.outcome) {
       return { ok: false, status: 500, error: "Invalid response" };
     }
-    return { ok: true, message: body.message, outcome: body.outcome };
+    return {
+      ok: true,
+      message: body.message,
+      outcome: body.outcome,
+      token_hash: body.token_hash,
+      token_type: body.token_type,
+    };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
   }

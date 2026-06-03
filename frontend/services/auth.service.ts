@@ -37,6 +37,15 @@ export async function signUpWithEmail(input: {
   return { error: null, session: data.session };
 }
 
+export async function verifyEmailOtp(
+  tokenHash: string,
+  type: "magiclink" | "email" | "signup" | "recovery" | "invite" | "email_change" = "magiclink",
+): Promise<{ error: Error | null }> {
+  const supabase = createClient();
+  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+  return { error: error ? new Error(error.message) : null };
+}
+
 export async function signOutBrowser(): Promise<void> {
   const supabase = createClient();
   await supabase.auth.signOut();

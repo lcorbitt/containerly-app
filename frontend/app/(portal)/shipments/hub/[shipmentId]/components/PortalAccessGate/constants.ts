@@ -4,4 +4,4 @@ export const PORTAL_ACCESS_GATE_CARD_CLASS =
 export const PORTAL_ACCESS_GATE_TITLE = "Shipment customer portal";
 
 export const PORTAL_ACCESS_GATE_INTRO =
-  "You don't have access to this shipment yet. Enter your email address to continue or request access from the team.";
+  "Enter your email to view this shipment. If you've been invited, you'll be signed in automatically — no password needed.";

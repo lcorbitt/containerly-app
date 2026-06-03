@@ -96,7 +96,10 @@ export type CheckPortalAccessEmailBody = {
 
 export type CheckPortalAccessEmailResponse = {
   message: string;
-  outcome: "magic_link_sent" | "request_sent" | "already_requested";
+  outcome: "signed_in" | "request_sent" | "already_requested";
+  /** Present when outcome is `signed_in`: one-time OTP the browser verifies to establish a session. */
+  token_hash?: string;
+  token_type?: "magiclink";
 };
 
 // ---------------------------------------------------------------------------

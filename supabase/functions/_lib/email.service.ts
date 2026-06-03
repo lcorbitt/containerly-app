@@ -127,26 +127,6 @@ export async function sendCustomerInviteEmail(args: {
   });
 }
 
-export async function sendPortalSignInLinkEmail(args: {
-  to: string;
-  orgName: string;
-  signInUrl: string;
-  shipmentLabel: string;
-}): Promise<SendEmailResult> {
-  return sendTransactionalEmail({
-    to: args.to,
-    subject: `Sign in to view ${args.shipmentLabel}`,
-    html: buildBrandedEmailHtml({
-      orgName: args.orgName,
-      title: "Your secure sign-in link",
-      body: `Click the button below to open <strong>${escapeHtml(args.shipmentLabel)}</strong> in the ${escapeHtml(args.orgName)} customer portal. This link signs you in automatically — no password needed.`,
-      actionUrl: args.signInUrl,
-      actionLabel: "Open your shipment",
-    }),
-    text: `Sign in to view ${args.shipmentLabel} in the ${args.orgName} customer portal: ${args.signInUrl}`,
-  });
-}
-
 export async function sendDocumentRejectedEmail(args: {
   to: string;
   orgName: string;

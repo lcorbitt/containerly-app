@@ -2,7 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { DEFAULT_CUSTOMER_VISIBILITY } from "@supabase-shared/shipment-portal-payload.ts";
 import {
   fetchCustomerInviteByTokenHash,
-  fetchPendingInviteByEmailForShipment,
+  fetchInviteByEmailForShipment,
   insertCustomerInvite,
   updateCustomerInviteStatus,
 } from "@models/customer_invites.ts";
@@ -37,7 +37,6 @@ import {
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsNewCustomerMessage,
 } from "@supabase-shared/notification-workflow.service.ts";
-import { sendPortalSignInLinkEmail } from "@supabase-shared/email.service.ts";
 import {
   fetchProfileDisplayName,
   listOrgAdminUserIds,
@@ -310,38 +309,23 @@ export async function acceptCustomerInvite(
 // claim-shipment-access (Notion-style allowlist)
 // ---------------------------------------------------------------------------
 
-export async function claimShipmentAccess(
+/**
+ * Grant a user access to a shipment from an invite row (idempotent): reuses an existing
+ * active grant, otherwise inserts `shipment_customer_access`, marks the invite accepted,
+ * records activity, types the profile as a customer, and notifies operators. Shared by
+ * `claimShipmentAccess` and the portal instant sign-in gate.
+ */
+async function grantShipmentAccessFromInvite(
   admin: SupabaseClient,
   userId: string,
-  userEmail: string,
-  shipmentId: string,
-): Promise<{ ok: true } & ClaimShipmentAccessResponse | Err> {
-  if (!shipmentId || !UUID_RE.test(shipmentId)) {
-    return { ok: false, status: 400, error: "Invalid shipment_id" };
-  }
-
-  const email = userEmail.trim().toLowerCase();
-  const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
-  if (existing?.id) {
-    return {
-      ok: true,
-      access_id: existing.id as string,
-      shipment_id: shipmentId,
-      already_had_access: true,
-    };
-  }
-
-  const { data: invite, error: invErr } = await fetchPendingInviteByEmailForShipment(
-    admin,
-    shipmentId,
-    email,
-  );
-  if (invErr) throw invErr;
-  if (!invite) {
-    return { ok: false, status: 403, error: "No pending invitation for this email on this shipment" };
-  }
-
+  invite: Record<string, unknown>,
+): Promise<string> {
+  const shipmentId = invite.shipment_id as string;
   const orgId = invite.organization_id as string;
+
+  const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
+  if (existing?.id) return existing.id as string;
+
   const vis = invite.visibility_settings as Record<string, unknown> | null | undefined;
   const visibility_settings = {
     ...DEFAULT_CUSTOMER_VISIBILITY,
@@ -387,9 +371,47 @@ export async function claimShipmentAccess(
     actorUserId: userId,
   });
 
+  return access.id as string;
+}
+
+export async function claimShipmentAccess(
+  admin: SupabaseClient,
+  userId: string,
+  userEmail: string,
+  shipmentId: string,
+): Promise<{ ok: true } & ClaimShipmentAccessResponse | Err> {
+  if (!shipmentId || !UUID_RE.test(shipmentId)) {
+    return { ok: false, status: 400, error: "Invalid shipment_id" };
+  }
+
+  const email = userEmail.trim().toLowerCase();
+  const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
+  if (existing?.id) {
+    return {
+      ok: true,
+      access_id: existing.id as string,
+      shipment_id: shipmentId,
+      already_had_access: true,
+    };
+  }
+
+  // Honor any non-revoked invite for this email+shipment (ignoring expiry — the operator
+  // deliberately invited them; expiry is enforced only on the legacy token-accept path).
+  const { data: invite, error: invErr } = await fetchInviteByEmailForShipment(
+    admin,
+    shipmentId,
+    email,
+  );
+  if (invErr) throw invErr;
+  if (!invite) {
+    return { ok: false, status: 403, error: "No invitation for this email on this shipment" };
+  }
+
+  const accessId = await grantShipmentAccessFromInvite(admin, userId, invite);
+
   return {
     ok: true,
-    access_id: access.id as string,
+    access_id: accessId,
     shipment_id: shipmentId,
   };
 }
@@ -563,77 +585,60 @@ export async function postCustomerMessage(
 // ---------------------------------------------------------------------------
 
 const GENERIC_PORTAL_EMAIL_MESSAGE =
-  "If this email is invited to this shipment, check your inbox for a secure sign-in link. Otherwise, your request has been sent to the team.";
+  "If this email is invited to this shipment you'll be signed in automatically. Otherwise, your request has been sent to the team.";
 
-const MAGIC_LINK_SENT_MESSAGE =
-  "Check your email for a secure sign-in link to open this shipment. No password required.";
+const SIGNED_IN_MESSAGE = "You're invited — signing you in…";
 
-/** Order/container label used in portal sign-in emails. */
-async function fetchShipmentLabel(admin: SupabaseClient, shipmentId: string): Promise<string> {
-  const { data: ship } = await admin
-    .from("shipments")
-    .select("order_number, container_number")
-    .eq("id", shipmentId)
-    .maybeSingle();
-  const order = (ship?.order_number as string | null | undefined)?.trim();
-  const container = (ship?.container_number as string | null | undefined)?.trim();
-  return order ? `Order ${order}` : container ? `Container ${container}` : "your shipment";
+/** Resolve (or create) the passwordless customer auth user for an email; returns the user id. */
+async function ensurePortalUserId(admin: SupabaseClient, email: string): Promise<string> {
+  const lower = email.trim().toLowerCase();
+
+  const { data: existingProfile } = await fetchProfileIdByEmail(admin, lower);
+  if (existingProfile?.id) return existingProfile.id as string;
+
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: lower,
+    email_confirm: true,
+  });
+  if (!createErr && created?.user?.id) return created.user.id;
+  if (createErr && !/already.*(registered|exists)/i.test(createErr.message)) {
+    throw new Error(`Could not create customer account: ${createErr.message}`);
+  }
+
+  // Race / pre-existing auth user without a cached profile id: re-resolve via profile.
+  const { data: reProfile } = await fetchProfileIdByEmail(admin, lower);
+  if (reProfile?.id) return reProfile.id as string;
+  throw new Error("Could not resolve customer account for sign-in");
 }
 
 /**
- * Mint a passwordless sign-in for a whitelisted/invited email: ensure the customer
- * auth user exists (email-only, confirmed), generate a Supabase magic link that
- * redirects to the hub, and deliver it via the branded Resend pipeline. The hub then
- * runs `claimShipmentAccess` to grant access on first arrival.
+ * Generate a one-time sign-in token (Supabase magic-link OTP) for an email. We return the
+ * `token_hash` to the browser, which verifies it client-side to establish a session
+ * immediately — no email round-trip. Gated server-side by the invite check below.
  */
-async function issuePortalMagicLink(
+async function issuePortalSignInToken(
   admin: SupabaseClient,
-  args: { email: string; shipmentId: string; orgId: string },
-): Promise<void> {
-  const email = args.email.trim().toLowerCase();
-
-  const { data: existingProfile } = await fetchProfileIdByEmail(admin, email);
-  if (!existingProfile?.id) {
-    const { error: createErr } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-    });
-    if (createErr && !/already.*(registered|exists)/i.test(createErr.message)) {
-      throw new Error(`Could not create customer account: ${createErr.message}`);
-    }
-  }
-
+  email: string,
+  shipmentId: string,
+): Promise<{ token_hash: string; token_type: "magiclink" }> {
   const siteUrl = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";
-  const redirectTo = `${siteUrl}/shipments/hub/${args.shipmentId}`;
+  const redirectTo = `${siteUrl}/shipments/hub/${shipmentId}`;
 
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
-    email,
+    email: email.trim().toLowerCase(),
     options: { redirectTo },
   });
   if (linkErr || !linkData) {
-    throw new Error(`Could not generate sign-in link: ${linkErr?.message ?? "unknown"}`);
+    throw new Error(`Could not generate sign-in token: ${linkErr?.message ?? "unknown"}`);
   }
 
-  const props = linkData.properties as { action_link?: string } | undefined;
-  const actionLink = props?.action_link ?? (linkData as { action_link?: string }).action_link;
-  if (!actionLink) {
-    throw new Error("Sign-in link generation returned no action_link");
+  const props = linkData.properties as { hashed_token?: string } | undefined;
+  const tokenHash = props?.hashed_token;
+  if (!tokenHash) {
+    throw new Error("Sign-in token generation returned no token");
   }
-
-  const { data: orgRow } = await fetchOrganizationForPortal(admin, args.orgId);
-  const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
-  const shipmentLabel = await fetchShipmentLabel(admin, args.shipmentId);
-
-  const emailResult = await sendPortalSignInLinkEmail({
-    to: email,
-    orgName,
-    signInUrl: actionLink,
-    shipmentLabel,
-  });
-  if (!emailResult.ok) {
-    throw new Error(`Sign-in link email could not be sent: ${emailResult.error}`);
-  }
+  return { token_hash: tokenHash, token_type: "magiclink" };
 }
 
 export async function checkPortalAccessEmail(
@@ -661,32 +666,35 @@ export async function checkPortalAccessEmail(
 
   const orgId = row.organization_id as string;
 
-  const { data: pendingInvite } = await fetchPendingInviteByEmailForShipment(
-    admin,
-    shipmentId,
-    emailRaw,
-  );
+  // Any non-revoked invite (ignoring expiry) or an existing active grant entitles access.
+  const { data: invite } = await fetchInviteByEmailForShipment(admin, shipmentId, emailRaw);
   const { data: activeAccess } = await fetchActiveAccessForProfileEmailOnShipment(
     admin,
     shipmentId,
     emailRaw,
   );
 
-  if (pendingInvite || activeAccess?.id) {
+  if (invite || activeAccess?.id) {
     try {
-      await issuePortalMagicLink(admin, { email: emailRaw, shipmentId, orgId });
+      const userId = await ensurePortalUserId(admin, emailRaw);
+      if (invite) {
+        await grantShipmentAccessFromInvite(admin, userId, invite as Record<string, unknown>);
+      }
+      const { token_hash, token_type } = await issuePortalSignInToken(admin, emailRaw, shipmentId);
+      return {
+        ok: true,
+        message: SIGNED_IN_MESSAGE,
+        outcome: "signed_in",
+        token_hash,
+        token_type,
+      };
     } catch (e) {
       return {
         ok: false,
         status: 502,
-        error: e instanceof Error ? e.message : "Could not send sign-in link",
+        error: e instanceof Error ? e.message : "Could not sign you in",
       };
     }
-    return {
-      ok: true,
-      message: MAGIC_LINK_SENT_MESSAGE,
-      outcome: "magic_link_sent",
-    };
   }
 
   const { data: existingRequest } = await fetchPendingAccessRequestByEmailForShipment(

@@ -7,7 +7,7 @@ import {
   checkPortalAccessEmail,
   previewCustomerInvite,
 } from "@/services/shipment.service";
-import { getBrowserAuthSession } from "@/services/auth.service";
+import { getBrowserAuthSession, verifyEmailOtp } from "@/services/auth.service";
 
 export function useInviteAcceptPanel(token: string) {
   const router = useRouter();
@@ -20,10 +20,8 @@ export function useInviteAcceptPanel(token: string) {
   const [invitedEmailMasked, setInvitedEmailMasked] = useState<string | null>(null);
 
   const [checkingSession, setCheckingSession] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
 
   const acceptAndRedirect = useCallback(async () => {
     const accept = await acceptImporterInvite(token);
@@ -69,10 +67,9 @@ export function useInviteAcceptPanel(token: string) {
     };
   }, [token, acceptAndRedirect]);
 
-  const sendSignInLink = useCallback(async () => {
+  const continueToPortal = useCallback(async () => {
     if (!invitedEmail || !shipmentId) return;
     setErrorMessage(null);
-    setMessage(null);
     setSubmitting(true);
     try {
       const r = await checkPortalAccessEmail({ shipmentId, email: invitedEmail });
@@ -80,8 +77,17 @@ export function useInviteAcceptPanel(token: string) {
         setErrorMessage(r.error);
         return;
       }
-      setMessage(r.message);
-      setLinkSent(r.outcome === "magic_link_sent");
+      if (r.outcome === "signed_in" && r.token_hash) {
+        const { error } = await verifyEmailOtp(r.token_hash, r.token_type ?? "magiclink");
+        if (error) {
+          setErrorMessage(error.message);
+          return;
+        }
+        window.location.assign(`/shipments/hub/${shipmentId}`);
+        return;
+      }
+      // Invite no longer valid (revoked/expired): fall back to the access-request message.
+      setErrorMessage(r.message);
     } finally {
       setSubmitting(false);
     }
@@ -94,10 +100,8 @@ export function useInviteAcceptPanel(token: string) {
     orgName,
     shipmentLabel,
     invitedEmailMasked,
-    message,
     errorMessage,
     submitting,
-    linkSent,
-    sendSignInLink,
+    continueToPortal,
   };
 }
