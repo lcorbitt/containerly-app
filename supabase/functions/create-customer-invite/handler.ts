@@ -18,6 +18,7 @@ export async function handle(req: Request): Promise<Response> {
       shipment_id?: string;
       invited_email?: string;
       visibility_settings?: Record<string, unknown>;
+      delivery_mode?: "email_invite" | "allowlist_only";
     };
 
     const admin = createServiceClient();
@@ -26,6 +27,7 @@ export async function handle(req: Request): Promise<Response> {
       shipment_id: body.shipment_id ?? "",
       invited_email: body.invited_email ?? "",
       visibility_settings: body.visibility_settings,
+      delivery_mode: body.delivery_mode,
     });
 
     if (!result.ok) {

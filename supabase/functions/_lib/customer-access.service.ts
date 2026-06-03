@@ -160,11 +160,18 @@ export async function createCustomerInvite(
   const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
 
   if (deliveryMode === "email_invite") {
-    await notifyCustomerInviteSent({
+    const emailResult = await notifyCustomerInviteSent({
       to: emailRaw,
       orgName,
       inviteUrl: invite_url,
     });
+    if (!emailResult.ok) {
+      return {
+        ok: false,
+        status: 502,
+        error: `Invite saved but email could not be sent: ${emailResult.error}`,
+      };
+    }
     const { data: existingProfile } = await fetchProfileIdByEmail(admin, emailRaw);
     if (existingProfile?.id) {
       await notifyCustomerInviteReceived(admin, {

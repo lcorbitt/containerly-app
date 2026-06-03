@@ -34,6 +34,7 @@ import {
   sendDocumentsApprovedEmail,
   sendDocumentsMailedEmail,
   sendNewMessageEmail,
+  type SendEmailResult,
 } from "@supabase-shared/email.service.ts";
 
 export {
@@ -287,9 +288,9 @@ export async function notifyCustomerInviteSent(
     orgName: string;
     inviteUrl: string;
   },
-): Promise<void> {
+): Promise<SendEmailResult> {
   const { sendCustomerInviteEmail } = await import("@supabase-shared/email.service.ts");
-  await sendCustomerInviteEmail(args);
+  return sendCustomerInviteEmail(args);
 }
 
 export async function notifyAssigneeAccessRequest(

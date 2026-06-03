@@ -9,7 +9,7 @@ export type SendEmailInput = {
   text?: string;
 };
 
-export type SendEmailResult = { ok: true } | { ok: false; error: string };
+export type SendEmailResult = { ok: true; providerId?: string } | { ok: false; error: string };
 
 export async function sendTransactionalEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
@@ -42,9 +42,18 @@ export async function sendTransactionalEmail(input: SendEmailInput): Promise<Sen
 
     if (!res.ok) {
       const body = await res.text();
+      console.error("[email] Resend rejected send", { to: input.to, status: res.status, body });
       return { ok: false, error: `Resend ${res.status}: ${body}` };
     }
-    return { ok: true };
+    let providerId: string | undefined;
+    try {
+      const parsed = (await res.json()) as { id?: string };
+      providerId = parsed.id;
+    } catch {
+      /* ignore */
+    }
+    console.log("[email] sent", { to: input.to, subject: input.subject, providerId });
+    return { ok: true, providerId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Email send failed" };
   }
