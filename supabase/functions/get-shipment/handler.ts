@@ -1,3 +1,4 @@
+// Delegates to getShipmentForOperator (@supabase-shared); customer access via shipment_customer_access.
 import { requireAuthUserId } from "@supabase-shared/auth.ts";
 import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
 import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
