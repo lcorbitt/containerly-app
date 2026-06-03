@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { Eye } from "lucide-react";
 import { ShipmentDocumentUploadModal } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
@@ -34,11 +35,14 @@ export function PublicContainerReport({
   initial,
   readOnlyMessaging = false,
   headerActions,
+  operatorPreview = false,
 }: {
   shipmentId: string;
   initial: PublicReportPayload;
   readOnlyMessaging?: boolean;
   headerActions?: React.ReactNode;
+  /** When true, an operator is viewing the customer portal — shows a small preview label. */
+  operatorPreview?: boolean;
 }) {
   const {
     payload,
@@ -104,6 +108,17 @@ export function PublicContainerReport({
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
         <div className="flex flex-col gap-6">
+          {operatorPreview ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300/80 bg-white/90 px-3 py-1 text-xs font-semibold text-zinc-600 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300">
+                <Eye className="h-3.5 w-3.5" aria-hidden />
+                Customer portal preview
+              </span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                This is how customers see this shipment.
+              </span>
+            </div>
+          ) : null}
           <header className={PORTAL_COMMERCIAL_CARD_CLASS}>
             <BrandedHeader
               variant="embedded"

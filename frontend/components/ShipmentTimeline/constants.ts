@@ -108,13 +108,13 @@ export const TONE_STYLES: Record<
     modalChip: "border border-yellow-500/40 bg-yellow-500/10 text-yellow-100",
   },
   shipmentCreated: {
-    node: "bg-indigo-50 text-indigo-800 ring-[#eef2ff] dark:bg-indigo-950 dark:text-indigo-200 dark:ring-zinc-950",
-    connector: "bg-indigo-400/50 dark:bg-indigo-500/38",
-    chip: "bg-indigo-100/90 text-indigo-900 dark:bg-indigo-950/80 dark:text-indigo-100",
-    iconGlow: "shadow-[0_0_20px_-4px_rgba(99,102,241,0.28)] dark:shadow-[0_0_24px_-6px_rgba(129,140,248,0.2)]",
+    node: "bg-primary-orange/10 text-primary-orange ring-[#fff4ef] dark:bg-primary-orange/15 dark:text-primary-orange dark:ring-zinc-950",
+    connector: "bg-primary-orange/45 dark:bg-primary-orange/40",
+    chip: "bg-primary-orange/10 text-primary-orange dark:bg-primary-orange/15 dark:text-primary-orange",
+    iconGlow: "shadow-[0_0_20px_-4px_rgba(255,78,0,0.32)] dark:shadow-[0_0_24px_-6px_rgba(255,78,0,0.22)]",
     modalStatusIcon:
-      "bg-indigo-500/20 text-indigo-200 ring-2 ring-indigo-400/50 shadow-[0_0_28px_-6px_rgba(99,102,241,0.5)]",
-    modalChip: "border border-indigo-500/40 bg-indigo-500/10 text-indigo-100",
+      "bg-primary-orange/20 text-primary-orange ring-2 ring-primary-orange/50 shadow-[0_0_28px_-6px_rgba(255,78,0,0.55)]",
+    modalChip: "border border-primary-orange/40 bg-primary-orange/10 text-primary-orange",
   },
 };
 

@@ -44,6 +44,11 @@ export default function SharedShipmentTrackingPage({
       if (cancelled) return;
 
       if (r.ok) {
+        // Operators (assignee / org member) get the operator shell + nav, not the customer portal nav.
+        if (r.data.viewer === "org_member") {
+          router.replace(`/shipments/${shipmentId}/customer-portal`);
+          return;
+        }
         setData(r.data);
         setPhase("portal");
         return;
