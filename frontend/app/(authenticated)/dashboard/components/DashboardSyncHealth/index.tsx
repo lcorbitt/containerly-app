@@ -63,7 +63,7 @@ export function DashboardSyncHealth({ metrics, loading }: DashboardSyncHealthPro
           </p>
         ) : null}
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-3 space-y-3">
           {rows.map((row) => {
             const pct =
               metrics.totalMine === 0 ? 0 : Math.round((row.count / Math.max(1, metrics.totalMine)) * 100);
@@ -84,7 +84,7 @@ export function DashboardSyncHealth({ metrics, loading }: DashboardSyncHealthPro
           })}
         </div>
 
-        <Link href="/shipments" className={`${DASHBOARD_SYNC_HEALTH_LINK_CLASS} mt-auto pt-6`}>
+        <Link href="/shipments" className={`${DASHBOARD_SYNC_HEALTH_LINK_CLASS} mt-auto pt-4`}>
           Browse shipments
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>

@@ -54,6 +54,26 @@ export type OrgDashboardMetrics = {
   linesCreatedByDay: DayCount[];
 };
 
+export type ShipmentCommercialSummary = {
+  orderNumber: string | null;
+  customerName: string | null;
+  portOfLoading: string | null;
+  portOfDestination: string | null;
+  workflowStatus: string | null;
+};
+
+export type TriageActionContext = {
+  shipmentId: string;
+  orderNumber: string | null;
+  customerName: string | null;
+  portOfLoading: string | null;
+  portOfDestination: string | null;
+  carrierStatus: string | null;
+  containerLocation: string | null;
+  trackingStatus: string | null;
+  workflowStatus: string | null;
+};
+
 export type SpotlightShipment = {
   shipmentId: string;
   orderNumber: string | null;
@@ -455,12 +475,75 @@ export function flattenTriageRows(buckets: TriageBucket[]): TriageRow[] {
   return rows;
 }
 
+export function collectTriageShipmentIds(
+  buckets: TriageBucket[],
+  containersById: Record<string, ContainerRow>,
+): string[] {
+  const ids = new Set<string>();
+  for (const row of flattenTriageRows(buckets)) {
+    const sid = containersById[row.containerId]?.shipment_id;
+    if (sid) ids.add(sid);
+  }
+  return [...ids];
+}
+
+export function formatTriageRouteLine(
+  portOfLoading: string | null,
+  portOfDestination: string | null,
+): string | null {
+  const origin = portOfLoading?.trim();
+  const destination = portOfDestination?.trim();
+  if (origin && destination) return `${origin} → ${destination}`;
+  return origin ?? destination ?? null;
+}
+
+function containerLocationLabel(location: Record<string, unknown> | null | undefined): string | null {
+  if (!location || typeof location !== "object") return null;
+  const last = location.last_location;
+  if (typeof last === "string" && last.trim()) return last.trim();
+  const next = location.next_location;
+  if (typeof next === "string" && next.trim()) return next.trim();
+  return null;
+}
+
+export function buildTriageActionContextByContainerId(input: {
+  buckets: TriageBucket[];
+  containersById: Record<string, ContainerRow>;
+  shipmentCommercialById: Record<string, ShipmentCommercialSummary>;
+  requests: TrackingRequest[];
+}): Record<string, TriageActionContext> {
+  const requestByContainerId = new Map<string, TrackingRequest>();
+  for (const request of input.requests) {
+    if (request.container_id) requestByContainerId.set(request.container_id, request);
+  }
+
+  const out: Record<string, TriageActionContext> = {};
+  for (const row of flattenTriageRows(input.buckets)) {
+    const container = input.containersById[row.containerId];
+    const shipmentId = container?.shipment_id;
+    if (!shipmentId) continue;
+
+    const commercial = input.shipmentCommercialById[shipmentId];
+    const trackingRequest = requestByContainerId.get(row.containerId);
+
+    out[row.containerId] = {
+      shipmentId,
+      orderNumber: commercial?.orderNumber ?? null,
+      customerName: commercial?.customerName ?? null,
+      portOfLoading: commercial?.portOfLoading ?? null,
+      portOfDestination: commercial?.portOfDestination ?? null,
+      carrierStatus: container?.status ?? null,
+      containerLocation: containerLocationLabel(container?.location),
+      trackingStatus: trackingRequest?.status ?? null,
+      workflowStatus: commercial?.workflowStatus ?? null,
+    };
+  }
+  return out;
+}
+
 export function pickSpotlightFromTriage(
   buckets: TriageBucket[],
-  shipmentCommercialById: Record<
-    string,
-    { orderNumber: string | null; portOfLoading: string | null; portOfDestination: string | null }
-  >,
+  shipmentCommercialById: Record<string, ShipmentCommercialSummary>,
   containersById: Record<string, ContainerRow>,
 ): SpotlightShipment | null {
   const rows = flattenTriageRows(buckets);

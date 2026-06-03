@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
 import { updateCommercialShipment } from "@/services/shipment.service";
 import {
@@ -13,19 +12,20 @@ import {
 
 export function ShipmentMailTrackingPanel({
   shipmentId,
+  organizationId,
   initialTrackingNumber,
   enabled = false,
   readOnly = false,
   onSaved,
 }: {
   shipmentId: string;
+  organizationId: string;
   initialTrackingNumber?: string | null;
   /** Post-approval: show save action. Pre-approval: disabled placeholder only. */
   enabled?: boolean;
   readOnly?: boolean;
   onSaved?: () => void;
 }) {
-  const { selectedOrgId } = useOrganizationWorkspace();
   const { toast } = useToast();
   const [trackingNumber, setTrackingNumber] = useState(initialTrackingNumber ?? "");
   const [saving, setSaving] = useState(false);
@@ -38,11 +38,11 @@ export function ShipmentMailTrackingPanel({
   const canEdit = enabled && !readOnly;
 
   async function save() {
-    if (!selectedOrgId || !canEdit) return;
+    if (!organizationId || !canEdit) return;
     setSaving(true);
     try {
       const r = await updateCommercialShipment({
-        organization_id: selectedOrgId,
+        organization_id: organizationId,
         shipment_id: shipmentId,
         physical_mail_tracking_number: trackingNumber.trim() || null,
       });

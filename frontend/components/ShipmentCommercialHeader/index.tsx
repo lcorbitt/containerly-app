@@ -79,9 +79,7 @@ export function ShipmentCommercialHeader({ source, workflowStatus }: ShipmentCom
             return (
               <div key={field.key}>
                 <dt className={SHIPMENT_DETAIL_LABEL_CLASS}>{field.label}</dt>
-                <dd
-                  className={`${SHIPMENT_DETAIL_VALUE_CLASS}${"mono" in field && field.mono ? " font-mono text-xs" : ""}`}
-                >
+                <dd className={SHIPMENT_DETAIL_VALUE_CLASS}>
                   {value}
                 </dd>
               </div>

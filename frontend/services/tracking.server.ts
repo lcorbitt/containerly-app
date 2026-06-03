@@ -6,11 +6,14 @@ import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snaps
 import {
   buildDaySeries,
   buildTriageBuckets,
+  buildTriageActionContextByContainerId,
   collectDelayedCarrierLines,
+  collectTriageShipmentIds,
   countByDay,
   pickSpotlightFromTriage,
   triageCountsFromBuckets,
   type OrgDashboardMetrics,
+  type ShipmentCommercialSummary,
 } from "@/utils/dashboard-metrics";
 import { buildPerformanceInsights } from "@/utils/shipment-metrics";
 import type { PerformanceInsights } from "@shared/dto/performance.dto";
@@ -346,6 +349,7 @@ export async function buildTrackingDashboardSnapshot(
       orgMetrics: orgBundle?.metrics,
       performanceInsights: orgBundle?.performanceInsights,
       spotlightShipment: null,
+      triageActionContextByContainerId: {},
     };
   }
 
@@ -473,28 +477,30 @@ export async function buildTrackingDashboardSnapshot(
     participatingShipmentIds: participatingSet,
   });
 
-  const spotlightShipmentIds = [
-    ...new Set(
-      flattenSpotlightShipmentIds(personalBuckets, map),
-    ),
-  ];
-  const shipmentCommercialById: Record<
-    string,
-    { orderNumber: string | null; portOfLoading: string | null; portOfDestination: string | null }
-  > = {};
-  if (spotlightShipmentIds.length > 0) {
+  const triageShipmentIds = collectTriageShipmentIds(personalBuckets, map);
+  const shipmentCommercialById: Record<string, ShipmentCommercialSummary> = {};
+  if (triageShipmentIds.length > 0) {
     const { data: shipCommercialRows } = await supabase
       .from("shipments")
-      .select("id, order_number, port_of_loading, port_of_destination")
-      .in("id", spotlightShipmentIds);
+      .select("id, order_number, customer_name, port_of_loading, port_of_destination, workflow_status")
+      .in("id", triageShipmentIds);
     for (const row of shipCommercialRows ?? []) {
       shipmentCommercialById[row.id as string] = {
         orderNumber: (row.order_number as string | null) ?? null,
+        customerName: (row.customer_name as string | null) ?? null,
         portOfLoading: (row.port_of_loading as string | null) ?? null,
         portOfDestination: (row.port_of_destination as string | null) ?? null,
+        workflowStatus: (row.workflow_status as string | null) ?? null,
       };
     }
   }
+
+  const triageActionContextByContainerId = buildTriageActionContextByContainerId({
+    buckets: personalBuckets,
+    containersById: map,
+    shipmentCommercialById,
+    requests: list,
+  });
 
   const orgBundle = await orgBundlePromise;
 
@@ -511,21 +517,8 @@ export async function buildTrackingDashboardSnapshot(
     orgMetrics: orgBundle?.metrics,
     performanceInsights: orgBundle?.performanceInsights,
     spotlightShipment: pickSpotlightFromTriage(personalBuckets, shipmentCommercialById, map),
+    triageActionContextByContainerId,
   };
-}
-
-function flattenSpotlightShipmentIds(
-  buckets: ReturnType<typeof buildTriageBuckets>,
-  containersById: Record<string, Pick<Container, "shipment_id">>,
-): string[] {
-  const ids: string[] = [];
-  for (const bucket of buckets) {
-    for (const row of bucket.rows) {
-      const sid = containersById[row.containerId]?.shipment_id;
-      if (sid) ids.push(sid);
-    }
-  }
-  return ids.slice(0, 1);
 }
 
 export async function fetchRecentTrackingRequestsForOrganizationQuery(

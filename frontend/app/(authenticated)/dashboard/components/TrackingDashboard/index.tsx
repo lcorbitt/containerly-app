@@ -3,12 +3,13 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { DASHBOARD_PAGE_INTRO_CLASS, DASHBOARD_PANEL_CLASS, DASHBOARD_PANEL_BODY_CLASS } from "../../constants";
+import { DASHBOARD_PAGE_INTRO_CLASS, DASHBOARD_PANEL_CLASS, DASHBOARD_PANEL_BODY_CLASS, DASHBOARD_SIDE_STACK_CLASS } from "../../constants";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
 import { DashboardPerformanceInsights } from "../DashboardPerformanceInsights";
 import { DashboardSpotlightShipment } from "../DashboardSpotlightShipment";
 import { DashboardSyncHealth } from "../DashboardSyncHealth";
+import { DashboardTriageBreakdown } from "../DashboardTriageBreakdown";
 import {
   TRACKING_DASHBOARD_GRID_CLASS,
   TRACKING_DASHBOARD_SHELL_CLASS,
@@ -49,6 +50,11 @@ export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) 
   const pageIntro = isAdminView
     ? "Organization overview — metrics, triage, and trends in one place."
     : "Your workload — what needs attention and how your lines are syncing.";
+
+  const spotlightContext =
+    snapshot?.spotlightShipment && snapshot.triageActionContextByContainerId
+      ? snapshot.triageActionContextByContainerId[snapshot.spotlightShipment.containerId]
+      : null;
 
   return (
     <div className={embedded ? EMBEDDED_SHELL_CLASS : TRACKING_DASHBOARD_SHELL_CLASS}>
@@ -101,21 +107,42 @@ export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) 
           />
 
           <div className={TRACKING_DASHBOARD_GRID_CLASS}>
-            <div className={TRACKING_DASHBOARD_SPAN_MAIN}>
+            <div className={`${TRACKING_DASHBOARD_SPAN_MAIN} flex`}>
               <DashboardAlertsPanel
                 loading={loading}
                 userId={snapshot?.currentUserId ?? null}
                 buckets={triageBuckets}
+                actionContextByContainerId={snapshot?.triageActionContextByContainerId}
                 isAdminView={isAdminView}
               />
             </div>
 
-            <div className={TRACKING_DASHBOARD_SPAN_SIDE}>
-              {isAdminView ? (
-                <DashboardSpotlightShipment spotlight={snapshot?.spotlightShipment} />
-              ) : (
-                <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
-              )}
+            <div className={`${TRACKING_DASHBOARD_SPAN_SIDE} flex`}>
+              <div className={DASHBOARD_SIDE_STACK_CLASS}>
+                {isAdminView ? (
+                  <>
+                    <DashboardSpotlightShipment
+                      spotlight={snapshot?.spotlightShipment}
+                      context={spotlightContext}
+                    />
+                    <DashboardTriageBreakdown
+                      loading={loading}
+                      isAdminView
+                      orgTriageCounts={snapshot?.orgMetrics?.triageCounts}
+                      buckets={triageBuckets}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
+                    <DashboardTriageBreakdown
+                      loading={loading}
+                      isAdminView={false}
+                      buckets={triageBuckets}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           </div>
 

@@ -81,20 +81,11 @@ export function SideNav({
               />
             ) : null}
 
-            {isFreight ? (
-              <SideNavLink
-                href={reportsNavItem.href}
-                label={reportsNavItem.label}
-                icon={reportsNavItem.icon}
-                active={isSideNavLinkActive(pathname, reportsNavItem.href)}
-              />
-            ) : (
-              <SideNavDisabledLink
-                label={reportsNavItem.label}
-                icon={reportsNavItem.icon}
-                tooltip={REPORTS_NAV_DISABLED_TOOLTIP}
-              />
-            )}
+            <SideNavDisabledLink
+              label={reportsNavItem.label}
+              icon={reportsNavItem.icon}
+              tooltip={REPORTS_NAV_DISABLED_TOOLTIP}
+            />
 
             <SideNavLink
               href={settingsNavItem.href}

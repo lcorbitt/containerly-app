@@ -57,6 +57,7 @@ export function ShipmentTrackingPanel({
     <div className={SHIPMENT_TRACKING_PANEL_STACK_CLASS}>
       <ShipmentMailTrackingPanel
         shipmentId={shipmentId}
+        organizationId={organizationId}
         initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
         enabled={postApproval}
         readOnly={readOnly}

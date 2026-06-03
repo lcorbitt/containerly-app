@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { ShipmentTrackingPanel } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentTrackingPanel";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import type { PublicReportPayload } from "@/types/public-report";
 import { buildPortalAttachmentDisplayNameMap } from "./utils";
 
@@ -15,7 +14,7 @@ export function PortalTrackingPanel({
   payload: PublicReportPayload;
   onRefresh: () => void | Promise<void>;
 }) {
-  const { selectedOrgId } = useOrganizationWorkspace();
+  const organizationId = payload.organization?.id ?? "";
   const readOnly = payload.viewer === "importer";
   const attachmentDisplayNamesById = useMemo(
     () => buildPortalAttachmentDisplayNameMap(payload.attachments ?? []),
@@ -25,7 +24,7 @@ export function PortalTrackingPanel({
   return (
     <ShipmentTrackingPanel
       shipmentId={shipmentId}
-      organizationId={selectedOrgId ?? ""}
+      organizationId={organizationId}
       workflowStatus={payload.commercial_details?.workflow_status}
       physicalMailTrackingNumber={payload.commercial_details?.physical_mail_tracking_number}
       activityEvents={payload.activity_events ?? []}

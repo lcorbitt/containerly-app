@@ -1,5 +1,6 @@
-import type { SpotlightShipment } from "@/utils/dashboard-metrics";
+import type { SpotlightShipment, TriageActionContext } from "@/utils/dashboard-metrics";
 
 export interface DashboardSpotlightShipmentProps {
   spotlight: SpotlightShipment | null | undefined;
+  context?: TriageActionContext | null;
 }

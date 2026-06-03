@@ -41,6 +41,19 @@ export const DASHBOARD_LINK_CLASS =
 
 export const DASHBOARD_EMPTY_CLASS = "text-sm text-zinc-500 dark:text-zinc-400";
 
+export const DASHBOARD_ATTENTION_ROW_HEIGHT = "min-h-[24rem]";
+
+export const DASHBOARD_ATTENTION_PANEL_CLASS = `${DASHBOARD_PANEL_CLASS} flex h-full w-full ${DASHBOARD_ATTENTION_ROW_HEIGHT} flex-col`;
+
+export const DASHBOARD_ATTENTION_PANEL_BODY_CLASS = `${DASHBOARD_PANEL_BODY_CLASS} flex min-h-0 flex-1 flex-col`;
+
+/** Two equal panels stacked beside the action-items column. */
+export const DASHBOARD_SIDE_STACK_CLASS = `flex h-full w-full ${DASHBOARD_ATTENTION_ROW_HEIGHT} flex-col gap-4`;
+
+export const DASHBOARD_SIDE_PANEL_CLASS = `${DASHBOARD_PANEL_CLASS} flex min-h-0 flex-1 flex-col overflow-hidden`;
+
+export const DASHBOARD_SIDE_PANEL_BODY_CLASS = "flex min-h-0 flex-1 flex-col p-5";
+
 export const DASHBOARD_LOADING_CLASS =
   "flex min-h-32 items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400";
 

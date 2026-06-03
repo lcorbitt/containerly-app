@@ -2,32 +2,43 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ShipmentCommercialRouteLane } from "@/components/ShipmentCommercialHeader/ShipmentCommercialRouteLane";
-import { TRIAGE_BUCKET_LABELS } from "@/utils/dashboard-metrics";
+import { TRIAGE_BUCKET_LABELS, formatTriageRouteLine } from "@/utils/dashboard-metrics";
 import {
+  DASHBOARD_SPOTLIGHT_ACTIONS_CLASS,
   DASHBOARD_SPOTLIGHT_CONTAINER_CLASS,
-  DASHBOARD_SPOTLIGHT_DETAIL_CLASS,
+  DASHBOARD_SPOTLIGHT_DETAIL_CLAMP_CLASS,
   DASHBOARD_SPOTLIGHT_EYEBROW_CLASS,
   DASHBOARD_SPOTLIGHT_LINK_CLASS,
+  DASHBOARD_SPOTLIGHT_META_CLASS,
   DASHBOARD_SPOTLIGHT_PANEL_BODY_CLASS,
   DASHBOARD_SPOTLIGHT_PANEL_CLASS,
   DASHBOARD_SPOTLIGHT_PANEL_URGENT_CLASS,
-  DASHBOARD_SPOTLIGHT_ACTIONS_CLASS,
+  DASHBOARD_SPOTLIGHT_ROUTE_CLASS,
   DASHBOARD_SPOTLIGHT_TITLE_CLASS,
 } from "./constants";
 import type { DashboardSpotlightShipmentProps } from "./types";
 
-export function DashboardSpotlightShipment({ spotlight }: DashboardSpotlightShipmentProps) {
+function buildSpotlightMeta(context: DashboardSpotlightShipmentProps["context"]): string | null {
+  if (!context) return null;
+  const parts: string[] = [];
+  const customer = context.customerName?.trim();
+  if (customer) parts.push(customer);
+  const carrier = context.carrierStatus?.trim();
+  if (carrier) parts.push(carrier);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+export function DashboardSpotlightShipment({ spotlight, context }: DashboardSpotlightShipmentProps) {
   if (!spotlight) {
     return (
       <section className={DASHBOARD_SPOTLIGHT_PANEL_CLASS}>
         <div className={`${DASHBOARD_SPOTLIGHT_PANEL_BODY_CLASS} flex h-full flex-col`}>
           <p className={DASHBOARD_SPOTLIGHT_EYEBROW_CLASS}>Spotlight</p>
           <h2 className={DASHBOARD_SPOTLIGHT_TITLE_CLASS}>All clear</h2>
-          <p className={DASHBOARD_SPOTLIGHT_DETAIL_CLASS}>
+          <p className={DASHBOARD_SPOTLIGHT_DETAIL_CLAMP_CLASS}>
             No urgent items in your triage queue.
           </p>
-          <Link href="/shipments" className={`${DASHBOARD_SPOTLIGHT_LINK_CLASS} mt-6`}>
+          <Link href="/shipments" className={`${DASHBOARD_SPOTLIGHT_LINK_CLASS} mt-auto pt-3`}>
             View shipments
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
@@ -38,6 +49,8 @@ export function DashboardSpotlightShipment({ spotlight }: DashboardSpotlightShip
 
   const orderLabel = spotlight.orderNumber?.trim() || "Shipment";
   const bucketLabel = TRIAGE_BUCKET_LABELS[spotlight.bucketKey];
+  const routeLine = formatTriageRouteLine(spotlight.portOfLoading, spotlight.portOfDestination);
+  const metaLine = buildSpotlightMeta(context);
 
   return (
     <section className={DASHBOARD_SPOTLIGHT_PANEL_CLASS}>
@@ -49,14 +62,9 @@ export function DashboardSpotlightShipment({ spotlight }: DashboardSpotlightShip
         </p>
         <h2 className={DASHBOARD_SPOTLIGHT_TITLE_CLASS}>{orderLabel}</h2>
         <p className={DASHBOARD_SPOTLIGHT_CONTAINER_CLASS}>{spotlight.containerNumber}</p>
-        <p className={`${DASHBOARD_SPOTLIGHT_DETAIL_CLASS} mt-3`}>{spotlight.triageDetail}</p>
-
-        <div className="mt-5">
-          <ShipmentCommercialRouteLane
-            origin={spotlight.portOfLoading}
-            destination={spotlight.portOfDestination}
-          />
-        </div>
+        {metaLine ? <p className={DASHBOARD_SPOTLIGHT_META_CLASS}>{metaLine}</p> : null}
+        {routeLine ? <p className={DASHBOARD_SPOTLIGHT_ROUTE_CLASS}>{routeLine}</p> : null}
+        <p className={DASHBOARD_SPOTLIGHT_DETAIL_CLAMP_CLASS}>{spotlight.triageDetail}</p>
 
         <div className={DASHBOARD_SPOTLIGHT_ACTIONS_CLASS}>
           <Link href={`/containers/${spotlight.containerId}`} className={DASHBOARD_SPOTLIGHT_LINK_CLASS}>
