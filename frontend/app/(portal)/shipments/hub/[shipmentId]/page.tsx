@@ -23,6 +23,7 @@ export default function SharedShipmentTrackingPage({
   const [phase, setPhase] = useState<HubPhase>("loading");
   const [data, setData] = useState<PublicReportPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,20 +67,26 @@ export default function SharedShipmentTrackingPage({
     return () => {
       cancelled = true;
     };
-  }, [shipmentId, router]);
+  }, [shipmentId, router, reloadKey]);
 
   if (phase === "loading") {
     return <PageLoading loadingText="Loading Customer Portal…" />;
   }
 
   if (phase === "gate") {
-    return <PortalAccessGate shipmentId={shipmentId} />;
+    return (
+      <PortalAccessGate shipmentId={shipmentId} onSignedIn={() => setReloadKey((k) => k + 1)} />
+    );
   }
 
   if (phase === "denied") {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
-        <PortalAccessGate shipmentId={shipmentId} showSignedInHint />
+        <PortalAccessGate
+          shipmentId={shipmentId}
+          showSignedInHint
+          onSignedIn={() => setReloadKey((k) => k + 1)}
+        />
         {err ? (
           <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">{err}</p>
         ) : null}

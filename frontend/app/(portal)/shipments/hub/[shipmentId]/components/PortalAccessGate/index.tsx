@@ -10,9 +10,9 @@ import {
 import type { PortalAccessGateProps } from "./types";
 import { usePortalAccessGate } from "./usePortalAccessGate";
 
-export function PortalAccessGate({ shipmentId, showSignedInHint }: PortalAccessGateProps) {
+export function PortalAccessGate({ shipmentId, showSignedInHint, onSignedIn }: PortalAccessGateProps) {
   const { email, setEmail, submitting, message, outcome, submit } =
-    usePortalAccessGate(shipmentId);
+    usePortalAccessGate(shipmentId, onSignedIn);
 
   const requested = outcome === "request_sent" || outcome === "already_requested";
 

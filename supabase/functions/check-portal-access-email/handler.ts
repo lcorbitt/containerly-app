@@ -1,3 +1,4 @@
+// Delegates to @supabase-shared / @models; forwards signed_in token fields to the client.
 import { createServiceClient } from "@supabase-shared/db.ts";
 import { checkPortalAccessEmail } from "@supabase-shared/customer-access.service.ts";
 import { edgeErrorMessage, jsonResponse } from "@supabase-shared/utils.ts";

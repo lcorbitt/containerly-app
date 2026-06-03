@@ -2,9 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { checkPortalAccessEmail } from "@/services/shipment.service";
-import { verifyEmailOtp } from "@/services/auth.service";
+import { getBrowserAuthSession, verifyEmailOtp } from "@/services/auth.service";
 
-export function usePortalAccessGate(shipmentId: string) {
+export function usePortalAccessGate(shipmentId: string, onSignedIn?: () => void) {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -32,14 +32,26 @@ export function usePortalAccessGate(shipmentId: string) {
           setMessage("Sign-in could not be completed. Please try again or contact the team.");
           return;
         }
-        setMessage(r.message);
+        setMessage("Signing you in…");
         const { error } = await verifyEmailOtp(r.token_hash, r.token_type ?? "magiclink");
         if (error) {
           setMessage(error.message);
           return;
         }
-        // Session established; reload so the hub picks it up and renders the portal.
-        window.location.reload();
+        // Confirm the session actually persisted before transitioning, so a dropped
+        // session surfaces a clear message instead of silently bouncing to the gate.
+        const session = await getBrowserAuthSession();
+        if (!session) {
+          setMessage(
+            "You're signed in, but your browser didn't keep the session. Disable private/incognito browsing or tracking protection for this site, then try again.",
+          );
+          return;
+        }
+        if (onSignedIn) {
+          onSignedIn();
+        } else {
+          window.location.reload();
+        }
         return;
       }
 
@@ -53,7 +65,7 @@ export function usePortalAccessGate(shipmentId: string) {
     } finally {
       setSubmitting(false);
     }
-  }, [email, shipmentId]);
+  }, [email, shipmentId, onSignedIn]);
 
   return {
     email,
