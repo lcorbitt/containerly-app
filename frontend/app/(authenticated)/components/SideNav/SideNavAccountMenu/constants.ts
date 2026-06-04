@@ -4,11 +4,13 @@ export const SIDE_NAV_ACCOUNT_MENU_TRIGGER_CLASS =
 export const SIDE_NAV_ACCOUNT_MENU_AVATAR_CLASS =
   "relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-200 text-sm font-medium text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100";
 
-export const SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS =
-  "min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100";
+export const SIDE_NAV_ACCOUNT_MENU_LABELS_CLASS = "flex min-w-0 flex-1 flex-col";
 
-export const SIDE_NAV_ACCOUNT_MENU_ROLE_LABEL_CLASS =
-  "mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400";
+export const SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS =
+  "min-w-0 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100";
+
+export const SIDE_NAV_ACCOUNT_MENU_TRIGGER_ROLE_LABEL_CLASS =
+  "truncate text-xs text-zinc-500 dark:text-zinc-400";
 
 /** Fixed panel stacks above main content (see WorkspaceQuickSearch z-[200]). */
 export const SIDE_NAV_ACCOUNT_MENU_PANEL_FIXED_CLASS =

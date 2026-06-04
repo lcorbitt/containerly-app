@@ -17,7 +17,7 @@ export function ShipmentCustomerPortalLink({
       className={`${linkClass} ${className ?? ""}`.trim()}
     >
       <Eye className="h-4 w-4 opacity-70" aria-hidden />
-      Customer Portal
+      Preview
     </Link>
   );
 }

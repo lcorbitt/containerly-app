@@ -33,6 +33,9 @@ export function AuthenticatedTopNav() {
     hubSubTabLabel,
     hubSubTabHref,
     hubLeafLabel,
+    customerPortalSubTabLabel,
+    customerPortalSubTabHref,
+    customerPortalLeafLabel,
     isFreight,
     openNewShipmentModal,
     openBulkImportModal,
@@ -47,9 +50,9 @@ export function AuthenticatedTopNav() {
         <TopNavBreadcrumb
           org={orgSegment}
           tab={tabSegment}
-          subTabLabel={hubSubTabLabel ?? activeSubTabName}
-          subTabHref={hubSubTabHref}
-          leafLabel={hubLeafLabel}
+          subTabLabel={hubSubTabLabel ?? customerPortalSubTabLabel ?? activeSubTabName}
+          subTabHref={hubSubTabHref ?? customerPortalSubTabHref}
+          leafLabel={hubLeafLabel ?? customerPortalLeafLabel}
         />
       </div>
 

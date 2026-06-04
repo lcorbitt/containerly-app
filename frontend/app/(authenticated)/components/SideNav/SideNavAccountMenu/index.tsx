@@ -5,13 +5,14 @@ import { Reveal } from "@/components/Reveal";
 import {
   SIDE_NAV_ACCOUNT_MENU_AVATAR_CLASS,
   SIDE_NAV_ACCOUNT_MENU_ITEM_CLASS,
+  SIDE_NAV_ACCOUNT_MENU_LABELS_CLASS,
   SIDE_NAV_ACCOUNT_MENU_LOGOUT_LABEL,
   SIDE_NAV_ACCOUNT_MENU_PANEL_CLASS,
   SIDE_NAV_ACCOUNT_MENU_PANEL_FIXED_CLASS,
   SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS,
-  SIDE_NAV_ACCOUNT_MENU_ROLE_LABEL_CLASS,
   SIDE_NAV_ACCOUNT_MENU_SIGNING_OUT_LABEL,
   SIDE_NAV_ACCOUNT_MENU_TRIGGER_CLASS,
+  SIDE_NAV_ACCOUNT_MENU_TRIGGER_ROLE_LABEL_CLASS,
 } from "./constants";
 import { useSideNavAccountMenu } from "./useSideNavAccountMenu";
 import type { SideNavAccountMenuProps } from "./types";
@@ -50,7 +51,6 @@ export function SideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccou
                 <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
                   {accountPrimaryLabel}
                 </p>
-                <p className={SIDE_NAV_ACCOUNT_MENU_ROLE_LABEL_CLASS}>{roleLabel}</p>
                 {orgName ? (
                   <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">{orgName}</p>
                 ) : null}
@@ -89,7 +89,12 @@ export function SideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccou
             initials
           )}
         </span>
-        <span className={SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS}>{accountPrimaryLabel}</span>
+        <span className={SIDE_NAV_ACCOUNT_MENU_LABELS_CLASS}>
+          <span className={SIDE_NAV_ACCOUNT_MENU_PRIMARY_LABEL_CLASS}>{accountPrimaryLabel}</span>
+          {roleLabel ? (
+            <span className={SIDE_NAV_ACCOUNT_MENU_TRIGGER_ROLE_LABEL_CLASS}>{roleLabel}</span>
+          ) : null}
+        </span>
       </button>
       {panel}
     </div>

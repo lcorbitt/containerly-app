@@ -39,16 +39,22 @@ export function useAuthenticatedTopNav() {
   const operatorShipmentId =
     subTabRoute?.kind === "shipment-operator" ? subTabRoute.shipmentId : "";
   const hubShipmentId = subTabRoute?.kind === "shipment-hub" ? subTabRoute.shipmentId : "";
+  const customerPortalShipmentId =
+    subTabRoute?.kind === "shipment-customer-portal" ? subTabRoute.shipmentId : "";
 
   const workspaceRowQuery = useShipmentWorkspaceRowQuery({
     shipmentId: operatorShipmentId,
     organizationId: selectedOrgId,
   });
 
+  // Hub + operator customer-portal breadcrumbs read the order number from the
+  // get-shipment payload (independent of the selected org), so it resolves reliably.
+  const portalShipmentId = hubShipmentId || customerPortalShipmentId;
+
   const hubShipmentQuery = useQuery({
-    queryKey: ["top-nav-shipment-hub", hubShipmentId],
-    queryFn: () => fetchShipment(hubShipmentId),
-    enabled: Boolean(hubShipmentId),
+    queryKey: ["top-nav-shipment-portal", portalShipmentId],
+    queryFn: () => fetchShipment(portalShipmentId),
+    enabled: Boolean(portalShipmentId),
   });
 
   const orgSegment = useMemo((): BreadcrumbSegment | null => {
@@ -71,6 +77,7 @@ export function useAuthenticatedTopNav() {
   );
 
   const isHubRoute = subTabRoute?.kind === "shipment-hub";
+  const isCustomerPortalRoute = subTabRoute?.kind === "shipment-customer-portal";
 
   const activeSubTabName = useMemo(() => {
     if (!subTabRoute || isHubRoute) return null;
@@ -106,6 +113,19 @@ export function useAuthenticatedTopNav() {
 
   const hubLeafLabel = isHubRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
 
+  const customerPortalSubTabLabel = useMemo(() => {
+    if (!isCustomerPortalRoute || subTabRoute?.kind !== "shipment-customer-portal") return null;
+    const payload = hubShipmentQuery.data?.ok ? hubShipmentQuery.data.data : null;
+    return hubShipmentOrderBreadcrumbLabel(payload, subTabRoute.shipmentId);
+  }, [isCustomerPortalRoute, subTabRoute, hubShipmentQuery.data]);
+
+  const customerPortalSubTabHref = useMemo(() => {
+    if (!isCustomerPortalRoute || subTabRoute?.kind !== "shipment-customer-portal") return null;
+    return `/shipments/${subTabRoute.shipmentId}`;
+  }, [isCustomerPortalRoute, subTabRoute]);
+
+  const customerPortalLeafLabel = isCustomerPortalRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
+
   useEffect(() => {
     if (!notificationsMenuOpen) return;
     function onPointerDown(e: MouseEvent) {
@@ -138,6 +158,9 @@ export function useAuthenticatedTopNav() {
     hubSubTabLabel,
     hubSubTabHref,
     hubLeafLabel,
+    customerPortalSubTabLabel,
+    customerPortalSubTabHref,
+    customerPortalLeafLabel,
     openNewShipmentModal,
     openBulkImportModal,
     toggleNotificationsMenu,
