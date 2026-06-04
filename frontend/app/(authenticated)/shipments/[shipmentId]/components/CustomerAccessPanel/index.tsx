@@ -91,7 +91,7 @@ export function CustomerAccessPanel({
             Allowlist only
           </label>
         </div>
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-3">
           <label className="min-w-0 flex-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
             Customer emails
             <TextInput
@@ -108,7 +108,7 @@ export function CustomerAccessPanel({
             type="button"
             onClick={onCreateInvite}
             disabled={creating}
-            className={`${PRIMARY_BTN} min-w-[9.25rem] shrink-0`}
+            className={`${PRIMARY_BTN} w-full`}
           >
             {creating ? (
               <>
@@ -190,7 +190,7 @@ export function CustomerAccessPanel({
         ) : null}
 
         {activeAccess.length === 0 && pendingInvites.length === 0 ? (
-          <p className="text-sm text-zinc-500">No importer access yet.</p>
+          <p className="text-sm text-zinc-500">No customer access yet.</p>
         ) : null}
 
         {activeAccess.length > 0 ? (

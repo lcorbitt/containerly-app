@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { PublicContainerReport } from "@/components/PublicContainerReport";
 import { PageLoading } from "@/components/PageLoading";
+import { useNavigationContentGate } from "@/components/NavigationProgress";
 import { fetchShipment } from "@/services/shipment.service";
 import type { PublicReportPayload } from "@/types/public-report";
 
@@ -19,6 +20,9 @@ export default function OperatorCustomerPortalPage({
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<PublicReportPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
+
+  // Keep the navigation overlay up until the portal data resolves (single continuous loader).
+  const { overlayActive } = useNavigationContentGate(phase !== "loading");
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +49,7 @@ export default function OperatorCustomerPortalPage({
   }, [shipmentId]);
 
   if (phase === "loading") {
-    return <PageLoading loadingText="Loading customer portal…" />;
+    return overlayActive ? null : <PageLoading loadingText="Loading customer portal…" />;
   }
 
   if (phase === "error" || !data) {

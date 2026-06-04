@@ -13,7 +13,9 @@ export function AuthenticatedMainPane({ children }: { children: React.ReactNode 
 
   return (
     <div className={AUTHENTICATED_MAIN_PANE_ROOT_CLASS}>
-      {isNavigating ? null : children}
+      {/* Children stay mounted under the overlay so the destination page can load its data while the
+          navigation overlay holds; it lifts only once that page reports ready (content gate). */}
+      {children}
       {isNavigating ? (
         <div className="absolute inset-0 z-10" aria-hidden={false}>
           <div className={AUTHENTICATED_MAIN_PANE_BLOCKER_CLASS} aria-hidden />

@@ -14,7 +14,9 @@ import {
   NAVIGATION_PROGRESS_ACTIVE_CLASS,
   NAVIGATION_PROGRESS_COMPLETING_CLASS,
   NAVIGATION_PROGRESS_COMPLETE_MS,
+  NAVIGATION_PROGRESS_GATE_GRACE_MS,
   NAVIGATION_PROGRESS_HIDDEN_CLASS,
+  NAVIGATION_PROGRESS_SAFETY_MS,
   NAVIGATION_PROGRESS_SHELL_CLASS,
   NAVIGATION_PROGRESS_SHOW_DELAY_MS,
   NAVIGATION_PROGRESS_TRACK_CLASS,
@@ -36,7 +38,11 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
   const [loadingText, setLoadingText] = useState<string | null>(null);
   const showTimerRef = useRef<number | null>(null);
   const completeTimerRef = useRef<number | null>(null);
+  const graceTimerRef = useRef<number | null>(null);
+  const safetyTimerRef = useRef<number | null>(null);
   const pendingStartRef = useRef(false);
+  // How many destination components are holding the overlay open until their data is ready.
+  const gateCountRef = useRef(0);
   const previousPathnameRef = useRef(pathname);
 
   const clearShowTimer = useCallback(() => {
@@ -53,8 +59,24 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
     }
   }, []);
 
+  const clearGraceTimer = useCallback(() => {
+    if (graceTimerRef.current != null) {
+      window.clearTimeout(graceTimerRef.current);
+      graceTimerRef.current = null;
+    }
+  }, []);
+
+  const clearSafetyTimer = useCallback(() => {
+    if (safetyTimerRef.current != null) {
+      window.clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
+  }, []);
+
   const finishNavigation = useCallback(() => {
     clearShowTimer();
+    clearGraceTimer();
+    clearSafetyTimer();
     pendingStartRef.current = false;
     setPendingNavigation(false);
     setLoadingText(null);
@@ -67,7 +89,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
       setPhase("idle");
       completeTimerRef.current = null;
     }, NAVIGATION_PROGRESS_COMPLETE_MS);
-  }, [clearCompleteTimer, clearShowTimer]);
+  }, [clearCompleteTimer, clearGraceTimer, clearSafetyTimer, clearShowTimer]);
 
   const startNavigation = useCallback((input?: NavigationStartInput) => {
     pendingStartRef.current = true;
@@ -79,13 +101,51 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
       setPhase("active");
       showTimerRef.current = null;
     }, NAVIGATION_PROGRESS_SHOW_DELAY_MS);
-  }, [clearShowTimer]);
+    // Safety net: a destination that never reports ready can't pin the overlay open forever.
+    clearSafetyTimer();
+    safetyTimerRef.current = window.setTimeout(() => {
+      finishNavigation();
+    }, NAVIGATION_PROGRESS_SAFETY_MS);
+  }, [clearSafetyTimer, clearShowTimer, finishNavigation]);
+
+  const claimContentGate = useCallback(() => {
+    gateCountRef.current += 1;
+    // A page now owns finishing the overlay (on ready / safety), so cancel the route-commit
+    // fallback that would otherwise close it early.
+    clearGraceTimer();
+  }, [clearGraceTimer]);
+
+  const releaseContentGate = useCallback(
+    ({ ready }: { ready: boolean }) => {
+      if (gateCountRef.current > 0) gateCountRef.current -= 1;
+      // Finish only once the destination's data is ready and no other gate is still holding.
+      if (ready && gateCountRef.current === 0 && pendingStartRef.current) {
+        finishNavigation();
+      }
+    },
+    [finishNavigation],
+  );
 
   useEffect(() => {
     if (previousPathnameRef.current === pathname) return;
     previousPathnameRef.current = pathname;
-    finishNavigation();
-  }, [finishNavigation, pathname]);
+
+    // Untracked navigation (browser back/forward, programmatic without startNavigation): just clear.
+    if (!pendingStartRef.current) {
+      finishNavigation();
+      return;
+    }
+
+    // Route committed. If the destination already claimed the content gate, keep the overlay up
+    // until it reports ready. Otherwise give it a brief window to mount and claim before closing.
+    if (gateCountRef.current > 0) return;
+    clearGraceTimer();
+    graceTimerRef.current = window.setTimeout(() => {
+      graceTimerRef.current = null;
+      if (gateCountRef.current > 0) return;
+      finishNavigation();
+    }, NAVIGATION_PROGRESS_GATE_GRACE_MS);
+  }, [clearGraceTimer, finishNavigation, pathname]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -111,8 +171,10 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
     () => () => {
       clearShowTimer();
       clearCompleteTimer();
+      clearGraceTimer();
+      clearSafetyTimer();
     },
-    [clearCompleteTimer, clearShowTimer],
+    [clearCompleteTimer, clearGraceTimer, clearSafetyTimer, clearShowTimer],
   );
 
   const value = useMemo<NavigationProgressContextValue>(
@@ -121,8 +183,10 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
       isNavigating: pendingNavigation || phase !== "idle",
       loadingText,
       startNavigation,
+      claimContentGate,
+      releaseContentGate,
     }),
-    [loadingText, pendingNavigation, phase, startNavigation],
+    [claimContentGate, loadingText, pendingNavigation, phase, releaseContentGate, startNavigation],
   );
 
   return (

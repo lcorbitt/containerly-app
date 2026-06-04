@@ -10,6 +10,7 @@ import { ShipmentTrackingMapPanel } from "@/components/ShipmentTrackingMap";
 import { DocumentsList } from "@/components/DocumentsList";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import { PageLoading } from "@/components/PageLoading";
+import { useNavigationContentGate } from "@/components/NavigationProgress";
 import {
   ShipmentTimelineView,
   TimelineOrderToggle,
@@ -100,6 +101,11 @@ export function ContainerWorkspace({
     carrierLastKnownDisplay,
   } = useContainerWorkspace({ containerId });
 
+  // Only the standalone /containers/[id] route owns the navigation overlay; when embedded in the
+  // shipment page, ShipmentWorkspace already holds the gate, so report ready immediately here.
+  const embedded = Boolean(shipmentEmbed);
+  const { overlayActive } = useNavigationContentGate(embedded || !loading);
+
   if (!selectedOrgId) {
     return (
       <p className="p-6 text-sm text-zinc-600 dark:text-zinc-400">
@@ -122,7 +128,7 @@ export function ContainerWorkspace({
   }
 
   if (loading) {
-    return <PageLoading loadingText="Loading request…" />;
+    return !embedded && overlayActive ? null : <PageLoading loadingText="Loading request…" />;
   }
 
   if (!request) {

@@ -2,6 +2,16 @@ export const NAVIGATION_PROGRESS_SHOW_DELAY_MS = 80;
 
 export const NAVIGATION_PROGRESS_COMPLETE_MS = 250;
 
+/**
+ * After a route commits, how long to wait for the destination page to claim the content gate
+ * before finishing the overlay anyway. Pages that mount synchronously claim before this fires;
+ * this only bounds how long the overlay lingers on pages that hold nothing async.
+ */
+export const NAVIGATION_PROGRESS_GATE_GRACE_MS = 120;
+
+/** Absolute ceiling so a never-ready destination can't pin the overlay open forever. */
+export const NAVIGATION_PROGRESS_SAFETY_MS = 10000;
+
 export const NAVIGATION_PROGRESS_SHELL_CLASS =
   "pointer-events-none fixed inset-x-0 top-0 z-[120] h-0.5 overflow-hidden";
 

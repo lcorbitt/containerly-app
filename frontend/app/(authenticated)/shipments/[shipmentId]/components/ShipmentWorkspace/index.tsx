@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageLoading } from "@/components/PageLoading";
+import { useNavigationContentGate } from "@/components/NavigationProgress";
 import { ShipmentAccessSidebar } from "../ShipmentAccessSidebar";
 import { ShipmentDetailsTabs } from "../ShipmentDetailsTabs";
 import type { ShipmentDetailsTabId } from "../ShipmentDetailsTabs/types";
@@ -100,6 +101,11 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           : null;
 
   const loading = rowQuery.isLoading && Boolean(selectedOrgId);
+
+  // Hold the navigation overlay open until this shipment's data is ready, so navigating here shows a
+  // single continuous "Loading Order No…" overlay instead of also flashing a "Loading Shipment…"
+  // page loader. On a direct load there's no overlay, so we fall back to the local loader below.
+  const { overlayActive } = useNavigationContentGate(!loading);
 
   const lines = row ? pickTrackingRowsExported(row) : [];
 
@@ -202,7 +208,8 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   }
 
   if (loading) {
-    return <PageLoading loadingText="Loading Shipment…" />;
+    // The navigation overlay is already covering this page; don't stack a second loader behind it.
+    return overlayActive ? null : <PageLoading loadingText="Loading Shipment…" />;
   }
 
   if (redirectAfterDelete) {
