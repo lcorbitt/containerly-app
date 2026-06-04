@@ -49,10 +49,45 @@ export async function fetchInviteByEmailForShipment(
     .maybeSingle();
 }
 
+/**
+ * Latest `pending` invite for an email on a shipment, ignoring the expiry window. Used to
+ * dedupe/refresh instead of stacking rows — the partial unique index allows only one pending
+ * invite per `(shipment_id, lower(invited_email))`, including expired-but-still-`pending` ones.
+ */
+export async function fetchPendingInviteForRefresh(
+  client: SupabaseClient,
+  shipmentId: string,
+  email: string,
+) {
+  return client
+    .from("customer_invites")
+    .select("id")
+    .eq("shipment_id", shipmentId)
+    .eq("invited_email", email.trim().toLowerCase())
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+}
+
 export async function updateCustomerInviteStatus(
   client: SupabaseClient,
   id: string,
   fields: Record<string, unknown>,
 ) {
   return client.from("customer_invites").update(fields).eq("id", id);
+}
+
+/** Update an invite by id and return the refreshed identity fields (for the resend/refresh path). */
+export async function updateCustomerInviteById(
+  client: SupabaseClient,
+  id: string,
+  fields: Record<string, unknown>,
+) {
+  return client
+    .from("customer_invites")
+    .update(fields)
+    .eq("id", id)
+    .select("id, expires_at, created_at")
+    .single();
 }

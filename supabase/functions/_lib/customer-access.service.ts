@@ -3,7 +3,9 @@ import { DEFAULT_CUSTOMER_VISIBILITY } from "@supabase-shared/shipment-portal-pa
 import {
   fetchCustomerInviteByTokenHash,
   fetchInviteByEmailForShipment,
+  fetchPendingInviteForRefresh,
   insertCustomerInvite,
+  updateCustomerInviteById,
   updateCustomerInviteStatus,
 } from "@models/customer_invites.ts";
 import { countMembershipsForUser } from "@models/organization_members.ts";
@@ -47,6 +49,7 @@ import { fetchShipmentParticipantForUser } from "@models/shipment_participants.t
 import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
 import { fetchActiveAccessForProfileEmailOnShipment } from "@models/shipment_customer_access.ts";
 import {
+  approvePendingAccessRequestsForEmail,
   fetchAccessRequestById,
   fetchPendingAccessRequestByEmailForShipment,
   insertShipmentCustomerAccessRequest,
@@ -130,7 +133,12 @@ export async function createCustomerInvite(
 
   const deliveryMode = input.delivery_mode === "allowlist_only" ? "allowlist_only" : "email_invite";
 
-  const { data: invite, error: insErr } = await insertCustomerInvite(admin, {
+  // Dedupe: reuse an existing pending invite for this (shipment, email) instead of stacking
+  // rows. A partial unique index enforces one pending invite per pair; refreshing in place
+  // (new token + expiry) doubles as a "resend".
+  const { data: existingPending } = await fetchPendingInviteForRefresh(admin, shipmentId, emailRaw);
+
+  const inviteFields = {
     organization_id: orgId,
     shipment_id: shipmentId,
     invited_email: emailRaw,
@@ -140,9 +148,13 @@ export async function createCustomerInvite(
     expires_at: expiresAt,
     visibility_settings: visibility,
     delivery_mode: deliveryMode,
-  });
+  };
+
+  const { data: invite, error: insErr } = existingPending?.id
+    ? await updateCustomerInviteById(admin, existingPending.id as string, inviteFields)
+    : await insertCustomerInvite(admin, inviteFields);
   if (insErr) throw insErr;
-  if (!invite) throw new Error("insertCustomerInvite returned no row");
+  if (!invite) throw new Error("customer invite upsert returned no row");
 
   await insertReportActivity(admin, {
     shipment_id: shipmentId,
@@ -188,6 +200,13 @@ export async function createCustomerInvite(
       });
     }
   }
+
+  // Converge with the customer-initiated path: if this email already had a pending access
+  // request, the operator's invite supersedes it — auto-approve so it leaves the request queue.
+  await approvePendingAccessRequestsForEmail(admin, shipmentId, emailRaw, {
+    invite_id: invite.id as string,
+    resolved_by_user_id: userId,
+  });
 
   return {
     ok: true,
@@ -322,9 +341,19 @@ async function grantShipmentAccessFromInvite(
 ): Promise<string> {
   const shipmentId = invite.shipment_id as string;
   const orgId = invite.organization_id as string;
+  const invitedEmail = String(invite.invited_email ?? "").trim().toLowerCase();
 
   const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
-  if (existing?.id) return existing.id as string;
+  if (existing?.id) {
+    // Access already granted (e.g. via the other path) — still converge any open request.
+    if (invitedEmail) {
+      await approvePendingAccessRequestsForEmail(admin, shipmentId, invitedEmail, {
+        invite_id: invite.id as string,
+        access_id: existing.id as string,
+      });
+    }
+    return existing.id as string;
+  }
 
   const vis = invite.visibility_settings as Record<string, unknown> | null | undefined;
   const visibility_settings = {
@@ -370,6 +399,14 @@ async function grantShipmentAccessFromInvite(
     customerDisplayName: customerName,
     actorUserId: userId,
   });
+
+  // Converge any customer-initiated request for this email onto the now-granted access.
+  if (invitedEmail) {
+    await approvePendingAccessRequestsForEmail(admin, shipmentId, invitedEmail, {
+      invite_id: invite.id as string,
+      access_id: access.id as string,
+    });
+  }
 
   return access.id as string;
 }
