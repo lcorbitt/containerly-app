@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   createImporterInvite,
   deleteShipmentParticipantRow,
@@ -62,14 +62,22 @@ export function useShipmentAccessTabContent({
   const [orgTagSuggestions, setOrgTagSuggestions] = useState<string[]>([]);
   const [emailNotificationsSubscribed, setEmailNotificationsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Only the first load (per shipment/org) shows the full "Loading…" swap. Refreshes after
+  // a mutation (approve/deny/invite/revoke) update data in place so the sidebar doesn't blank.
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     setAssigneeUserId(initialAssigneeUserId);
   }, [initialAssigneeUserId, shipmentId]);
 
+  useEffect(() => {
+    hasLoadedRef.current = false;
+    setLoading(true);
+  }, [shipmentId, selectedOrgId]);
+
   const load = useCallback(async () => {
     if (!selectedOrgId) return;
-    setLoading(true);
+    if (!hasLoadedRef.current) setLoading(true);
     try {
       const snap = await fetchShipmentAccessTabSnapshotForBrowser({
         shipmentId,
@@ -87,6 +95,7 @@ export function useShipmentAccessTabContent({
       setOrgTagSuggestions(snap.orgTagSuggestions);
       setEmailNotificationsSubscribed(snap.emailNotificationsSubscribed);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [selectedOrgId, shipmentId]);

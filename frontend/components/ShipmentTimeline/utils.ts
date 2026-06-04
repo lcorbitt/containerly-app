@@ -4,16 +4,16 @@ import {
   Anchor,
   Barcode,
   Building2,
-  CheckCircle2,
+  FileCheck,
+  FileInput,
   FileText,
-  Mail,
+  FileX,
   MapPin,
   MessageSquare,
   Package,
   Shield,
   Ship,
   Truck,
-  XCircle,
 } from "lucide-react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import {
@@ -399,14 +399,14 @@ export function inferTimelineVisual(
   if (/drafts_attached|document.*upload|revision/.test(t)) {
     return { tone: "document", Icon: FileText, label: "Documents" };
   }
-  if (/documents_approved|approved/.test(t)) {
-    return { tone: "land", Icon: CheckCircle2, label: "Approved" };
+  if (/documents_approved/.test(t)) {
+    return { tone: "success", Icon: FileCheck, label: "Approved" };
   }
-  if (/documents_rejected|rejected/.test(t)) {
-    return { tone: "customs", Icon: XCircle, label: "Revision" };
+  if (/documents_rejected/.test(t)) {
+    return { tone: "success", Icon: FileX, label: "Rejected" };
   }
-  if (/originals_mailed|mailed/.test(t)) {
-    return { tone: "document", Icon: Mail, label: "Mailed" };
+  if (/originals_mailed|originals_sent/.test(t)) {
+    return { tone: "success", Icon: FileInput, label: "Sent" };
   }
   if (/tracking_linked|carrier/.test(t)) {
     return { tone: "system", Icon: Activity, label: "Tracking" };

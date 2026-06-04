@@ -105,6 +105,30 @@ export function PublicContainerReport({
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
         <div className="flex flex-col gap-6">
+          {!threadReadOnly &&
+          payload.shipment_access &&
+          !payload.shipment_access.profile_completed_at &&
+          payload.shipment_access.configuration_reminder_due_at ? (
+            <div className="flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-sky-950 dark:text-sky-100">
+                You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
+                until{" "}
+                {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}
+                .
+              </p>
+              <button
+                type="button"
+                disabled={setupDismissBusy}
+                onClick={handleSetupDismiss}
+                className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
+              >
+                {setupDismissBusy ? "Saving…" : "Configure later"}
+              </button>
+            </div>
+          ) : null}
           <header className={PORTAL_COMMERCIAL_CARD_CLASS}>
             <BrandedHeader
               variant="embedded"
@@ -138,30 +162,6 @@ export function PublicContainerReport({
                       Estimated divergence: {Math.round(Math.abs(logisticsHints.ais_vs_carrier_eta_hours))} hours
                     </p>
                   ) : null}
-                </div>
-              ) : null}
-              {!threadReadOnly &&
-              payload.shipment_access &&
-              !payload.shipment_access.profile_completed_at &&
-              payload.shipment_access.configuration_reminder_due_at ? (
-                <div className="mt-4 flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-sky-950 dark:text-sky-100">
-                    You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
-                    until{" "}
-                    {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    .
-                  </p>
-                  <button
-                    type="button"
-                    disabled={setupDismissBusy}
-                    onClick={handleSetupDismiss}
-                    className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
-                  >
-                    {setupDismissBusy ? "Saving…" : "Configure later"}
-                  </button>
                 </div>
               ) : null}
             </div>

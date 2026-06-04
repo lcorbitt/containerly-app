@@ -116,6 +116,15 @@ export const TONE_STYLES: Record<
       "bg-primary-orange/20 text-primary-orange ring-2 ring-primary-orange/50 shadow-[0_0_28px_-6px_rgba(255,78,0,0.55)]",
     modalChip: "border border-primary-orange/40 bg-primary-orange/10 text-primary-orange",
   },
+  success: {
+    node: "bg-emerald-50 text-emerald-700 ring-[#ecfdf5] dark:bg-emerald-950 dark:text-emerald-300 dark:ring-zinc-950",
+    connector: "bg-emerald-400/55 dark:bg-emerald-500/45",
+    chip: "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-100",
+    iconGlow: "shadow-[0_0_20px_-4px_rgba(16,185,129,0.32)] dark:shadow-[0_0_24px_-6px_rgba(52,211,153,0.2)]",
+    modalStatusIcon:
+      "bg-emerald-500/20 text-emerald-200 ring-2 ring-emerald-400/50 shadow-[0_0_28px_-6px_rgba(16,185,129,0.55)]",
+    modalChip: "border border-emerald-500/40 bg-emerald-500/10 text-emerald-100",
+  },
 };
 
 /** Neutral card surface — tone color lives on the timeline node icon only. */

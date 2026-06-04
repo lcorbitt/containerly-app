@@ -13,6 +13,14 @@ export async function fetchProfileImagePath(): Promise<string | null> {
   return profileImagePath?.trim() || null;
 }
 
+/** Current user's display fields (name + avatar path) — used by the customer portal top nav. */
+export async function fetchMyProfileFields(): Promise<{
+  profileImagePath: string | null;
+  fullName: string | null;
+}> {
+  return apiJson<{ profileImagePath: string | null; fullName: string | null }>("/api/me/profile");
+}
+
 export async function updateProfileFullName(fullName: string | null): Promise<void> {
   await apiJson("/api/me/profile", {
     method: "PATCH",

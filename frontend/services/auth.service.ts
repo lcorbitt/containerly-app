@@ -12,6 +12,19 @@ export async function getBrowserAuthSession() {
   return data.session ?? null;
 }
 
+/**
+ * Subscribe to browser auth-state changes (sign-in / sign-out / token refresh). Lets long-lived
+ * UI (e.g. the portal top nav in the layout) react to an in-page sign-in without a full reload.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToAuthState(callback: (signedIn: boolean) => void): () => void {
+  const supabase = createClient();
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(Boolean(session));
+  });
+  return () => data.subscription.unsubscribe();
+}
+
 export async function signInWithPassword(email: string, password: string): Promise<{ error: Error | null }> {
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
