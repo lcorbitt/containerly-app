@@ -60,30 +60,49 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
                 </div>
 
                 <div className="space-y-4 p-4">
-                  <div className="flex items-center gap-2">
-                    <TextInput
-                      type="text"
-                      value={state.inviteEmail}
-                      onChange={(e) => state.setInviteEmail(e.target.value)}
-                      placeholder="Email or group, separated by commas"
-                      autoComplete="off"
-                      containerClassName="min-w-0 flex-1"
-                      className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void state.createInvite();
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <TextInput
+                        type="text"
+                        value={state.inviteEmail}
+                        onChange={(e) => state.setInviteEmail(e.target.value)}
+                        placeholder="Email or group, separated by commas"
+                        autoComplete="off"
+                        containerClassName="min-w-0 flex-1"
+                        className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${
+                          state.inviteFieldError
+                            ? "border-red-400 dark:border-red-600"
+                            : "border-zinc-200 dark:border-zinc-700"
+                        }`}
+                        aria-invalid={state.inviteFieldError ? true : undefined}
+                        aria-describedby={
+                          state.inviteFieldError ? "shipment-share-invite-email-error" : undefined
                         }
-                      }}
-                    />
-                    <button
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void state.createInvite();
+                          }
+                        }}
+                      />
+                      <button
                       type="button"
                       disabled={state.inviteCreating}
                       onClick={() => void state.createInvite()}
                       className={primaryActionClass}
                     >
                       {state.inviteCreating ? <WorkspacePostSpinner /> : "Share"}
-                    </button>
+                      </button>
+                    </div>
+                    {state.inviteFieldError ? (
+                      <p
+                        id="shipment-share-invite-email-error"
+                        role="alert"
+                        className="text-xs text-red-600 dark:text-red-400"
+                      >
+                        {state.inviteFieldError}
+                      </p>
+                    ) : null}
                   </div>
 
                   {state.loading ? (

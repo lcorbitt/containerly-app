@@ -35,6 +35,7 @@ export function ShipmentAccessTabContent({
     messageAuthorByUserId,
 
     inviteEmail,
+    inviteFieldError,
     setInviteEmail,
     inviteDeliveryMode,
     setInviteDeliveryMode,
@@ -163,6 +164,7 @@ export function ShipmentAccessTabContent({
         <CustomerAccessPanel
           variant="panel"
           inviteEmail={inviteEmail}
+          inviteFieldError={inviteFieldError}
           onInviteEmailChange={setInviteEmail}
           deliveryMode={inviteDeliveryMode}
           onDeliveryModeChange={setInviteDeliveryMode}

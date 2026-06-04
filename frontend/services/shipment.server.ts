@@ -13,6 +13,13 @@ import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
+import type { ImporterGrantedShipmentSortColumn } from "@/utils/importer-shipment-sort";
+
+export {
+  IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS,
+  normalizeImporterGrantedShipmentSortColumn,
+  type ImporterGrantedShipmentSortColumn,
+} from "@/utils/importer-shipment-sort";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type {
   ShipmentContextSummary,
@@ -195,79 +202,56 @@ export async function fetchOperatorShipmentsOverviewPage(
 
   return { rows, totalCount: Number.isFinite(totalCount) ? totalCount : 0 };
 }
-export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
-  "order_number",
-  "created_at",
-  "updated_at",
-] as const;
 
-export type ImporterGrantedShipmentSortColumn =
-  (typeof IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS)[number];
+/* ------------------------------------------------------------------ */
+/*  Importer Granted Shipments                                         */
+/* ------------------------------------------------------------------ */
 
-export function normalizeImporterGrantedShipmentSortColumn(
-  raw: string | null,
-): ImporterGrantedShipmentSortColumn {
-  if (raw && (IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS as readonly string[]).includes(raw)) {
-    return raw as ImporterGrantedShipmentSortColumn;
-  }
-  return "created_at";
-}
-
-export type NestedContainer = {
-  id?: string;
-  container_number?: string | null;
-  status: string | null;
-  last_synced_at: string | null;
-  location: Record<string, unknown> | null;
-  tracking_requests?:
-    | { status: string | null; last_sync_at: string | null }
-    | { status: string | null; last_sync_at: string | null }[]
-    | null;
-};
-
-/** One grant row: shipment-scoped importer access. */
+/** One grant row: shipment-scoped importer access (ops overview fields + org). */
 export type ImporterGrantedShipmentRow = {
-  /** Shipment id — use for `/shipments/hub/[id]` (shared tracking) and `get-shipment`. */
+  /** Shipment id — use for `/shipments/hub/[id]` and `get-shipment`. */
   id: string;
   access_grant_id: string;
+  organization_id: string;
+  organization_name: string;
   order_number: string;
-  container_number: string;
-  status: string;
-  last_sync_at: string | null;
-  updated_at: string;
+  customer_name: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
-  containers: NestedContainer | NestedContainer[] | null;
 };
 
-type AccessShipmentRow = {
+type RpcImporterOverviewRow = {
+  total_count: number | string;
+  access_grant_id: string;
   id: string;
+  organization_id: string;
+  organization_name: string;
+  order_number: string;
+  customer_name: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
-  updated_at: string;
-  shipment_id: string;
-  shipments:
-    | {
-        id: string;
-        order_number: string;
-        bill_of_lading: string | null;
-        shipping_line: string | null;
-        updated_at: string;
-        containers?: NestedContainer | NestedContainer[] | null;
-      }
-    | {
-        id: string;
-        order_number: string;
-        bill_of_lading: string | null;
-        shipping_line: string | null;
-        updated_at: string;
-        containers?: NestedContainer | NestedContainer[] | null;
-      }[]
-    | null;
 };
 
-function pickTrStatus(c: NestedContainer | null | undefined): string | null {
-  if (!c?.tracking_requests) return null;
-  const tr = Array.isArray(c.tracking_requests) ? c.tracking_requests[0] : c.tracking_requests;
-  return (tr?.status as string | null) ?? null;
+function toImporterOverviewRow(r: RpcImporterOverviewRow): ImporterGrantedShipmentRow {
+  return {
+    id: r.id,
+    access_grant_id: r.access_grant_id,
+    organization_id: r.organization_id,
+    organization_name: r.organization_name?.trim() || "—",
+    order_number: r.order_number,
+    customer_name: r.customer_name,
+    port_of_loading: r.port_of_loading,
+    port_of_destination: r.port_of_destination,
+    workflow_status: r.workflow_status,
+    estimated_arrival_at: r.estimated_arrival_at,
+    created_at: r.created_at,
+  };
 }
 
 /**
@@ -285,112 +269,28 @@ export async function fetchImporterGrantedShipmentsPage(
   },
 ): Promise<{ rows: ImporterGrantedShipmentRow[]; totalCount: number }> {
   const { userId, page, pageSize, sortColumn, sortDirection, search } = args;
+  const offset = Math.max(0, page) * pageSize;
 
-  let q = supabase
-    .from("shipment_customer_access")
-    .select(
-      `
-      id,
-      created_at,
-      updated_at,
-      shipment_id,
-      shipments!inner (
-        id,
-        order_number,
-        bill_of_lading,
-        shipping_line,
-        updated_at,
-        containers (
-          id,
-          container_number,
-          status,
-          last_synced_at,
-          location,
-          tracking_requests ( status, last_sync_at )
-        )
-      )
-    `,
-      { count: "exact" },
-    )
-    .eq("customer_user_id", userId)
-    .is("revoked_at", null);
+  const { data, error } = await supabase.rpc("importer_granted_shipments_overview_page", {
+    p_customer_user_id: userId,
+    p_search: search.trim(),
+    p_sort_column: sortColumn,
+    p_sort_asc: sortDirection === "asc",
+    p_limit: pageSize,
+    p_offset: offset,
+  });
 
-  const term = search.trim();
-  if (term) {
-    const s = sanitizeIlikeTerm(term);
-    q = q.or(`order_number.ilike.%${s}%,bill_of_lading.ilike.%${s}%`, {
-      referencedTable: "shipments",
-    });
-  }
-
-  const sortRef =
-    sortColumn === "order_number"
-      ? { column: "order_number" as const, foreignTable: "shipments" as const }
-      : sortColumn === "updated_at"
-        ? { column: "updated_at" as const, foreignTable: "shipments" as const }
-        : { column: "created_at" as const, foreignTable: undefined };
-
-  if (sortRef.foreignTable) {
-    q = q.order(sortRef.column, {
-      ascending: sortDirection === "asc",
-      referencedTable: sortRef.foreignTable,
-    });
-  } else {
-    q = q.order(sortRef.column, { ascending: sortDirection === "asc" });
-  }
-
-  const from = page * pageSize;
-  const to = from + pageSize - 1;
-  const { data, error, count } = await q.range(from, to);
   if (error) throw new Error(error.message);
 
-  const raw = (data ?? []) as AccessShipmentRow[];
-  const rows: ImporterGrantedShipmentRow[] = [];
-  for (const row of raw) {
-    const ship = row.shipments;
-    const s = Array.isArray(ship) ? ship[0] : ship;
-    if (!s?.id) continue;
-    const contRaw = s.containers;
-    const contList: NestedContainer[] = !contRaw
-      ? []
-      : Array.isArray(contRaw)
-        ? contRaw
-        : [contRaw];
-    contList.sort((a, b) =>
-      String(a.container_number ?? "").localeCompare(String(b.container_number ?? "")),
-    );
-    const first = contList[0] ?? null;
-    const numbers = contList
-      .map((c) => c.container_number?.trim())
-      .filter(Boolean) as string[];
-    const label =
-      numbers.length === 0
-        ? s.order_number.trim() || s.id.slice(0, 8)
-        : numbers.length === 1
-          ? numbers[0]!
-          : `${numbers.length} containers`;
-    const trStatus = pickTrStatus(first);
-    const syncAt =
-      first?.last_synced_at ??
-      (Array.isArray(first?.tracking_requests)
-        ? first?.tracking_requests[0]?.last_sync_at
-        : first?.tracking_requests?.last_sync_at) ??
-      null;
-
-    rows.push({
-      id: s.id,
-      access_grant_id: row.id,
-      order_number: s.order_number,
-      container_number: label,
-      status: trStatus ?? "pending",
-      last_sync_at: syncAt,
-      updated_at: s.updated_at ?? row.updated_at,
-      created_at: row.created_at,
-      containers: first,
-    });
+  const rawRows = (data as RpcImporterOverviewRow[] | null) ?? [];
+  if (rawRows.length === 0) {
+    return { rows: [], totalCount: 0 };
   }
 
-  return { rows, totalCount: count ?? 0 };
+  const totalCount = Number(rawRows[0]!.total_count);
+  const rows = rawRows.map(toImporterOverviewRow);
+
+  return { rows, totalCount: Number.isFinite(totalCount) ? totalCount : 0 };
 }
 export type ShipmentAccessTabSnapshot = {
   assigneeUserId: string | null;

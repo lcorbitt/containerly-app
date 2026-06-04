@@ -24,6 +24,11 @@ export async function fetchProfileIdByEmail(client: SupabaseClient, emailLower: 
   return client.from("profiles").select("id").eq("email", emailLower).maybeSingle();
 }
 
+/** `profiles` — id + platform role for invite validation. */
+export async function fetchProfileIdAndRoleByEmail(client: SupabaseClient, emailLower: string) {
+  return client.from("profiles").select("id, role").eq("email", emailLower).maybeSingle();
+}
+
 /** `profiles` — avatar storage paths keyed by user id (message thread display). */
 export async function fetchProfileImagePathsByUserIds(
   client: SupabaseClient,

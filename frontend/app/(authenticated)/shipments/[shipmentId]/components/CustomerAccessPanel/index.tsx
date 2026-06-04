@@ -13,6 +13,7 @@ const PRIMARY_BTN =
 
 export function CustomerAccessPanel({
   inviteEmail,
+  inviteFieldError,
   onInviteEmailChange,
   deliveryMode,
   onDeliveryModeChange,
@@ -30,6 +31,7 @@ export function CustomerAccessPanel({
   variant = "panel",
 }: {
   inviteEmail: string;
+  inviteFieldError?: string | null;
   onInviteEmailChange: (v: string) => void;
   deliveryMode: "email_invite" | "allowlist_only";
   onDeliveryModeChange: (v: "email_invite" | "allowlist_only") => void;
@@ -99,10 +101,25 @@ export function CustomerAccessPanel({
               value={inviteEmail}
               onChange={(e) => onInviteEmailChange(e.target.value)}
               containerClassName="mt-1"
-              className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+              className={`w-full rounded-md border bg-white px-3 py-2 text-xs dark:bg-zinc-950 ${
+                inviteFieldError
+                  ? "border-red-400 dark:border-red-600"
+                  : "border-zinc-200 dark:border-zinc-700"
+              }`}
               placeholder="Email or group, separated by commas"
               autoComplete="off"
+              aria-invalid={inviteFieldError ? true : undefined}
+              aria-describedby={inviteFieldError ? "customer-invite-email-error" : undefined}
             />
+            {inviteFieldError ? (
+              <p
+                id="customer-invite-email-error"
+                role="alert"
+                className="mt-1.5 text-xs text-red-600 dark:text-red-400"
+              >
+                {inviteFieldError}
+              </p>
+            ) : null}
           </label>
           <button
             type="button"

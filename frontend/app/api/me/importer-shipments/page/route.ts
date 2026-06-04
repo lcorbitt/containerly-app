@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   const page = Math.max(0, Number(body.page ?? 0) || 0);
   const pageSize = Math.min(100, Math.max(1, Number(body.pageSize ?? 25) || 25));
-  const sortColumn = body.sortColumn ?? "created_at";
+  const sortColumn = body.sortColumn ?? "last_sync_at";
   const sortDirection = body.sortDirection === "asc" ? "asc" : "desc";
   const search = typeof body.search === "string" ? body.search : "";
 

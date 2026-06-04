@@ -46,3 +46,18 @@ export async function fetchMembershipUserIdForOrg(
 export async function countMembershipsForUser(client: SupabaseClient, userId: string) {
   return client.from("organization_members").select("id", { count: "exact", head: true }).eq("user_id", userId);
 }
+
+/** Active org operator seat (admin or member) for a user in one organization. */
+export async function fetchOrgOperatorMembershipForUser(
+  client: SupabaseClient,
+  organizationId: string,
+  userId: string,
+) {
+  return client
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .in("role", ["admin", "member"])
+    .maybeSingle();
+}

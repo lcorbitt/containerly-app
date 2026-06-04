@@ -17,6 +17,8 @@ import {
   AUTHENTICATED_TOP_NAV_BULK_IMPORT_ICON_CLASS,
   AUTHENTICATED_TOP_NAV_BULK_IMPORT_INNER_CLASS,
   AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS,
+  AUTHENTICATED_TOP_NAV_BREADCRUMB_BANNER_CLASS,
+  AUTHENTICATED_TOP_NAV_BREADCRUMB_INLINE_CLASS,
 } from "./constants";
 import { useAuthenticatedTopNav } from "./useAuthenticatedTopNav";
 
@@ -43,17 +45,37 @@ export function AuthenticatedTopNav() {
     closeNotificationsMenu,
   } = useAuthenticatedTopNav();
 
+  const subTabLabel = hubSubTabLabel ?? customerPortalSubTabLabel ?? activeSubTabName;
+  const subTabHref = hubSubTabHref ?? customerPortalSubTabHref;
+  const leafLabel = hubLeafLabel ?? customerPortalLeafLabel;
+  const hasBreadcrumbs = Boolean(orgSegment || tabSegment || subTabLabel || leafLabel);
+
+  const breadcrumbProps = {
+    org: orgSegment,
+    tab: tabSegment,
+    subTabLabel,
+    subTabHref,
+    leafLabel,
+  };
+
   return (
-    <TopNavShell variant="app">
+    <TopNavShell
+      variant="app"
+      footer={
+        hasBreadcrumbs ? (
+          <div className={AUTHENTICATED_TOP_NAV_BREADCRUMB_BANNER_CLASS}>
+            <TopNavBreadcrumb {...breadcrumbProps} />
+          </div>
+        ) : undefined
+      }
+    >
       <div className={AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS}>
         <NavBrand href="/dashboard" variant="app" />
-        <TopNavBreadcrumb
-          org={orgSegment}
-          tab={tabSegment}
-          subTabLabel={hubSubTabLabel ?? customerPortalSubTabLabel ?? activeSubTabName}
-          subTabHref={hubSubTabHref ?? customerPortalSubTabHref}
-          leafLabel={hubLeafLabel ?? customerPortalLeafLabel}
-        />
+        {hasBreadcrumbs ? (
+          <div className={AUTHENTICATED_TOP_NAV_BREADCRUMB_INLINE_CLASS}>
+            <TopNavBreadcrumb {...breadcrumbProps} />
+          </div>
+        ) : null}
       </div>
 
       <div className={AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS}>

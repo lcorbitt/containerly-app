@@ -14,6 +14,13 @@ export const AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS = "hidden md:inline";
 
 export const AUTHENTICATED_TOP_NAV_BRAND_ROW_CLASS = "flex min-w-0 items-center gap-3 sm:gap-4";
 
+/** Breadcrumbs in the main bar — large viewports only. */
+export const AUTHENTICATED_TOP_NAV_BREADCRUMB_INLINE_CLASS = "hidden min-w-0 lg:block";
+
+/** Thin strip attached below the top bar — below large breakpoint only. */
+export const AUTHENTICATED_TOP_NAV_BREADCRUMB_BANNER_CLASS =
+  "border-t border-zinc-200 bg-white/90 px-4 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90 md:px-12 lg:hidden";
+
 export const AUTHENTICATED_TOP_NAV_ACTIONS_ROW_CLASS =
   "ml-auto flex items-center gap-5 sm:gap-8 md:gap-10";
 

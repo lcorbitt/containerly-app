@@ -480,13 +480,33 @@ export async function loadShipmentScopeThreadForUser(
 
   if (shErr || !sh) return { ok: false, error: shErr?.message ?? "Shipment not found." };
 
-  const [msgRes, attRes] = await Promise.all([
-    supabase
-      .from("report_messages")
-      .select("*")
-      .eq("shipment_id", input.shipmentId)
-      .is("container_id", null)
-      .order("created_at", { ascending: true }),
+  const { data: containerRows, error: contErr } = await supabase
+    .from("containers")
+    .select("id")
+    .eq("shipment_id", input.shipmentId);
+  if (contErr) return { ok: false, error: contErr.message };
+
+  const containerIds = (containerRows ?? []).map((c) => c.id as string);
+
+  const shipmentMsgQuery = supabase
+    .from("report_messages")
+    .select("*")
+    .eq("shipment_id", input.shipmentId)
+    .is("container_id", null)
+    .order("created_at", { ascending: true });
+
+  const containerMsgQuery =
+    containerIds.length > 0
+      ? supabase
+          .from("report_messages")
+          .select("*")
+          .in("container_id", containerIds)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] as ReportMessage[], error: null });
+
+  const [shipmentMsgRes, containerMsgRes, attRes] = await Promise.all([
+    shipmentMsgQuery,
+    containerMsgQuery,
     supabase
       .from("workspace_attachments")
       .select("*")
@@ -495,9 +515,12 @@ export async function loadShipmentScopeThreadForUser(
       .order("created_at", { ascending: false }),
   ]);
 
-  if (msgRes.error) return { ok: false, error: msgRes.error.message };
+  if (shipmentMsgRes.error) return { ok: false, error: shipmentMsgRes.error.message };
+  if (containerMsgRes.error) return { ok: false, error: containerMsgRes.error.message };
 
-  const msgList = (msgRes.data as ReportMessage[]) ?? [];
+  const msgList = [...((shipmentMsgRes.data as ReportMessage[]) ?? []), ...((containerMsgRes.data as ReportMessage[]) ?? [])].sort(
+    (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
+  );
   const attRows: WorkspaceAttachment[] = attRes.error
     ? []
     : ((attRes.data as WorkspaceAttachment[]) ?? []);
@@ -522,6 +545,19 @@ export async function loadShipmentScopeThreadForUser(
       });
       profileImagePathByUserId[id] =
         ((p.profile_image_path as string | null | undefined)?.trim() || null);
+    }
+  }
+
+  for (const m of msgList) {
+    const uid = m.author_user_id;
+    if (!uid || nameByUser[uid]) continue;
+    const stored = m.author_display_name?.trim();
+    if (stored) {
+      nameByUser[uid] = stored;
+      continue;
+    }
+    if (m.author_kind === "customer") {
+      nameByUser[uid] = "Importer";
     }
   }
 
@@ -890,15 +926,33 @@ export async function loadOrgShipmentMessageThreadsForUser(
 ): Promise<OrgShipmentMessageThreadsResult> {
   const { data: msgRows, error } = await supabase
     .from("report_messages")
-    .select("shipment_id, body, author_kind, author_user_id, created_at")
+    .select("shipment_id, container_id, body, author_kind, author_user_id, created_at")
     .eq("organization_id", organizationId)
-    .not("shipment_id", "is", null)
-    .is("container_id", null)
     .eq("is_internal", false)
     .order("created_at", { ascending: false })
     .limit(ORG_SHIPMENT_MESSAGE_FETCH_LIMIT);
 
   if (error) return { ok: false, error: error.message };
+
+  const containerIds = [
+    ...new Set(
+      (msgRows ?? [])
+        .map((row) => row.container_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const shipmentByContainerId = new Map<string, string>();
+  if (containerIds.length > 0) {
+    const { data: containers, error: contErr } = await supabase
+      .from("containers")
+      .select("id, shipment_id")
+      .in("id", containerIds);
+    if (contErr) return { ok: false, error: contErr.message };
+    for (const c of containers ?? []) {
+      const sid = c.shipment_id as string | null;
+      if (sid) shipmentByContainerId.set(c.id as string, sid);
+    }
+  }
 
   const byShipment = new Map<
     string,
@@ -912,7 +966,10 @@ export async function loadOrgShipmentMessageThreadsForUser(
   >();
 
   for (const row of msgRows ?? []) {
-    const shipmentId = row.shipment_id as string | null;
+    const shipmentId =
+      (row.shipment_id as string | null) ??
+      (row.container_id ? shipmentByContainerId.get(row.container_id as string) : undefined) ??
+      null;
     if (!shipmentId) continue;
     const existing = byShipment.get(shipmentId);
     if (existing) {

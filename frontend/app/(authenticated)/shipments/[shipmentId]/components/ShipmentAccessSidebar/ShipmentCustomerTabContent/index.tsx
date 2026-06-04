@@ -15,6 +15,7 @@ export function ShipmentCustomerTabContent({ state }: ShipmentCustomerTabContent
       <CustomerAccessPanel
         variant="sidebar"
         inviteEmail={state.inviteEmail}
+        inviteFieldError={state.inviteFieldError}
         onInviteEmailChange={state.setInviteEmail}
         deliveryMode={state.inviteDeliveryMode}
         onDeliveryModeChange={state.setInviteDeliveryMode}

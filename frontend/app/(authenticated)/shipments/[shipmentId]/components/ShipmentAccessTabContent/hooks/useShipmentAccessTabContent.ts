@@ -22,6 +22,7 @@ import type {
 } from "@/types/database";
 import type { CustomSelectOption } from "@/components/CustomSelect";
 import { parseCustomerInviteRecipients } from "@/utils/customer-invite-recipients";
+import { isCustomerInviteOperatorEmailError } from "@/utils/customer-invite-errors";
 
 export function useShipmentAccessTabContent({
   shipmentId,
@@ -54,6 +55,7 @@ export function useShipmentAccessTabContent({
   );
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteFieldError, setInviteFieldError] = useState<string | null>(null);
   const [inviteCreating, setInviteCreating] = useState(false);
   const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
   const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">("email_invite");
@@ -211,8 +213,14 @@ export function useShipmentAccessTabContent({
     }
   }
 
+  const handleInviteEmailChange = useCallback((value: string) => {
+    setInviteEmail(value);
+    setInviteFieldError(null);
+  }, []);
+
   async function createInvite() {
     if (!selectedOrgId) return;
+    setInviteFieldError(null);
 
     const { emails, invalidTokens } = parseCustomerInviteRecipients(inviteEmail);
     if (invalidTokens.length > 0) {
@@ -243,6 +251,9 @@ export function useShipmentAccessTabContent({
         });
         if (!r.ok) {
           failures.push(`${email}: ${r.error}`);
+          if (isCustomerInviteOperatorEmailError(r.error)) {
+            setInviteFieldError(r.error);
+          }
           continue;
         }
 
@@ -256,11 +267,20 @@ export function useShipmentAccessTabContent({
       }
 
       if (successCount === 0) {
-        toast(failures[0] ?? "Could not create invites.", "error");
+        const firstFailure = failures[0] ?? "Could not create invites.";
+        const errMsg = firstFailure.includes(": ")
+          ? firstFailure.slice(firstFailure.indexOf(": ") + 2)
+          : firstFailure;
+        const operatorOnly =
+          failures.length === 1 && isCustomerInviteOperatorEmailError(errMsg);
+        if (!operatorOnly) {
+          toast(firstFailure, "error");
+        }
         return;
       }
 
       setInviteEmail("");
+      setInviteFieldError(null);
       await load();
 
       if (successCount === 1 && singleInviteUrl) {
@@ -348,7 +368,8 @@ export function useShipmentAccessTabContent({
     messageAuthorByUserId,
 
     inviteEmail,
-    setInviteEmail,
+    setInviteEmail: handleInviteEmailChange,
+    inviteFieldError,
     inviteDeliveryMode,
     setInviteDeliveryMode,
     inviteCreating,

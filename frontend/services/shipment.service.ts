@@ -34,6 +34,7 @@ import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
+import type { ImporterGrantedShipmentSortColumn } from "@/utils/importer-shipment-sort";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -185,48 +186,28 @@ export function maxLastSyncIso(row: ShipmentOverviewRow): string | null {
 /*  Importer Granted Shipments                                         */
 /* ------------------------------------------------------------------ */
 
-export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
-  "order_number",
-  "created_at",
-  "updated_at",
-] as const;
+export {
+  IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS,
+  DEFAULT_IMPORTER_GRANTED_SHIPMENT_SORT_COLUMN,
+  normalizeImporterGrantedShipmentSortColumn,
+  defaultSortDirectionForImporterGrantedShipmentColumn,
+  type ImporterGrantedShipmentSortColumn,
+} from "@/utils/importer-shipment-sort";
 
-export type ImporterGrantedShipmentSortColumn =
-  (typeof IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS)[number];
-
-export function normalizeImporterGrantedShipmentSortColumn(
-  raw: string | null,
-): ImporterGrantedShipmentSortColumn {
-  if (raw && (IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS as readonly string[]).includes(raw)) {
-    return raw as ImporterGrantedShipmentSortColumn;
-  }
-  return "created_at";
-}
-
-export type NestedContainer = {
-  id?: string;
-  container_number?: string | null;
-  status: string | null;
-  last_synced_at: string | null;
-  location: Record<string, unknown> | null;
-  tracking_requests?:
-    | { status: string | null; last_sync_at: string | null }
-    | { status: string | null; last_sync_at: string | null }[]
-    | null;
-};
-
-/** One grant row: shipment-scoped importer access. */
+/** One grant row: shipment-scoped importer access (ops overview fields + org). */
 export type ImporterGrantedShipmentRow = {
   /** Shipment id — use for `/shipments/hub/[id]` (shared tracking) and `get-shipment`. */
   id: string;
   access_grant_id: string;
+  organization_id: string;
+  organization_name: string;
   order_number: string;
-  container_number: string;
-  status: string;
-  last_sync_at: string | null;
-  updated_at: string;
+  customer_name: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  workflow_status: string | null;
+  estimated_arrival_at: string | null;
   created_at: string;
-  containers: NestedContainer | NestedContainer[] | null;
 };
 
 /* ------------------------------------------------------------------ */

@@ -8,7 +8,10 @@ import {
   updateCustomerInviteById,
   updateCustomerInviteStatus,
 } from "@models/customer_invites.ts";
-import { countMembershipsForUser } from "@models/organization_members.ts";
+import {
+  countMembershipsForUser,
+  fetchOrgOperatorMembershipForUser,
+} from "@models/organization_members.ts";
 import { insertReportActivity } from "@models/report_activity.ts";
 import { resolveAccessRequestAlerts } from "@models/alerts.ts";
 import { recordMessageActivityEvent } from "@supabase-shared/message-activity.service.ts";
@@ -45,7 +48,7 @@ import {
   listOrgAdminUserIds,
   notifyCustomerInviteReceived,
 } from "@supabase-shared/in-app-alerts.ts";
-import { fetchProfileIdByEmail } from "@models/profiles.ts";
+import { fetchProfileIdAndRoleByEmail, fetchProfileIdByEmail } from "@models/profiles.ts";
 import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
 import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
 import { fetchActiveAccessForProfileEmailOnShipment } from "@models/shipment_customer_access.ts";
@@ -92,6 +95,45 @@ const MAX_BODY = 4000;
 
 type Err = { ok: false; status: number; error: string; expected_email_hint?: string };
 
+/** Returned when invited_email matches an org admin/member or platform superadmin. */
+export const CUSTOMER_INVITE_OPERATOR_EMAIL_ERROR =
+  "This email belongs to someone on your organization team (admin or member). Customer invites are only for external importer contacts.";
+
+export const CUSTOMER_INVITE_SUPERADMIN_EMAIL_ERROR =
+  "This email belongs to a platform administrator. Customer invites are only for external importer contacts.";
+
+/** Importer accounts: no org membership → `profiles.account_kind = customer`. */
+async function ensureCustomerProfileKind(admin: SupabaseClient, userId: string): Promise<void> {
+  const { count: memberCount } = await countMembershipsForUser(admin, userId);
+  if ((memberCount ?? 0) === 0) {
+    await updateProfileAccountKind(admin, userId, "customer");
+  }
+}
+
+async function customerInviteBlockedForOperatorEmail(
+  admin: SupabaseClient,
+  organizationId: string,
+  emailLower: string,
+): Promise<string | null> {
+  const { data: profile } = await fetchProfileIdAndRoleByEmail(admin, emailLower);
+  if (!profile?.id) return null;
+
+  if ((profile.role as string | undefined) === "superadmin") {
+    return CUSTOMER_INVITE_SUPERADMIN_EMAIL_ERROR;
+  }
+
+  const { data: membership } = await fetchOrgOperatorMembershipForUser(
+    admin,
+    organizationId,
+    profile.id as string,
+  );
+  if (membership?.role) {
+    return CUSTOMER_INVITE_OPERATOR_EMAIL_ERROR;
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // create-customer-invite
 // ---------------------------------------------------------------------------
@@ -115,6 +157,11 @@ export async function createCustomerInvite(
   if (!orgId || !UUID_RE.test(orgId)) return { ok: false, status: 400, error: "Invalid organization_id" };
   if (!shipmentId || !UUID_RE.test(shipmentId)) return { ok: false, status: 400, error: "Invalid shipment_id" };
   if (!emailRaw || !emailRaw.includes("@")) return { ok: false, status: 400, error: "Valid invited_email required" };
+
+  const operatorEmailError = await customerInviteBlockedForOperatorEmail(admin, orgId, emailRaw);
+  if (operatorEmailError) {
+    return { ok: false, status: 400, error: operatorEmailError };
+  }
 
   const { data: row, error: shErr } = await fetchShipmentIdAndOrganization(userClient, shipmentId);
   if (shErr || !row) return { ok: false, status: 404, error: "Shipment not found" };
@@ -271,6 +318,7 @@ export async function acceptCustomerInvite(
       accepted_at: new Date().toISOString(),
       accepted_by_user_id: userId,
     });
+    await ensureCustomerProfileKind(admin, userId);
     return { ok: true, already_had_access: true, shipment_id: shipmentId, shipment_access_id: existing.id as string };
   }
 
@@ -308,11 +356,7 @@ export async function acceptCustomerInvite(
     metadata: { invite_id: invite.id },
   });
 
-  const { count: memberCount } = await countMembershipsForUser(admin, userId);
-
-  if ((memberCount ?? 0) === 0) {
-    await updateProfileAccountKind(admin, userId, "customer");
-  }
+  await ensureCustomerProfileKind(admin, userId);
 
   const customerName = await fetchProfileDisplayName(admin, userId);
   await notifyOperatorsCustomerAccessGranted(admin, {
@@ -346,6 +390,7 @@ async function grantShipmentAccessFromInvite(
 
   const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
   if (existing?.id) {
+    await ensureCustomerProfileKind(admin, userId);
     // Access already granted (e.g. via the other path) — still converge any open request.
     if (invitedEmail) {
       await approvePendingAccessRequestsForEmail(admin, shipmentId, invitedEmail, {
@@ -388,10 +433,7 @@ async function grantShipmentAccessFromInvite(
     metadata: { invite_id: invite.id, claim: true },
   });
 
-  const { count: memberCount } = await countMembershipsForUser(admin, userId);
-  if ((memberCount ?? 0) === 0) {
-    await updateProfileAccountKind(admin, userId, "customer");
-  }
+  await ensureCustomerProfileKind(admin, userId);
 
   const customerName = await fetchProfileDisplayName(admin, userId);
   await notifyOperatorsCustomerAccessGranted(admin, {
@@ -545,8 +587,10 @@ export async function postCustomerMessage(
     }
   }
 
+  const orgId = access.organization_id as string;
   const insertRow = shipmentScoped
     ? {
+        organization_id: orgId,
         shipment_id: shipmentId,
         container_id: null as string | null,
         author_kind: "customer" as const,
@@ -557,6 +601,7 @@ export async function postCustomerMessage(
         parent_message_id: parentId,
       }
     : {
+        organization_id: orgId,
         container_id: containerId,
         shipment_id: null as string | null,
         author_kind: "customer" as const,
@@ -638,14 +683,20 @@ async function ensurePortalUserId(admin: SupabaseClient, email: string): Promise
     email: lower,
     email_confirm: true,
   });
-  if (!createErr && created?.user?.id) return created.user.id;
+  if (!createErr && created?.user?.id) {
+    await ensureCustomerProfileKind(admin, created.user.id);
+    return created.user.id;
+  }
   if (createErr && !/already.*(registered|exists)/i.test(createErr.message)) {
     throw new Error(`Could not create customer account: ${createErr.message}`);
   }
 
   // Race / pre-existing auth user without a cached profile id: re-resolve via profile.
   const { data: reProfile } = await fetchProfileIdByEmail(admin, lower);
-  if (reProfile?.id) return reProfile.id as string;
+  if (reProfile?.id) {
+    await ensureCustomerProfileKind(admin, reProfile.id as string);
+    return reProfile.id as string;
+  }
   throw new Error("Could not resolve customer account for sign-in");
 }
 
