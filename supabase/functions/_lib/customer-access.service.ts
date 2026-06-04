@@ -10,6 +10,7 @@ import {
 } from "@models/customer_invites.ts";
 import { countMembershipsForUser } from "@models/organization_members.ts";
 import { insertReportActivity } from "@models/report_activity.ts";
+import { resolveAccessRequestAlerts } from "@models/alerts.ts";
 import { recordMessageActivityEvent } from "@supabase-shared/message-activity.service.ts";
 import {
   fetchReportMessageParentForReply,
@@ -849,6 +850,10 @@ export async function resolveCustomerAccessRequest(
       resolved_at: new Date().toISOString(),
       resolved_by_user_id: userId,
     });
+    await resolveAccessRequestAlerts(admin, requestId, {
+      decision: "denied",
+      resolvedByUserId: userId,
+    });
     return { ok: true, status: "denied", shipment_id: shipmentId };
   }
 
@@ -873,6 +878,11 @@ export async function resolveCustomerAccessRequest(
     resolved_at: new Date().toISOString(),
     resolved_by_user_id: userId,
     invite_id: inviteResult.invite_id,
+  });
+
+  await resolveAccessRequestAlerts(admin, requestId, {
+    decision: "approved",
+    resolvedByUserId: userId,
   });
 
   return {

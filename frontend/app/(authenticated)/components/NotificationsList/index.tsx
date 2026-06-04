@@ -22,6 +22,11 @@ function accessRequestIdFromAlert(alert: Alert): string | null {
   return typeof id === "string" ? id : null;
 }
 
+function accessRequestDecisionFromAlert(alert: Alert): "approved" | "denied" | null {
+  const decision = alert.details?.access_request_status;
+  return decision === "approved" || decision === "denied" ? decision : null;
+}
+
 function AlertRowBody({
   alert: a,
   onAcknowledge,
@@ -39,11 +44,14 @@ function AlertRowBody({
 }) {
   const { Icon, className: iconColor } = alertTypeIconConfig(a.alert_type);
   const unacked = !a.acknowledged_at;
-  const isAccessRequest = a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && unacked;
+  const accessDecision = accessRequestDecisionFromAlert(a);
+  // Once resolved (here or elsewhere), show the decision instead of stale Approve/Deny buttons.
+  const isAccessRequest =
+    a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && unacked && !accessDecision;
 
   return (
     <>
-      <div className="flex min-h-[2.75rem] items-center gap-2">
+      <div className="flex min-h-11 items-center gap-2">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden>
           <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
         </span>
@@ -62,7 +70,17 @@ function AlertRowBody({
           <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
             <span>{formatTimestamp(a.created_at)}</span>
           </p>
-          {unacked && onAcknowledge && !isAccessRequest ? (
+          {accessDecision ? (
+            <span
+              className={`mt-1 inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                accessDecision === "approved"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"
+                  : "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              }`}
+            >
+              {accessDecision === "approved" ? "Approved" : "Denied"}
+            </span>
+          ) : unacked && onAcknowledge && !isAccessRequest ? (
             <button
               type="button"
               onClick={(e) => {
