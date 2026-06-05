@@ -68,7 +68,49 @@ export function CustomerAccessPanel({
 
   return (
     <div className={isSidebar ? "flex flex-col" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <div className="shrink-0 space-y-3 border-b border-zinc-100 dark:border-zinc-800">
+      {pendingInvites.length > 0 ? (
+        <div className="shrink-0 border-b border-zinc-100 pb-4 dark:border-zinc-800">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Pending invites</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {pendingInvites.map((inv) => (
+              <li
+                key={inv.id}
+                className="flex flex-col gap-2 rounded-lg border border-amber-200/80 p-3 dark:border-amber-900/40 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium text-zinc-800 dark:text-zinc-200">{inv.invited_email}</p>
+                  <p className="text-xs text-zinc-500">
+                    Expires {formatTimestamp(inv.expires_at)} · link was shown when invite was created
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs font-medium text-red-600 underline dark:text-red-400"
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Revoke invite?",
+                      description: "They won’t be able to accept this invite anymore.",
+                      confirmLabel: "Revoke",
+                      cancelLabel: "Cancel",
+                      variant: "danger",
+                    });
+                    if (!ok) return;
+                    await onRevokeInvite(inv.id);
+                  }}
+                >
+                  Revoke
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div
+        className={`shrink-0 space-y-3 border-b border-zinc-100 pb-4 dark:border-zinc-800 ${
+          pendingInvites.length > 0 ? "pt-4" : ""
+        }`}
+      >
         <label
           id="customers-label"
           className="block text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500"
@@ -168,44 +210,6 @@ export function CustomerAccessPanel({
         ) : null}
       </div>
       <div className={isSidebar ? "pt-4" : "min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"}>
-        {pendingInvites.length > 0 ? (
-          <div className="mb-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Pending invites</p>
-            <ul className="mt-2 flex flex-col gap-2">
-              {pendingInvites.map((inv) => (
-                <li
-                  key={inv.id}
-                  className="flex flex-col gap-2 rounded-lg border border-amber-200/80 p-3 dark:border-amber-900/40 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0 text-sm">
-                    <p className="font-medium text-zinc-800 dark:text-zinc-200">{inv.invited_email}</p>
-                    <p className="text-xs text-zinc-500">
-                      Expires {formatTimestamp(inv.expires_at)} · link was shown when invite was created
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="shrink-0 text-xs font-medium text-red-600 underline dark:text-red-400"
-                    onClick={async () => {
-                      const ok = await confirm({
-                        title: "Revoke invite?",
-                        description: "They won’t be able to accept this invite anymore.",
-                        confirmLabel: "Revoke",
-                        cancelLabel: "Cancel",
-                        variant: "danger",
-                      });
-                      if (!ok) return;
-                      await onRevokeInvite(inv.id);
-                    }}
-                  >
-                    Revoke
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
         {activeAccess.length === 0 && pendingInvites.length === 0 ? (
           <p className="text-sm text-zinc-500">No customer access yet.</p>
         ) : null}
@@ -221,7 +225,6 @@ export function CustomerAccessPanel({
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{label}</p>
-                    <p className="text-xs text-zinc-500">Importer account · since {formatTimestamp(access.created_at)}</p>
                   </div>
                   <button
                     type="button"

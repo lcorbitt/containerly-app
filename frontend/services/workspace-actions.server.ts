@@ -21,6 +21,7 @@ import {
   buildMessageActivityMetadata,
   messageActivityActorKind,
   messageActivityEventType,
+  resolveMessageActivityBody,
 } from "@/utils/message-activity-event";
 import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -40,22 +41,26 @@ async function insertMessageActivityEventForUser(
     messageId: string;
     body: string;
     authorKind: string;
-    authorDisplayName: string;
+    authorDisplayName: string | null | undefined;
     authorUserId: string | null;
     containerId?: string | null;
+    attachmentCount?: number;
   },
 ): Promise<void> {
+  const activityBody = resolveMessageActivityBody(input.body, input.attachmentCount ?? 0);
   const { error } = await supabase.from("shipment_activity_events").insert({
     shipment_id: input.shipmentId,
     event_type: messageActivityEventType(input.authorKind),
-    body: input.body.trim(),
+    body: activityBody,
     actor_kind: messageActivityActorKind(input.authorKind),
     actor_user_id: input.authorUserId,
     metadata: buildMessageActivityMetadata({
       messageId: input.messageId,
+      authorKind: input.authorKind,
       authorDisplayName: input.authorDisplayName,
       body: input.body,
       containerId: input.containerId,
+      attachmentCount: input.attachmentCount,
     }),
   });
   if (error) throw new Error(error.message);
@@ -309,21 +314,6 @@ export async function postContainerWorkspaceMessageForUser(
   if (!inserted) throw new Error("Message was not saved.");
   const message = inserted as ReportMessage;
 
-  if (!input.internalOnly && input.body.trim()) {
-    const shipmentId = await resolveContainerShipmentId(supabase, input.containerId);
-    if (shipmentId) {
-      await insertMessageActivityEventForUser(supabase, {
-        shipmentId,
-        messageId: message.id,
-        body: input.body,
-        authorKind: message.author_kind,
-        authorDisplayName: displayName,
-        authorUserId: userId,
-        containerId: input.containerId,
-      });
-    }
-  }
-
   const attachmentErrors: string[] = [];
   for (const file of input.files) {
     try {
@@ -337,6 +327,22 @@ export async function postContainerWorkspaceMessageForUser(
       });
     } catch (e) {
       attachmentErrors.push(e instanceof Error ? e.message : "Could not upload an attachment");
+    }
+  }
+
+  if (!input.internalOnly) {
+    const shipmentId = await resolveContainerShipmentId(supabase, input.containerId);
+    if (shipmentId) {
+      await insertMessageActivityEventForUser(supabase, {
+        shipmentId,
+        messageId: message.id,
+        body: input.body,
+        authorKind: message.author_kind,
+        authorDisplayName: displayName,
+        authorUserId: userId,
+        containerId: input.containerId,
+        attachmentCount: input.files.length,
+      });
     }
   }
 
@@ -717,21 +723,7 @@ export async function insertShipmentScopeReportMessageForUser(
     .single();
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
-  const message = inserted as ReportMessage;
-
-  if (!input.internalOnly && input.body.trim()) {
-    await insertMessageActivityEventForUser(supabase, {
-      shipmentId: input.shipmentId,
-      messageId: message.id,
-      body: input.body,
-      authorKind: message.author_kind,
-      authorDisplayName: displayName,
-      authorUserId: userId,
-      containerId: null,
-    });
-  }
-
-  return message.id;
+  return (inserted as ReportMessage).id;
 }
 
 export async function postShipmentScopeMessageWithAttachmentsForUser(
@@ -747,6 +739,16 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     files: File[];
   },
 ): Promise<{ messageId: string; attachmentErrors: string[] }> {
+  const { data: selfProf } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+  const displayName = profileDisplayName({
+    full_name: selfProf?.full_name as string | null,
+    email: (selfProf?.email as string | null) ?? userEmail,
+  });
+
   const messageId = await insertShipmentScopeReportMessageForUser(supabase, userId, userEmail, {
     shipmentId: input.shipmentId,
     body: input.body,
@@ -767,6 +769,20 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
       attachmentErrors.push(e instanceof Error ? e.message : "Could not upload an attachment");
     }
   }
+
+  if (!input.internalOnly) {
+    await insertMessageActivityEventForUser(supabase, {
+      shipmentId: input.shipmentId,
+      messageId,
+      body: input.body,
+      authorKind: "member",
+      authorDisplayName: displayName,
+      authorUserId: userId,
+      containerId: null,
+      attachmentCount: input.files.length,
+    });
+  }
+
   try {
     await runOperatorShipmentMessageNotifications({
       organizationId: input.organizationId,
@@ -919,6 +935,23 @@ export async function uploadShipmentScopeStandaloneFilesForUser(
 const ORG_SHIPMENT_THREAD_INDEX_LIMIT = 100;
 const ORG_SHIPMENT_MESSAGE_FETCH_LIMIT = 5000;
 
+function resolveThreadAuthorName(
+  authorKind: string,
+  authorUserId: string | null,
+  authorDisplayName: string | null,
+  profileNameByUserId: Record<string, string>,
+): string {
+  if (authorKind === "customer") {
+    return authorDisplayName?.trim() || "Importer";
+  }
+  if (authorUserId && profileNameByUserId[authorUserId]) {
+    return profileNameByUserId[authorUserId]!;
+  }
+  const stored = authorDisplayName?.trim();
+  if (stored) return stored;
+  return "Team member";
+}
+
 export async function loadOrgShipmentMessageThreadsForUser(
   supabase: SupabaseClient,
   userId: string,
@@ -926,7 +959,9 @@ export async function loadOrgShipmentMessageThreadsForUser(
 ): Promise<OrgShipmentMessageThreadsResult> {
   const { data: msgRows, error } = await supabase
     .from("report_messages")
-    .select("shipment_id, container_id, body, author_kind, author_user_id, created_at")
+    .select(
+      "shipment_id, container_id, body, author_kind, author_user_id, author_display_name, created_at",
+    )
     .eq("organization_id", organizationId)
     .eq("is_internal", false)
     .order("created_at", { ascending: false })
@@ -961,6 +996,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
       last_message_preview: string;
       last_author_kind: string;
       last_author_user_id: string | null;
+      last_author_display_name: string | null;
       message_count: number;
     }
   >();
@@ -981,6 +1017,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
       last_message_preview: typeof row.body === "string" ? stripMessageMarkup(row.body).trim() : "",
       last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
       last_author_user_id: (row.author_user_id as string | null | undefined) ?? null,
+      last_author_display_name: (row.author_display_name as string | null | undefined) ?? null,
       message_count: 1,
     });
   }
@@ -1002,12 +1039,42 @@ export async function loadOrgShipmentMessageThreadsForUser(
     (shipments ?? []).map((s) => [s.id as string, (s.order_number as string | null) ?? null]),
   );
 
+  const authorIds = [
+    ...new Set(
+      [...byShipment.values()]
+        .map((agg) => agg.last_author_user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const profileNameByUserId: Record<string, string> = {};
+  if (authorIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .in("id", authorIds);
+    for (const p of profs ?? []) {
+      profileNameByUserId[p.id as string] = profileDisplayName({
+        full_name: p.full_name as string | null,
+        email: p.email as string | null,
+      });
+    }
+  }
+
   const threads = [...byShipment.entries()]
-    .map(([shipment_id, agg]) => ({
-      shipment_id,
-      order_number: orderById.get(shipment_id) ?? null,
-      ...agg,
-    }))
+    .map(([shipment_id, agg]) => {
+      const { last_author_display_name, ...rest } = agg;
+      return {
+        shipment_id,
+        order_number: orderById.get(shipment_id) ?? null,
+        ...rest,
+        last_author_name: resolveThreadAuthorName(
+          agg.last_author_kind,
+          agg.last_author_user_id,
+          last_author_display_name,
+          profileNameByUserId,
+        ),
+      };
+    })
     .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))
     .slice(0, ORG_SHIPMENT_THREAD_INDEX_LIMIT);
 

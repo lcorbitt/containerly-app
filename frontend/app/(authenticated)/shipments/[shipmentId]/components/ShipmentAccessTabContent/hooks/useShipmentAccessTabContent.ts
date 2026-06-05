@@ -60,6 +60,7 @@ export function useShipmentAccessTabContent({
   const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
   const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">("email_invite");
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
+  const [customerEmailByUserId, setCustomerEmailByUserId] = useState<Record<string, string>>({});
   const [tags, setTags] = useState<string[]>([]);
   const [orgTagSuggestions, setOrgTagSuggestions] = useState<string[]>([]);
   const [emailNotificationsSubscribed, setEmailNotificationsSubscribed] = useState(false);
@@ -93,6 +94,7 @@ export function useShipmentAccessTabContent({
       setOrgPeers(snap.orgPeers);
       setProfileImagePathByUserId(snap.profileImagePathByUserId);
       setMessageAuthorByUserId(snap.messageAuthorByUserId);
+      setCustomerEmailByUserId(snap.customerEmailByUserId);
       setTags(snap.tags);
       setOrgTagSuggestions(snap.orgTagSuggestions);
       setEmailNotificationsSubscribed(snap.emailNotificationsSubscribed);
@@ -153,11 +155,11 @@ export function useShipmentAccessTabContent({
   const activeAccessWithLabels = useMemo(() => {
     return customerAccessRows.map((access) => {
       const label =
-        messageAuthorByUserId[access.customer_user_id]?.trim() ||
+        customerEmailByUserId[access.customer_user_id]?.trim() ||
         `User ${access.customer_user_id.slice(0, 8)}…`;
       return { access, label };
     });
-  }, [customerAccessRows, messageAuthorByUserId]);
+  }, [customerAccessRows, customerEmailByUserId]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 

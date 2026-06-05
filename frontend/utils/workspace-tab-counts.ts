@@ -3,7 +3,7 @@ import type { PortalAttachment, ShipmentActivityEvent } from "@shared/dto/shipme
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
-export function countShipmentScopeTrackingEvents(input: {
+export function countShipmentScopeTimelineEvents(input: {
   activityEvents?: ShipmentActivityEvent[];
   carrierEvents?: PublicTimelineEvent[];
 }): number {

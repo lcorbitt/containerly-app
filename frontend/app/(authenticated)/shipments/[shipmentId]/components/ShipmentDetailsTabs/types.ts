@@ -3,7 +3,7 @@ import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { ShipmentMetricsSummary } from "@shared/dto/performance.dto";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
-export type ShipmentDetailsTabId = "tracking" | "documents" | "messages";
+export type ShipmentDetailsTabId = "timeline" | "documents" | "messages";
 
 export interface ShipmentDetailsTabsProps {
   shipmentId: string;

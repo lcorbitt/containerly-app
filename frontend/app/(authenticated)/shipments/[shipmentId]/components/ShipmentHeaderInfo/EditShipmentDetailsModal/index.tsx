@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useId, useRef, useState } from "react";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
 import { ShipmentCommercialFormFields } from "@/components/ShipmentCommercialFormFields";
@@ -30,9 +31,14 @@ export function EditShipmentDetailsModal({
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const [portalReady, setPortalReady] = useState(false);
   const [values, setValues] = useState(emptyFormValues);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -58,8 +64,6 @@ export function EditShipmentDetailsModal({
       window.removeEventListener("keydown", onKey);
     };
   }, [open, saving, onClose]);
-
-  if (!open) return null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,7 +93,9 @@ export function EditShipmentDetailsModal({
     }
   }
 
-  return (
+  if (!open || !portalReady || typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto sm:items-center sm:p-4">
       <button
         type="button"
@@ -142,6 +148,7 @@ export function EditShipmentDetailsModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

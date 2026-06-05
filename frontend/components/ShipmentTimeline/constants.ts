@@ -11,10 +11,6 @@ export const TONE_STYLES: Record<
     connector: string;
     chip: string;
     iconGlow: string;
-    /** Status-colored icon on black event modal */
-    modalStatusIcon: string;
-    /** Phase chip on black modal */
-    modalChip: string;
   }
 > = {
   vessel: {
@@ -22,108 +18,72 @@ export const TONE_STYLES: Record<
     connector: "bg-blue-400/55 dark:bg-blue-500/45",
     chip: "bg-blue-100/90 text-blue-800 dark:bg-blue-950/80 dark:text-blue-200",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(59,130,246,0.35)] dark:shadow-[0_0_24px_-6px_rgba(96,165,250,0.25)]",
-    modalStatusIcon:
-      "bg-blue-500/20 text-blue-300 ring-2 ring-blue-500/50 shadow-[0_0_28px_-6px_rgba(59,130,246,0.55)]",
-    modalChip: "border border-blue-500/40 bg-blue-500/10 text-blue-200",
   },
   port: {
     node: "bg-teal-50 text-teal-800 ring-[#f0fdfa] dark:bg-teal-950 dark:text-teal-200 dark:ring-zinc-950",
     connector: "bg-teal-400/50 dark:bg-teal-500/40",
     chip: "bg-teal-100/90 text-teal-900 dark:bg-teal-950/80 dark:text-teal-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(20,184,166,0.3)] dark:shadow-[0_0_24px_-6px_rgba(45,212,191,0.2)]",
-    modalStatusIcon:
-      "bg-teal-500/20 text-teal-200 ring-2 ring-teal-400/50 shadow-[0_0_28px_-6px_rgba(20,184,166,0.5)]",
-    modalChip: "border border-teal-500/40 bg-teal-500/10 text-teal-100",
   },
   land: {
     node: "bg-emerald-50 text-emerald-800 ring-[#ecfdf5] dark:bg-emerald-950 dark:text-emerald-200 dark:ring-zinc-950",
     connector: "bg-emerald-400/50 dark:bg-emerald-500/38",
     chip: "bg-emerald-100/90 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(16,185,129,0.28)] dark:shadow-[0_0_24px_-6px_rgba(52,211,153,0.18)]",
-    modalStatusIcon:
-      "bg-emerald-500/20 text-emerald-200 ring-2 ring-emerald-400/50 shadow-[0_0_28px_-6px_rgba(16,185,129,0.5)]",
-    modalChip: "border border-emerald-500/40 bg-emerald-500/10 text-emerald-100",
   },
   customs: {
     node: "bg-amber-50 text-amber-900 ring-[#fffbeb] dark:bg-amber-950 dark:text-amber-100 dark:ring-zinc-950",
     connector: "bg-amber-400/50 dark:bg-amber-500/40",
     chip: "bg-amber-100/90 text-amber-950 dark:bg-amber-950/75 dark:text-amber-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(245,158,11,0.32)] dark:shadow-[0_0_24px_-6px_rgba(251,191,36,0.2)]",
-    modalStatusIcon:
-      "bg-amber-500/20 text-amber-200 ring-2 ring-amber-400/50 shadow-[0_0_28px_-6px_rgba(245,158,11,0.5)]",
-    modalChip: "border border-amber-500/40 bg-amber-500/10 text-amber-100",
   },
   system: {
     node: "bg-zinc-100 text-zinc-700 ring-white dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-950",
     connector: "bg-zinc-400/50 dark:bg-zinc-500/40",
     chip: "bg-zinc-200/80 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
     iconGlow: "shadow-[0_0_16px_-4px_rgba(113,113,122,0.25)]",
-    modalStatusIcon:
-      "bg-zinc-500/25 text-zinc-100 ring-2 ring-zinc-400/45 shadow-[0_0_24px_-6px_rgba(161,161,170,0.35)]",
-    modalChip: "border border-zinc-500/50 bg-zinc-500/15 text-zinc-200",
   },
   milestone: {
     node: "bg-violet-50 text-violet-800 ring-[#f5f3ff] dark:bg-violet-950 dark:text-violet-200 dark:ring-zinc-950",
     connector: "bg-violet-400/50 dark:bg-violet-500/38",
     chip: "bg-violet-100/90 text-violet-900 dark:bg-violet-950/80 dark:text-violet-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(139,92,246,0.28)] dark:shadow-[0_0_24px_-6px_rgba(167,139,250,0.2)]",
-    modalStatusIcon:
-      "bg-violet-500/20 text-violet-200 ring-2 ring-violet-400/50 shadow-[0_0_28px_-6px_rgba(139,92,246,0.5)]",
-    modalChip: "border border-violet-500/40 bg-violet-500/10 text-violet-100",
   },
   document: {
     node: "bg-sky-50 text-sky-800 ring-sky-50 dark:bg-sky-950 dark:text-sky-200 dark:ring-zinc-950",
     connector: "bg-sky-400/50 dark:bg-sky-500/38",
     chip: "bg-sky-100/90 text-sky-900 dark:bg-sky-950/80 dark:text-sky-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(14,165,233,0.28)] dark:shadow-[0_0_24px_-6px_rgba(56,189,248,0.2)]",
-    modalStatusIcon:
-      "bg-sky-500/20 text-sky-200 ring-2 ring-sky-400/50 shadow-[0_0_28px_-6px_rgba(14,165,233,0.5)]",
-    modalChip: "border border-sky-500/40 bg-sky-500/10 text-sky-100",
   },
   operatorMessage: {
     node: "bg-emerald-50 text-emerald-800 ring-[#ecfdf5] dark:bg-emerald-950 dark:text-emerald-200 dark:ring-zinc-950",
     connector: "bg-emerald-400/50 dark:bg-emerald-500/38",
     chip: "bg-emerald-100/90 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(16,185,129,0.28)] dark:shadow-[0_0_24px_-6px_rgba(52,211,153,0.18)]",
-    modalStatusIcon:
-      "bg-emerald-500/20 text-emerald-200 ring-2 ring-emerald-400/50 shadow-[0_0_28px_-6px_rgba(16,185,129,0.5)]",
-    modalChip: "border border-emerald-500/40 bg-emerald-500/10 text-emerald-100",
   },
   customerMessage: {
     node: "bg-rose-50 text-rose-800 ring-[#fff1f2] dark:bg-rose-950 dark:text-rose-200 dark:ring-zinc-950",
     connector: "bg-rose-400/50 dark:bg-rose-500/38",
     chip: "bg-rose-100/90 text-rose-900 dark:bg-rose-950/80 dark:text-rose-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(244,63,94,0.28)] dark:shadow-[0_0_24px_-6px_rgba(251,113,133,0.18)]",
-    modalStatusIcon:
-      "bg-rose-500/20 text-rose-200 ring-2 ring-rose-400/50 shadow-[0_0_28px_-6px_rgba(244,63,94,0.5)]",
-    modalChip: "border border-rose-500/40 bg-rose-500/10 text-rose-100",
   },
   trackingNumber: {
     node: "bg-yellow-50 text-yellow-900 ring-[#fefce8] dark:bg-yellow-950 dark:text-yellow-100 dark:ring-zinc-950",
     connector: "bg-yellow-400/55 dark:bg-yellow-500/45",
     chip: "bg-yellow-100/90 text-yellow-950 dark:bg-yellow-950/75 dark:text-yellow-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(234,179,8,0.32)] dark:shadow-[0_0_24px_-6px_rgba(250,204,21,0.2)]",
-    modalStatusIcon:
-      "bg-yellow-500/20 text-yellow-200 ring-2 ring-yellow-400/50 shadow-[0_0_28px_-6px_rgba(234,179,8,0.5)]",
-    modalChip: "border border-yellow-500/40 bg-yellow-500/10 text-yellow-100",
   },
   shipmentCreated: {
     node: "bg-primary-orange/10 text-primary-orange ring-[#fff4ef] dark:bg-primary-orange/15 dark:text-primary-orange dark:ring-zinc-950",
     connector: "bg-primary-orange/45 dark:bg-primary-orange/40",
     chip: "bg-primary-orange/10 text-primary-orange dark:bg-primary-orange/15 dark:text-primary-orange",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(255,78,0,0.32)] dark:shadow-[0_0_24px_-6px_rgba(255,78,0,0.22)]",
-    modalStatusIcon:
-      "bg-primary-orange/20 text-primary-orange ring-2 ring-primary-orange/50 shadow-[0_0_28px_-6px_rgba(255,78,0,0.55)]",
-    modalChip: "border border-primary-orange/40 bg-primary-orange/10 text-primary-orange",
   },
   success: {
     node: "bg-emerald-50 text-emerald-700 ring-[#ecfdf5] dark:bg-emerald-950 dark:text-emerald-300 dark:ring-zinc-950",
     connector: "bg-emerald-400/55 dark:bg-emerald-500/45",
     chip: "bg-emerald-100/90 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-100",
     iconGlow: "shadow-[0_0_20px_-4px_rgba(16,185,129,0.32)] dark:shadow-[0_0_24px_-6px_rgba(52,211,153,0.2)]",
-    modalStatusIcon:
-      "bg-emerald-500/20 text-emerald-200 ring-2 ring-emerald-400/50 shadow-[0_0_28px_-6px_rgba(16,185,129,0.55)]",
-    modalChip: "border border-emerald-500/40 bg-emerald-500/10 text-emerald-100",
   },
 };
 
@@ -133,9 +93,6 @@ export const STEP_CARD_SURFACE =
 
 export const STEP_CARD_BASE =
   "w-full rounded-md border px-2.5 py-2 text-left shadow-[0_1px_0_0_rgba(0,0,0,0.03)] ring-1 ring-slate-200/40 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)] dark:ring-slate-600/30 sm:px-3 sm:py-2.5";
-
-export const STEP_CARD_INTERACTIVE =
-  "cursor-pointer transition-[border-color,box-shadow,transform] duration-200 motion-safe:hover:border-zinc-300/90 motion-safe:hover:shadow-md motion-safe:active:scale-[0.99] dark:motion-safe:hover:border-zinc-600/90";
 
 export const TIMELINE_COMMUNICATION_PREVIEW_CLASS =
   "mt-0.5 line-clamp-3 text-sm font-medium leading-snug text-zinc-700 dark:text-zinc-300";

@@ -301,6 +301,7 @@ export type ShipmentAccessTabSnapshot = {
   pendingInvites: CustomerInvite[];
   pendingAccessRequests: ShipmentCustomerAccessRequest[];
   messageAuthorByUserId: Record<string, string>;
+  customerEmailByUserId: Record<string, string>;
   tags: string[];
   orgTagSuggestions: string[];
   emailNotificationsSubscribed: boolean;
@@ -409,16 +410,23 @@ export async function fetchShipmentAccessTabSnapshot(
   const participantIds = participantRows.map((p) => p.user_id);
   const profileIds = [...new Set([...customerIds, ...participantIds, ...(assigneeUserId ? [assigneeUserId] : [])])];
   const messageAuthorByUserId: Record<string, string> = {};
+  const customerEmailByUserId: Record<string, string> = {};
+  const customerUserIdSet = new Set(customerIds);
   if (profileIds.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
       .select("id, email, full_name")
       .in("id", profileIds);
     for (const p of profs ?? []) {
-      messageAuthorByUserId[p.id as string] = profileDisplayName({
+      const userId = p.id as string;
+      const email = (p.email as string | null)?.trim();
+      messageAuthorByUserId[userId] = profileDisplayName({
         full_name: p.full_name as string | null,
-        email: p.email as string | null,
+        email,
       });
+      if (customerUserIdSet.has(userId) && email) {
+        customerEmailByUserId[userId] = email;
+      }
     }
   }
 
@@ -431,6 +439,7 @@ export async function fetchShipmentAccessTabSnapshot(
     pendingInvites,
     pendingAccessRequests,
     messageAuthorByUserId,
+    customerEmailByUserId,
     tags,
     orgTagSuggestions,
     emailNotificationsSubscribed,

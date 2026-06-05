@@ -5,11 +5,11 @@ import { Reveal } from "@/components/Reveal";
 import {
   WorkspaceDocumentsTabIcon,
   WorkspaceMessagesTabIcon,
-  WorkspaceTrackingTabIcon,
+  WorkspaceTimelineTabIcon,
 } from "@/components/WorkspaceTabShell/tab-icons";
 import { formatWorkspaceTabLabel, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import { ShipmentMessagesPanel } from "../ShipmentMessagesPanel";
-import { ShipmentTrackingPanel } from "../ShipmentTrackingPanel";
+import { ShipmentTimelinePanel } from "../ShipmentTimelinePanel";
 import { ShipmentWorkspaceScopePanel } from "../ShipmentWorkspaceScopePanel";
 import {
   SHIPMENT_DETAILS_TAB_CONTENTS_CLASS,
@@ -19,7 +19,7 @@ import {
   SHIPMENT_DETAILS_TAB_PANEL_CLASS,
   SHIPMENT_DETAILS_TAB_REVEAL_CLASS,
   SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS,
-  SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS,
+  SHIPMENT_DETAILS_TAB_TIMELINE_PANEL_CLASS,
 } from "./constants";
 import type { ShipmentDetailsTabId, ShipmentDetailsTabsProps } from "./types";
 import { useShipmentDetailsTabs } from "./useShipmentDetailsTabs";
@@ -38,7 +38,7 @@ export function ShipmentDetailsTabs({
   onActiveTabChange,
   onTrackingEnabled,
 }: ShipmentDetailsTabsProps) {
-  const [internalActiveTab, setInternalActiveTab] = useState<ShipmentDetailsTabId>("tracking");
+  const [internalActiveTab, setInternalActiveTab] = useState<ShipmentDetailsTabId>("timeline");
   const activeTab = controlledActiveTab ?? internalActiveTab;
 
   const selectTab = (tab: ShipmentDetailsTabId) => {
@@ -49,11 +49,11 @@ export function ShipmentDetailsTabs({
     onActiveTabChange?.(tab);
   };
 
-  const isTrackingTab = activeTab === "tracking";
+  const isTimelineTab = activeTab === "timeline";
   const isDocumentsTab = activeTab === "documents";
   const isMessagesTab = activeTab === "messages";
 
-  const { trackingCount, documentsCount, messagesCount } = useShipmentDetailsTabs({
+  const { timelineCount, documentsCount, messagesCount } = useShipmentDetailsTabs({
     shipmentId,
     organizationId,
     activityEvents,
@@ -66,14 +66,14 @@ export function ShipmentDetailsTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={isTrackingTab}
-          id="shipment-tab-tracking"
-          aria-controls="shipment-tabpanel-tracking"
-          className={workspaceTabButtonClass(isTrackingTab)}
-          onClick={() => selectTab("tracking")}
+          aria-selected={isTimelineTab}
+          id="shipment-tab-timeline"
+          aria-controls="shipment-tabpanel-timeline"
+          className={workspaceTabButtonClass(isTimelineTab)}
+          onClick={() => selectTab("timeline")}
         >
-          <WorkspaceTrackingTabIcon />
-          {formatWorkspaceTabLabel("Tracking", trackingCount)}
+          <WorkspaceTimelineTabIcon />
+          {formatWorkspaceTabLabel("Timeline", timelineCount)}
         </button>
         <button
           type="button"
@@ -103,16 +103,16 @@ export function ShipmentDetailsTabs({
 
       <div className={SHIPMENT_DETAILS_TAB_CONTENTS_CLASS}>
         <div
-          id="shipment-tabpanel-tracking"
+          id="shipment-tabpanel-timeline"
           role="tabpanel"
-          aria-labelledby="shipment-tab-tracking"
-          aria-hidden={!isTrackingTab}
-          tabIndex={isTrackingTab ? 0 : -1}
-          className={`${SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS} ${isTrackingTab ? "" : "pointer-events-none invisible"}`}
+          aria-labelledby="shipment-tab-timeline"
+          aria-hidden={!isTimelineTab}
+          tabIndex={isTimelineTab ? 0 : -1}
+          className={`${SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS} ${isTimelineTab ? "" : "pointer-events-none invisible"}`}
         >
-          <Reveal show={isTrackingTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
-            <div className={SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS}>
-              <ShipmentTrackingPanel
+          <Reveal show={isTimelineTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
+            <div className={SHIPMENT_DETAILS_TAB_TIMELINE_PANEL_CLASS}>
+              <ShipmentTimelinePanel
                 shipmentId={shipmentId}
                 organizationId={organizationId}
                 workflowStatus={workflowStatus}

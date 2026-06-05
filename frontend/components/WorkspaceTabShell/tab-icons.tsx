@@ -1,7 +1,7 @@
 import { FileText, MessageSquare, Route } from "lucide-react";
 import { WORKSPACE_TAB_ICON_CLASS } from "./constants";
 
-export function WorkspaceTrackingTabIcon() {
+export function WorkspaceTimelineTabIcon() {
   return <Route className={WORKSPACE_TAB_ICON_CLASS} strokeWidth={2} aria-hidden />;
 }
 

@@ -544,7 +544,10 @@ export async function postCustomerMessage(
   const shipmentId = input.shipment_id?.trim() ?? "";
   const containerId = input.container_id?.trim() ?? "";
   const text = input.body?.trim() ?? "";
-  const name = input.author_display_name?.trim().slice(0, 120) ?? null;
+  let name = input.author_display_name?.trim().slice(0, 120) ?? null;
+  if (!name) {
+    name = await fetchProfileDisplayName(admin, userId);
+  }
   const parentRaw = (typeof input.parent_message_id === "string" ? input.parent_message_id : "").trim();
   const parentId = parentRaw && UUID_RE.test(parentRaw) ? parentRaw : null;
   const shipmentScoped = !containerId;
@@ -626,19 +629,15 @@ export async function postCustomerMessage(
     metadata: { message_id: inserted.id },
   });
 
-  try {
-    await recordMessageActivityEvent(admin, {
-      shipmentId,
-      messageId: inserted.id as string,
-      body: text,
-      authorKind: "customer",
-      authorDisplayName: name,
-      authorUserId: userId,
-      containerId: shipmentScoped ? null : containerId,
-    });
-  } catch {
-    /* best-effort */
-  }
+  await recordMessageActivityEvent(admin, {
+    shipmentId,
+    messageId: inserted.id as string,
+    body: text,
+    authorKind: "customer",
+    authorDisplayName: name,
+    authorUserId: userId,
+    containerId: shipmentScoped ? null : containerId,
+  });
 
   const { data: orgRow } = await fetchOrganizationForPortal(admin, access.organization_id as string);
   await notifyOperatorsNewCustomerMessage(admin, {

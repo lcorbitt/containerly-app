@@ -7,7 +7,7 @@ import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
 import {
   countShipmentScopeDocuments,
   countShipmentScopeMessages,
-  countShipmentScopeTrackingEvents,
+  countShipmentScopeTimelineEvents,
 } from "@/utils/workspace-tab-counts";
 
 export function useShipmentDetailsTabs({
@@ -23,8 +23,8 @@ export function useShipmentDetailsTabs({
 }) {
   const threadQuery = useShipmentScopeThreadQuery(organizationId, shipmentId);
 
-  const trackingCount = useMemo(
-    () => countShipmentScopeTrackingEvents({ activityEvents, carrierEvents }),
+  const timelineCount = useMemo(
+    () => countShipmentScopeTimelineEvents({ activityEvents, carrierEvents }),
     [activityEvents, carrierEvents],
   );
 
@@ -38,5 +38,5 @@ export function useShipmentDetailsTabs({
     return countShipmentScopeMessages(messages);
   }, [threadQuery.data]);
 
-  return { trackingCount, documentsCount, messagesCount };
+  return { timelineCount, documentsCount, messagesCount };
 }

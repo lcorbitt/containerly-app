@@ -9,12 +9,12 @@ import {
   WORKSPACE_TAB_PANEL_CLASS,
   WORKSPACE_TAB_REVEAL_CLASS,
   WORKSPACE_TAB_STACK_SLOT_CLASS,
-  WORKSPACE_TAB_TRACKING_PANEL_CLASS,
+  WORKSPACE_TAB_TIMELINE_PANEL_CLASS,
 } from "@/components/WorkspaceTabShell/constants";
 import {
   WorkspaceDocumentsTabIcon,
   WorkspaceMessagesTabIcon,
-  WorkspaceTrackingTabIcon,
+  WorkspaceTimelineTabIcon,
 } from "@/components/WorkspaceTabShell/tab-icons";
 import { formatWorkspaceTabLabel, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
 import type { PortalDetailsTabId, PortalDetailsTabsProps } from "./types";
@@ -23,11 +23,11 @@ export function PortalDetailsTabs({
   activeTab,
   onTabChange,
   tabCounts,
-  trackingPanel,
+  timelinePanel,
   documentsPanel,
   messagesPanel,
 }: PortalDetailsTabsProps) {
-  const isTrackingTab = activeTab === "tracking";
+  const isTimelineTab = activeTab === "timeline";
   const isDocumentsTab = activeTab === "documents";
   const isMessagesTab = activeTab === "messages";
 
@@ -37,14 +37,14 @@ export function PortalDetailsTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={isTrackingTab}
-          id="portal-tab-tracking"
-          aria-controls="portal-tabpanel-tracking"
-          className={workspaceTabButtonClass(isTrackingTab)}
-          onClick={() => onTabChange("tracking")}
+          aria-selected={isTimelineTab}
+          id="portal-tab-timeline"
+          aria-controls="portal-tabpanel-timeline"
+          className={workspaceTabButtonClass(isTimelineTab)}
+          onClick={() => onTabChange("timeline")}
         >
-          <WorkspaceTrackingTabIcon />
-          {formatWorkspaceTabLabel("Tracking", tabCounts.tracking)}
+          <WorkspaceTimelineTabIcon />
+          {formatWorkspaceTabLabel("Timeline", tabCounts.timeline)}
         </button>
         <button
           type="button"
@@ -74,15 +74,15 @@ export function PortalDetailsTabs({
 
       <div className={WORKSPACE_TAB_CONTENTS_CLASS}>
         <div
-          id="portal-tabpanel-tracking"
+          id="portal-tabpanel-timeline"
           role="tabpanel"
-          aria-labelledby="portal-tab-tracking"
-          aria-hidden={!isTrackingTab}
-          tabIndex={isTrackingTab ? 0 : -1}
-          className={`${WORKSPACE_TAB_STACK_SLOT_CLASS} ${isTrackingTab ? "" : "pointer-events-none invisible"}`}
+          aria-labelledby="portal-tab-timeline"
+          aria-hidden={!isTimelineTab}
+          tabIndex={isTimelineTab ? 0 : -1}
+          className={`${WORKSPACE_TAB_STACK_SLOT_CLASS} ${isTimelineTab ? "" : "pointer-events-none invisible"}`}
         >
-          <Reveal show={isTrackingTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
-            <div className={WORKSPACE_TAB_TRACKING_PANEL_CLASS}>{trackingPanel}</div>
+          <Reveal show={isTimelineTab} keepMounted className={WORKSPACE_TAB_REVEAL_CLASS}>
+            <div className={WORKSPACE_TAB_TIMELINE_PANEL_CLASS}>{timelinePanel}</div>
           </Reveal>
         </div>
 

@@ -19,7 +19,7 @@ import { BrandedHeader } from "@/components/BrandedHeader";
 import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
 import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
 import { PortalDetailsTabs } from "./PortalDetailsTabs";
-import { PortalTrackingPanel } from "./PortalTrackingPanel";
+import { PortalTimelinePanel } from "./PortalTimelinePanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
   PORTAL_CUSTOMER_NOTE_CLASS,
@@ -172,8 +172,8 @@ export function PublicContainerReport({
               activeTab={dashboardTab}
               onTabChange={setDashboardTab}
               tabCounts={tabCounts}
-              trackingPanel={
-                <PortalTrackingPanel
+              timelinePanel={
+                <PortalTimelinePanel
                   shipmentId={shipmentId}
                   payload={payload}
                   onRefresh={refresh}

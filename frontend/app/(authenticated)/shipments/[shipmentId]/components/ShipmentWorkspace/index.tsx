@@ -127,7 +127,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   const selectDetailsTab = useCallback(
     (tab: ShipmentDetailsTabId) => {
       replaceSearchParams((params) => {
-        if (tab === "tracking") {
+        if (tab === "timeline") {
           params.delete("tab");
         } else {
           params.set("tab", tab);

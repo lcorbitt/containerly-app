@@ -81,19 +81,15 @@ async function postOrgMemberPortalMessage(
   if (insErr) return { ok: false, status: 500, error: insErr.message };
   if (!inserted) return { ok: false, status: 500, error: "Message was not saved" };
 
-  try {
-    await recordMessageActivityEvent(admin, {
-      shipmentId: input.shipmentId,
-      messageId: inserted.id as string,
-      body: input.body,
-      authorKind: "member",
-      authorDisplayName: input.authorDisplayName?.trim() || "Team member",
-      authorUserId: userId,
-      containerId: null,
-    });
-  } catch {
-    /* best-effort */
-  }
+  await recordMessageActivityEvent(admin, {
+    shipmentId: input.shipmentId,
+    messageId: inserted.id as string,
+    body: input.body,
+    authorKind: "member",
+    authorDisplayName: input.authorDisplayName?.trim() || "Team member",
+    authorUserId: userId,
+    containerId: null,
+  });
 
   const preview = input.body;
   const { data: orgRow } = await fetchOrganizationForPortal(admin, input.organizationId);

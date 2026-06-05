@@ -223,6 +223,7 @@ export type ShipmentAccessTabSnapshot = {
   pendingInvites: CustomerInvite[];
   pendingAccessRequests: ShipmentCustomerAccessRequest[];
   messageAuthorByUserId: Record<string, string>;
+  customerEmailByUserId: Record<string, string>;
   tags: string[];
   orgTagSuggestions: string[];
   emailNotificationsSubscribed: boolean;

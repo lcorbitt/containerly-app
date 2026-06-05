@@ -11,9 +11,16 @@ export function threadNeedsReply(lastAuthorKind: string): boolean {
   return lastAuthorKind === "customer";
 }
 
-export function threadOrderLabel(orderNumber: string | null, shipmentId: string): string {
+export function threadAuthorTitle(thread: {
+  last_author_name: string;
+}): string {
+  const name = thread.last_author_name?.trim();
+  return name || "Unknown";
+}
+
+export function threadOrderSubtitle(orderNumber: string | null, shipmentId: string): string {
   const trimmed = orderNumber?.trim();
-  if (trimmed) return trimmed;
+  if (trimmed) return `Order No. ${trimmed}`;
   return `${MESSAGES_LIST_ORDER_FALLBACK} ${shipmentId.slice(0, 8)}`;
 }
 

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { ShipmentTrackingPanel } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentTrackingPanel";
+import { ShipmentTimelinePanel } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentTimelinePanel";
 import type { PublicReportPayload } from "@/types/public-report";
 import { buildPortalAttachmentDisplayNameMap } from "./utils";
 
-export function PortalTrackingPanel({
+export function PortalTimelinePanel({
   shipmentId,
   payload,
   onRefresh,
@@ -22,7 +22,7 @@ export function PortalTrackingPanel({
   );
 
   return (
-    <ShipmentTrackingPanel
+    <ShipmentTimelinePanel
       shipmentId={shipmentId}
       organizationId={organizationId}
       workflowStatus={payload.commercial_details?.workflow_status}

@@ -10,12 +10,12 @@ import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
 import { ShipmentMailTrackingPanel } from "../ShipmentMailTrackingPanel";
 import { isShipmentPostApproval } from "@/utils/shipment-workflow-status";
 import {
-  SHIPMENT_TRACKING_PANEL_STACK_CLASS,
-  SHIPMENT_TRACKING_TIMELINE_CLASS,
+  SHIPMENT_TIMELINE_PANEL_STACK_CLASS,
+  SHIPMENT_TIMELINE_SECTION_CLASS,
 } from "./constants";
 import { buildAttachmentDisplayNameMap } from "./utils";
 
-export function ShipmentTrackingPanel({
+export function ShipmentTimelinePanel({
   shipmentId,
   organizationId,
   workflowStatus,
@@ -54,7 +54,7 @@ export function ShipmentTrackingPanel({
   const attachmentDisplayNamesById = attachmentDisplayNamesByIdProp ?? attachmentDisplayNamesByIdFromQuery;
 
   return (
-    <div className={SHIPMENT_TRACKING_PANEL_STACK_CLASS}>
+    <div className={SHIPMENT_TIMELINE_PANEL_STACK_CLASS}>
       <ShipmentMailTrackingPanel
         shipmentId={shipmentId}
         organizationId={organizationId}
@@ -70,7 +70,7 @@ export function ShipmentTrackingPanel({
         events={carrierEvents}
         activityEvents={activityEvents}
         attachmentDisplayNamesById={attachmentDisplayNamesById}
-        className={SHIPMENT_TRACKING_TIMELINE_CLASS}
+        className={SHIPMENT_TIMELINE_SECTION_CLASS}
         emptyHint="Document uploads, approvals, and carrier updates will appear here."
       />
     </div>

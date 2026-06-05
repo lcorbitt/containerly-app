@@ -24,7 +24,7 @@ import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/
 import {
   countShipmentScopeDocuments,
   countShipmentScopeMessages,
-  countShipmentScopeTrackingEvents,
+  countShipmentScopeTimelineEvents,
 } from "@/utils/workspace-tab-counts";
 import {
   buildPortalAttachmentsByMessageId,
@@ -48,7 +48,7 @@ export function usePublicContainerReport({
   const [body, setBody] = useState("");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("tracking");
+  const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("timeline");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
   const [setupDismissBusy, setSetupDismissBusy] = useState(false);
@@ -100,7 +100,7 @@ export function usePublicContainerReport({
 
   const tabCounts = useMemo(
     () => ({
-      tracking: countShipmentScopeTrackingEvents({
+      timeline: countShipmentScopeTimelineEvents({
         activityEvents: payload.activity_events ?? [],
         carrierEvents: timeline,
       }),

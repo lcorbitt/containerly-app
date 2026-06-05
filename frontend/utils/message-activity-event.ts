@@ -17,6 +17,24 @@ export function messageActivityActorKind(authorKind: string): "customer" | "oper
   return authorKind === "customer" ? "customer" : "operator";
 }
 
+export function resolveMessageActivityDisplayName(
+  authorDisplayName: string | null | undefined,
+  authorKind: string,
+): string {
+  const trimmed = authorDisplayName?.trim();
+  if (trimmed) return trimmed;
+  return authorKind === "customer" ? "Customer" : "Team member";
+}
+
+export function resolveMessageActivityBody(body: string, attachmentCount = 0): string {
+  const trimmed = body.trim();
+  if (trimmed) return trimmed;
+  if (attachmentCount > 0) {
+    return attachmentCount === 1 ? "Sent an attachment" : `Sent ${attachmentCount} attachments`;
+  }
+  return "Message posted";
+}
+
 export function messageActivityCommunicationTitle(authorDisplayName: string): string {
   const name = authorDisplayName.trim() || "Unknown sender";
   return `Message from ${name}`;
@@ -33,14 +51,17 @@ export function formatCommunicationTimelinePreview(
 
 export function buildMessageActivityMetadata(input: {
   messageId: string;
-  authorDisplayName: string;
+  authorKind: string;
+  authorDisplayName: string | null | undefined;
   body: string;
   containerId?: string | null;
+  attachmentCount?: number;
 }): Record<string, unknown> {
+  const activityBody = resolveMessageActivityBody(input.body, input.attachmentCount ?? 0);
   return {
     message_id: input.messageId,
-    author_display_name: input.authorDisplayName.trim() || "Unknown sender",
-    message_preview: truncateMessageActivityPreview(input.body),
+    author_display_name: resolveMessageActivityDisplayName(input.authorDisplayName, input.authorKind),
+    message_preview: truncateMessageActivityPreview(activityBody),
     container_id: input.containerId ?? null,
     scope: input.containerId ? "container" : "shipment",
   };

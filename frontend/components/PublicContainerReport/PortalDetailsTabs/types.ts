@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
-export type PortalDetailsTabId = "tracking" | "documents" | "messages";
+export type PortalDetailsTabId = "timeline" | "documents" | "messages";
 
 export interface PortalDetailsTabCounts {
-  tracking: number;
+  timeline: number;
   documents: number;
   messages: number;
 }
@@ -12,7 +12,7 @@ export interface PortalDetailsTabsProps {
   activeTab: PortalDetailsTabId;
   onTabChange: (tab: PortalDetailsTabId) => void;
   tabCounts: PortalDetailsTabCounts;
-  trackingPanel: ReactNode;
+  timelinePanel: ReactNode;
   documentsPanel: ReactNode;
   messagesPanel: ReactNode;
 }

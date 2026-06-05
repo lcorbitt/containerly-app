@@ -31,32 +31,6 @@ export function formatTimelineWhen(iso: string) {
   return formatTimestamp(iso);
 }
 
-export function formatIsoUtc(iso: string) {
-  try {
-    return new Date(iso).toISOString();
-  } catch {
-    return iso;
-  }
-}
-
-export function formatRelativeWhen(iso: string): string {
-  try {
-    const d = new Date(iso).getTime();
-    const diffMs = Date.now() - d;
-    const abs = Math.abs(diffMs);
-    const mins = Math.round(abs / 60000);
-    if (mins < 1) return diffMs >= 0 ? "Just now" : "Soon";
-    if (mins < 60) return diffMs >= 0 ? `${mins}m ago` : `in ${mins}m`;
-    const hrs = Math.round(mins / 60);
-    if (hrs < 48) return diffMs >= 0 ? `${hrs}h ago` : `in ${hrs}h`;
-    const days = Math.round(hrs / 24);
-    if (days < 14) return diffMs >= 0 ? `${days}d ago` : `in ${days}d`;
-    return diffMs >= 0 ? `${Math.round(days / 7)}w ago` : `in ${Math.round(days / 7)}w`;
-  } catch {
-    return "";
-  }
-}
-
 export function humanizeCarrierToken(s: string): string {
   return s
     .toLowerCase()
@@ -64,13 +38,6 @@ export function humanizeCarrierToken(s: string): string {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-export function humanizeFieldKey(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
 }
 
 export function eventHeading(
@@ -453,18 +420,6 @@ export function isCommunicationTimelineEvent(eventType: string): boolean {
 export function communicationTimelinePreview(subtitle: string | null | undefined): string | null {
   if (!subtitle?.trim()) return null;
   return formatCommunicationTimelinePreview(subtitle);
-}
-
-export function formatValueForDisplay(v: unknown): string {
-  if (v === null || v === undefined) return "—";
-  if (typeof v === "boolean") return v ? "Yes" : "No";
-  if (typeof v === "number" && Number.isFinite(v)) return String(v);
-  if (typeof v === "string") return v;
-  try {
-    return JSON.stringify(v, null, 2);
-  } catch {
-    return String(v);
-  }
 }
 
 export function formatLocationSnippet(loc: Record<string, unknown>): string | null {

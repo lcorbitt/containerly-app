@@ -54,6 +54,8 @@ export interface ShipmentMessageThreadSummary {
   last_message_preview: string;
   last_author_kind: string;
   last_author_user_id: string | null;
+  /** Resolved display label for the latest message author. */
+  last_author_name: string;
   message_count: number;
 }
 

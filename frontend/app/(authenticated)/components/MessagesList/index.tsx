@@ -8,7 +8,13 @@ import {
   MESSAGES_LIST_EMPTY_TITLE,
   MESSAGES_LIST_ROW_LINK_CLASS,
 } from "./constants";
-import { threadHref, threadNeedsReply, threadOrderLabel, truncateMessagePreview } from "./utils";
+import {
+  threadAuthorTitle,
+  threadHref,
+  threadNeedsReply,
+  threadOrderSubtitle,
+  truncateMessagePreview,
+} from "./utils";
 
 function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   const needsReply = threadNeedsReply(thread.last_author_kind);
@@ -21,7 +27,14 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
           needsReply ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-800 dark:text-zinc-200"
         }`}
       >
-        {threadOrderLabel(thread.order_number, thread.shipment_id)}
+        {threadAuthorTitle(thread)}
+      </p>
+      <p
+        className={`mt-0.5 min-w-0 line-clamp-1 text-[11px] font-medium leading-snug wrap-break-word ${
+          needsReply ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-500 dark:text-zinc-500"
+        }`}
+      >
+        {threadOrderSubtitle(thread.order_number, thread.shipment_id)}
       </p>
       {preview ? (
         <p
@@ -32,8 +45,8 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
           {preview}
         </p>
       ) : null}
-      <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-        <span>{formatTimestamp(thread.last_message_at)}</span>
+      <p className="mt-1.5 text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">
+        {formatTimestamp(thread.last_message_at)}
       </p>
     </>
   );

@@ -54,8 +54,6 @@ export interface ShipmentTimelineProps {
   activityEvents?: ShipmentActivityEvent[];
   /** Current attachment display names keyed by attachment id (keeps timeline in sync after renames). */
   attachmentDisplayNamesById?: Record<string, string>;
-  /** When false, cards are not clickable (public report). Default true for team views. */
-  interactiveDetail?: boolean;
   /** Merged onto the outer section (e.g. `rounded-none border-0` inside a tab panel). */
   className?: string;
   emptyMessage?: string;

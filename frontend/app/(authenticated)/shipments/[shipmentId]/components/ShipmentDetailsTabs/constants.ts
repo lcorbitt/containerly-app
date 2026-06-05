@@ -8,17 +8,17 @@ export {
   WORKSPACE_TAB_PANEL_CLASS as SHIPMENT_DETAILS_TAB_PANEL_CLASS,
   WORKSPACE_TAB_REVEAL_CLASS as SHIPMENT_DETAILS_TAB_REVEAL_CLASS,
   WORKSPACE_TAB_STACK_SLOT_CLASS as SHIPMENT_DETAILS_TAB_STACK_SLOT_CLASS,
-  WORKSPACE_TAB_TRACKING_PANEL_CLASS as SHIPMENT_DETAILS_TAB_TRACKING_PANEL_CLASS,
+  WORKSPACE_TAB_TIMELINE_PANEL_CLASS as SHIPMENT_DETAILS_TAB_TIMELINE_PANEL_CLASS,
 } from "@/components/WorkspaceTabShell/constants";
 
-export const SHIPMENT_TRACKING_TAB_DISABLED_TOOLTIP =
-  "Tracking unlocks after the customer approves all draft documents.";
+export const SHIPMENT_TIMELINE_TAB_DISABLED_TOOLTIP =
+  "Timeline unlocks after the customer approves all draft documents.";
 
-export const SHIPMENT_TRACKING_TAB_DISABLED_TOOLTIP_CLASS =
+export const SHIPMENT_TIMELINE_TAB_DISABLED_TOOLTIP_CLASS =
   "max-w-[18rem] text-center font-normal leading-snug whitespace-normal";
 
-export const SHIPMENT_TRACKING_TAB_BUTTON_DISABLED_CLASS =
+export const SHIPMENT_TIMELINE_TAB_BUTTON_DISABLED_CLASS =
   "cursor-not-allowed opacity-45 hover:text-zinc-500 dark:hover:text-zinc-400";
 
-/** Equal-width tab slot when the tracking tab is wrapped for tooltip hover. */
-export const SHIPMENT_TRACKING_TAB_SLOT_CLASS = "flex min-w-0 flex-1 basis-0";
+/** Equal-width tab slot when the timeline tab is wrapped for tooltip hover. */
+export const SHIPMENT_TIMELINE_TAB_SLOT_CLASS = "flex min-w-0 flex-1 basis-0";
