@@ -3,13 +3,31 @@
 import Link from "next/link";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
+  MESSAGES_LIST_AUTHOR_BADGE_BASE_CLASS,
+  MESSAGES_LIST_AUTHOR_BADGE_CUSTOMER_CLASS,
+  MESSAGES_LIST_AUTHOR_BADGE_TEAM_CLASS,
+  MESSAGES_LIST_AUTHOR_EMAIL_CLASS,
+  MESSAGES_LIST_AUTHOR_NAME_CLASS,
+  MESSAGES_LIST_AUTHOR_META_CLASS,
+  MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS,
+  MESSAGES_LIST_AUTHOR_SECTION_CLASS,
+  MESSAGES_LIST_CLASS,
   MESSAGES_LIST_EMPTY_HINT,
   MESSAGES_LIST_EMPTY_TITLE,
+  MESSAGES_LIST_ORDER_TITLE_CLASS,
+  MESSAGES_LIST_PREVIEW_EMPTY_CLASS,
+  MESSAGES_LIST_PREVIEW_SHELL_CLASS,
+  MESSAGES_LIST_PREVIEW_SHELL_NEEDS_REPLY_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_CLASS,
   MESSAGES_LIST_ROW_LINK_CLASS,
+  MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS,
+  MESSAGES_LIST_TIMESTAMP_CLASS,
 } from "./constants";
 import {
   formatMessageListTimestamp,
   threadAuthorEmail,
+  threadAuthorRoleLabel,
   threadAuthorTitle,
   threadHref,
   threadNeedsReply,
@@ -22,53 +40,78 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   const preview = truncateMessagePreview(thread.last_message_preview);
   const authorTitle = threadAuthorTitle(thread);
   const authorEmail = threadAuthorEmail(thread);
-  const authorNameClass = needsReply
-    ? "text-zinc-900 dark:text-zinc-100"
-    : "text-zinc-800 dark:text-zinc-200";
+  const orderTitle = threadOrderSubtitle(thread.order_number, thread.shipment_id);
+  const roleLabel = threadAuthorRoleLabel(thread.last_author_kind);
+  const isCustomer = thread.last_author_kind === "customer";
 
   return (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
+    <article className="min-w-0">
+      <header className="flex items-start justify-between gap-2">
+        <h3
+          className={MESSAGES_LIST_ORDER_TITLE_CLASS}
+          title={orderTitle}
+        >
+          {orderTitle}
+        </h3>
+        <time
+          dateTime={thread.last_message_at}
+          className={MESSAGES_LIST_TIMESTAMP_CLASS}
+        >
+          {formatMessageListTimestamp(thread.last_message_at)}
+        </time>
+      </header>
+
+      <div className={MESSAGES_LIST_AUTHOR_SECTION_CLASS}>
+        <span
+          className={`${MESSAGES_LIST_AUTHOR_BADGE_BASE_CLASS} ${
+            isCustomer
+              ? MESSAGES_LIST_AUTHOR_BADGE_CUSTOMER_CLASS
+              : MESSAGES_LIST_AUTHOR_BADGE_TEAM_CLASS
+          }`}
+        >
+          {roleLabel}
+        </span>
+        <div className={MESSAGES_LIST_AUTHOR_META_CLASS}>
           <p
-            className={`min-w-0 truncate text-xs font-bold leading-snug ${authorNameClass}`}
+            className={
+              needsReply
+                ? MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS
+                : MESSAGES_LIST_AUTHOR_NAME_CLASS
+            }
             title={authorTitle}
           >
             {authorTitle}
           </p>
           {authorEmail ? (
-            <p
-              className="mt-0.5 min-w-0 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400"
-              title={authorEmail}
-            >
+            <p className={MESSAGES_LIST_AUTHOR_EMAIL_CLASS} title={authorEmail}>
               {authorEmail}
             </p>
           ) : null}
         </div>
-        <time
-          dateTime={thread.last_message_at}
-          className="shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500"
-        >
-          {formatMessageListTimestamp(thread.last_message_at)}
-        </time>
       </div>
-      <p
-        className={`mt-0.5 min-w-0 line-clamp-1 text-[11px] font-medium leading-snug wrap-break-word ${
-          needsReply ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-500 dark:text-zinc-500"
-        }`}
+
+      <div
+        className={
+          needsReply
+            ? MESSAGES_LIST_PREVIEW_SHELL_NEEDS_REPLY_CLASS
+            : MESSAGES_LIST_PREVIEW_SHELL_CLASS
+        }
       >
-        {threadOrderSubtitle(thread.order_number, thread.shipment_id)}
-      </p>
-      {preview ? (
-        <p
-          className={`mt-1 min-w-0 line-clamp-2 text-[11px] leading-snug wrap-break-word ${
-            needsReply ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-600 dark:text-zinc-400"
-          }`}
-        >
-          {preview}
-        </p>
-      ) : null}
-    </>
+        {preview ? (
+          <p
+            className={
+              needsReply
+                ? MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_CLASS
+                : MESSAGES_LIST_PREVIEW_TEXT_CLASS
+            }
+          >
+            {preview}
+          </p>
+        ) : (
+          <p className={MESSAGES_LIST_PREVIEW_EMPTY_CLASS}>No message text</p>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -91,21 +134,23 @@ export function MessagesList({
   }
 
   return (
-    <ul className="py-0.5">
-      {threads.map((thread) => (
-        <li
-          key={thread.shipment_id}
-          className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/80"
-        >
-          <Link
-            href={threadHref(thread.shipment_id)}
-            onClick={() => onItemNavigate?.()}
-            className={MESSAGES_LIST_ROW_LINK_CLASS}
-          >
-            <ThreadRowBody thread={thread} />
-          </Link>
-        </li>
-      ))}
+    <ul className={MESSAGES_LIST_CLASS}>
+      {threads.map((thread) => {
+        const needsReply = threadNeedsReply(thread.last_author_kind);
+        return (
+          <li key={thread.shipment_id}>
+            <Link
+              href={threadHref(thread.shipment_id)}
+              onClick={() => onItemNavigate?.()}
+              className={`${MESSAGES_LIST_ROW_LINK_CLASS}${
+                needsReply ? ` ${MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS}` : ""
+              }`}
+            >
+              <ThreadRowBody thread={thread} />
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
