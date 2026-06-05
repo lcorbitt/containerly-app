@@ -43,27 +43,15 @@ export const THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS = "max-w-[min(100%,28rem)]";
 export const THREAD_MESSAGE_BUBBLE_CLASS =
   `relative min-w-0 w-fit ${THREAD_MESSAGE_BUBBLE_MAX_WIDTH_CLASS} text-sm`;
 
-export const THREAD_MESSAGE_BUBBLE_OTHER_CLASS = THREAD_MESSAGE_BUBBLE_CLASS;
-
-export const THREAD_MESSAGE_BUBBLE_OWN_CLASS = THREAD_MESSAGE_BUBBLE_CLASS;
-
-export const THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS =
+export const THREAD_MESSAGE_QUOTE_SHELL_CLASS =
   "mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md";
 
-export const THREAD_MESSAGE_QUOTE_SHELL_OWN_CLASS =
-  "mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md";
-
-export const THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS = "min-w-0 pr-25";
-
-export const THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS = "min-w-0 pr-25";
+export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0 pr-25";
 
 /** Extra bottom space while inline-editing so save/cancel icons sit clear of the editor. */
 export const THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS = "pb-8";
 
-export const THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS =
-  "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
-
-export const THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS =
+export const THREAD_MESSAGE_CORNER_ACTIONS_CLASS =
   "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
 
 export const THREAD_MESSAGE_EDIT_ACTIONS_CLASS =
@@ -83,6 +71,9 @@ export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
 export const THREAD_MESSAGE_TIMESTAMP_CLASS =
   "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
+
+export const THREAD_MESSAGE_AUTHOR_ROW_CLASS =
+  "flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5";
 
 export const THREAD_MESSAGE_AUTHOR_EMAIL_CLASS =
   "mt-0.5 min-w-0 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400";

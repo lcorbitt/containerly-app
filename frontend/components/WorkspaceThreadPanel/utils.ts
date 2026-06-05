@@ -19,14 +19,10 @@ import {
   THREAD_TEAM_ROOT_BG_CLASS,
   THREAD_MESSAGE_ROW_CLASS,
   THREAD_MESSAGE_ROW_OWN_CLASS,
-  THREAD_MESSAGE_BUBBLE_OWN_CLASS,
-  THREAD_MESSAGE_BUBBLE_OTHER_CLASS,
-  THREAD_MESSAGE_QUOTE_SHELL_OWN_CLASS,
-  THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS,
-  THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS,
-  THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS,
-  THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS,
-  THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS,
+  THREAD_MESSAGE_BUBBLE_CLASS,
+  THREAD_MESSAGE_QUOTE_SHELL_CLASS,
+  THREAD_MESSAGE_CONTENT_PAD_CLASS,
+  THREAD_MESSAGE_CORNER_ACTIONS_CLASS,
 } from "./constants";
 
 export function buildAuthorAvatarUrlByUserId(
@@ -75,28 +71,6 @@ export function threadMessageReplyRingClass(palette: ThreadMessagePalette): stri
 
 export function threadMessageRowClass(isOwnMessage: boolean): string {
   return isOwnMessage ? THREAD_MESSAGE_ROW_OWN_CLASS : THREAD_MESSAGE_ROW_CLASS;
-}
-
-export function threadMessageBubbleClass(isOwnMessage: boolean): string {
-  return isOwnMessage ? THREAD_MESSAGE_BUBBLE_OWN_CLASS : THREAD_MESSAGE_BUBBLE_OTHER_CLASS;
-}
-
-export function threadMessageQuoteShellClass(isOwnMessage: boolean): string {
-  return isOwnMessage
-    ? THREAD_MESSAGE_QUOTE_SHELL_OWN_CLASS
-    : THREAD_MESSAGE_QUOTE_SHELL_OTHER_CLASS;
-}
-
-export function threadMessageContentPadClass(isOwnMessage: boolean): string {
-  return isOwnMessage
-    ? THREAD_MESSAGE_CONTENT_PAD_OWN_CLASS
-    : THREAD_MESSAGE_CONTENT_PAD_OTHER_CLASS;
-}
-
-export function threadMessageCornerActionsClass(isOwnMessage: boolean): string {
-  return isOwnMessage
-    ? THREAD_MESSAGE_CORNER_ACTIONS_OWN_CLASS
-    : THREAD_MESSAGE_CORNER_ACTIONS_OTHER_CLASS;
 }
 
 export function threadMessageShellClass({
