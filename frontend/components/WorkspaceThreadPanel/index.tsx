@@ -16,7 +16,7 @@ import {
   MAX_ATTACHMENT_SIZE_LABEL,
   MAX_ATTACHMENTS_PER_MESSAGE,
 } from "@/utils/workspace-files";
-import { formatTimestamp } from "@/utils/datetime";
+import { formatShortTimestamp } from "@/utils/datetime";
 import {
   buildMessageTree,
   truncatedReplyPreview,
@@ -24,8 +24,10 @@ import {
 } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import {
+  THREAD_MESSAGE_AUTHOR_EMAIL_CLASS,
   THREAD_MESSAGE_AVATAR_CLASS,
   THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS,
+  THREAD_MESSAGE_TIMESTAMP_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS,
   THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS,
@@ -147,22 +149,26 @@ function ThreadMessageItem({
     <div
       className={`${threadMessageContentPadClass(isOwnMessage)}${isEditing ? ` ${THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS}` : ""}`}
     >
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span
-          className={threadMessageAuthorHeadingClass({
-            palette,
-            isOwnMessage,
-            highlightOwnAsOperator,
-          })}
-        >
-          {authorLabel}
-        </span>
-        {authorEmail ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{authorEmail}</span>
-        ) : null}
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {formatTimestamp(node.created_at)}
-        </span>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <span
+            className={threadMessageAuthorHeadingClass({
+              palette,
+              isOwnMessage,
+              highlightOwnAsOperator,
+            })}
+          >
+            {authorLabel}
+          </span>
+          {authorEmail ? (
+            <p className={THREAD_MESSAGE_AUTHOR_EMAIL_CLASS} title={authorEmail}>
+              {authorEmail}
+            </p>
+          ) : null}
+        </div>
+        <time dateTime={node.created_at} className={THREAD_MESSAGE_TIMESTAMP_CLASS}>
+          {formatShortTimestamp(node.created_at)}
+        </time>
       </div>
       {isEditing ? (
         <div className="mt-2">

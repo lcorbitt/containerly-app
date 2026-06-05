@@ -81,6 +81,12 @@ export const THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS =
 
 export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
+export const THREAD_MESSAGE_TIMESTAMP_CLASS =
+  "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
+
+export const THREAD_MESSAGE_AUTHOR_EMAIL_CLASS =
+  "mt-0.5 min-w-0 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400";
+
 /** Scroll target for page-level focus when opening the messages tab (composer footer). */
 export const THREAD_PANEL_COMPOSER_ID = "workspace-thread-composer";
 
