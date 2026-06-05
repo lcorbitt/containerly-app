@@ -6,7 +6,7 @@ export const SHIPMENT_SHARE_MENU_PANEL_CLASS =
   "overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-950";
 
 export const SHIPMENT_SHARE_MENU_TRIGGER_CLASS =
-  "inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-900/40 dark:bg-primary-orange dark:hover:bg-primary-orange/90 dark:focus-visible:ring-primary-orange/40";
+  "inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-900/40 dark:bg-primary-orange dark:hover:bg-primary-orange/90 dark:focus-visible:ring-primary-orange/40";
 
 export const SHIPMENT_SHARE_MENU_TRIGGER_SIDEBAR_CLASS = `${SHIPMENT_SHARE_MENU_TRIGGER_CLASS} w-full`;
 
