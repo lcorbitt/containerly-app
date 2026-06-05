@@ -46,7 +46,7 @@ export const THREAD_MESSAGE_BUBBLE_CLASS =
 export const THREAD_MESSAGE_QUOTE_SHELL_CLASS =
   "mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md";
 
-export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0 pr-25";
+export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0";
 
 /** Extra bottom space while inline-editing so save/cancel icons sit clear of the editor. */
 export const THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS = "pb-8";
