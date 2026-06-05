@@ -17,5 +17,5 @@ export function CustomerPortalShareMenu({
     organizationId,
   });
 
-  return <ShipmentShareMenu shipmentId={shipmentId} state={state} variant="portal" />;
+  return <ShipmentShareMenu shipmentId={shipmentId} state={state} variant="hub" />;
 }

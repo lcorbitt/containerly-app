@@ -21,14 +21,14 @@ import {
   truncateMessageActivityPreview,
   formatCommunicationTimelinePreview,
 } from "@/utils/message-activity-event";
-import { formatTimestamp } from "@/utils/datetime";
+import { formatShortTimestamp } from "@/utils/datetime";
 import type { PublicTimelineEvent } from "@/types/public-report";
 import type { ShipmentTimelineDisplayEvent, TimelineDocumentMeta, TimelineDocumentMetaItem, TimelineTone } from "./types";
 import { GENERIC_EVENT_TYPE } from "./constants";
 
-/** Absolute clock time on timeline cards and related UI (matches messages / activity). */
+/** Short timestamp for timeline cards (matches messages sidenav). */
 export function formatTimelineWhen(iso: string) {
-  return formatTimestamp(iso);
+  return formatShortTimestamp(iso);
 }
 
 export function humanizeCarrierToken(s: string): string {

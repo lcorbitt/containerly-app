@@ -1,3 +1,4 @@
+import { formatShortTimestamp } from "@/utils/datetime";
 import { stripMessageMarkup } from "@/utils/message-markup";
 import { MESSAGE_PREVIEW_MAX_LEN, MESSAGES_LIST_ORDER_FALLBACK } from "./constants";
 
@@ -27,29 +28,8 @@ export function threadAuthorEmail(thread: {
   return email || null;
 }
 
-/** LinkedIn-style: time if today, short date (e.g. Jun 4) otherwise. */
 export function formatMessageListTimestamp(iso: string, nowMs = Date.now()): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-
-  const now = new Date(nowMs);
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  if (isToday) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }).format(date);
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-  }).format(date);
+  return formatShortTimestamp(iso, nowMs);
 }
 
 export function threadOrderSubtitle(orderNumber: string | null, shipmentId: string): string {

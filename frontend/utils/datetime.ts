@@ -1,3 +1,28 @@
+/** LinkedIn-style: time if today, short date (e.g. Jun 4) otherwise. */
+export function formatShortTimestamp(iso: string, nowMs = Date.now()): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  const now = new Date(nowMs);
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (isToday) {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 /** Compact display: e.g. `4/2/26, 9:12 PM` (2-digit year, no seconds). */
 export function formatTimestamp(iso: string): string {
   try {

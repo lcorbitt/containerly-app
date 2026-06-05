@@ -99,3 +99,6 @@ export const TIMELINE_COMMUNICATION_PREVIEW_CLASS =
 
 export const TIMELINE_DEFAULT_SUBTITLE_CLASS =
   "mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400";
+
+export const TIMELINE_CARD_TIMESTAMP_CLASS =
+  "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";

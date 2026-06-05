@@ -4,7 +4,7 @@ import type { ShipmentAccessTabContentState } from "@/app/(authenticated)/shipme
 export interface ShipmentShareMenuProps {
   shipmentId: string;
   state: ShipmentAccessTabContentState;
-  variant?: "portal" | "sidebar";
+  variant?: "hub" | "sidebar";
 }
 
 export type ShipmentShareAccessRow = {

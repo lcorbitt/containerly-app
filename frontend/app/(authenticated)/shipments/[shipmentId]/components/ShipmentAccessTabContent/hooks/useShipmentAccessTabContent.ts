@@ -239,7 +239,7 @@ export function useShipmentAccessTabContent({
 
     setInviteCreating(true);
     try {
-      const portalUrl = `${origin}/shipments/hub/${shipmentId}`;
+      const hubUrl = `${origin}/shipments/hub/${shipmentId}`;
       let successCount = 0;
       let singleInviteUrl: string | null = null;
       const failures: string[] = [];
@@ -262,7 +262,7 @@ export function useShipmentAccessTabContent({
         successCount += 1;
         singleInviteUrl =
           inviteDeliveryMode === "allowlist_only"
-            ? portalUrl
+            ? hubUrl
             : r.invite_url.startsWith("http")
               ? r.invite_url
               : `${origin}${r.invite_url}`;
@@ -288,7 +288,7 @@ export function useShipmentAccessTabContent({
       if (successCount === 1 && singleInviteUrl) {
         setLastInviteUrl(singleInviteUrl);
       } else if (inviteDeliveryMode === "allowlist_only") {
-        setLastInviteUrl(portalUrl);
+        setLastInviteUrl(hubUrl);
       } else {
         setLastInviteUrl(null);
       }

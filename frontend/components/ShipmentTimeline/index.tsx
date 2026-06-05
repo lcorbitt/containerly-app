@@ -6,7 +6,14 @@ import type {
   ShipmentTimelineOrder,
   ShipmentTimelineViewProps,
 } from "./types";
-import { TONE_STYLES, STEP_CARD_BASE, STEP_CARD_SURFACE, TIMELINE_COMMUNICATION_PREVIEW_CLASS, TIMELINE_DEFAULT_SUBTITLE_CLASS } from "./constants";
+import {
+  TONE_STYLES,
+  STEP_CARD_BASE,
+  STEP_CARD_SURFACE,
+  TIMELINE_CARD_TIMESTAMP_CLASS,
+  TIMELINE_COMMUNICATION_PREVIEW_CLASS,
+  TIMELINE_DEFAULT_SUBTITLE_CLASS,
+} from "./constants";
 import {
   buildShipmentTimelineEvents,
   formatTimelineWhen,
@@ -130,12 +137,18 @@ export function ShipmentTimelineView({
                       </div>
                       <div className="relative z-10 min-w-0">
                         <div className={`${STEP_CARD_BASE} w-full max-w-none ${STEP_CARD_SURFACE}`}>
-                        <div className="flex flex-wrap items-center gap-1 gap-y-0.5">
+                        <div className="flex items-start justify-between gap-2">
                           <span
                             className={`inline-flex max-w-full items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${s.chip}`}
                           >
                             {label}
                           </span>
+                          <time
+                            dateTime={ev.occurred_at}
+                            className={TIMELINE_CARD_TIMESTAMP_CLASS}
+                          >
+                            {formatTimelineWhen(ev.occurred_at)}
+                          </time>
                         </div>
                         <p className="mt-1 text-[13px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
                           {title}
@@ -146,9 +159,6 @@ export function ShipmentTimelineView({
                           <p className={TIMELINE_DEFAULT_SUBTITLE_CLASS}>{subtitle}</p>
                         ) : null}
                         {ev.documentMeta ? <TimelineDocumentMeta meta={ev.documentMeta} /> : null}
-                        <p className="mt-1 font-mono text-[10px] leading-tight text-zinc-500 dark:text-zinc-500">
-                          {formatTimelineWhen(ev.occurred_at)}
-                        </p>
                         {locSnippet || (ev.location && Object.keys(ev.location).length > 0) ? (
                           <div className="mt-1.5 border-t border-zinc-200/50 pt-1.5 dark:border-zinc-700/50">
                             {locSnippet ? (

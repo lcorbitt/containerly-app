@@ -10,26 +10,29 @@ import {
   SHIPMENT_SHARE_MENU_PANEL_CLASS,
   SHIPMENT_SHARE_MENU_PANEL_REVEAL_CLASS,
   SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS,
-  SHIPMENT_SHARE_MENU_PRIMARY_ACTION_PORTAL_CLASS,
+  SHIPMENT_SHARE_MENU_PRIMARY_ACTION_HUB_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS,
-  SHIPMENT_SHARE_MENU_TRIGGER_PORTAL_CLASS,
+  SHIPMENT_SHARE_MENU_TRIGGER_CLASS,
+  SHIPMENT_SHARE_MENU_TRIGGER_SIDEBAR_CLASS,
 } from "./constants";
 import type { ShipmentShareMenuProps } from "./types";
 import { useShipmentShareMenu } from "./useShipmentShareMenu";
-import { buildShipmentShareAccessRows, shipmentPortalUrl } from "./utils";
+import { buildShipmentShareAccessRows, shipmentHubUrl } from "./utils";
 
 export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: ShipmentShareMenuProps) {
   const primaryActionClass =
-    variant === "portal"
-      ? SHIPMENT_SHARE_MENU_PRIMARY_ACTION_PORTAL_CLASS
+    variant === "hub"
+      ? SHIPMENT_SHARE_MENU_PRIMARY_ACTION_HUB_CLASS
       : SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS;
   const { menuId, triggerRef, panelRef, open, panelPos, toggle } = useShipmentShareMenu();
   const accessRows = buildShipmentShareAccessRows(state);
-  const portalUrl = shipmentPortalUrl(shipmentId, state.origin);
+  const hubUrl = shipmentHubUrl(shipmentId, state.origin);
+  const triggerClass =
+    variant === "sidebar" ? SHIPMENT_SHARE_MENU_TRIGGER_SIDEBAR_CLASS : SHIPMENT_SHARE_MENU_TRIGGER_CLASS;
 
-  async function copyPortalLink() {
+  async function copyHubLink() {
     try {
-      await navigator.clipboard.writeText(portalUrl);
+      await navigator.clipboard.writeText(hubUrl);
       state.toast("Link copied", "success");
     } catch {
       state.toast("Could not copy", "error");
@@ -129,7 +132,7 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-zinc-500">No one has access yet.</p>
+                    <p className="text-sm text-zinc-500">No customers invited yet.</p>
                   )}
 
                 </div>
@@ -137,7 +140,7 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
                 <div className="flex items-center justify-end border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
                   <button
                     type="button"
-                    onClick={() => void copyPortalLink()}
+                    onClick={() => void copyHubLink()}
                     className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
                   >
                     <Link2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
@@ -159,7 +162,7 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={toggle}
-        className={SHIPMENT_SHARE_MENU_TRIGGER_PORTAL_CLASS}
+        className={triggerClass}
       >
         <Globe className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
         Share

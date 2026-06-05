@@ -28,7 +28,7 @@ export function ShipmentAccessSidebar({
       aria-label="Shipment team and settings"
       className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5"
     >
-      <div className="flex flex-wrap items-center justify-end gap-2 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+      <div className="w-full border-b border-zinc-200 pb-4 dark:border-zinc-800">
         <ShipmentShareMenu shipmentId={shipmentId} state={accessState} variant="sidebar" />
       </div>
 
