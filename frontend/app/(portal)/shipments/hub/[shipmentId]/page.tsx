@@ -18,7 +18,6 @@ export default function SharedShipmentTrackingPage({
   params: Promise<{ shipmentId: string }>;
 }) {
   const { shipmentId } = use(params);
-  const router = useRouter();
   const [phase, setPhase] = useState<HubPhase>("loading");
   const [data, setData] = useState<PublicReportPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
