@@ -29,6 +29,23 @@ export async function fetchProfileIdAndRoleByEmail(client: SupabaseClient, email
   return client.from("profiles").select("id, role").eq("email", emailLower).maybeSingle();
 }
 
+/** `profiles` — account emails keyed by user id (customer message thread display). */
+export async function fetchProfileEmailsByUserIds(
+  client: SupabaseClient,
+  userIds: string[],
+): Promise<Record<string, string>> {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (ids.length === 0) return {};
+
+  const { data } = await client.from("profiles").select("id, email").in("id", ids);
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) {
+    const email = (row.email as string | null | undefined)?.trim();
+    if (email) out[row.id as string] = email;
+  }
+  return out;
+}
+
 /** `profiles` — avatar storage paths keyed by user id (message thread display). */
 export async function fetchProfileImagePathsByUserIds(
   client: SupabaseClient,

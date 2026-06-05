@@ -65,6 +65,7 @@ export function PublicContainerReport({
     setupDismissBusy,
     currentUserId,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
     postMessage,
@@ -207,6 +208,7 @@ export function PublicContainerReport({
                     <ThreadPanel
                       messages={threadMessages}
                       authorNameByUserId={messageAuthorByUserId}
+                      authorEmailByUserId={messageAuthorEmailByUserId}
                       authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                       uploaderDisplayByUserId={messageAuthorByUserId}
                       attachmentsByMessageId={attachmentsByMessageId}

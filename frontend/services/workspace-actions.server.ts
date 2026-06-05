@@ -537,6 +537,7 @@ export async function loadShipmentScopeThreadForUser(
   const uploaderIds = [...new Set(attRows.map((a) => a.uploaded_by))];
   const profileIds = [...new Set([...authorIds, ...uploaderIds])];
   const nameByUser: Record<string, string> = {};
+  const emailByUser: Record<string, string> = {};
   const profileImagePathByUserId: Record<string, string | null> = {};
   if (profileIds.length > 0) {
     const { data: profs } = await supabase
@@ -545,6 +546,8 @@ export async function loadShipmentScopeThreadForUser(
       .in("id", profileIds);
     for (const p of profs ?? []) {
       const id = p.id as string;
+      const email = (p.email as string | null)?.trim() ?? "";
+      if (email) emailByUser[id] = email;
       nameByUser[id] = profileDisplayName({
         full_name: p.full_name as string | null,
         email: p.email as string | null,
@@ -563,7 +566,7 @@ export async function loadShipmentScopeThreadForUser(
       continue;
     }
     if (m.author_kind === "customer") {
-      nameByUser[uid] = "Importer";
+      nameByUser[uid] = emailByUser[uid] ? profileDisplayName({ email: emailByUser[uid] }) : "Importer";
     }
   }
 
@@ -572,6 +575,7 @@ export async function loadShipmentScopeThreadForUser(
     messages: msgList,
     attachments: attRows,
     messageAuthorByUserId: nameByUser,
+    messageAuthorEmailByUserId: emailByUser,
     profileImagePathByUserId,
     currentUserId: userId,
   };
@@ -952,6 +956,16 @@ function resolveThreadAuthorName(
   return "Team member";
 }
 
+function resolveThreadAuthorEmail(
+  authorKind: string,
+  authorUserId: string | null,
+  profileEmailByUserId: Record<string, string>,
+): string | null {
+  if (authorKind !== "customer" || !authorUserId) return null;
+  const email = profileEmailByUserId[authorUserId]?.trim();
+  return email || null;
+}
+
 export async function loadOrgShipmentMessageThreadsForUser(
   supabase: SupabaseClient,
   userId: string,
@@ -1047,16 +1061,20 @@ export async function loadOrgShipmentMessageThreadsForUser(
     ),
   ];
   const profileNameByUserId: Record<string, string> = {};
+  const profileEmailByUserId: Record<string, string> = {};
   if (authorIds.length > 0) {
     const { data: profs } = await supabase
       .from("profiles")
       .select("id, email, full_name")
       .in("id", authorIds);
     for (const p of profs ?? []) {
-      profileNameByUserId[p.id as string] = profileDisplayName({
+      const id = p.id as string;
+      profileNameByUserId[id] = profileDisplayName({
         full_name: p.full_name as string | null,
         email: p.email as string | null,
       });
+      const email = (p.email as string | null)?.trim() ?? "";
+      if (email) profileEmailByUserId[id] = email;
     }
   }
 
@@ -1072,6 +1090,11 @@ export async function loadOrgShipmentMessageThreadsForUser(
           agg.last_author_user_id,
           last_author_display_name,
           profileNameByUserId,
+        ),
+        last_author_email: resolveThreadAuthorEmail(
+          agg.last_author_kind,
+          agg.last_author_user_id,
+          profileEmailByUserId,
         ),
       };
     })

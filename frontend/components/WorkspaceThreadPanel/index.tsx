@@ -35,6 +35,7 @@ import {
 } from "./constants";
 import {
   threadMessageAuthorAvatarUrl,
+  threadMessageAuthorEmail,
   threadMessageAuthorName,
   threadMessageAvatarClass,
   threadMessageAuthorHeadingClass,
@@ -67,6 +68,7 @@ function ThreadMessageItem({
   onEditDraftChange,
   messageById,
   authorNameByUserId,
+  authorEmailByUserId,
   authorAvatarUrlByUserId,
   uploaderDisplayByUserId,
   currentUserId,
@@ -91,6 +93,7 @@ function ThreadMessageItem({
   onEditDraftChange: (value: string) => void;
   messageById: Map<string, ReportMessage>;
   authorNameByUserId: Record<string, string>;
+  authorEmailByUserId?: Record<string, string>;
   authorAvatarUrlByUserId: Record<string, string | null>;
   uploaderDisplayByUserId: Record<string, string>;
   currentUserId: string | null;
@@ -118,6 +121,7 @@ function ThreadMessageItem({
   const actionsBusy = Boolean(deletingMessageId) || Boolean(savingEditMessageId);
   const showEdit = isOwnMessage && allowMessageEdit !== false;
   const authorLabel = threadMessageAuthorName(node, authorNameByUserId);
+  const authorEmail = threadMessageAuthorEmail(node, authorEmailByUserId);
   const authorAvatarUrl = threadMessageAuthorAvatarUrl(node, authorAvatarUrlByUserId);
 
   const shell = threadMessageShellClass({ isRoot, palette, isOwnMessage, highlightOwnAsOperator });
@@ -153,6 +157,9 @@ function ThreadMessageItem({
         >
           {authorLabel}
         </span>
+        {authorEmail ? (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{authorEmail}</span>
+        ) : null}
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
           {formatTimestamp(node.created_at)}
         </span>
@@ -358,6 +365,7 @@ function ThreadMessageItem({
               onEditDraftChange={onEditDraftChange}
               messageById={messageById}
               authorNameByUserId={authorNameByUserId}
+              authorEmailByUserId={authorEmailByUserId}
               authorAvatarUrlByUserId={authorAvatarUrlByUserId}
               uploaderDisplayByUserId={uploaderDisplayByUserId}
               currentUserId={currentUserId}
@@ -379,6 +387,7 @@ function ThreadMessageItem({
 export function ThreadPanel({
   messages,
   authorNameByUserId,
+  authorEmailByUserId,
   authorAvatarUrlByUserId = {},
   uploaderDisplayByUserId,
   body,
@@ -415,6 +424,7 @@ export function ThreadPanel({
 }: {
   messages: ReportMessage[];
   authorNameByUserId: Record<string, string>;
+  authorEmailByUserId?: Record<string, string>;
   authorAvatarUrlByUserId?: Record<string, string | null>;
   uploaderDisplayByUserId: Record<string, string>;
   attachmentsByMessageId: Map<string, WorkspaceAttachment[]>;
@@ -521,6 +531,7 @@ export function ThreadPanel({
                 onEditDraftChange={handleEditDraftChange}
                 messageById={messageById}
                 authorNameByUserId={authorNameByUserId}
+                authorEmailByUserId={authorEmailByUserId}
                 authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                 uploaderDisplayByUserId={uploaderDisplayByUserId}
                 currentUserId={currentUserId}

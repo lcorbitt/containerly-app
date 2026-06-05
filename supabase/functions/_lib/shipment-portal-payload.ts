@@ -2,7 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { listAlertsForContainers } from "@models/alerts.ts";
 import { listContainersForShipment } from "@models/containers.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
-import { fetchProfileImagePathsByUserIds } from "@models/profiles.ts";
+import { fetchProfileEmailsByUserIds, fetchProfileImagePathsByUserIds } from "@models/profiles.ts";
 import {
   queryReportMessagesForContainers,
   queryReportMessagesForShipment,
@@ -216,10 +216,10 @@ export async function buildShipmentPortalPayload(
         .filter((id): id is string => Boolean(id)),
     ),
   ];
-  const profileImagePathByUserId = await fetchProfileImagePathsByUserIds(
-    admin,
-    messageAuthorUserIds,
-  );
+  const [profileImagePathByUserId, profileEmailByUserId] = await Promise.all([
+    fetchProfileImagePathsByUserIds(admin, messageAuthorUserIds),
+    fetchProfileEmailsByUserIds(admin, messageAuthorUserIds),
+  ]);
 
   const [{ data: attContainer }, { data: attShipment }] = await Promise.all([
     containerIds.length > 0
@@ -393,6 +393,7 @@ export async function buildShipmentPortalPayload(
     messages: messagesDecorated,
     attachments: attachmentsDecorated,
     profile_image_path_by_user_id: profileImagePathByUserId,
+    profile_email_by_user_id: profileEmailByUserId,
   };
 
   if (includeRaw && primary?.raw_external) {

@@ -60,6 +60,7 @@ export function useContainerWorkspace({
   const [request, setRequest] = useState<TrackingRequest | null>(null);
   const [messages, setMessages] = useState<ReportMessage[]>([]);
   const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
+  const [messageAuthorEmailByUserId, setMessageAuthorEmailByUserId] = useState<Record<string, string>>({});
   const [profileImagePathByUserId, setProfileImagePathByUserId] = useState<
     Record<string, string | null>
   >({});
@@ -206,6 +207,7 @@ export function useContainerWorkspace({
         setRequest(result.request);
         setMessages(result.messages);
         setMessageAuthorByUserId(result.messageAuthorByUserId);
+        setMessageAuthorEmailByUserId(result.messageAuthorEmailByUserId);
         setProfileImagePathByUserId(result.profileImagePathByUserId);
         setActivity(result.activity);
         setActivityEvents(result.activityEvents);
@@ -549,6 +551,7 @@ export function useContainerWorkspace({
 
     threadMessages,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
     body,

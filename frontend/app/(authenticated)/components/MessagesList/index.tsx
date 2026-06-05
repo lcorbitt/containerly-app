@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { formatTimestamp } from "@/utils/datetime";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   MESSAGES_LIST_EMPTY_HINT,
@@ -9,6 +8,8 @@ import {
   MESSAGES_LIST_ROW_LINK_CLASS,
 } from "./constants";
 import {
+  formatMessageListTimestamp,
+  threadAuthorEmail,
   threadAuthorTitle,
   threadHref,
   threadNeedsReply,
@@ -19,16 +20,38 @@ import {
 function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   const needsReply = threadNeedsReply(thread.last_author_kind);
   const preview = truncateMessagePreview(thread.last_message_preview);
+  const authorTitle = threadAuthorTitle(thread);
+  const authorEmail = threadAuthorEmail(thread);
+  const authorNameClass = needsReply
+    ? "text-zinc-900 dark:text-zinc-100"
+    : "text-zinc-800 dark:text-zinc-200";
 
   return (
     <>
-      <p
-        className={`min-w-0 line-clamp-1 text-xs font-bold leading-snug wrap-break-word ${
-          needsReply ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-800 dark:text-zinc-200"
-        }`}
-      >
-        {threadAuthorTitle(thread)}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p
+            className={`min-w-0 truncate text-xs font-bold leading-snug ${authorNameClass}`}
+            title={authorTitle}
+          >
+            {authorTitle}
+          </p>
+          {authorEmail ? (
+            <p
+              className="mt-0.5 min-w-0 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400"
+              title={authorEmail}
+            >
+              {authorEmail}
+            </p>
+          ) : null}
+        </div>
+        <time
+          dateTime={thread.last_message_at}
+          className="shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500"
+        >
+          {formatMessageListTimestamp(thread.last_message_at)}
+        </time>
+      </div>
       <p
         className={`mt-0.5 min-w-0 line-clamp-1 text-[11px] font-medium leading-snug wrap-break-word ${
           needsReply ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-500 dark:text-zinc-500"
@@ -45,9 +68,6 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
           {preview}
         </p>
       ) : null}
-      <p className="mt-1.5 text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">
-        {formatTimestamp(thread.last_message_at)}
-      </p>
     </>
   );
 }

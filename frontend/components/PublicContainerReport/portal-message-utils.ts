@@ -1,3 +1,4 @@
+import { profileDisplayName } from "@/utils/author-display-name";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type { PortalAttachment, ThreadMessage } from "@shared/dto/shipment.dto";
 import { publicThreadAuthorName } from "./utils";
@@ -43,12 +44,34 @@ export function portalAttachmentToWorkspaceAttachment(a: PortalAttachment): Work
   };
 }
 
-export function buildPortalMessageAuthorMap(messages: ThreadMessage[]): Record<string, string> {
+export function buildPortalMessageAuthorMap(
+  messages: ThreadMessage[],
+  profileEmailByUserId?: Record<string, string>,
+): Record<string, string> {
   const map: Record<string, string> = {};
   for (const m of messages) {
-    if (m.author_user_id) {
-      map[m.author_user_id] = publicThreadAuthorName(m);
+    if (!m.author_user_id) continue;
+    if (m.author_kind === "customer") {
+      const email = profileEmailByUserId?.[m.author_user_id]?.trim();
+      map[m.author_user_id] =
+        m.author_display_name?.trim() ||
+        (email ? profileDisplayName({ email }) : publicThreadAuthorName(m));
+      continue;
     }
+    map[m.author_user_id] = publicThreadAuthorName(m);
+  }
+  return map;
+}
+
+export function buildPortalMessageAuthorEmailMap(
+  messages: ThreadMessage[],
+  profileEmailByUserId?: Record<string, string>,
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const m of messages) {
+    if (m.author_kind !== "customer" || !m.author_user_id) continue;
+    const email = profileEmailByUserId?.[m.author_user_id]?.trim();
+    if (email) map[m.author_user_id] = email;
   }
   return map;
 }

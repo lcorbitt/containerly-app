@@ -56,6 +56,7 @@ export function ContainerWorkspace({
 
     threadMessages,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
     body,
@@ -338,6 +339,7 @@ export function ContainerWorkspace({
                 <ThreadPanel
                   messages={threadMessages}
                   authorNameByUserId={messageAuthorByUserId}
+                  authorEmailByUserId={messageAuthorEmailByUserId}
                   authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                   uploaderDisplayByUserId={messageAuthorByUserId}
                   attachmentsByMessageId={attachmentsByMessageId}

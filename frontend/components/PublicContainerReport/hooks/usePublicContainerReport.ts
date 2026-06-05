@@ -28,6 +28,7 @@ import {
 } from "@/utils/workspace-tab-counts";
 import {
   buildPortalAttachmentsByMessageId,
+  buildPortalMessageAuthorEmailMap,
   buildPortalMessageAuthorMap,
   portalThreadMessageToReportMessage,
 } from "../portal-message-utils";
@@ -83,9 +84,16 @@ export function usePublicContainerReport({
     [visibleMessages],
   );
 
+  const profileEmailByUserId = payload.profile_email_by_user_id ?? {};
+
   const messageAuthorByUserId = useMemo(
-    () => buildPortalMessageAuthorMap(visibleMessages),
-    [visibleMessages],
+    () => buildPortalMessageAuthorMap(visibleMessages, profileEmailByUserId),
+    [profileEmailByUserId, visibleMessages],
+  );
+
+  const messageAuthorEmailByUserId = useMemo(
+    () => buildPortalMessageAuthorEmailMap(visibleMessages, profileEmailByUserId),
+    [profileEmailByUserId, visibleMessages],
   );
 
   const authorAvatarUrlByUserId = useMemo(
@@ -328,6 +336,7 @@ export function usePublicContainerReport({
     setupDismissBusy,
     currentUserId,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
 

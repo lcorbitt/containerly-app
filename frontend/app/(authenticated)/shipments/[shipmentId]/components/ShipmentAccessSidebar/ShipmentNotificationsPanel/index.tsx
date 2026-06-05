@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell } from "lucide-react";
+import { SIDEBAR_SETTINGS_LABEL_CLASS } from "../ShipmentSidebarSettingsRow/constants";
 import {
   SHIPMENT_NOTIFICATIONS_SUBSCRIBE_BTN_ACTIVE_CLASS,
   SHIPMENT_NOTIFICATIONS_SUBSCRIBE_BTN_CLASS,
@@ -14,9 +15,7 @@ export function ShipmentNotificationsPanel({ state }: { state: ShipmentNotificat
 
   return (
     <section aria-label="Shipment notifications">
-      <h3 className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-        Notifications
-      </h3>
+      <h3 className={SIDEBAR_SETTINGS_LABEL_CLASS}>Notifications</h3>
       <button
         type="button"
         disabled={saving}

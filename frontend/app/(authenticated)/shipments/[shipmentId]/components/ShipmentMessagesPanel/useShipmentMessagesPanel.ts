@@ -68,6 +68,7 @@ export function useShipmentMessagesPanel({
   const messages = threadQuery.data?.ok ? threadQuery.data.messages : [];
   const attachments = threadQuery.data?.ok ? threadQuery.data.attachments : [];
   const messageAuthorByUserId = threadQuery.data?.ok ? threadQuery.data.messageAuthorByUserId : {};
+  const messageAuthorEmailByUserId = threadQuery.data?.ok ? threadQuery.data.messageAuthorEmailByUserId : {};
   const profileImagePathByUserId = threadQuery.data?.ok
     ? threadQuery.data.profileImagePathByUserId
     : {};
@@ -266,6 +267,7 @@ export function useShipmentMessagesPanel({
     shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     currentUserId,
     attachmentsByMessageId,

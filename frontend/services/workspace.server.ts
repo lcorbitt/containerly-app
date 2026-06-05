@@ -133,6 +133,7 @@ export async function loadContainerWorkspaceDataForUser(
   const profileIds = [...new Set([...authorIds, ...uploaderIds])];
 
   const nameByUser: Record<string, string> = {};
+  const emailByUser: Record<string, string> = {};
   const profileImagePathByUserId: Record<string, string | null> = {};
   if (profileIds.length > 0) {
     const { data: profs } = await supabase
@@ -141,6 +142,8 @@ export async function loadContainerWorkspaceDataForUser(
       .in("id", profileIds);
     for (const p of profs ?? []) {
       const id = p.id as string;
+      const email = (p.email as string | null)?.trim() ?? "";
+      if (email) emailByUser[id] = email;
       nameByUser[id] = profileDisplayName({
         full_name: p.full_name as string | null,
         email: p.email as string | null,
@@ -184,6 +187,7 @@ export async function loadContainerWorkspaceDataForUser(
     request: tr as TrackingRequest,
     messages: msgList,
     messageAuthorByUserId: nameByUser,
+    messageAuthorEmailByUserId: emailByUser,
     profileImagePathByUserId,
     activity: (act as ReportActivity[]) ?? [],
     activityEvents,

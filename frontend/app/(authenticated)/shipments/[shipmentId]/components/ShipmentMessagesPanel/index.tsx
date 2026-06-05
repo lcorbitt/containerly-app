@@ -35,6 +35,7 @@ export function ShipmentMessagesPanel({
     shipmentLabel,
     threadMessages,
     messageAuthorByUserId,
+    messageAuthorEmailByUserId,
     authorAvatarUrlByUserId,
     currentUserId,
     attachmentsByMessageId,
@@ -98,6 +99,7 @@ export function ShipmentMessagesPanel({
           pinToLatest={pinToLatest}
           scrollComposerIntoView={pinToLatest}
           authorNameByUserId={messageAuthorByUserId}
+          authorEmailByUserId={messageAuthorEmailByUserId}
           authorAvatarUrlByUserId={authorAvatarUrlByUserId}
           uploaderDisplayByUserId={messageAuthorByUserId}
           attachmentsByMessageId={attachmentsByMessageId}

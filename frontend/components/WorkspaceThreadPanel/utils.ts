@@ -174,13 +174,29 @@ export function threadMessageAuthorName(
   nameByUserId: Record<string, string>,
 ): string {
   if (m.author_kind === "system") return "System";
-  if (m.author_kind === "customer") return m.author_display_name?.trim() || "Importer";
+  if (m.author_kind === "customer") {
+    if (m.author_user_id && nameByUserId[m.author_user_id]) {
+      return nameByUserId[m.author_user_id]!;
+    }
+    return m.author_display_name?.trim() || "Importer";
+  }
   if (m.author_user_id && nameByUserId[m.author_user_id]) {
     return nameByUserId[m.author_user_id]!;
   }
   const stored = m.author_display_name?.trim();
   if (stored) return stored;
   return "Team member";
+}
+
+export function threadMessageAuthorEmail(
+  m: ReportMessage,
+  emailByUserId: Record<string, string> | undefined,
+): string | null {
+  if (m.author_kind !== "customer") return null;
+  const uid = m.author_user_id;
+  if (!uid) return null;
+  const email = emailByUserId?.[uid]?.trim();
+  return email || null;
 }
 
 export function scrollThreadToLatest(

@@ -173,4 +173,6 @@ export type ShipmentPortalPayload = {
   preview?: boolean;
   /** `profiles.profile_image_path` for message authors (resolve to public URL on the client). */
   profile_image_path_by_user_id?: Record<string, string | null>;
+  /** `profiles.email` for message authors (shown on customer messages in the thread). */
+  profile_email_by_user_id?: Record<string, string>;
 };

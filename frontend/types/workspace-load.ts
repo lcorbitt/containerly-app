@@ -18,6 +18,7 @@ export type ContainerWorkspaceLoadResult =
       request: TrackingRequest;
       messages: ReportMessage[];
       messageAuthorByUserId: Record<string, string>;
+      messageAuthorEmailByUserId: Record<string, string>;
       profileImagePathByUserId: Record<string, string | null>;
       activity: ReportActivity[];
       activityEvents: ShipmentActivityEvent[];
@@ -35,6 +36,7 @@ export type ShipmentScopeLoadResult =
       messages: ReportMessage[];
       attachments: WorkspaceAttachment[];
       messageAuthorByUserId: Record<string, string>;
+      messageAuthorEmailByUserId: Record<string, string>;
       profileImagePathByUserId: Record<string, string | null>;
       currentUserId: string;
     };
@@ -56,6 +58,8 @@ export interface ShipmentMessageThreadSummary {
   last_author_user_id: string | null;
   /** Resolved display label for the latest message author. */
   last_author_name: string;
+  /** Customer email for the latest message author, when applicable. */
+  last_author_email: string | null;
   message_count: number;
 }
 
