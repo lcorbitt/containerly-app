@@ -28,15 +28,16 @@ import {
   THREAD_MESSAGE_AUTHOR_ROW_CLASS,
   THREAD_MESSAGE_AVATAR_CLASS,
   THREAD_MESSAGE_BUBBLE_CLASS,
+  THREAD_MESSAGE_ACTION_DELETE_BUTTON_CLASS,
+  THREAD_MESSAGE_ACTION_BUTTON_CLASS,
+  THREAD_MESSAGE_ACTION_ICON_CLASS,
+  THREAD_MESSAGE_ACTION_TOOLBAR_CLASS,
+  THREAD_MESSAGE_ACTION_TOOLBAR_INNER_CLASS,
   THREAD_MESSAGE_CONTENT_PAD_CLASS,
   THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS,
-  THREAD_MESSAGE_CORNER_ACTIONS_CLASS,
+  THREAD_MESSAGE_EDIT_ACTIONS_CLASS,
   THREAD_MESSAGE_QUOTE_SHELL_CLASS,
   THREAD_MESSAGE_TIMESTAMP_CLASS,
-  THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS,
-  THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS,
-  THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS,
-  THREAD_MESSAGE_EDIT_ACTIONS_CLASS,
   THREAD_OWN_COMPOSER_BG_CLASS,
   THREAD_PANEL_COMPOSER_ID,
 } from "./constants";
@@ -208,7 +209,7 @@ function ThreadMessageItem({
           onClick={() => onSaveEditMessage(node.id)}
           disabled={isSavingEdit || !editDraft.trim()}
           aria-label={isSavingEdit ? "Saving message…" : "Save message"}
-          className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+          className={THREAD_MESSAGE_ACTION_BUTTON_CLASS}
         >
           {isSavingEdit ? (
             <span
@@ -217,7 +218,7 @@ function ThreadMessageItem({
             />
           ) : (
             <Check
-              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+              className={THREAD_MESSAGE_ACTION_ICON_CLASS}
               strokeWidth={2}
               aria-hidden
             />
@@ -230,10 +231,10 @@ function ThreadMessageItem({
           onClick={onCancelEditMessage}
           disabled={isSavingEdit}
           aria-label="Cancel editing"
-          className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+          className={THREAD_MESSAGE_ACTION_BUTTON_CLASS}
         >
           <X
-            className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+            className={THREAD_MESSAGE_ACTION_ICON_CLASS}
             strokeWidth={2}
             aria-hidden
           />
@@ -243,7 +244,8 @@ function ThreadMessageItem({
   ) : null;
 
   const cornerActions = (
-    <div className={THREAD_MESSAGE_CORNER_ACTIONS_CLASS}>
+    <div className={THREAD_MESSAGE_ACTION_TOOLBAR_CLASS}>
+      <div className={THREAD_MESSAGE_ACTION_TOOLBAR_INNER_CLASS} role="toolbar" aria-label="Message actions">
       {allowReply && !isEditing ? (
         <ActionHoverTooltip label="Reply">
           <button
@@ -251,10 +253,10 @@ function ThreadMessageItem({
             onClick={() => onReply(node.id)}
             disabled={actionsBusy || Boolean(editingMessageId)}
             aria-label="Reply to this message"
-            className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+            className={THREAD_MESSAGE_ACTION_BUTTON_CLASS}
           >
             <Reply
-              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+              className={THREAD_MESSAGE_ACTION_ICON_CLASS}
               strokeWidth={2}
               aria-hidden
             />
@@ -268,10 +270,10 @@ function ThreadMessageItem({
             onClick={() => onStartEditMessage(node.id)}
             disabled={actionsBusy || Boolean(editingMessageId)}
             aria-label="Edit message"
-            className={THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS}
+            className={THREAD_MESSAGE_ACTION_BUTTON_CLASS}
           >
             <Pencil
-              className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+              className={THREAD_MESSAGE_ACTION_ICON_CLASS}
               strokeWidth={2}
               aria-hidden
             />
@@ -285,7 +287,7 @@ function ThreadMessageItem({
             aria-label={isDeleting ? "Deleting message…" : "Delete message"}
             disabled={actionsBusy}
             onClick={() => onDeleteMessage(node.id)}
-            className={THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS}
+            className={THREAD_MESSAGE_ACTION_DELETE_BUTTON_CLASS}
           >
             {isDeleting ? (
               <span
@@ -294,7 +296,7 @@ function ThreadMessageItem({
               />
             ) : (
               <Trash2
-                className={THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS}
+                className={THREAD_MESSAGE_ACTION_ICON_CLASS}
                 strokeWidth={2}
                 aria-hidden
               />
@@ -302,6 +304,7 @@ function ThreadMessageItem({
           </button>
         </ActionHoverTooltip>
       ) : null}
+      </div>
     </div>
   );
 
@@ -309,6 +312,7 @@ function ThreadMessageItem({
     <div
       className={`${THREAD_MESSAGE_BUBBLE_CLASS} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
     >
+        {cornerActions}
         {parent ? (
           <div
             className={`${THREAD_MESSAGE_QUOTE_SHELL_CLASS} ${threadMessageQuoteClass(
@@ -323,19 +327,8 @@ function ThreadMessageItem({
             </p>
           </div>
         ) : null}
-        {isOwnMessage ? (
-          <>
-            {cornerActions}
-            {editActions}
-            {messageContent}
-          </>
-        ) : (
-          <>
-            {messageContent}
-            {cornerActions}
-            {editActions}
-          </>
-        )}
+        {editActions}
+        {messageContent}
     </div>
   );
 

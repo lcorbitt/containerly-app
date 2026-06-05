@@ -51,21 +51,23 @@ export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0";
 /** Extra bottom space while inline-editing so save/cancel icons sit clear of the editor. */
 export const THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS = "pb-8";
 
-export const THREAD_MESSAGE_CORNER_ACTIONS_CLASS =
-  "absolute top-0 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px] opacity-0 transition-opacity duration-200 ease-out group-hover/card:opacity-100 focus-within:opacity-100";
+export const THREAD_MESSAGE_ACTION_TOOLBAR_CLASS =
+  "pointer-events-none absolute -top-2.5 right-2 z-20 opacity-0 transition-opacity duration-150 ease-out group-hover/card:pointer-events-auto group-hover/card:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100";
+
+export const THREAD_MESSAGE_ACTION_TOOLBAR_INNER_CLASS =
+  "flex items-center gap-0.5 rounded-md border border-zinc-200/90 bg-white/95 px-1 py-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.12)] backdrop-blur-sm dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)]";
 
 export const THREAD_MESSAGE_EDIT_ACTIONS_CLASS =
-  "absolute bottom-1 right-1 z-10 flex items-center gap-0.5 rounded-md bg-transparent p-0.5 backdrop-blur-[2px]";
+  "absolute bottom-1 right-1 z-10 flex items-center gap-0.5 rounded-md border border-zinc-200/90 bg-white/95 px-1 py-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.12)] backdrop-blur-sm dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)]";
 
-/** Reply / edit — dark icon on hover in light mode (readable on pastel bubbles). */
-export const THREAD_MESSAGE_CORNER_ACTION_REPLY_EDIT_CLASS =
-  "group/msg-act inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-zinc-500 transition-colors duration-200 ease-out hover:bg-zinc-900/10 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-50";
+export const THREAD_MESSAGE_ACTION_BUTTON_CLASS =
+  "group/msg-act inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-zinc-500 transition-colors duration-150 ease-out hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-100";
 
-export const THREAD_MESSAGE_CORNER_ACTION_DELETE_CLASS =
-  "group/msg-act inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-600 transition-colors duration-200 ease-out hover:bg-red-950/10 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-red-600 dark:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-200 dark:disabled:hover:text-red-500";
+export const THREAD_MESSAGE_ACTION_DELETE_BUTTON_CLASS =
+  "group/msg-act inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-red-500 transition-colors duration-150 ease-out hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300";
 
-export const THREAD_MESSAGE_CORNER_ACTION_ICON_CLASS =
-  "h-4 w-4 shrink-0 transition-[transform,color] duration-200 ease-out group-hover/msg-act:scale-[1.14]";
+export const THREAD_MESSAGE_ACTION_ICON_CLASS =
+  "h-4 w-4 shrink-0 transition-[transform,color] duration-150 ease-out group-hover/msg-act:scale-110";
 
 export const THREAD_MESSAGE_AVATAR_CLASS = "shrink-0";
 
