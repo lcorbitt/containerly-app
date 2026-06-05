@@ -21,17 +21,10 @@ export interface ContainerSubTabRoute {
   href: string;
 }
 
-export interface ShipmentCustomerPortalSubTabRoute {
-  kind: "shipment-customer-portal";
-  shipmentId: string;
-  href: string;
-}
-
 export type SubTabRoute =
   | ShipmentOperatorSubTabRoute
   | ShipmentHubSubTabRoute
-  | ContainerSubTabRoute
-  | ShipmentCustomerPortalSubTabRoute;
+  | ContainerSubTabRoute;
 
 export interface TopNavBreadcrumbProps {
   org: BreadcrumbSegment | null;

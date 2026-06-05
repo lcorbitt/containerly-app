@@ -39,8 +39,6 @@ export function PublicContainerReport({
   initial: PublicReportPayload;
   readOnlyMessaging?: boolean;
   headerActions?: React.ReactNode;
-  /** When true, an operator is viewing the customer portal — shows a small preview label. */
-  operatorPreview?: boolean;
 }) {
   const {
     payload,

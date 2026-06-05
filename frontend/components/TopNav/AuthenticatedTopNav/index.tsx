@@ -35,9 +35,6 @@ export function AuthenticatedTopNav() {
     hubSubTabLabel,
     hubSubTabHref,
     hubLeafLabel,
-    customerPortalSubTabLabel,
-    customerPortalSubTabHref,
-    customerPortalLeafLabel,
     isFreight,
     openNewShipmentModal,
     openBulkImportModal,
@@ -45,9 +42,9 @@ export function AuthenticatedTopNav() {
     closeNotificationsMenu,
   } = useAuthenticatedTopNav();
 
-  const subTabLabel = hubSubTabLabel ?? customerPortalSubTabLabel ?? activeSubTabName;
-  const subTabHref = hubSubTabHref ?? customerPortalSubTabHref;
-  const leafLabel = hubLeafLabel ?? customerPortalLeafLabel;
+  const subTabLabel = hubSubTabLabel ?? activeSubTabName;
+  const subTabHref = hubSubTabHref;
+  const leafLabel = hubLeafLabel;
   const hasBreadcrumbs = Boolean(orgSegment || tabSegment || subTabLabel || leafLabel);
 
   const breadcrumbProps = {

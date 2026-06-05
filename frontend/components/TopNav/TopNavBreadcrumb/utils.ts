@@ -29,15 +29,6 @@ export function activeNavSegmentFromPathname(
 }
 
 export function parseSubTabRoute(pathname: string): SubTabRoute | null {
-  const customerPortalMatch = pathname.match(/^\/shipments\/([^/]+)\/customer-portal\/?$/);
-  if (customerPortalMatch) {
-    return {
-      kind: "shipment-customer-portal",
-      shipmentId: customerPortalMatch[1]!,
-      href: pathname,
-    };
-  }
-
   const operatorMatch = pathname.match(/^\/shipments\/(?!hub\/)([^/]+)\/?$/);
   if (operatorMatch) {
     return {

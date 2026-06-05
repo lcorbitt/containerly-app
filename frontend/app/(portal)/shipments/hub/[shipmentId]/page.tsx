@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { PublicContainerReport } from "@/components/PublicContainerReport";
 import { PageLoading } from "@/components/PageLoading";
@@ -44,11 +43,6 @@ export default function SharedShipmentTrackingPage({
       if (cancelled) return;
 
       if (r.ok) {
-        // Operators (assignee / org member) get the operator shell + nav, not the customer portal nav.
-        if (r.data.viewer === "org_member") {
-          router.replace(`/shipments/${shipmentId}/customer-portal`);
-          return;
-        }
         setData(r.data);
         setPhase("portal");
         return;
@@ -72,7 +66,7 @@ export default function SharedShipmentTrackingPage({
     return () => {
       cancelled = true;
     };
-  }, [shipmentId, router, reloadKey]);
+  }, [shipmentId, reloadKey]);
 
   if (phase === "loading") {
     return <PageLoading loadingText="Loading Customer Portal…" />;
