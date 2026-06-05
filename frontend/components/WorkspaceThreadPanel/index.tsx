@@ -42,16 +42,12 @@ import {
 import {
   threadMessageAuthorAvatarUrl,
   threadMessageAuthorEmail,
-  threadMessageAuthorName,
-  threadMessageAvatarClass,
   threadMessageAuthorHeadingClass,
   threadMessageAuthorName,
   threadMessageAvatarClass,
-  threadMessageAuthorEmail,
   threadMessageIsOwn,
   threadMessagePalette,
   threadMessageQuoteClass,
-  threadMessageQuoteShellClass,
   threadMessageReplyRingClass,
   threadMessageRowClass,
   threadMessageShellClass,
@@ -151,10 +147,10 @@ function ThreadMessageItem({
 
   const messageContent = (
     <div
-      className={`${threadMessageContentPadClass(isOwnMessage)}${isEditing ? ` ${THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS}` : ""}`}
+      className={`${THREAD_MESSAGE_CONTENT_PAD_CLASS}${isEditing ? ` ${THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS}` : ""}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="min-w-0">
+        <div className={THREAD_MESSAGE_AUTHOR_ROW_CLASS}>
           <span
             className={threadMessageAuthorHeadingClass({
               palette,
@@ -164,15 +160,15 @@ function ThreadMessageItem({
           >
             {authorLabel}
           </span>
-          {authorEmail ? (
-            <p className={THREAD_MESSAGE_AUTHOR_EMAIL_CLASS} title={authorEmail}>
-              {authorEmail}
-            </p>
-          ) : null}
+          <time dateTime={node.created_at} className={THREAD_MESSAGE_TIMESTAMP_CLASS}>
+            {formatShortTimestamp(node.created_at)}
+          </time>
         </div>
-        <time dateTime={node.created_at} className={THREAD_MESSAGE_TIMESTAMP_CLASS}>
-          {formatShortTimestamp(node.created_at)}
-        </time>
+        {authorEmail ? (
+          <p className={THREAD_MESSAGE_AUTHOR_EMAIL_CLASS} title={authorEmail}>
+            {authorEmail}
+          </p>
+        ) : null}
       </div>
       {isEditing ? (
         <div className="mt-2">
@@ -246,7 +242,7 @@ function ThreadMessageItem({
   ) : null;
 
   const cornerActions = (
-    <div className={threadMessageCornerActionsClass(isOwnMessage)}>
+    <div className={THREAD_MESSAGE_CORNER_ACTIONS_CLASS}>
       {allowReply && !isEditing ? (
         <ActionHoverTooltip label="Reply">
           <button
@@ -310,11 +306,11 @@ function ThreadMessageItem({
 
   const bubble = (
     <div
-      className={`${threadMessageBubbleClass(isOwnMessage)} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
+      className={`${THREAD_MESSAGE_BUBBLE_CLASS} ${shell} ${isReplyTarget ? replyTargetRing : ""}`}
     >
         {parent ? (
           <div
-            className={`${threadMessageQuoteShellClass(isOwnMessage)} ${threadMessageQuoteClass(
+            className={`${THREAD_MESSAGE_QUOTE_SHELL_CLASS} ${threadMessageQuoteClass(
               threadMessagePalette({ authorKind: parent.author_kind }),
             )}`}
           >
