@@ -4,13 +4,11 @@ import Link from "next/link";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   MESSAGES_LIST_AUTHOR_EMAIL_CLASS,
-  MESSAGES_LIST_AUTHOR_NAME_CLASS,
-  MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS,
-  MESSAGES_LIST_AUTHOR_SECTION_CLASS,
+  MESSAGES_LIST_AUTHOR_TITLE_CLASS,
   MESSAGES_LIST_CLASS,
   MESSAGES_LIST_EMPTY_HINT,
   MESSAGES_LIST_EMPTY_TITLE,
-  MESSAGES_LIST_ORDER_TITLE_CLASS,
+  MESSAGES_LIST_ORDER_SUBTITLE_CLASS,
   MESSAGES_LIST_PREVIEW_EMPTY_CLASS,
   MESSAGES_LIST_PREVIEW_SHELL_CLASS,
   MESSAGES_LIST_PREVIEW_SHELL_NEEDS_REPLY_CLASS,
@@ -40,11 +38,8 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   return (
     <article className="min-w-0">
       <header className="flex items-start justify-between gap-2">
-        <h3
-          className={MESSAGES_LIST_ORDER_TITLE_CLASS}
-          title={orderTitle}
-        >
-          {orderTitle}
+        <h3 className={MESSAGES_LIST_AUTHOR_TITLE_CLASS} title={authorTitle}>
+          {authorTitle}
         </h3>
         <time
           dateTime={thread.last_message_at}
@@ -54,23 +49,15 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
         </time>
       </header>
 
-      <div className={MESSAGES_LIST_AUTHOR_SECTION_CLASS}>
-        <p
-          className={
-            needsReply
-              ? MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS
-              : MESSAGES_LIST_AUTHOR_NAME_CLASS
-          }
-          title={authorTitle}
-        >
-          {authorTitle}
+      {authorEmail ? (
+        <p className={MESSAGES_LIST_AUTHOR_EMAIL_CLASS} title={authorEmail}>
+          {authorEmail}
         </p>
-        {authorEmail ? (
-          <p className={MESSAGES_LIST_AUTHOR_EMAIL_CLASS} title={authorEmail}>
-            {authorEmail}
-          </p>
-        ) : null}
-      </div>
+      ) : null}
+
+      <p className={MESSAGES_LIST_ORDER_SUBTITLE_CLASS} title={orderTitle}>
+        {orderTitle}
+      </p>
 
       <div
         className={

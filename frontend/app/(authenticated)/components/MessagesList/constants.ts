@@ -10,22 +10,17 @@ export const MESSAGES_LIST_ROW_LINK_CLASS =
 export const MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS =
   "border-rose-200/90 bg-rose-50/50 hover:border-rose-300 hover:bg-rose-50/80 dark:border-rose-900/70 dark:bg-rose-950/25 dark:hover:border-rose-800 dark:hover:bg-rose-950/40";
 
-export const MESSAGES_LIST_ORDER_TITLE_CLASS =
+export const MESSAGES_LIST_AUTHOR_TITLE_CLASS =
   "min-w-0 truncate text-xs font-semibold leading-snug text-zinc-900 dark:text-zinc-50";
 
 export const MESSAGES_LIST_TIMESTAMP_CLASS =
   "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
 
-export const MESSAGES_LIST_AUTHOR_SECTION_CLASS = "mt-1.5 min-w-0";
-
-export const MESSAGES_LIST_AUTHOR_NAME_CLASS =
-  "min-w-0 truncate text-[11px] font-medium leading-snug text-zinc-600 dark:text-zinc-400";
-
-export const MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS =
-  "min-w-0 truncate text-[11px] font-semibold leading-snug text-zinc-800 dark:text-zinc-200";
-
 export const MESSAGES_LIST_AUTHOR_EMAIL_CLASS =
   "mt-0.5 min-w-0 truncate text-[10px] leading-snug text-zinc-400 dark:text-zinc-500";
+
+export const MESSAGES_LIST_ORDER_SUBTITLE_CLASS =
+  "mt-1.5 min-w-0 truncate text-[11px] font-medium leading-snug text-zinc-600 dark:text-zinc-400";
 
 export const MESSAGES_LIST_PREVIEW_SHELL_CLASS =
   "mt-2 rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5 dark:border-zinc-800/80 dark:bg-zinc-950/50";
