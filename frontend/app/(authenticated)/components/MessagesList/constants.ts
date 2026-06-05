@@ -16,18 +16,7 @@ export const MESSAGES_LIST_ORDER_TITLE_CLASS =
 export const MESSAGES_LIST_TIMESTAMP_CLASS =
   "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
 
-export const MESSAGES_LIST_AUTHOR_SECTION_CLASS = "mt-1.5 flex min-w-0 items-start gap-2";
-
-export const MESSAGES_LIST_AUTHOR_META_CLASS = "min-w-0 flex-1";
-
-export const MESSAGES_LIST_AUTHOR_BADGE_BASE_CLASS =
-  "shrink-0 rounded px-1 py-px text-[9px] font-semibold uppercase tracking-wide";
-
-export const MESSAGES_LIST_AUTHOR_BADGE_CUSTOMER_CLASS =
-  "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-200";
-
-export const MESSAGES_LIST_AUTHOR_BADGE_TEAM_CLASS =
-  "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200";
+export const MESSAGES_LIST_AUTHOR_SECTION_CLASS = "mt-1.5 min-w-0";
 
 export const MESSAGES_LIST_AUTHOR_NAME_CLASS =
   "min-w-0 truncate text-[11px] font-medium leading-snug text-zinc-600 dark:text-zinc-400";

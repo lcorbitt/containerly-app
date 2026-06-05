@@ -27,10 +27,6 @@ export function threadAuthorEmail(thread: {
   return email || null;
 }
 
-export function threadAuthorRoleLabel(authorKind: string): "Customer" | "Team" {
-  return authorKind === "customer" ? "Customer" : "Team";
-}
-
 /** LinkedIn-style: time if today, short date (e.g. Jun 4) otherwise. */
 export function formatMessageListTimestamp(iso: string, nowMs = Date.now()): string {
   const date = new Date(iso);

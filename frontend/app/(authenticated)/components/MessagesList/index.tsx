@@ -3,12 +3,8 @@
 import Link from "next/link";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
-  MESSAGES_LIST_AUTHOR_BADGE_BASE_CLASS,
-  MESSAGES_LIST_AUTHOR_BADGE_CUSTOMER_CLASS,
-  MESSAGES_LIST_AUTHOR_BADGE_TEAM_CLASS,
   MESSAGES_LIST_AUTHOR_EMAIL_CLASS,
   MESSAGES_LIST_AUTHOR_NAME_CLASS,
-  MESSAGES_LIST_AUTHOR_META_CLASS,
   MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS,
   MESSAGES_LIST_AUTHOR_SECTION_CLASS,
   MESSAGES_LIST_CLASS,
@@ -27,7 +23,6 @@ import {
 import {
   formatMessageListTimestamp,
   threadAuthorEmail,
-  threadAuthorRoleLabel,
   threadAuthorTitle,
   threadHref,
   threadNeedsReply,
@@ -41,8 +36,6 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   const authorTitle = threadAuthorTitle(thread);
   const authorEmail = threadAuthorEmail(thread);
   const orderTitle = threadOrderSubtitle(thread.order_number, thread.shipment_id);
-  const roleLabel = threadAuthorRoleLabel(thread.last_author_kind);
-  const isCustomer = thread.last_author_kind === "customer";
 
   return (
     <article className="min-w-0">
@@ -62,32 +55,21 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
       </header>
 
       <div className={MESSAGES_LIST_AUTHOR_SECTION_CLASS}>
-        <span
-          className={`${MESSAGES_LIST_AUTHOR_BADGE_BASE_CLASS} ${
-            isCustomer
-              ? MESSAGES_LIST_AUTHOR_BADGE_CUSTOMER_CLASS
-              : MESSAGES_LIST_AUTHOR_BADGE_TEAM_CLASS
-          }`}
+        <p
+          className={
+            needsReply
+              ? MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS
+              : MESSAGES_LIST_AUTHOR_NAME_CLASS
+          }
+          title={authorTitle}
         >
-          {roleLabel}
-        </span>
-        <div className={MESSAGES_LIST_AUTHOR_META_CLASS}>
-          <p
-            className={
-              needsReply
-                ? MESSAGES_LIST_AUTHOR_NAME_NEEDS_REPLY_CLASS
-                : MESSAGES_LIST_AUTHOR_NAME_CLASS
-            }
-            title={authorTitle}
-          >
-            {authorTitle}
+          {authorTitle}
+        </p>
+        {authorEmail ? (
+          <p className={MESSAGES_LIST_AUTHOR_EMAIL_CLASS} title={authorEmail}>
+            {authorEmail}
           </p>
-          {authorEmail ? (
-            <p className={MESSAGES_LIST_AUTHOR_EMAIL_CLASS} title={authorEmail}>
-              {authorEmail}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       <div
