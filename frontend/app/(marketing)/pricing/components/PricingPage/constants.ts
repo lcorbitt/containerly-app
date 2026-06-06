@@ -3,7 +3,7 @@ import type { BillingCycle, FaqItem, FeatureGroup, PricingTier } from "./types";
 
 export const PRICING_EYEBROW = "Pricing";
 
-export const PRICING_HEADLINE = "Pricing that scales with every shipment you move.";
+export const PRICING_HEADLINE = "One seat per teammate. Unlimited portals for customers.";
 
 export const PRICING_SUBHEAD =
   "Start free, invite your team, and upgrade when you are ready to put every shipment behind a branded customer portal. No card required to begin.";

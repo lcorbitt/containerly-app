@@ -23,8 +23,7 @@ export const HOW_IT_WORKS_TOC: readonly HowItWorksTocItem[] = [
 
 export const HOW_IT_WORKS_HERO = {
   eyebrow: "How it works",
-  title:
-    "A documentation-first shipment workflow with invite-gated customer portals, tracking, and shared accountability.",
+  title: "Documentation-first shipments with invite-gated customer portals.",
   subcopy:
     "Containerly replaces fragmented status updates with one credible record. Teams manage commercial details, documents, and milestones in a shipment workspace, then publish the same narrative to verified customers in a branded portal — not anonymous public links.",
   sidebarTitle: "Want to see it live?",
