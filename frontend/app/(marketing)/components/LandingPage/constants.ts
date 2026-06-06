@@ -30,8 +30,8 @@ export const PROBLEM_HEADLINE =
 export const featureCards: readonly FeatureCard[] = [
   {
     icon: Radar,
-    title: "One link, every update",
-    body: "Status, milestones, and history live on one shareable page, so your team is not reconciling three different answers across inboxes.",
+    title: "One portal, verified access",
+    body: "Status, milestones, and history live on one invite-gated portal per shipment, so your team is not reconciling three different answers across inboxes.",
   },
   {
     icon: Bell,
@@ -72,7 +72,7 @@ export const audienceCards: readonly AudienceCard[] = [
     label: "Freight brokers",
     headline: "Stop fielding 'where is my load?' calls",
     pain: "Loads move fast but communication lags behind, and every status question pulls you off the next deal.",
-    outcome: "Send one live link per shipment and look bigger than you are on every load you move.",
+    outcome: "Share one portal link per shipment — customers sign in with their invited email — and look bigger than you are on every load you move.",
   },
   {
     label: "3PLs",
@@ -92,12 +92,12 @@ export const portalSteps: readonly Step[] = [
   {
     n: "01",
     title: "Look like the most professional partner they work with",
-    body: "Hand customers a branded portal to review documents, approve exports, and follow activity, with optional carrier tracking when you turn it on. You set the bar their other suppliers get measured against.",
+    body: "Hand customers a branded portal with per-customer visibility controls — documents, export approvals, and activity — plus optional carrier tracking when you turn it on. You set the bar their other suppliers get measured against.",
   },
   {
     n: "02",
     title: "Cut the inbound that eats your day",
-    body: "Customers self serve status and documents after a short, verified sign up, so the 'where is it' and 'send me that doc again' messages stop landing in your inbox.",
+    body: "Customers self serve status and documents after passwordless sign-in with their invited email, so the 'where is it' and 'send me that doc again' messages stop landing in your inbox.",
   },
   {
     n: "03",
@@ -145,7 +145,7 @@ export const steps: readonly Step[] = [
   {
     n: "04",
     title: "Invite customers into a branded portal",
-    body: "Share a dedicated customer portal where customers and partners self serve documents, shipment details, and the same narrative your team relies on.",
+    body: "Send an invite email or allowlist a customer and share the hub link — they sign in with their invited email and self serve documents, shipment details, and the same narrative your team relies on.",
   },
   {
     n: "05",

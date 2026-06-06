@@ -228,8 +228,12 @@ export function LandingPage() {
               <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How it works</h2>
               <p className="mt-2 max-w-xl text-zinc-600 dark:text-zinc-400">
                 Build the shipment workspace your team trusts, then publish that same clarity to
-                customers through a branded portal with document approvals, messaging, and live
-                milestones.
+                customers through an invite-gated branded portal with document approvals, messaging,
+                and live milestones.{" "}
+                <Link href="/how-it-works" className="font-medium text-zinc-800 underline dark:text-zinc-200">
+                  See sharing and access details
+                </Link>
+                .
               </p>
             </div>
             <Link href="/login" className={`${GHOST_BTN_CLASS} hidden md:inline-flex`}>
