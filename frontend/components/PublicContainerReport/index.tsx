@@ -67,6 +67,8 @@ export function PublicContainerReport({
     authorAvatarUrlByUserId,
     attachmentsByMessageId,
     postMessage,
+    deleteMessage,
+    deletingMessageId,
     handleSetupDismiss,
     handleDocumentOpen,
     commercialDetails,
@@ -222,9 +224,9 @@ export function PublicContainerReport({
                       onReplyParent={setReplyParentId}
                       onClearReplyParent={() => setReplyParentId(null)}
                       currentUserId={currentUserId}
-                      onDeleteMessage={() => {}}
-                      deletingMessageId={null}
-                      allowMessageDelete={false}
+                      onDeleteMessage={(id) => void deleteMessage(id)}
+                      deletingMessageId={deletingMessageId}
+                      allowMessageDelete={!threadReadOnly}
                       allowMessageEdit={false}
                       composerHidden={threadReadOnly}
                       allowReply={!threadReadOnly}

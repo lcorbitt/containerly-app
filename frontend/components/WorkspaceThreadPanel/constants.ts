@@ -40,13 +40,14 @@ export const THREAD_MESSAGE_BUBBLE_CLASS =
 export const THREAD_MESSAGE_QUOTE_SHELL_CLASS =
   "mb-3 border-l-[3px] pl-3 pr-25 rounded-r-md";
 
-export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0";
+/** Right padding keeps long author lines clear of the hover action toolbar. */
+export const THREAD_MESSAGE_CONTENT_PAD_CLASS = "min-w-0 pr-14";
 
 /** Extra bottom space while inline-editing so save/cancel icons sit clear of the editor. */
 export const THREAD_MESSAGE_CONTENT_PAD_EDITING_CLASS = "pb-8";
 
 export const THREAD_MESSAGE_ACTION_TOOLBAR_CLASS =
-  "pointer-events-none absolute -top-2.5 right-2 z-20 opacity-0 transition-opacity duration-150 ease-out group-hover/card:pointer-events-auto group-hover/card:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100";
+  "pointer-events-none absolute top-1.5 right-2 z-20 opacity-0 transition-opacity duration-150 ease-out group-hover/card:pointer-events-auto group-hover/card:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100";
 
 export const THREAD_MESSAGE_ACTION_TOOLBAR_INNER_CLASS =
   "flex items-center gap-0.5 rounded-md border border-zinc-200/90 bg-white/95 px-1 py-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.12)] backdrop-blur-sm dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)]";

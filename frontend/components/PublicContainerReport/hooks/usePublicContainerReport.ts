@@ -3,9 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/constants";
+import { useConfirm } from "@/contexts/confirm-dialog";
 import { useToast } from "@/contexts/toast";
 import { MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
-import { uploadShipmentScopeStandaloneFiles } from "@/services/workspace.service";
+import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
+import {
+  deleteShipmentScopeMessage,
+  uploadShipmentScopeStandaloneFiles,
+} from "@/services/workspace.service";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
 import { orgReportMessagesRealtimeDedupeKey } from "@/hooks/queries/useOrgReportMessagesRealtime";
 import { createClient } from "@/lib/supabase/client";
@@ -44,11 +49,13 @@ export function usePublicContainerReport({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   const [payload, setPayload] = useState(initial);
   const [body, setBody] = useState("");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("timeline");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
@@ -169,6 +176,35 @@ export function usePublicContainerReport({
       setSending(false);
     }
   }, [body, replyParentId, shipmentId, refresh, toast]);
+
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      const ok = await confirm({
+        title: "Delete?",
+        description:
+          "This permanently removes the message. Any replies nested under it will be removed as well.",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
+        variant: "danger",
+      });
+      if (!ok) return;
+      setDeletingMessageId(messageId);
+      try {
+        await deleteShipmentScopeMessage({ messageId, messages: threadMessages });
+        setReplyParentId((prev) => {
+          const ids = collectMessageSubtreeIds(threadMessages, messageId);
+          return prev && ids.has(prev) ? null : prev;
+        });
+        await refresh();
+        toast("Message deleted", "success");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not delete message", "error");
+      } finally {
+        setDeletingMessageId(null);
+      }
+    },
+    [confirm, refresh, threadMessages, toast],
+  );
 
   async function handleSetupDismiss() {
     setSetupDismissBusy(true);
@@ -350,6 +386,8 @@ export function usePublicContainerReport({
     setRejectReasonById,
 
     postMessage,
+    deleteMessage,
+    deletingMessageId,
     handleSetupDismiss,
     handleDocumentOpen,
     handleDocumentReview,
