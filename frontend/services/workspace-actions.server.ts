@@ -15,6 +15,7 @@ import { persistShipmentWorkflowStatus } from "@/services/document-workflow.serv
 import {
   runCustomerDocumentUploadNotification,
   runOperatorDraftsPublishedNotification,
+  runCustomerShipmentMessageNotifications,
   runOperatorShipmentMessageNotifications,
 } from "@/services/notification.server";
 import {
@@ -695,12 +696,13 @@ export async function insertShipmentScopeReportMessageForUser(
   userId: string,
   userEmail: string | null,
   input: {
+    organizationId: string;
     shipmentId: string;
     body: string;
     internalOnly: boolean;
     replyParentId: string | null;
   },
-): Promise<string> {
+): Promise<{ messageId: string; authorKind: "member" | "customer" }> {
   const { data: selfProf } = await supabase
     .from("profiles")
     .select("full_name, email")
@@ -711,15 +713,24 @@ export async function insertShipmentScopeReportMessageForUser(
     email: (selfProf?.email as string | null) ?? userEmail,
   });
 
+  const uploaderKind = await resolveShipmentAttachmentUploaderKind(
+    supabase,
+    input.organizationId,
+    input.shipmentId,
+    userId,
+  );
+  const authorKind = uploaderKind === "customer" ? "customer" : "member";
+  const isInternal = authorKind === "customer" ? false : input.internalOnly;
+
   const { data: inserted, error } = await supabase
     .from("report_messages")
     .insert({
       shipment_id: input.shipmentId,
       container_id: null,
       author_user_id: userId,
-      author_kind: "member",
+      author_kind: authorKind,
       author_display_name: displayName,
-      is_internal: input.internalOnly,
+      is_internal: isInternal,
       body: input.body,
       parent_message_id: input.replyParentId,
     })
@@ -727,7 +738,7 @@ export async function insertShipmentScopeReportMessageForUser(
     .single();
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
-  return (inserted as ReportMessage).id;
+  return { messageId: (inserted as ReportMessage).id, authorKind };
 }
 
 export async function postShipmentScopeMessageWithAttachmentsForUser(
@@ -753,12 +764,23 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     email: (selfProf?.email as string | null) ?? userEmail,
   });
 
-  const messageId = await insertShipmentScopeReportMessageForUser(supabase, userId, userEmail, {
-    shipmentId: input.shipmentId,
-    body: input.body,
-    internalOnly: input.internalOnly,
-    replyParentId: input.replyParentId,
-  });
+  const trimmedBody = input.body.trim();
+  if (!trimmedBody && input.files.length === 0) {
+    throw new Error("Message body or at least one attachment is required.");
+  }
+
+  const { messageId, authorKind } = await insertShipmentScopeReportMessageForUser(
+    supabase,
+    userId,
+    userEmail,
+    {
+      organizationId: input.organizationId,
+      shipmentId: input.shipmentId,
+      body: trimmedBody || " ",
+      internalOnly: input.internalOnly,
+      replyParentId: input.replyParentId,
+    },
+  );
   const attachmentErrors: string[] = [];
   for (const file of input.files) {
     try {
@@ -774,28 +796,43 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     }
   }
 
-  if (!input.internalOnly) {
-    await insertMessageActivityEventForUser(supabase, {
-      shipmentId: input.shipmentId,
-      messageId,
-      body: input.body,
-      authorKind: "member",
-      authorDisplayName: displayName,
-      authorUserId: userId,
-      containerId: null,
-      attachmentCount: input.files.length,
-    });
+  const isPublicMessage = authorKind === "customer" || !input.internalOnly;
+  if (isPublicMessage) {
+    try {
+      await insertMessageActivityEventForUser(supabase, {
+        shipmentId: input.shipmentId,
+        messageId,
+        body: trimmedBody || input.body,
+        authorKind,
+        authorDisplayName: displayName,
+        authorUserId: userId,
+        containerId: null,
+        attachmentCount: input.files.length,
+      });
+    } catch {
+      /* best-effort — customer activity rows use service role on Edge */
+    }
   }
 
   try {
-    await runOperatorShipmentMessageNotifications({
-      organizationId: input.organizationId,
-      shipmentId: input.shipmentId,
-      actorUserId: userId,
-      body: input.body,
-      internalOnly: input.internalOnly,
-      reportMessageId: messageId,
-    });
+    if (authorKind === "customer") {
+      await runCustomerShipmentMessageNotifications({
+        organizationId: input.organizationId,
+        shipmentId: input.shipmentId,
+        customerUserId: userId,
+        body: trimmedBody || input.body,
+        reportMessageId: messageId,
+      });
+    } else {
+      await runOperatorShipmentMessageNotifications({
+        organizationId: input.organizationId,
+        shipmentId: input.shipmentId,
+        actorUserId: userId,
+        body: trimmedBody || input.body,
+        internalOnly: input.internalOnly,
+        reportMessageId: messageId,
+      });
+    }
   } catch {
     /* best-effort */
   }

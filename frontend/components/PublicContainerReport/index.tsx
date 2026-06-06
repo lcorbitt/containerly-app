@@ -69,6 +69,17 @@ export function PublicContainerReport({
     postMessage,
     deleteMessage,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
+    composerPendingFiles,
+    onComposerPickFiles,
+    onRemoveComposerPendingFile,
+    openAttachment,
     handleSetupDismiss,
     handleDocumentOpen,
     commercialDetails,
@@ -212,10 +223,10 @@ export function PublicContainerReport({
                       authorAvatarUrlByUserId={authorAvatarUrlByUserId}
                       uploaderDisplayByUserId={messageAuthorByUserId}
                       attachmentsByMessageId={attachmentsByMessageId}
-                      onOpenAttachment={(row) => void handleDocumentOpen(row.storage_path)}
-                      composerPendingFiles={[]}
-                      onComposerPickFiles={() => {}}
-                      onRemoveComposerPendingFile={() => {}}
+                      onOpenAttachment={(row) => void openAttachment(row)}
+                      composerPendingFiles={composerPendingFiles}
+                      onComposerPickFiles={onComposerPickFiles}
+                      onRemoveComposerPendingFile={onRemoveComposerPendingFile}
                       body={body}
                       onBodyChange={setBody}
                       posting={sending}
@@ -225,9 +236,16 @@ export function PublicContainerReport({
                       onClearReplyParent={() => setReplyParentId(null)}
                       currentUserId={currentUserId}
                       onDeleteMessage={(id) => void deleteMessage(id)}
+                      onStartEditMessage={startEditMessage}
+                      onCancelEditMessage={cancelEditMessage}
+                      onSaveEditMessage={(id) => void saveEditMessage(id)}
+                      editingMessageId={editingMessageId}
+                      editDraft={editDraft}
+                      onEditDraftChange={setEditDraft}
                       deletingMessageId={deletingMessageId}
+                      savingEditMessageId={savingEditMessageId}
                       allowMessageDelete={!threadReadOnly}
-                      allowMessageEdit={false}
+                      allowMessageEdit={!threadReadOnly}
                       composerHidden={threadReadOnly}
                       allowReply={!threadReadOnly}
                       emptyStateText={SHIPMENT_THREAD_EMPTY_STATE_TEXT}

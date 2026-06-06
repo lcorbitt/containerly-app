@@ -5,10 +5,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/constants";
 import { useConfirm } from "@/contexts/confirm-dialog";
 import { useToast } from "@/contexts/toast";
-import { MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
+import {
+  MAX_ATTACHMENT_FILE_BYTES,
+  MAX_ATTACHMENT_SIZE_LABEL,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH,
+} from "@/utils/workspace-files";
 import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import {
+  createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
+  patchReportMessage,
+  postShipmentScopeMessageWithAttachments,
   uploadShipmentScopeStandaloneFiles,
 } from "@/services/workspace.service";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
@@ -17,10 +25,10 @@ import { createClient } from "@/lib/supabase/client";
 import {
   completeImporterPortalSetup,
   fetchShipment,
-  postShipmentThreadMessage,
   reviewShipmentDocument,
 } from "@/services/shipment.service";
 import { createWorkspaceStorageSignedUrl } from "@/services/workspace.service";
+import type { WorkspaceAttachment } from "@/types/database";
 import { buildMessageTree, truncatedReplyPreview } from "@/utils/report-message-tree";
 import type { PublicReportPayload } from "@/types/public-report";
 import type { PortalDetailsTabId } from "../PortalDetailsTabs";
@@ -56,6 +64,10 @@ export function usePublicContainerReport({
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [savingEditMessageId, setSavingEditMessageId] = useState<string | null>(null);
+  const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
   const [dashboardTab, setDashboardTab] = useState<PortalDetailsTabId>("timeline");
   const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
   const [rejectReasonById, setRejectReasonById] = useState<Record<string, string>>({});
@@ -156,26 +168,123 @@ export function usePublicContainerReport({
 
   const postMessage = useCallback(async () => {
     const t = body.trim();
-    if (!t) return;
-    setSending(true);
-    try {
-      const r = await postShipmentThreadMessage({
-        shipmentId,
-        body: t,
-        parentMessageId: replyParentId,
-      });
-      if (!r.ok) {
-        toast(r.error, "error");
+    const files = [...composerPendingFiles];
+    if (!t && files.length === 0) return;
+    if (!organizationId) {
+      toast("Could not send message — organization is missing.", "error");
+      return;
+    }
+    if (files.length > MAX_ATTACHMENTS_PER_MESSAGE) {
+      toast(`You can attach up to ${MAX_ATTACHMENTS_PER_MESSAGE} files per message.`, "info");
+      return;
+    }
+    for (const f of files) {
+      if (f.size > MAX_ATTACHMENT_FILE_BYTES) {
+        toast(`"${f.name}" exceeds the ${MAX_ATTACHMENT_SIZE_LABEL} size limit.`, "error");
         return;
       }
+    }
+    setSending(true);
+    try {
+      const { attachmentErrors } = await postShipmentScopeMessageWithAttachments({
+        organizationId,
+        shipmentId,
+        body: t,
+        replyParentId,
+        files,
+      });
+      for (const msg of attachmentErrors) {
+        toast(msg, "error");
+      }
       setBody("");
+      setComposerPendingFiles([]);
       setReplyParentId(null);
       await refresh();
-      toast("Message sent", "success");
+      toast("Message posted", "success");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not post message", "error");
     } finally {
       setSending(false);
     }
-  }, [body, replyParentId, shipmentId, refresh, toast]);
+  }, [body, composerPendingFiles, organizationId, refresh, replyParentId, shipmentId, toast]);
+
+  const onComposerPickFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files?.length) return;
+      const incoming = Array.from(files);
+      setComposerPendingFiles((prev) => {
+        const cap = MAX_ATTACHMENTS_PER_MESSAGE;
+        const room = cap - prev.length;
+        if (room <= 0) {
+          toast(`You can attach up to ${cap} files per message.`, "info");
+          return prev;
+        }
+        const accepted = incoming.slice(0, room);
+        if (incoming.length > accepted.length) {
+          toast(
+            `Only ${cap} files per message. ${incoming.length - accepted.length} file(s) were not added.`,
+            "info",
+          );
+        }
+        return [...prev, ...accepted];
+      });
+    },
+    [toast],
+  );
+
+  const onRemoveComposerPendingFile = useCallback((index: number) => {
+    setComposerPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const openAttachment = useCallback(
+    async (row: WorkspaceAttachment) => {
+      try {
+        const url = await createWorkspaceAttachmentSignedUrl(row.storage_path);
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not open file", "error");
+      }
+    },
+    [toast],
+  );
+
+  const startEditMessage = useCallback(
+    (messageId: string) => {
+      const msg = threadMessages.find((m) => m.id === messageId);
+      if (!msg) return;
+      setEditingMessageId(messageId);
+      setEditDraft(msg.body);
+    },
+    [threadMessages],
+  );
+
+  const cancelEditMessage = useCallback(() => {
+    setEditingMessageId(null);
+    setEditDraft("");
+  }, []);
+
+  const saveEditMessage = useCallback(
+    async (messageId: string) => {
+      const trimmed = editDraft.trim();
+      if (!trimmed) {
+        toast("Message cannot be empty.", "error");
+        return;
+      }
+      setSavingEditMessageId(messageId);
+      try {
+        await patchReportMessage({ messageId, body: trimmed });
+        setEditingMessageId(null);
+        setEditDraft("");
+        await refresh();
+        toast("Message updated", "success");
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not update message", "error");
+      } finally {
+        setSavingEditMessageId(null);
+      }
+    },
+    [editDraft, refresh, toast],
+  );
 
   const deleteMessage = useCallback(
     async (messageId: string) => {
@@ -388,6 +497,17 @@ export function usePublicContainerReport({
     postMessage,
     deleteMessage,
     deletingMessageId,
+    editingMessageId,
+    editDraft,
+    setEditDraft,
+    startEditMessage,
+    cancelEditMessage,
+    saveEditMessage,
+    savingEditMessageId,
+    composerPendingFiles,
+    onComposerPickFiles,
+    onRemoveComposerPendingFile,
+    openAttachment,
     handleSetupDismiss,
     handleDocumentOpen,
     handleDocumentReview,

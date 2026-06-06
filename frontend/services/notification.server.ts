@@ -18,6 +18,7 @@ import {
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
 } from "@supabase-shared/in-app-alerts";
+import { notifyOperatorsNewCustomerMessage } from "@supabase-shared/notification-workflow.service";
 
 function adminClient(): SupabaseClient {
   return createAdminClient();
@@ -131,6 +132,34 @@ export async function runOperatorShipmentMessageNotifications(input: {
     shipmentId: input.shipmentId,
     operatorUserId: input.actorUserId,
     preview,
+    reportMessageId: input.reportMessageId,
+  });
+}
+
+export async function runCustomerShipmentMessageNotifications(input: {
+  organizationId: string;
+  shipmentId: string;
+  customerUserId: string;
+  body: string;
+  reportMessageId: string;
+}): Promise<void> {
+  const preview = stripMessageMarkup(input.body).trim();
+  if (!preview) return;
+
+  const admin = adminClient();
+  const { data: orgRow } = await admin
+    .from("organizations")
+    .select("name")
+    .eq("id", input.organizationId)
+    .maybeSingle();
+
+  await notifyOperatorsNewCustomerMessage(admin, {
+    organizationId: input.organizationId,
+    shipmentId: input.shipmentId,
+    containerId: null,
+    orgName: (orgRow?.name as string | undefined) ?? "Containerly",
+    preview,
+    customerUserId: input.customerUserId,
     reportMessageId: input.reportMessageId,
   });
 }
