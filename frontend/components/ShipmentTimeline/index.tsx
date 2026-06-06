@@ -16,8 +16,6 @@ import {
   TIMELINE_COMMUNICATION_PREVIEW_CLASS,
   TIMELINE_CONNECTOR_PAST_CLASS,
   TIMELINE_DEFAULT_SUBTITLE_CLASS,
-  TIMELINE_LATEST_BADGE_CLASS,
-  TIMELINE_LATEST_BADGE_LABEL,
   TIMELINE_LATEST_NODE_CLASS,
   TIMELINE_PAST_NODE_CLASS,
 } from "./constants";
@@ -172,9 +170,6 @@ export function ShipmentTimelineView({
                             >
                               {label}
                             </span>
-                            {isLatest ? (
-                              <span className={TIMELINE_LATEST_BADGE_CLASS}>{TIMELINE_LATEST_BADGE_LABEL}</span>
-                            ) : null}
                           </div>
                           <time
                             dateTime={ev.occurred_at}

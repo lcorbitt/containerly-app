@@ -116,8 +116,3 @@ export const STEP_CARD_SURFACE_PAST =
 
 export const STEP_CARD_SURFACE_LATEST =
   "border-zinc-300 bg-white shadow-sm ring-1 ring-zinc-200/70 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-600/40";
-
-export const TIMELINE_LATEST_BADGE_CLASS =
-  "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200/80 dark:text-emerald-300 dark:ring-emerald-800/60";
-
-export const TIMELINE_LATEST_BADGE_LABEL = "Current";
