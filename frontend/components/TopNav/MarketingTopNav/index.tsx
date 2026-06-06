@@ -52,7 +52,7 @@ export function MarketingTopNav() {
                 Sign in
               </Link>
               <Link href={MARKETING_TOP_NAV_LOGIN_PATH} className={MARKETING_TOP_NAV_CTA_CLASS}>
-                Get started
+                Get Started
               </Link>
             </div>
 
@@ -99,7 +99,7 @@ export function MarketingTopNav() {
               className={`${MARKETING_TOP_NAV_CTA_CLASS} mt-2 text-center`}
               onClick={closeMobile}
             >
-              Get started
+              Get Started
             </Link>
           </div>
         </div>
