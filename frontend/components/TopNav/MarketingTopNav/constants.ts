@@ -1,5 +1,5 @@
 export const MARKETING_TOP_NAV_LINK_CLASS =
-  "text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white";
+  "text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-white dark:hover:text-primary-orange dark:active:text-primary-orange";
 
 export const MARKETING_TOP_NAV_CTA_CLASS =
   "rounded-full border border-primary-orange/70 bg-white px-4 py-2 text-sm font-semibold text-primary-orange shadow-sm transition-[box-shadow,transform,border-color,background-color] hover:border-primary-orange hover:bg-primary-orange/5 active:scale-[0.98] dark:border-primary-orange/85 dark:bg-black/55 dark:shadow-[0_0_24px_rgba(255,78,0,0.32)] dark:backdrop-blur-sm dark:hover:bg-primary-orange/10 dark:hover:shadow-[0_0_32px_rgba(255,78,0,0.45)]";
