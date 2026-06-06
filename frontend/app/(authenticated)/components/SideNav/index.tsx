@@ -8,7 +8,6 @@ import { useSideNav } from "./hooks/useSideNav";
 import {
   adminNavItems,
   dashboardNavItem,
-  howItWorksNavItem,
   REPORTS_NAV_DISABLED_TOOLTIP,
   reportsNavItem,
   settingsNavItem,
@@ -41,8 +40,6 @@ export function SideNav({
     toggleMessages,
     closeSecondaryPanel,
   } = useSideNav(isSuperAdmin);
-
-  const howItWorksActive = isSideNavLinkActive(pathname, howItWorksNavItem.href);
 
   return (
     <aside className="relative z-[100] box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -94,13 +91,6 @@ export function SideNav({
               label={settingsNavItem.label}
               icon={settingsNavItem.icon}
               active={isSideNavLinkActive(pathname, settingsNavItem.href)}
-            />
-
-            <SideNavLink
-              href={howItWorksNavItem.href}
-              label={howItWorksNavItem.label}
-              icon={howItWorksNavItem.icon}
-              active={howItWorksActive}
             />
           </div>
 

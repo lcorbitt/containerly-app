@@ -1,7 +1,6 @@
 import {
   BarChart2,
   Building2,
-  CircleHelp,
   LayoutDashboard,
   Package,
   Settings,
@@ -13,12 +12,6 @@ export const SIDE_NAV_LINK_SURFACE_CLASS =
 
 export const SIDE_NAV_LINK_HOVER_SURFACE_CLASS =
   "border border-transparent bg-transparent hover:border-zinc-200 hover:bg-zinc-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-950";
-
-export const howItWorksNavItem = {
-  href: "/container-details",
-  label: "How It Works",
-  icon: CircleHelp,
-} as const;
 
 export const reportsNavItem = {
   href: "/reports",
