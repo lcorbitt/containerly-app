@@ -1,16 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  acceptImporterInvite,
-  checkPortalAccessEmail,
-  previewCustomerInvite,
-} from "@/services/shipment.service";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { checkPortalAccessEmail, previewCustomerInvite } from "@/services/shipment.service";
 import { getBrowserAuthSession, verifyEmailOtp } from "@/services/auth.service";
 
 export function useInviteAcceptPanel(token: string) {
-  const router = useRouter();
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [orgName, setOrgName] = useState<string | null>(null);
@@ -22,16 +16,7 @@ export function useInviteAcceptPanel(token: string) {
   const [checkingSession, setCheckingSession] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const acceptAndRedirect = useCallback(async () => {
-    const accept = await acceptImporterInvite(token);
-    if (!accept.ok) {
-      setErrorMessage(accept.error);
-      return false;
-    }
-    router.replace(`/shipments/hub/${accept.shipment_id}`);
-    return true;
-  }, [token, router]);
+  const signInStartedRef = useRef(false);
 
   const signInWithInvitedEmail = useCallback(async (email: string, shipId: string): Promise<boolean> => {
     const r = await checkPortalAccessEmail({ shipmentId: shipId, email });
@@ -79,12 +64,18 @@ export function useInviteAcceptPanel(token: string) {
       setInvitedEmailMasked(preview.invited_email_masked);
       setPreviewLoading(false);
 
+      if (signInStartedRef.current) return;
+      signInStartedRef.current = true;
+
       setCheckingSession(true);
       try {
         const session = await getBrowserAuthSession();
         if (cancelled) return;
-        if (session) {
-          await acceptAndRedirect();
+        if (
+          session?.user?.email &&
+          session.user.email.trim().toLowerCase() === preview.invited_email.trim().toLowerCase()
+        ) {
+          window.location.assign(`/shipments/hub/${preview.shipment_id}`);
           return;
         }
 
@@ -96,7 +87,7 @@ export function useInviteAcceptPanel(token: string) {
     return () => {
       cancelled = true;
     };
-  }, [token, acceptAndRedirect, signInWithInvitedEmail]);
+  }, [token, signInWithInvitedEmail]);
 
   const continueToPortal = useCallback(async () => {
     if (!invitedEmail || !shipmentId) return;

@@ -279,12 +279,37 @@ export async function acceptCustomerInvite(
   if (invErr) throw invErr;
   if (!invite) return { ok: false, status: 404, error: "Invalid or expired invite" };
 
+  const invitedEmail = String(invite.invited_email).trim().toLowerCase();
+  const shipmentId = invite.shipment_id as string;
+
+  if (invite.status === "revoked" || invite.status === "expired") {
+    return { ok: false, status: 410, error: "Invite is no longer valid" };
+  }
+
+  if (invite.status === "accepted") {
+    if (userEmail !== invitedEmail) {
+      return {
+        ok: false,
+        status: 403,
+        error: "Signed-in email does not match the invitation. Sign in with the invited address.",
+        expected_email_hint: invitedEmail.replace(/(^.).*(@.*$)/, "$1***$2"),
+      };
+    }
+    const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
+    if (existing?.id) {
+      await ensureCustomerProfileKind(admin, userId);
+      return {
+        ok: true,
+        already_had_access: true,
+        shipment_id: shipmentId,
+        shipment_access_id: existing.id as string,
+      };
+    }
+    return { ok: false, status: 409, error: "Invite already accepted" };
+  }
+
   if (invite.status !== "pending") {
-    return {
-      ok: false,
-      status: 409,
-      error: invite.status === "accepted" ? "Invite already accepted" : "Invite is no longer valid",
-    };
+    return { ok: false, status: 410, error: "Invite is no longer valid" };
   }
 
   if (new Date(invite.expires_at as string) < new Date()) {
@@ -292,7 +317,6 @@ export async function acceptCustomerInvite(
     return { ok: false, status: 410, error: "This invite has expired" };
   }
 
-  const invitedEmail = String(invite.invited_email).trim().toLowerCase();
   if (userEmail !== invitedEmail) {
     return {
       ok: false,
@@ -302,7 +326,6 @@ export async function acceptCustomerInvite(
     };
   }
 
-  const shipmentId = invite.shipment_id as string;
   const orgId = invite.organization_id as string;
 
   const { data: existing } = await fetchActiveAccessId(admin, shipmentId, userId);
@@ -952,11 +975,18 @@ export async function previewCustomerInvite(
   const { data: invite, error: invErr } = await fetchCustomerInviteByTokenHash(admin, tokenHash);
   if (invErr) throw invErr;
   if (!invite) return { ok: false, status: 404, error: "Invalid or expired invite" };
-  if (invite.status !== "pending") {
+
+  if (invite.status === "revoked" || invite.status === "expired") {
     return { ok: false, status: 410, error: "Invite is no longer valid" };
   }
-  if (new Date(invite.expires_at as string) < new Date()) {
+
+  if (invite.status === "pending" && new Date(invite.expires_at as string) < new Date()) {
+    await updateCustomerInviteStatus(admin, invite.id as string, { status: "expired" });
     return { ok: false, status: 410, error: "This invite has expired" };
+  }
+
+  if (invite.status !== "pending" && invite.status !== "accepted") {
+    return { ok: false, status: 410, error: "Invite is no longer valid" };
   }
 
   const orgId = invite.organization_id as string;
