@@ -18,7 +18,7 @@ export const REJECT_TRIGGER_CLASS =
   "inline-flex shrink-0 items-center justify-center rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:bg-zinc-950 dark:text-red-400 dark:hover:bg-red-950/30";
 
 export const OPEN_LINK_CLASS =
-  "inline-flex shrink-0 items-center gap-1 text-xs font-medium text-sky-800 underline decoration-sky-800/35 underline-offset-2 hover:decoration-sky-800 dark:text-sky-300 dark:decoration-sky-300/40";
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sky-800 transition-colors hover:bg-sky-100 dark:text-sky-300 dark:hover:bg-sky-950/40";
 
 export const PENDING_STATUS_BADGE_CLASS =
   "inline-flex shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200";

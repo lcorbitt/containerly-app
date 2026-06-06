@@ -206,10 +206,10 @@ function PortalDocumentRow({
           <button
             type="button"
             onClick={() => onOpen(attachment.storage_path)}
+            aria-label="Open document"
             className={OPEN_LINK_CLASS}
           >
-            Open view/download
-            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
           </button>
 
           {scopeLabel ? <span className={SCOPE_BADGE_CLASS}>{scopeLabel}</span> : null}
