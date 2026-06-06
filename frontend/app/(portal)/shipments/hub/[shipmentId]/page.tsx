@@ -24,6 +24,12 @@ export default function SharedShipmentTrackingPage({
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    const inviteToken = new URLSearchParams(window.location.search).get("token")?.trim() ?? "";
+    if (inviteToken) {
+      window.location.replace(`/invite/accept?token=${encodeURIComponent(inviteToken)}`);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       setPhase("loading");

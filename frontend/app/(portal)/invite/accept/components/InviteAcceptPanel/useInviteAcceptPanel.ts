@@ -33,6 +33,32 @@ export function useInviteAcceptPanel(token: string) {
     return true;
   }, [token, router]);
 
+  const signInWithInvitedEmail = useCallback(async (email: string, shipId: string): Promise<boolean> => {
+    const r = await checkPortalAccessEmail({ shipmentId: shipId, email });
+    if (!r.ok) {
+      setErrorMessage(r.error);
+      return false;
+    }
+    if (r.outcome === "signed_in" && r.token_hash) {
+      const { error } = await verifyEmailOtp(r.token_hash, r.token_type ?? "magiclink");
+      if (error) {
+        setErrorMessage(error.message);
+        return false;
+      }
+      const session = await getBrowserAuthSession();
+      if (!session) {
+        setErrorMessage(
+          "You're signed in, but your browser didn't keep the session. Disable private/incognito browsing or tracking protection for this site, then try again.",
+        );
+        return false;
+      }
+      window.location.assign(`/shipments/hub/${shipId}`);
+      return true;
+    }
+    setErrorMessage(r.message);
+    return false;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -53,45 +79,35 @@ export function useInviteAcceptPanel(token: string) {
       setInvitedEmailMasked(preview.invited_email_masked);
       setPreviewLoading(false);
 
-      // Already signed in (e.g. existing user clicking the link): accept immediately.
-      const session = await getBrowserAuthSession();
-      if (cancelled) return;
-      if (session) {
-        setCheckingSession(true);
-        await acceptAndRedirect();
-        setCheckingSession(false);
+      setCheckingSession(true);
+      try {
+        const session = await getBrowserAuthSession();
+        if (cancelled) return;
+        if (session) {
+          await acceptAndRedirect();
+          return;
+        }
+
+        await signInWithInvitedEmail(preview.invited_email, preview.shipment_id);
+      } finally {
+        if (!cancelled) setCheckingSession(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, acceptAndRedirect]);
+  }, [token, acceptAndRedirect, signInWithInvitedEmail]);
 
   const continueToPortal = useCallback(async () => {
     if (!invitedEmail || !shipmentId) return;
     setErrorMessage(null);
     setSubmitting(true);
     try {
-      const r = await checkPortalAccessEmail({ shipmentId, email: invitedEmail });
-      if (!r.ok) {
-        setErrorMessage(r.error);
-        return;
-      }
-      if (r.outcome === "signed_in" && r.token_hash) {
-        const { error } = await verifyEmailOtp(r.token_hash, r.token_type ?? "magiclink");
-        if (error) {
-          setErrorMessage(error.message);
-          return;
-        }
-        window.location.assign(`/shipments/hub/${shipmentId}`);
-        return;
-      }
-      // Invite no longer valid (revoked/expired): fall back to the access-request message.
-      setErrorMessage(r.message);
+      await signInWithInvitedEmail(invitedEmail, shipmentId);
     } finally {
       setSubmitting(false);
     }
-  }, [invitedEmail, shipmentId]);
+  }, [invitedEmail, shipmentId, signInWithInvitedEmail]);
 
   return {
     previewLoading,

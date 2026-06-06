@@ -215,11 +215,6 @@ export async function createCustomerInvite(
   const siteUrl = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";
   const invitePath = `/invite/accept?token=${encodeURIComponent(token)}`;
   const invite_url = siteUrl ? `${siteUrl}${invitePath}` : invitePath;
-  // Email CTA points at the hub: the customer enters their email there and receives a
-  // passwordless sign-in link (low-friction). The token `invite_url` above is retained
-  // for the operator copy-link and the legacy /invite/accept route.
-  const hubPath = `/shipments/hub/${shipmentId}`;
-  const hub_url = siteUrl ? `${siteUrl}${hubPath}` : hubPath;
 
   const { data: orgRow } = await fetchOrganizationForPortal(admin, orgId);
   const orgName = (orgRow?.name as string | undefined) ?? "Your logistics team";
@@ -228,7 +223,7 @@ export async function createCustomerInvite(
     const emailResult = await notifyCustomerInviteSent({
       to: emailRaw,
       orgName,
-      inviteUrl: hub_url,
+      inviteUrl: invite_url,
     });
     if (!emailResult.ok) {
       return {
