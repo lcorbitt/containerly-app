@@ -34,6 +34,7 @@ export const MARKETING_TOP_NAV_THEME_TOGGLE_CLASS =
 export const MARKETING_TOP_NAV_LINKS = [
   { href: "/#features", label: "Features" },
   { href: "/how-it-works", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/#security", label: "Security" },
 ] as const;
 
