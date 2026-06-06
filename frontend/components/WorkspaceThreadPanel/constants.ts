@@ -1,4 +1,4 @@
-/** Signed-in operator — own messages (sky blue). */
+/** Signed-in viewer — own messages (sky blue), regardless of operator vs customer role. */
 export const THREAD_OWN_ROOT_BG_CLASS = "bg-sky-100 dark:bg-sky-950/55";
 export const THREAD_OWN_REPLY_BG_CLASS = "bg-sky-100 dark:bg-sky-950/48";
 export const THREAD_OWN_HIGHLIGHT_ROOT_BG_CLASS =
@@ -15,12 +15,6 @@ export const THREAD_OWN_REPLY_RING_CLASS =
 /** Teammates — other org operators (emerald green). */
 export const THREAD_TEAM_ROOT_BG_CLASS = "bg-emerald-100 dark:bg-emerald-950/55";
 export const THREAD_TEAM_REPLY_BG_CLASS = "bg-emerald-100 dark:bg-emerald-950/48";
-export const THREAD_TEAM_OWN_ROOT_BG_CLASS =
-  "border-r-[3px] border-emerald-500/70 bg-emerald-200/85 dark:border-emerald-500/50 dark:bg-emerald-900/58";
-export const THREAD_TEAM_OWN_REPLY_BG_CLASS =
-  "border-r-[3px] border-emerald-500/60 bg-emerald-200/75 dark:border-emerald-500/45 dark:bg-emerald-900/52";
-export const THREAD_TEAM_OWN_AVATAR_RING_CLASS =
-  "ring-2 ring-emerald-500/40 ring-offset-2 ring-offset-zinc-50 dark:ring-emerald-500/35 dark:ring-offset-zinc-950";
 export const THREAD_TEAM_QUOTE_BG_CLASS =
   "border-emerald-400/90 bg-emerald-200/80 py-1.5 dark:border-emerald-500/70 dark:bg-emerald-900/55";
 export const THREAD_TEAM_REPLY_RING_CLASS =

@@ -118,7 +118,6 @@ function ThreadMessageItem({
     currentUserId,
     authorUserId: node.author_user_id,
   });
-  const highlightOwnAsOperator = isOwnMessage && palette === "team";
   const isDeleting = deletingMessageId === node.id;
   const isEditing = editingMessageId === node.id;
   const isSavingEdit = savingEditMessageId === node.id;
@@ -128,11 +127,9 @@ function ThreadMessageItem({
   const authorEmail = threadMessageAuthorEmail(node, authorEmailByUserId);
   const authorAvatarUrl = threadMessageAuthorAvatarUrl(node, authorAvatarUrlByUserId);
 
-  const shell = threadMessageShellClass({ isRoot, palette, isOwnMessage, highlightOwnAsOperator });
+  const shell = threadMessageShellClass({ isRoot, palette, isOwnMessage });
   const avatarClass = threadMessageAvatarClass({
     isOwnMessage,
-    highlightOwnAsOperator,
-    palette,
     baseClass: THREAD_MESSAGE_AVATAR_CLASS,
   });
 
@@ -157,7 +154,6 @@ function ThreadMessageItem({
             className={threadMessageAuthorHeadingClass({
               palette,
               isOwnMessage,
-              highlightOwnAsOperator,
             })}
           >
             {authorLabel}

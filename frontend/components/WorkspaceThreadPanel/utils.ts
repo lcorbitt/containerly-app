@@ -10,9 +10,6 @@ import {
   THREAD_OWN_HIGHLIGHT_ROOT_BG_CLASS,
   THREAD_MESSAGE_CARD_SHADOW_CLASS,
   THREAD_REPLY_CARD_SHADOW_CLASS,
-  THREAD_TEAM_OWN_AVATAR_RING_CLASS,
-  THREAD_TEAM_OWN_REPLY_BG_CLASS,
-  THREAD_TEAM_OWN_ROOT_BG_CLASS,
   THREAD_TEAM_QUOTE_BG_CLASS,
   THREAD_TEAM_REPLY_BG_CLASS,
   THREAD_TEAM_REPLY_RING_CLASS,
@@ -76,24 +73,17 @@ export function threadMessageShellClass({
   isRoot,
   palette,
   isOwnMessage,
-  highlightOwnAsOperator,
 }: {
   isRoot: boolean;
   palette: ThreadMessagePalette;
   isOwnMessage: boolean;
-  /** Operator viewing their own message in a shared thread — sky-blue highlight. */
-  highlightOwnAsOperator: boolean;
 }): string {
   const shadow = isRoot ? THREAD_MESSAGE_CARD_SHADOW_CLASS : THREAD_REPLY_CARD_SHADOW_CLASS;
   const radius = isRoot ? "rounded-2xl" : "rounded-xl";
 
   let bg: string;
-  if (isOwnMessage && highlightOwnAsOperator) {
+  if (isOwnMessage) {
     bg = isRoot ? THREAD_OWN_HIGHLIGHT_ROOT_BG_CLASS : THREAD_OWN_HIGHLIGHT_REPLY_BG_CLASS;
-  } else if (isOwnMessage && palette === "team") {
-    bg = isRoot ? THREAD_TEAM_OWN_ROOT_BG_CLASS : THREAD_TEAM_OWN_REPLY_BG_CLASS;
-  } else if (isOwnMessage) {
-    bg = isRoot ? THREAD_IMPORTER_ROOT_BG_CLASS : THREAD_IMPORTER_REPLY_BG_CLASS;
   } else if (palette === "team") {
     bg = isRoot ? THREAD_TEAM_ROOT_BG_CLASS : THREAD_TEAM_REPLY_BG_CLASS;
   } else {
@@ -105,41 +95,27 @@ export function threadMessageShellClass({
 
 export function threadMessageAvatarClass({
   isOwnMessage,
-  highlightOwnAsOperator,
-  palette,
   baseClass,
 }: {
   isOwnMessage: boolean;
-  highlightOwnAsOperator: boolean;
-  palette: ThreadMessagePalette;
   baseClass: string;
 }): string {
   if (!isOwnMessage) return baseClass;
-  const ring = highlightOwnAsOperator
-    ? THREAD_OWN_AVATAR_RING_CLASS
-    : palette === "team"
-      ? THREAD_TEAM_OWN_AVATAR_RING_CLASS
-      : baseClass;
-  return ring === baseClass ? baseClass : `${baseClass} ${ring}`;
+  return `${baseClass} ${THREAD_OWN_AVATAR_RING_CLASS}`;
 }
 
 export function threadMessageAuthorHeadingClass({
   palette,
   isOwnMessage,
-  highlightOwnAsOperator,
 }: {
   palette: ThreadMessagePalette;
   isOwnMessage: boolean;
-  highlightOwnAsOperator: boolean;
 }): string {
-  if (!isOwnMessage) {
-    return palette === "customer"
-      ? "text-sm font-semibold text-rose-950 dark:text-rose-100"
-      : "text-sm font-semibold text-zinc-900 dark:text-zinc-50";
+  if (isOwnMessage) return "text-sm font-semibold text-sky-950 dark:text-sky-100";
+  if (palette === "customer") {
+    return "text-sm font-semibold text-rose-950 dark:text-rose-100";
   }
-  if (highlightOwnAsOperator) return "text-sm font-semibold text-sky-950 dark:text-sky-100";
-  if (palette === "customer") return "text-sm font-semibold text-rose-950 dark:text-rose-100";
-  return "text-sm font-semibold text-emerald-950 dark:text-emerald-100";
+  return "text-sm font-semibold text-zinc-900 dark:text-zinc-50";
 }
 
 export function threadMessageAuthorName(
