@@ -1,11 +1,18 @@
-import { CustomerTopNav } from "@/components/TopNav";
+import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { PortalLayoutShell } from "./components/PortalLayoutShell";
 
-/** Auth-gated shipment portal — no operator shell, no marketing nav. */
-export default function PortalLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <div className="portal-shell flex min-h-0 flex-1 flex-col">
-      <CustomerTopNav />
-      <main className="relative flex min-h-0 flex-1 flex-col">{children}</main>
-    </div>
-  );
+/** Auth-gated shipment portal — operator top nav when signed in as freight; customer nav otherwise. */
+export default async function PortalLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const session = await loadAuthenticatedLayoutSession();
+  const operatorSession =
+    session && !session.isCustomer
+      ? {
+          userId: session.user.id,
+          initialOrgs: session.initialOrgs,
+          isSuperAdmin: session.isSuperAdmin,
+          initialProfileImagePath: session.profile?.profile_image_path ?? null,
+        }
+      : null;
+
+  return <PortalLayoutShell operatorSession={operatorSession}>{children}</PortalLayoutShell>;
 }
