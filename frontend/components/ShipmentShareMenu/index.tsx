@@ -69,8 +69,8 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
               <div className={SHIPMENT_SHARE_MENU_PANEL_BODY_CLASS}>
                 <ShipmentShareAccessRequests state={state} />
 
-                <div className="space-y-1.5">
-                  <RadioGroup className="flex flex-wrap gap-3">
+                <div className="space-y-4">
+                  <RadioGroup className="flex flex-wrap gap-4">
                     <Radio
                       name="shipment-share-invite-delivery-mode"
                       value="email_invite"
