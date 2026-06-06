@@ -1,22 +1,33 @@
-import assert from "node:assert/strict";
 import {
   parseMessageMarkup,
   serializeMessageMarkup,
   stripMessageMarkup,
 } from "./message-markup";
 
-assert.deepEqual(parseMessageMarkup("plain text"), [{ type: "text", value: "plain text" }]);
+describe("message-markup", () => {
+  it("parses plain text", () => {
+    expect(parseMessageMarkup("plain text")).toEqual([{ type: "text", value: "plain text" }]);
+  });
 
-assert.deepEqual(stripMessageMarkup("**bold** and *italic*"), "bold and italic");
+  it("strips bold and italic markup", () => {
+    expect(stripMessageMarkup("**bold** and *italic*")).toBe("bold and italic");
+  });
 
-const nested = parseMessageMarkup("**bold *and italic* **");
-assert.equal(nested[0]?.type, "bold");
+  it("parses nested bold markup", () => {
+    const nested = parseMessageMarkup("**bold *and italic* **");
+    expect(nested[0]?.type).toBe("bold");
+  });
 
-assert.equal(stripMessageMarkup("\\*not italic\\*"), "*not italic*");
+  it("preserves escaped asterisks", () => {
+    expect(stripMessageMarkup("\\*not italic\\*")).toBe("*not italic*");
+  });
 
-const roundTrip = serializeMessageMarkup(parseMessageMarkup("hello **world**"));
-assert.equal(roundTrip, "hello **world**");
+  it("round-trips markup", () => {
+    const roundTrip = serializeMessageMarkup(parseMessageMarkup("hello **world**"));
+    expect(roundTrip).toBe("hello **world**");
+  });
 
-assert.equal(stripMessageMarkup("~~strike~~ `code`"), "strike code");
-
-console.log("message-markup tests passed");
+  it("strips strike and code markup", () => {
+    expect(stripMessageMarkup("~~strike~~ `code`")).toBe("strike code");
+  });
+});

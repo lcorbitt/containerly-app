@@ -1,5 +1,5 @@
-import type { RefObject } from "react";
 import type { ShipmentAccessTabContentState } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentAccessTabContent/hooks/useShipmentAccessTabContent";
+import type { ShipmentCustomerAccess } from "@/types/database";
 
 export interface ShipmentShareMenuProps {
   shipmentId: string;
@@ -7,18 +7,14 @@ export interface ShipmentShareMenuProps {
   variant?: "hub" | "sidebar";
 }
 
+export type ShipmentShareAccessRowKind = "active" | "pending";
+
 export type ShipmentShareAccessRow = {
   id: string;
+  kind: ShipmentShareAccessRowKind;
   label: string;
   sublabel?: string;
   avatarUrl: string | null;
   role: string;
-};
-
-export type ShipmentShareMenuPanelProps = {
-  shipmentId: string;
-  state: ShipmentAccessTabContentState;
-  menuId: string;
-  panelRef: RefObject<HTMLDivElement | null>;
-  panelPos: { top: number; left: number; width: number };
+  access?: ShipmentCustomerAccess;
 };

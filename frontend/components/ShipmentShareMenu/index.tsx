@@ -2,33 +2,37 @@
 
 import { createPortal } from "react-dom";
 import { ChevronDown, Globe, Link2 } from "lucide-react";
-import { UserAvatar } from "@/components/UserAvatar";
+import { Radio, RadioGroup } from "@/components/Radio";
 import { TextInput } from "@/components/TextInput";
 import { Reveal } from "@/components/Reveal";
 import { WorkspacePostSpinner } from "@/components/WorkspacePostSpinner";
 import {
+  SHIPMENT_SHARE_MENU_ATTENTION_BADGE_CLASS,
+  SHIPMENT_SHARE_MENU_PANEL_BODY_CLASS,
   SHIPMENT_SHARE_MENU_PANEL_CLASS,
   SHIPMENT_SHARE_MENU_PANEL_REVEAL_CLASS,
   SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS,
-  SHIPMENT_SHARE_MENU_PRIMARY_ACTION_HUB_CLASS,
+  SHIPMENT_SHARE_MENU_PRIMARY_ACTION_INNER_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS,
+  SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_SIDEBAR_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_CLASS,
+  SHIPMENT_SHARE_MENU_TRIGGER_LABEL_CLASS,
   SHIPMENT_SHARE_MENU_TRIGGER_SIDEBAR_CLASS,
 } from "./constants";
+import { ShipmentShareAccessRequests } from "./ShipmentShareAccessRequests";
+import { ShipmentShareLastInviteBanner } from "./ShipmentShareLastInviteBanner";
+import { ShipmentSharePeopleList } from "./ShipmentSharePeopleList";
 import type { ShipmentShareMenuProps } from "./types";
 import { useShipmentShareMenu } from "./useShipmentShareMenu";
 import { buildShipmentShareAccessRows, shipmentHubUrl } from "./utils";
 
 export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: ShipmentShareMenuProps) {
-  const primaryActionClass =
-    variant === "hub"
-      ? SHIPMENT_SHARE_MENU_PRIMARY_ACTION_HUB_CLASS
-      : SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS;
   const { menuId, triggerRef, panelRef, open, panelPos, toggle } = useShipmentShareMenu();
   const accessRows = buildShipmentShareAccessRows(state);
   const hubUrl = shipmentHubUrl(shipmentId, state.origin);
   const triggerClass =
     variant === "sidebar" ? SHIPMENT_SHARE_MENU_TRIGGER_SIDEBAR_CLASS : SHIPMENT_SHARE_MENU_TRIGGER_CLASS;
+  const attentionCount = state.pendingAccessRequests.length + state.pendingInvites.length;
 
   async function copyHubLink() {
     try {
@@ -58,95 +62,102 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
               aria-label="Share shipment"
               className={SHIPMENT_SHARE_MENU_PANEL_CLASS}
             >
-                <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-                  <p className="text-center text-sm font-medium text-zinc-900 dark:text-zinc-50">Share</p>
-                </div>
+              <div className="shrink-0 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                <p className="text-center text-sm font-medium text-zinc-900 dark:text-zinc-50">Share</p>
+              </div>
 
-                <div className="space-y-4 p-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <TextInput
-                        type="text"
-                        value={state.inviteEmail}
-                        onChange={(e) => state.setInviteEmail(e.target.value)}
-                        placeholder="Email or group, separated by commas"
-                        autoComplete="off"
-                        containerClassName="min-w-0 flex-1"
-                        className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${
-                          state.inviteFieldError
-                            ? "border-red-400 dark:border-red-600"
-                            : "border-zinc-200 dark:border-zinc-700"
-                        }`}
-                        aria-invalid={state.inviteFieldError ? true : undefined}
-                        aria-describedby={
-                          state.inviteFieldError ? "shipment-share-invite-email-error" : undefined
+              <div className={SHIPMENT_SHARE_MENU_PANEL_BODY_CLASS}>
+                <ShipmentShareAccessRequests state={state} />
+
+                <div className="space-y-1.5">
+                  <RadioGroup className="flex flex-wrap gap-3">
+                    <Radio
+                      name="shipment-share-invite-delivery-mode"
+                      value="email_invite"
+                      checked={state.inviteDeliveryMode === "email_invite"}
+                      onChange={() => state.setInviteDeliveryMode("email_invite")}
+                      label="Send invite email"
+                    />
+                    <Radio
+                      name="shipment-share-invite-delivery-mode"
+                      value="allowlist_only"
+                      checked={state.inviteDeliveryMode === "allowlist_only"}
+                      onChange={() => state.setInviteDeliveryMode("allowlist_only")}
+                      label="Allowlist only"
+                    />
+                  </RadioGroup>
+                  <div className="flex items-center gap-2">
+                    <TextInput
+                      type="text"
+                      value={state.inviteEmail}
+                      onChange={(e) => state.setInviteEmail(e.target.value)}
+                      placeholder="Email or group, separated by commas"
+                      autoComplete="off"
+                      containerClassName="min-w-0 flex-1"
+                      className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#2383E2] focus:outline-none focus:ring-2 focus:ring-[#2383E2]/30 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${
+                        state.inviteFieldError
+                          ? "border-red-400 dark:border-red-600"
+                          : "border-zinc-200 dark:border-zinc-700"
+                      }`}
+                      aria-invalid={state.inviteFieldError ? true : undefined}
+                      aria-describedby={state.inviteFieldError ? "shipment-share-invite-email-error" : undefined}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void state.createInvite();
                         }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void state.createInvite();
-                          }
-                        }}
-                      />
-                      <button
+                      }}
+                    />
+                    <button
                       type="button"
                       disabled={state.inviteCreating}
                       onClick={() => void state.createInvite()}
-                      className={primaryActionClass}
+                      className={SHIPMENT_SHARE_MENU_PRIMARY_ACTION_CLASS}
                     >
-                      {state.inviteCreating ? <WorkspacePostSpinner /> : "Share"}
-                      </button>
-                    </div>
-                    {state.inviteFieldError ? (
-                      <p
-                        id="shipment-share-invite-email-error"
-                        role="alert"
-                        className="text-xs text-red-600 dark:text-red-400"
-                      >
-                        {state.inviteFieldError}
-                      </p>
-                    ) : null}
+                      <span className={SHIPMENT_SHARE_MENU_PRIMARY_ACTION_INNER_CLASS}>
+                        {state.inviteCreating ? <WorkspacePostSpinner /> : "Share"}
+                      </span>
+                    </button>
                   </div>
-
-                  {state.loading ? (
-                    <p className="text-sm text-zinc-500">Loading access…</p>
-                  ) : accessRows.length > 0 ? (
-                    <ul className="max-h-52 space-y-1 overflow-y-auto overscroll-contain">
-                      {accessRows.map((row) => (
-                        <li key={row.id} className="flex items-center justify-between gap-3 rounded-lg px-1 py-1.5">
-                          <span className="flex min-w-0 items-center gap-2.5">
-                            <UserAvatar imageUrl={row.avatarUrl} label={row.label} size="md" />
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                {row.label}
-                              </span>
-                              {row.sublabel ? (
-                                <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">
-                                  {row.sublabel}
-                                </span>
-                              ) : null}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{row.role}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-zinc-500">No customers invited yet.</p>
-                  )}
-
+                  {state.inviteFieldError ? (
+                    <p
+                      id="shipment-share-invite-email-error"
+                      role="alert"
+                      className="text-xs text-red-600 dark:text-red-400"
+                    >
+                      {state.inviteFieldError}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div className="flex items-center justify-end border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => void copyHubLink()}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    <Link2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
-                    Copy link
-                  </button>
-                </div>
+                {state.lastInviteUrl ? (
+                  <ShipmentShareLastInviteBanner
+                    url={state.lastInviteUrl}
+                    origin={state.origin}
+                    onDismiss={() => state.setLastInviteUrl(null)}
+                    onToast={state.toast}
+                  />
+                ) : null}
+
+                {state.loading ? (
+                  <p className="text-sm text-zinc-500">Loading access…</p>
+                ) : accessRows.length > 0 ? (
+                  <ShipmentSharePeopleList rows={accessRows} state={state} />
+                ) : (
+                  <p className="text-sm text-zinc-500">No customers invited yet.</p>
+                )}
+              </div>
+
+              <div className="flex shrink-0 items-center justify-end border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => void copyHubLink()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                >
+                  <Link2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                  Copy link
+                </button>
+              </div>
             </div>
           </Reveal>,
           document.body,
@@ -164,10 +175,17 @@ export function ShipmentShareMenu({ shipmentId, state, variant = "sidebar" }: Sh
         onClick={toggle}
         className={triggerClass}
       >
-        <Globe className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-        Share
+        <span className={SHIPMENT_SHARE_MENU_TRIGGER_LABEL_CLASS}>
+          <Globe className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+          Share
+          {attentionCount > 0 ? (
+            <span className={SHIPMENT_SHARE_MENU_ATTENTION_BADGE_CLASS} aria-label={`${attentionCount} pending`}>
+              {attentionCount}
+            </span>
+          ) : null}
+        </span>
         <ChevronDown
-          className={`${SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS}${open ? " rotate-180" : ""}`}
+          className={`${SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_CLASS}${open ? " rotate-180" : ""}${variant === "sidebar" ? ` ${SHIPMENT_SHARE_MENU_TRIGGER_CHEVRON_SIDEBAR_CLASS}` : ""}`}
           strokeWidth={2}
           aria-hidden
         />

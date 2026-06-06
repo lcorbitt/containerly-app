@@ -1,0 +1,22 @@
+{
+  "imports": {
+    "@shared/": "./_wire/",
+    "@supabase-shared/": "./_lib/",
+    "@models/": "./_models/",
+    "@models/profiles.ts": "./_lib/testing/mocks/profiles.mock.ts",
+    "@models/organization_members.ts": "./_lib/testing/mocks/organization_members.mock.ts",
+    "@models/shipments.ts": "./_lib/testing/mocks/shipments.mock.ts",
+    "@models/customer_invites.ts": "./_lib/testing/mocks/customer_invites.mock.ts",
+    "@models/report_activity.ts": "./_lib/testing/mocks/report_activity.mock.ts",
+    "@models/organizations.ts": "./_lib/testing/mocks/organizations.mock.ts",
+    "@models/shipment_customer_access_requests.ts": "./_lib/testing/mocks/shipment_customer_access_requests.mock.ts",
+    "@supabase-shared/notification-workflow.service.ts": "./_lib/testing/mocks/notification-workflow.mock.ts",
+    "@supabase-shared/in-app-alerts.ts": "./_lib/testing/mocks/in-app-alerts.mock.ts",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window"]
+  },
+  "nodeModulesDir": "auto"
+}

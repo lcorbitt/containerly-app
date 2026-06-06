@@ -227,13 +227,13 @@ input[type="reset"]:disabled {
     animation-duration: 0.15s;
   }
 
-  .nav-bulk-import-btn::before,
-  .nav-bulk-import-btn:hover::after {
+  .primary-orange-btn::before,
+  .primary-orange-btn:hover::after {
     animation: none;
     transition-duration: 0ms;
   }
 
-  .nav-bulk-import-btn:hover::after {
+  .primary-orange-btn:hover::after {
     opacity: 0.12;
     transform: translateX(0) skewX(-10deg);
   }
@@ -244,9 +244,9 @@ input[type="reset"]:disabled {
   input[type="reset"],
   a,
   .color-fade,
-  .nav-bulk-import-btn,
-  .nav-bulk-import-btn::before,
-  .nav-bulk-import-btn::after {
+  .primary-orange-btn,
+  .primary-orange-btn::before,
+  .primary-orange-btn::after {
     transition-duration: 0ms;
   }
 }
@@ -272,8 +272,8 @@ input[type="search"]::-webkit-search-results-button {
   }
 }
 
-/* Top nav — bulk import: light primary (default) → darker primary + shimmer (hover). */
-@keyframes nav-bulk-import-shimmer {
+/* Primary orange CTA: light gradient (default) → darker primary + shimmer (hover). */
+@keyframes primary-orange-btn-shimmer {
   0% {
     transform: translateX(-125%) skewX(-10deg);
   }
@@ -282,7 +282,7 @@ input[type="search"]::-webkit-search-results-button {
   }
 }
 
-.nav-bulk-import-btn {
+.primary-orange-btn {
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -311,7 +311,7 @@ input[type="search"]::-webkit-search-results-button {
 }
 
 /* Darker primary overlay — opacity uses same ease-in-out as other buttons. */
-.nav-bulk-import-btn::before {
+.primary-orange-btn::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -328,7 +328,7 @@ input[type="search"]::-webkit-search-results-button {
   transition: opacity var(--duration-color-fade) var(--ease-color-fade);
 }
 
-.nav-bulk-import-btn::after {
+.primary-orange-btn::after {
   content: "";
   position: absolute;
   top: -10%;
@@ -352,7 +352,7 @@ input[type="search"]::-webkit-search-results-button {
   transition: opacity var(--duration-color-fade) var(--ease-color-fade);
 }
 
-.nav-bulk-import-btn:hover {
+.primary-orange-btn:hover {
   border-color: color-mix(in srgb, var(--color-primary-orange) 88%, #c94100);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.1),
@@ -360,23 +360,23 @@ input[type="search"]::-webkit-search-results-button {
     0 0 10px color-mix(in srgb, var(--color-primary-orange) 14%, transparent);
 }
 
-.nav-bulk-import-btn:hover::before {
+.primary-orange-btn:hover::before {
   opacity: 1;
 }
 
-.nav-bulk-import-btn:hover::after {
+.primary-orange-btn:hover::after {
   opacity: 1;
-  animation: nav-bulk-import-shimmer 3.25s ease-in-out infinite;
+  animation: primary-orange-btn-shimmer 3.25s ease-in-out infinite;
 }
 
-.nav-bulk-import-btn:focus-visible {
+.primary-orange-btn:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px var(--background),
     0 0 0 4px color-mix(in srgb, var(--color-primary-orange) 40%, transparent);
 }
 
-html.dark .nav-bulk-import-btn {
+html.dark .primary-orange-btn {
   border-color: color-mix(in srgb, var(--color-primary-orange) 62%, white);
   background: linear-gradient(
     118deg,
@@ -389,7 +389,7 @@ html.dark .nav-bulk-import-btn {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-html.dark .nav-bulk-import-btn::before {
+html.dark .primary-orange-btn::before {
   background: linear-gradient(
     118deg,
     color-mix(in srgb, var(--color-primary-orange) 96%, #d94a08) 0%,
@@ -398,7 +398,7 @@ html.dark .nav-bulk-import-btn::before {
   );
 }
 
-html.dark .nav-bulk-import-btn:hover {
+html.dark .primary-orange-btn:hover {
   border-color: color-mix(in srgb, var(--color-primary-orange) 90%, #b83c00);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.35),

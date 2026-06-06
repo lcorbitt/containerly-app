@@ -24,6 +24,9 @@ export const HERO_EYEBROW = "For freight brokers, 3PLs, and export teams";
 export const HERO_SUBHEAD =
   "Containerly replaces the email threads, document chasing, and status questions around every shipment with a single shared workspace.";
 
+export const PROBLEM_HEADLINE =
+  "Stop digging through emails and spreadsheets to answer shipment questions.";
+
 export const featureCards: readonly FeatureCard[] = [
   {
     icon: Radar,

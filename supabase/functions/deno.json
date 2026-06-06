@@ -3,9 +3,11 @@
     "@shared/": "./_wire/",
     "@supabase-shared/": "./_lib/",
     "@models/": "./_models/",
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "@std/assert": "jsr:@std/assert@1"
   },
   "compilerOptions": {
     "lib": ["deno.window"]
-  }
+  },
+  "nodeModulesDir": "auto"
 }

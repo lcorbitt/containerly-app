@@ -350,6 +350,15 @@ export function buildShipmentTimelineEvents(input: {
   return items.sort((a, b) => Date.parse(a.occurred_at) - Date.parse(b.occurred_at));
 }
 
+export function getLatestTimelineEventId(
+  events: ShipmentTimelineDisplayEvent[],
+): string | null {
+  if (events.length === 0) return null;
+  return events.reduce((latest, event) =>
+    Date.parse(event.occurred_at) >= Date.parse(latest.occurred_at) ? event : latest,
+  ).id;
+}
+
 export function inferTimelineVisual(
   eventType: string,
   status: string | null,

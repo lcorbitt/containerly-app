@@ -9,6 +9,7 @@ import {
   GHOST_BTN_CLASS,
   HERO_EYEBROW,
   HERO_SUBHEAD,
+  PROBLEM_HEADLINE,
   automationExamples,
   featureCards,
   painBullets,
@@ -81,12 +82,12 @@ export function LandingPage() {
         <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
-              Fragmented information creates expensive conversations
+              {PROBLEM_HEADLINE}
             </h2>
             <p className="mt-3 max-w-xl text-zinc-600 dark:text-zinc-400">
-              When customers cannot self serve, every update becomes a one off reply. Containerly gives
-              operators a professional surface to publish clarity and gives customers a reason to stop
-              opening new threads.
+              Fragmented information creates expensive conversations. When customers cannot self serve,
+              every update becomes a one off reply. Containerly gives operators a professional surface to
+              publish clarity and gives customers a reason to stop opening new threads.
             </p>
           </div>
           <ul className="mt-10 grid gap-3 md:grid-cols-2">

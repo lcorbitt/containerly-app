@@ -1,0 +1,7 @@
+{
+  "name": "supabase-functions",
+  "private": true,
+  "scripts": {
+    "test:edge": "deno test --config deno.test.json --allow-env --no-check _lib/customer-access.service.test.ts"
+  }
+}

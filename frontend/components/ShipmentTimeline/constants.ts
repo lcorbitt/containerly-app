@@ -102,3 +102,22 @@ export const TIMELINE_DEFAULT_SUBTITLE_CLASS =
 
 export const TIMELINE_CARD_TIMESTAMP_CLASS =
   "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
+
+export const TIMELINE_CONNECTOR_PAST_CLASS =
+  "bg-zinc-200/55 dark:bg-zinc-700/45";
+
+export const TIMELINE_PAST_NODE_CLASS =
+  "opacity-60 motion-safe:group-hover:opacity-75 motion-safe:group-hover:scale-100";
+
+export const TIMELINE_LATEST_NODE_CLASS = "scale-105";
+
+export const STEP_CARD_SURFACE_PAST =
+  "border-zinc-200/60 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-zinc-950/40";
+
+export const STEP_CARD_SURFACE_LATEST =
+  "border-zinc-300 bg-white shadow-sm ring-1 ring-zinc-200/70 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-600/40";
+
+export const TIMELINE_LATEST_BADGE_CLASS =
+  "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200/80 dark:text-emerald-300 dark:ring-emerald-800/60";
+
+export const TIMELINE_LATEST_BADGE_LABEL = "Current";

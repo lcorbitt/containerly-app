@@ -87,7 +87,7 @@ export function OperatorShipmentsOverview({
                   <TextInput
                     id="shipments-overview-search"
                     type="search"
-                    placeholder="Search order no., customer, container, tag…"
+                    placeholder="Search order no., customer, tag…"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     disabled={loading}

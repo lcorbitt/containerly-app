@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomSelect } from "@/components/CustomSelect";
+import { RadioGroup, RadioTile } from "@/components/Radio";
 import { useNewTrackingForm } from "./hooks/useNewTrackingForm";
 import { JSONCARGO_CONTAINER_DOCS } from "./constants";
 
@@ -153,77 +154,27 @@ export function NewTrackingForm({
           <legend id="shipment-mode-legend" className="mb-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
             Attach to shipment
           </legend>
-          <div
-            role="radiogroup"
+          <RadioGroup
             aria-labelledby="shipment-mode-legend"
             className="grid grid-cols-1 gap-2 sm:grid-cols-2"
           >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={shipmentMode === "existing"}
-              onClick={() => setShipmentMode("existing")}
-              className={`group flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-[border-color,box-shadow,background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-zinc-500/50 dark:focus-visible:ring-offset-zinc-950 ${
-                shipmentMode === "existing"
-                  ? "border-zinc-900 bg-zinc-50 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-zinc-100 dark:bg-zinc-900/60 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
-                  : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/90 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/40"
-              }`}
-            >
-              <span
-                className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                  shipmentMode === "existing"
-                    ? "border-zinc-900 dark:border-zinc-100"
-                    : "border-zinc-300 dark:border-zinc-600 group-hover:border-zinc-400 dark:group-hover:border-zinc-500"
-                }`}
-                aria-hidden
-              >
-                {shipmentMode === "existing" ? (
-                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
-                ) : null}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Existing shipment
-                </span>
-                <span className="mt-1 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Recommended — attach carrier sync to a commercial shipment you already manage.
-                </span>
-              </span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={shipmentMode === "new"}
-              onClick={() => setShipmentMode("new")}
-              className={`group flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-[border-color,box-shadow,background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-zinc-500/50 dark:focus-visible:ring-offset-zinc-950 ${
-                shipmentMode === "new"
-                  ? "border-zinc-900 bg-zinc-50 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-zinc-100 dark:bg-zinc-900/60 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
-                  : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/90 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/40"
-              }`}
-            >
-              <span
-                className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                  shipmentMode === "new"
-                    ? "border-zinc-900 dark:border-zinc-100"
-                    : "border-zinc-300 dark:border-zinc-600 group-hover:border-zinc-400 dark:group-hover:border-zinc-500"
-                }`}
-                aria-hidden
-              >
-                {shipmentMode === "new" ? (
-                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
-                ) : null}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Quick sync only
-                </span>
-                <span className="mt-1 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Creates a minimal shipment row from the container number. Prefer New Shipment for documentation
-                  workflows.
-                </span>
-              </span>
-            </button>
-          </div>
+            <RadioTile
+              name="shipment-mode"
+              value="existing"
+              checked={shipmentMode === "existing"}
+              onChange={() => setShipmentMode("existing")}
+              title="Existing shipment"
+              description="Recommended — attach carrier sync to a commercial shipment you already manage."
+            />
+            <RadioTile
+              name="shipment-mode"
+              value="new"
+              checked={shipmentMode === "new"}
+              onChange={() => setShipmentMode("new")}
+              title="Quick sync only"
+              description='Creates a minimal shipment row from the container number. Prefer New Shipment for documentation workflows.'
+            />
+          </RadioGroup>
 
           {showShipmentPicker ? (
             <div className="mt-1 flex flex-col gap-1.5">

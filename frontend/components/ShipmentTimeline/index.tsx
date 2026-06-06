@@ -10,14 +10,22 @@ import {
   TONE_STYLES,
   STEP_CARD_BASE,
   STEP_CARD_SURFACE,
+  STEP_CARD_SURFACE_LATEST,
+  STEP_CARD_SURFACE_PAST,
   TIMELINE_CARD_TIMESTAMP_CLASS,
   TIMELINE_COMMUNICATION_PREVIEW_CLASS,
+  TIMELINE_CONNECTOR_PAST_CLASS,
   TIMELINE_DEFAULT_SUBTITLE_CLASS,
+  TIMELINE_LATEST_BADGE_CLASS,
+  TIMELINE_LATEST_BADGE_LABEL,
+  TIMELINE_LATEST_NODE_CLASS,
+  TIMELINE_PAST_NODE_CLASS,
 } from "./constants";
 import {
   buildShipmentTimelineEvents,
   formatTimelineWhen,
   eventHeading,
+  getLatestTimelineEventId,
   inferTimelineVisual,
   isCommunicationTimelineEvent,
   communicationTimelinePreview,
@@ -35,7 +43,7 @@ export type {
   ContainerTimelineViewProps,
 } from "./types";
 export type { TimelineTone } from "./types";
-export { formatTimelineWhen, buildShipmentTimelineEvents } from "./utils";
+export { formatTimelineWhen, buildShipmentTimelineEvents, getLatestTimelineEventId } from "./utils";
 export { useShipmentTimelineOrder, useContainerTimelineOrder } from "./useShipmentTimeline";
 
 export function TimelineOrderToggle({
@@ -73,6 +81,7 @@ export function ShipmentTimelineView({
 }: ShipmentTimelineViewProps) {
   const { displayEvents, orderFadeOut } = order;
   const eventCount = displayEvents.length;
+  const latestEventId = getLatestTimelineEventId(displayEvents);
 
   return (
     <section
@@ -102,6 +111,9 @@ export function ShipmentTimelineView({
                 );
                 const s = TONE_STYLES[tone];
                 const isLast = index === displayEvents.length - 1;
+                const isLatest = ev.id === latestEventId;
+                const isPast = !isLatest;
+                const nextIsLatest = displayEvents[index + 1]?.id === latestEventId;
                 const { title, subtitle } = eventHeading(ev);
                 const isCommunication = isCommunicationTimelineEvent(ev.event_type);
                 const communicationPreview = isCommunication
@@ -117,32 +129,53 @@ export function ShipmentTimelineView({
                     <div className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3">
                       {index > 0 ? (
                         <span
-                          className="pointer-events-none absolute -top-8 bottom-1/2 left-[1.25rem] z-0 w-px -translate-x-1/2 bg-zinc-200 dark:bg-zinc-700"
+                          className={`pointer-events-none absolute -top-8 bottom-1/2 left-[1.25rem] z-0 w-px -translate-x-1/2 ${
+                            isLatest ? s.connector : TIMELINE_CONNECTOR_PAST_CLASS
+                          }`}
                           aria-hidden
                         />
                       ) : null}
                       {!isLast ? (
                         <span
-                          className="pointer-events-none absolute top-1/2 -bottom-8 left-[1.25rem] z-0 w-px -translate-x-1/2 bg-zinc-200 dark:bg-zinc-700"
+                          className={`pointer-events-none absolute top-1/2 -bottom-8 left-[1.25rem] z-0 w-px -translate-x-1/2 ${
+                            nextIsLatest ? s.connector : TIMELINE_CONNECTOR_PAST_CLASS
+                          }`}
                           aria-hidden
                         />
                       ) : null}
                       <div className="relative z-10 flex justify-center">
                         <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-white transition-[transform,box-shadow] duration-200 motion-safe:group-hover:scale-[1.03] dark:ring-offset-zinc-950 ${s.node} ${s.iconGlow}`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-2 ring-offset-2 ring-offset-white transition-[transform,opacity,box-shadow] duration-200 motion-safe:group-hover:scale-[1.03] dark:ring-offset-zinc-950 ${s.node} ${
+                            isLatest ? `${s.iconGlow} ${TIMELINE_LATEST_NODE_CLASS}` : TIMELINE_PAST_NODE_CLASS
+                          }`}
                           aria-hidden
                         >
                           <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2} />
                         </div>
                       </div>
                       <div className="relative z-10 min-w-0">
-                        <div className={`${STEP_CARD_BASE} w-full max-w-none ${STEP_CARD_SURFACE}`}>
+                        <div
+                          className={`${STEP_CARD_BASE} w-full max-w-none ${
+                            isLatest
+                              ? STEP_CARD_SURFACE_LATEST
+                              : isPast
+                                ? STEP_CARD_SURFACE_PAST
+                                : STEP_CARD_SURFACE
+                          }`}
+                        >
                         <div className="flex items-start justify-between gap-2">
-                          <span
-                            className={`inline-flex max-w-full items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${s.chip}`}
-                          >
-                            {label}
-                          </span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex max-w-full items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                                isPast ? "opacity-75" : ""
+                              } ${s.chip}`}
+                            >
+                              {label}
+                            </span>
+                            {isLatest ? (
+                              <span className={TIMELINE_LATEST_BADGE_CLASS}>{TIMELINE_LATEST_BADGE_LABEL}</span>
+                            ) : null}
+                          </div>
                           <time
                             dateTime={ev.occurred_at}
                             className={TIMELINE_CARD_TIMESTAMP_CLASS}
@@ -150,7 +183,13 @@ export function ShipmentTimelineView({
                             {formatTimelineWhen(ev.occurred_at)}
                           </time>
                         </div>
-                        <p className="mt-1 text-[13px] font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
+                        <p
+                          className={`mt-1 text-[13px] leading-snug ${
+                            isLatest
+                              ? "font-semibold text-zinc-900 dark:text-zinc-50"
+                              : "font-medium text-zinc-600 dark:text-zinc-400"
+                          }`}
+                        >
                           {title}
                         </p>
                         {communicationPreview ? (

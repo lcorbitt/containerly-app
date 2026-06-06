@@ -13,7 +13,9 @@ export function buildShipmentShareAccessRows(
   for (const { access, label } of state.activeAccessWithLabels) {
     rows.push({
       id: access.id,
+      kind: "active",
       label,
+      access,
       avatarUrl: getProfileImagePublicUrlBrowser(state.profileImagePathByUserId[access.customer_user_id] ?? null),
       role: "Importer",
     });
@@ -22,6 +24,7 @@ export function buildShipmentShareAccessRows(
   for (const invite of state.pendingInvites) {
     rows.push({
       id: invite.id,
+      kind: "pending",
       label: invite.invited_email,
       sublabel: "Invite pending",
       avatarUrl: null,
