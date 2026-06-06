@@ -24,7 +24,7 @@ export const pricingTiers: readonly PricingTier[] = [
     id: "starter",
     name: "Starter",
     icon: Rocket,
-    tagline: "For small teams running their first portals.",
+    tagline: "For individual teams or small organizations running their first portals.",
     monthlyPrice: 0,
     annualPrice: 0,
     priceUnit: "forever",
