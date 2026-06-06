@@ -84,7 +84,7 @@ export function DashboardTriageBreakdown({
         )}
 
         <Link href="/shipments" className={`${DASHBOARD_TRIAGE_BREAKDOWN_LINK_CLASS} mt-auto pt-4`}>
-          View shipments
+          ViewShipments
           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>

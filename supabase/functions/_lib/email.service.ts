@@ -67,6 +67,19 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function marketingSiteUrl(): string {
+  return Deno.env.get("PUBLIC_SITE_URL")?.trim().replace(/\/$/, "") ?? "";
+}
+
+function poweredByContainerlyFooter(): string {
+  const siteUrl = marketingSiteUrl();
+  const containerlyLink = siteUrl
+    ? `<a href="${escapeHtml(siteUrl)}" style="color:#a1a1aa;text-decoration:underline">Containerly</a>`
+    : "Containerly";
+
+  return `<p style="margin-top:32px;font-size:11px;color:#a1a1aa">Powered by ${containerlyLink}</p>`;
+}
+
 export function buildBrandedEmailHtml(args: {
   orgName: string;
   title: string;
@@ -82,7 +95,7 @@ export function buildBrandedEmailHtml(args: {
 <h2 style="font-size:18px;margin:0 0 12px">${escapeHtml(args.title)}</h2>
 <p>${args.body}</p>
 ${actionBlock}
-<p style="margin-top:32px;font-size:11px;color:#a1a1aa">Powered by Containerly</p>
+${poweredByContainerlyFooter()}
 </body></html>`;
 }
 
