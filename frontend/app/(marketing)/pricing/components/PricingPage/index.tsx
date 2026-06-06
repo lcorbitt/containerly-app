@@ -223,7 +223,10 @@ export function PricingPage() {
         </Reveal>
       </section>
 
-      <section className="border-t border-zinc-200 px-4 py-20 dark:border-white/[0.06] md:px-8">
+      <section
+        id="faq"
+        className="scroll-mt-24 border-t border-zinc-200 px-4 py-20 dark:border-white/[0.06] md:px-8"
+      >
         <Reveal whenInView className="mx-auto max-w-3xl">
           <div className="text-center">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary-orange">

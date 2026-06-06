@@ -324,28 +324,6 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      <footer className="border-t border-zinc-200 px-4 py-10 dark:border-white/[0.06] md:px-8">
-        <Reveal whenInView className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 md:flex-row">
-          <p>{`\u00A9 ${new Date().getFullYear()} Containerly`}</p>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            <Link href="/#before-after" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
-              Why
-            </Link>
-            <Link href="/#audience" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
-              Who it is for
-            </Link>
-            <Link href="/#features" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
-              Product
-            </Link>
-            <Link href="/#customer-portal" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
-              Portal
-            </Link>
-            <Link href="/login" className="transition-colors hover:text-zinc-600 dark:text-zinc-300">
-              App
-            </Link>
-          </div>
-        </Reveal>
-      </footer>
     </>
   );
 }

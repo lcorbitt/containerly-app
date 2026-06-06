@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MarketingFooter } from "./components/MarketingFooter";
 import { MarketingTopNav } from "@/components/TopNav";
 import { SITE_DESCRIPTION, SITE_LANDING_TITLE, SITE_LOGO_PATH } from "@/lib/site-metadata";
 
@@ -26,6 +27,7 @@ export default function MarketingLayout({
     <div className="marketing-shell flex min-h-0 flex-1 flex-col">
       <MarketingTopNav />
       <main className="relative flex min-h-0 flex-1 flex-col">{children}</main>
+      <MarketingFooter />
     </div>
   );
 }
