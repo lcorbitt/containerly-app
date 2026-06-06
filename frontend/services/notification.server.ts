@@ -4,6 +4,9 @@ import { stripMessageMarkup } from "@/utils/message-markup";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   fetchProfileDisplayName,
+  fetchShipmentOrderPhrase,
+  formatActorOnShipmentMessage,
+  messageAlertLinkage,
   notifyCustomersOperatorReply,
   notifyOrgAdminsMemberJoined,
   notifyOperatorsBolImported,
@@ -13,12 +16,12 @@ import {
   notifyOperatorsOriginalsMailed,
   notifyOperatorsTeamMessage,
   notifyOperatorsTrackingLinked,
+  notifyShipmentStakeholdersInApp,
   notifyUserAssignedAsAssignee,
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
 } from "@supabase-shared/in-app-alerts";
-import { notifyOperatorsNewCustomerMessage } from "@supabase-shared/notification-workflow.service";
 
 function adminClient(): SupabaseClient {
   return createAdminClient();
@@ -147,20 +150,23 @@ export async function runCustomerShipmentMessageNotifications(input: {
   if (!preview) return;
 
   const admin = adminClient();
-  const { data: orgRow } = await admin
-    .from("organizations")
-    .select("name")
-    .eq("id", input.organizationId)
-    .maybeSingle();
+  const customerName = await fetchProfileDisplayName(admin, input.customerUserId);
+  const orderPhrase = await fetchShipmentOrderPhrase(admin, input.shipmentId);
 
-  await notifyOperatorsNewCustomerMessage(admin, {
+  await notifyShipmentStakeholdersInApp(admin, {
     organizationId: input.organizationId,
     shipmentId: input.shipmentId,
     containerId: null,
-    orgName: (orgRow?.name as string | undefined) ?? "Containerly",
-    preview,
-    customerUserId: input.customerUserId,
-    reportMessageId: input.reportMessageId,
+    alertType: "MESSAGE_NEW",
+    severity: "warning",
+    message: formatActorOnShipmentMessage(
+      customerName,
+      orderPhrase,
+      preview.slice(0, 160),
+    ),
+    excludeUserId: input.customerUserId,
+    actorUserId: input.customerUserId,
+    ...messageAlertLinkage(input.reportMessageId),
   });
 }
 
