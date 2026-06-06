@@ -2,9 +2,7 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ShipmentShareMenu } from "./index";
-import { createMockShareState, getShareMenuTrigger, mockAccessRequest, mockPendingInvite } from "./test-utils";
-
-const SHIPMENT_ID = "22222222-2222-4222-8222-222222222222";
+import { createMockShareState, getShareMenuTrigger, mockAccessRequest, mockPendingInvite, SHIPMENT_ID } from "./test-utils";
 
 describe("ShipmentShareMenu", () => {
   it("renders Share trigger without badge when nothing is pending", () => {

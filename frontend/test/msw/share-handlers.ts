@@ -1,10 +1,10 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, type RequestHandler } from "msw";
 import { setupServer } from "msw/node";
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import type { ShipmentAccessTabSnapshot } from "@/services/shipment.service";
-import { ORG_ID } from "@/components/ShipmentShareMenu/test-utils";
+import { ORG_ID, SHIPMENT_ID } from "@/components/ShipmentShareMenu/test-utils";
 
-export const SHIPMENT_ID = "22222222-2222-4222-8222-222222222222";
+export { SHIPMENT_ID };
 export const ACCESS_REQUEST_ID = "33333333-3333-4333-8333-333333333333";
 
 const SUPABASE_BASE = "https://test.supabase.co";
@@ -52,6 +52,6 @@ export function resolveAccessRequestHandler(
   );
 }
 
-export function createShareMswServer(...handlers: Parameters<typeof setupServer>[0]) {
+export function createShareMswServer(...handlers: RequestHandler[]) {
   return setupServer(...handlers);
 }
