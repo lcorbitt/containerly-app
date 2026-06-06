@@ -31,7 +31,7 @@ export function GrantAccessSettingsEditor({
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{granteeLabel}</p>
-      <p className="mt-0.5 text-[11px] text-zinc-500">What this importer sees on their shipment page</p>
+      <p className="mt-0.5 text-[11px] text-zinc-500">What this customer sees on their shipment page</p>
 
       <fieldset className="mt-4 space-y-2 text-sm">
         <legend className="sr-only">Visibility</legend>
@@ -57,7 +57,7 @@ export function GrantAccessSettingsEditor({
 
       <div className="mt-4 space-y-2">
         <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-          Note on importer portal
+          Note on customer portal
           <textarea
             value={ov.customer_note}
             onChange={(e) => setOv((o) => ({ ...o, customer_note: e.target.value }))}
@@ -107,7 +107,7 @@ export function GrantAccessSettingsEditor({
           onClick={() => void openPreview()}
           className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200"
         >
-          Preview importer portal
+          Preview customer portal
         </button>
       </div>
 
@@ -116,11 +116,11 @@ export function GrantAccessSettingsEditor({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           role="dialog"
           aria-modal
-          aria-label="Importer portal preview"
+          aria-label="Customer portal preview"
         >
           <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Importer portal preview</p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer portal preview</p>
               <DialogCloseButton onClick={closePreview} />
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-2">

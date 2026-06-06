@@ -11,7 +11,7 @@ export default function ContainerDetailsPage() {
       <div className="mt-6 space-y-4 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         <p>
           Containerly is built for <strong className="font-medium">documentation-first export shipments</strong>.
-          Operators enter commercial details manually, upload export documents, and invite importers to a branded
+          Operators enter commercial details manually, upload export documents, and invite customers to a branded
           portal. Carrier container tracking is an optional premium step after customers approve the paperwork.
         </p>
         <ol className="list-decimal space-y-3 pl-5">
@@ -25,7 +25,7 @@ export default function ContainerDetailsPage() {
             classify document type, and send them for customer review on the portal.
           </li>
           <li>
-            <strong className="font-medium">Customer portal</strong> — importers approve or reject documents, follow
+            <strong className="font-medium">Customer portal</strong> — customers approve or reject documents, follow
             the activity feed, and message your team. Physical mail tracking can be added after approval.
           </li>
           <li>
@@ -55,7 +55,7 @@ export default function ContainerDetailsPage() {
           </p>
         </details>
         <p>
-          Importer accounts (no freight organization) see only shipments partners invited them to. Operators manage
+          Customer accounts (no freight organization) see only shipments partners invited them to. Operators manage
           everything from <Link href="/shipments" className="font-medium underline">Shipments</Link> and the per-shipment
           workspace (documents, invites, messages).
         </p>

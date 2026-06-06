@@ -566,7 +566,7 @@ export async function loadShipmentScopeThreadForUser(
       continue;
     }
     if (m.author_kind === "customer") {
-      nameByUser[uid] = emailByUser[uid] ? profileDisplayName({ email: emailByUser[uid] }) : "Importer";
+      nameByUser[uid] = emailByUser[uid] ? profileDisplayName({ email: emailByUser[uid] }) : "Customer";
     }
   }
 
@@ -946,7 +946,7 @@ function resolveThreadAuthorName(
   profileNameByUserId: Record<string, string>,
 ): string {
   if (authorKind === "customer") {
-    return authorDisplayName?.trim() || "Importer";
+    return authorDisplayName?.trim() || "Customer";
   }
   if (authorUserId && profileNameByUserId[authorUserId]) {
     return profileNameByUserId[authorUserId]!;

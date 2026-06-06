@@ -20,9 +20,9 @@ describe("buildShipmentShareAccessRows", () => {
       id: "access-1",
       kind: "active",
       label: "importer@example.com",
-      role: "Importer",
       avatarUrl: "https://cdn.example.com/avatars/user-abc.png",
     });
+    expect(rows[0].role).toBeUndefined();
     expect(rows[1]).toMatchObject({
       id: "invite-1",
       kind: "pending",

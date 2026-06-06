@@ -36,7 +36,7 @@ export const featureCards: readonly FeatureCard[] = [
   {
     icon: Bell,
     title: "Branded portals customers open",
-    body: "Importers and partners get a clarity your competitors email as PDF attachments, so the experience becomes a reason to keep working with you instead of shopping the next quote.",
+    body: "Customers and partners get a clarity your competitors email as PDF attachments, so the experience becomes a reason to keep working with you instead of shopping the next quote.",
   },
   {
     icon: Workflow,
@@ -145,7 +145,7 @@ export const steps: readonly Step[] = [
   {
     n: "04",
     title: "Invite customers into a branded portal",
-    body: "Share a dedicated customer portal where importers and partners self serve documents, shipment details, and the same narrative your team relies on.",
+    body: "Share a dedicated customer portal where customers and partners self serve documents, shipment details, and the same narrative your team relies on.",
   },
   {
     n: "05",

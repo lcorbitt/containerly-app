@@ -126,7 +126,7 @@ export default function HowItWorksPage() {
                     details, documents, approvals, tracking, and team coordination).
                   </li>
                   <li>
-                    <strong>Customer portal</strong> for sharing the right slice of that record with importers and
+                    <strong>Customer portal</strong> for sharing the right slice of that record with customers and
                     partners (documents, timeline, messages, and updates).
                   </li>
                 </ul>
@@ -149,7 +149,7 @@ export default function HowItWorksPage() {
                     v="Internal users who can collaborate on shipments (admins can manage settings and invites)."
                   />
                   <DefinitionRow
-                    k="Customers (importers/partners)"
+                    k="Customers (partners)"
                     v="External users who access shipments through a portal invite and only see what you share."
                   />
                   <DefinitionRow

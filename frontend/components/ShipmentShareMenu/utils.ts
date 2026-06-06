@@ -17,7 +17,6 @@ export function buildShipmentShareAccessRows(
       label,
       access,
       avatarUrl: getProfileImagePublicUrlBrowser(state.profileImagePathByUserId[access.customer_user_id] ?? null),
-      role: "Importer",
     });
   }
 

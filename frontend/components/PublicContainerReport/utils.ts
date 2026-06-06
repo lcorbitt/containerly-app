@@ -2,7 +2,7 @@ import type { PublicThreadMessage } from "@/types/public-report";
 
 export function publicThreadAuthorName(m: PublicThreadMessage): string {
   if (m.author_kind === "system") return "System";
-  if (m.author_kind === "customer") return m.author_display_name?.trim() || "Importer";
+  if (m.author_kind === "customer") return m.author_display_name?.trim() || "Customer";
   if (m.author_kind === "member") return m.author_display_name?.trim() || "Logistics team";
   return m.author_kind;
 }

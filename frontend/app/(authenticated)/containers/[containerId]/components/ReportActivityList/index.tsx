@@ -3,7 +3,7 @@ import type { ReportActivity } from "@/types/database";
 
 const ACTIVITY_ACTION_LABELS: Record<string, string> = {
   public_view: "Public report viewed (legacy)",
-  customer_message: "Importer message",
+  customer_message: "Customer message",
   customer_invite_created: "Invite sent",
   customer_invite_accepted: "Invite accepted",
 };

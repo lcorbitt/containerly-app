@@ -15,6 +15,6 @@ export type ShipmentShareAccessRow = {
   label: string;
   sublabel?: string;
   avatarUrl: string | null;
-  role: string;
+  role?: string;
   access?: ShipmentCustomerAccess;
 };

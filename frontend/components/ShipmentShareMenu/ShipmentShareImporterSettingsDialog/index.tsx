@@ -30,12 +30,12 @@ export function ShipmentShareImporterSettingsDialog({
       className={SHIPMENT_SHARE_IMPORTER_SETTINGS_DIALOG_CLASS}
       role="dialog"
       aria-modal
-      aria-label={`Importer settings for ${granteeLabel}`}
+      aria-label={`Customer settings for ${granteeLabel}`}
     >
       <div className={SHIPMENT_SHARE_IMPORTER_SETTINGS_DIALOG_PANEL_CLASS}>
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
           <div>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Importer settings</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer settings</p>
             <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{granteeLabel}</p>
           </div>
           <DialogCloseButton onClick={onClose} />

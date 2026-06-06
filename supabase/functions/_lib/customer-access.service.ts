@@ -97,10 +97,10 @@ type Err = { ok: false; status: number; error: string; expected_email_hint?: str
 
 /** Returned when invited_email matches an org admin/member or platform superadmin. */
 export const CUSTOMER_INVITE_OPERATOR_EMAIL_ERROR =
-  "This email belongs to someone on your organization team (admin or member). Customer invites are only for external importer contacts.";
+  "This email belongs to someone on your organization team (admin or member). Customer invites are only for external customer contacts.";
 
 export const CUSTOMER_INVITE_SUPERADMIN_EMAIL_ERROR =
-  "This email belongs to a platform administrator. Customer invites are only for external importer contacts.";
+  "This email belongs to a platform administrator. Customer invites are only for external customer contacts.";
 
 /** Importer accounts: no org membership → `profiles.account_kind = customer`. */
 async function ensureCustomerProfileKind(admin: SupabaseClient, userId: string): Promise<void> {

@@ -304,7 +304,7 @@ export function useShipmentAccessTabContent({
       if (successCount > 1) {
         toast(
           inviteDeliveryMode === "allowlist_only"
-            ? `${successCount} emails allowlisted — share the portal link with your importers.`
+            ? `${successCount} emails allowlisted — share the portal link with your customers.`
             : `${successCount} invite emails sent.`,
           "success",
         );
@@ -313,7 +313,7 @@ export function useShipmentAccessTabContent({
 
       toast(
         inviteDeliveryMode === "allowlist_only"
-          ? "Email allowlisted — share the portal link with your importer."
+          ? "Email allowlisted — share the portal link with your customer."
           : "Invite email sent — copy the link below if needed.",
         "success",
       );

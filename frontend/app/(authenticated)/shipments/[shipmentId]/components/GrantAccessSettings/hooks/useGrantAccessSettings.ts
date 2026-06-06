@@ -72,7 +72,7 @@ export function useGrantAccessSettings({
         visibilitySettings: visibilityPayload(),
         operatorOverrides: overridesPayload(),
       });
-      toast("Importer portal settings saved", "success");
+      toast("Customer portal settings saved", "success");
       onSaved();
     } catch (e) {
       toast(e instanceof Error ? e.message : "Save failed", "error");

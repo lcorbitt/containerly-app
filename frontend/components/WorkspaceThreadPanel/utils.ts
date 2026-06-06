@@ -151,7 +151,7 @@ export function threadMessageAuthorName(
     if (m.author_user_id && nameByUserId[m.author_user_id]) {
       return nameByUserId[m.author_user_id]!;
     }
-    return m.author_display_name?.trim() || "Importer";
+    return m.author_display_name?.trim() || "Customer";
   }
   if (m.author_user_id && nameByUserId[m.author_user_id]) {
     return nameByUserId[m.author_user_id]!;

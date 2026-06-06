@@ -31,9 +31,8 @@ const pendingRow: ShipmentShareAccessRow = {
 const activeRow: ShipmentShareAccessRow = {
   id: "access-1",
   kind: "active",
-  label: "importer@example.com",
+  label: "customer@example.com",
   avatarUrl: null,
-  role: "Importer",
   access: {
     id: "access-1",
     shipment_id: "22222222-2222-4222-8222-222222222222",

@@ -35,7 +35,7 @@ export function ShipmentSharePeopleList({ rows, state }: ShipmentSharePeopleList
 
   async function revokeActiveAccess(id: string) {
     const ok = await confirm({
-      title: "Revoke importer access?",
+      title: "Revoke customer access?",
       description: "They will no longer see this shipment or documents.",
       confirmLabel: "Revoke",
       cancelLabel: "Cancel",
@@ -62,7 +62,9 @@ export function ShipmentSharePeopleList({ rows, state }: ShipmentSharePeopleList
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
-              <span className={SHIPMENT_SHARE_PEOPLE_LIST_ROLE_CLASS}>{row.role}</span>
+              {row.role ? (
+                <span className={SHIPMENT_SHARE_PEOPLE_LIST_ROLE_CLASS}>{row.role}</span>
+              ) : null}
               {row.kind === "pending" ? (
                 <button
                   type="button"
