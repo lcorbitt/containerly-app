@@ -39,7 +39,7 @@ export const HOW_IT_WORKS_ROLE_DEFINITIONS: readonly HowItWorksDefinition[] = [
     v: "Your company workspace. Shipments, members, and permissions are scoped to an organization.",
   },
   {
-    k: "Organization members",
+    k: "Organization members (operators)",
     v: "Internal users who collaborate on shipments. Admins manage settings, branding, and invites; members work on assigned shipments.",
   },
   {
