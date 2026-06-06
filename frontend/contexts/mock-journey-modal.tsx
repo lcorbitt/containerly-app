@@ -1,41 +1,22 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useAtom } from "jotai";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { mockJourneyModalOpenAtom } from "@/atoms/mock-journey-modal";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
 import { MockJourneySimulator } from "@/components/MockJourneySimulator";
-import { fetchRecentTrackingRequestsForOrganization } from "@/services/tracking.service";
-import { emitTrackingCreated } from "@/utils/tracking-created-event";
-import type { TrackingRequest } from "@/types/database";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { fetchRecentTrackingRequestsForOrganization } from "@/services/tracking.service";
+import type { TrackingRequest } from "@/types/database";
+import { emitTrackingCreated } from "@/utils/tracking-created-event";
 
-type MockJourneyModalContextValue = {
-  openMockJourneyModal: () => void;
-};
+export { useMockJourneyModal } from "@/atoms/mock-journey-modal";
 
-const MockJourneyModalContext = createContext<MockJourneyModalContextValue | null>(null);
-
-export function useMockJourneyModal(): MockJourneyModalContextValue {
-  const ctx = useContext(MockJourneyModalContext);
-  if (!ctx) {
-    throw new Error("useMockJourneyModal must be used within MockJourneyModalProvider");
-  }
-  return ctx;
-}
-
-export function MockJourneyModalProvider({ children }: { children: React.ReactNode }) {
+export function MockJourneyModalHost({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useAtom(mockJourneyModalOpenAtom);
   const [requests, setRequests] = useState<TrackingRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const titleId = useId();
@@ -62,7 +43,7 @@ export function MockJourneyModalProvider({ children }: { children: React.ReactNo
 
   const close = useCallback(() => {
     setOpen(false);
-  }, []);
+  }, [setOpen]);
 
   const afterComplete = useCallback(() => {
     emitTrackingCreated();
@@ -88,14 +69,8 @@ export function MockJourneyModalProvider({ children }: { children: React.ReactNo
     };
   }, [open, close]);
 
-  const openMockJourneyModal = useCallback(() => {
-    setOpen(true);
-  }, []);
-
-  const value = useMemo(() => ({ openMockJourneyModal }), [openMockJourneyModal]);
-
   return (
-    <MockJourneyModalContext.Provider value={value}>
+    <>
       {children}
       {open ? (
         <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto sm:items-center sm:p-4">
@@ -142,6 +117,6 @@ export function MockJourneyModalProvider({ children }: { children: React.ReactNo
           </div>
         </div>
       ) : null}
-    </MockJourneyModalContext.Provider>
+    </>
   );
 }

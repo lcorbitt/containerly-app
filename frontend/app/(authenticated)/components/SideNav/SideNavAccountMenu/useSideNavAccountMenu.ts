@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigationProgress } from "@/components/NavigationProgress";
 import { profileMenuLabels } from "@/components/TopNav/AuthenticatedTopNav/utils";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useSessionAvatar } from "@/contexts/session-avatar";
+import { useSessionAvatar } from "@/atoms/session-avatar";
 import { signOutBrowser } from "@/services/auth.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
 import { profileInitials } from "@/utils/display-initials";

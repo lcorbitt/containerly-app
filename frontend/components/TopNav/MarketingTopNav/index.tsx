@@ -86,7 +86,9 @@ export function MarketingTopNav() {
                   </Link>
                 ))
               : null}
-            {!hideMarketingLinks ? <hr className="my-4 border-zinc-200 dark:border-white/10" /> : null}
+            {!hideMarketingLinks ? (
+              <hr className="my-4 border-zinc-200 dark:border-white/10" />
+            ) : null}
             <Link
               href={MARKETING_TOP_NAV_LOGIN_PATH}
               className={MARKETING_TOP_NAV_MOBILE_LINK_CLASS}

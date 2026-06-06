@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
-/* `dark:` utilities apply when `<html class="dark">` (ThemeProvider + ThemeScript). */
+/* `dark:` utilities apply when `<html class="dark">` (theme atom + ThemeScript). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

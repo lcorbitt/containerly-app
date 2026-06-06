@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { MarketingFooter } from "../../../components/MarketingFooter";
 import {
   HOW_IT_WORKS_GLOSSARY,
   HOW_IT_WORKS_HERO,
@@ -61,6 +62,7 @@ function DefinitionRow(props: { k: string; v: ReactNode }) {
 
 export function HowItWorksPage() {
   return (
+    <>
     <main className="min-h-[calc(100vh-4rem)] border-t border-zinc-200 bg-zinc-50 px-4 py-10 dark:border-white/[0.06] dark:bg-zinc-950 md:px-8 md:py-14">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 lg:grid-cols-[16rem_1fr]">
@@ -360,5 +362,7 @@ export function HowItWorksPage() {
         </div>
       </div>
     </main>
+    <MarketingFooter />
+    </>
   );
 }

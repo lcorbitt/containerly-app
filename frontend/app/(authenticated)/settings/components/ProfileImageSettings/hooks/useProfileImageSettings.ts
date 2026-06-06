@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useToast } from "@/contexts/toast";
-import { useOptionalSessionAvatar } from "@/contexts/session-avatar";
+import { useSessionAvatar } from "@/atoms/session-avatar";
 import { assertProfileImageFile } from "@/utils/profile-image";
 import {
   getProfileImagePublicUrlBrowser,
@@ -22,7 +22,7 @@ export function useProfileImageSettings({
   email: string;
 }) {
   const { toast } = useToast();
-  const sessionAvatar = useOptionalSessionAvatar();
+  const { setProfileImagePath } = useSessionAvatar();
   const inputRef = useRef<HTMLInputElement>(null);
   const [path, setPath] = useState<string | null>(initialProfileImagePath);
   const [busy, setBusy] = useState(false);
@@ -33,8 +33,8 @@ export function useProfileImageSettings({
   const refreshPathFromDb = useCallback(async () => {
     const next = await fetchProfileImagePath();
     setPath(next);
-    sessionAvatar?.setProfileImagePath(next);
-  }, [sessionAvatar]);
+    setProfileImagePath(next);
+  }, [setProfileImagePath]);
 
   const onPickFile = useCallback(
     async (fileList: FileList | null) => {
@@ -56,7 +56,7 @@ export function useProfileImageSettings({
         });
 
         setPath(objectPath);
-        sessionAvatar?.setProfileImagePath(objectPath);
+        setProfileImagePath(objectPath);
         toast("Profile photo updated", "success");
       } catch (e) {
         toast(e instanceof Error ? e.message : "Upload failed", "error");
@@ -65,7 +65,7 @@ export function useProfileImageSettings({
         if (inputRef.current) inputRef.current.value = "";
       }
     },
-    [path, sessionAvatar, toast],
+    [path, setProfileImagePath, toast],
   );
 
   const removePhoto = useCallback(async () => {
@@ -83,14 +83,14 @@ export function useProfileImageSettings({
       }
 
       setPath(null);
-      sessionAvatar?.setProfileImagePath(null);
+      setProfileImagePath(null);
       toast("Profile photo removed", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not remove photo", "error");
     } finally {
       setBusy(false);
     }
-  }, [path, sessionAvatar, refreshPathFromDb, toast]);
+  }, [path, setProfileImagePath, refreshPathFromDb, toast]);
 
   const triggerFilePicker = useCallback(() => {
     inputRef.current?.click();

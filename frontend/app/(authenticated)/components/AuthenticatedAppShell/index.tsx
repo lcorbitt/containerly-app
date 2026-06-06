@@ -1,7 +1,7 @@
 import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
-import { SessionAvatarProvider } from "@/contexts/session-avatar";
 import { AuthenticatedTopNav } from "@/components/TopNav";
-import { MockJourneyModalProvider } from "@/contexts/mock-journey-modal";
+import { MockJourneyModalHost } from "@/contexts/mock-journey-modal";
+import { SessionAvatarInit } from "@/components/SessionAvatarInit";
 import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
 import { AuthenticatedMainPane } from "../AuthenticatedMainPane";
 import { OrgWorkspaceRealtimeBridge } from "../OrgWorkspaceRealtimeBridge";
@@ -31,10 +31,10 @@ export function AuthenticatedAppShell({
       isSuperAdmin={isSuperAdmin}
       userId={userId}
     >
-      <SessionAvatarProvider initialProfileImagePath={initialProfileImagePath}>
-        <NewShipmentModalProvider>
-          <MockJourneyModalProvider>
-            <OrgWorkspaceRealtimeBridge />
+      <SessionAvatarInit initialProfileImagePath={initialProfileImagePath} />
+      <NewShipmentModalProvider>
+        <MockJourneyModalHost>
+          <OrgWorkspaceRealtimeBridge />
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
               <AuthenticatedTopNav />
               <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>
@@ -51,9 +51,8 @@ export function AuthenticatedAppShell({
                 </div>
               </div>
             </div>
-          </MockJourneyModalProvider>
-        </NewShipmentModalProvider>
-      </SessionAvatarProvider>
+        </MockJourneyModalHost>
+      </NewShipmentModalProvider>
     </OrganizationWorkspaceProvider>
   );
 }

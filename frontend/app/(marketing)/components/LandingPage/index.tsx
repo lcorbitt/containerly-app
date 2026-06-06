@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarketingFooter } from "../MarketingFooter";
 import { Reveal } from "@/components/Reveal";
 import { Lock, ShieldCheck, Zap } from "lucide-react";
 import { AudienceSection } from "./components/AudienceSection";
@@ -324,6 +325,7 @@ export function LandingPage() {
         </Reveal>
       </section>
 
+      <MarketingFooter />
     </>
   );
 }

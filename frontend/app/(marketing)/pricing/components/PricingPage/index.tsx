@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check, Minus } from "lucide-react";
+import { MarketingFooter } from "../../../components/MarketingFooter";
 import { Reveal } from "@/components/Reveal";
 import {
   ACCENT_BTN_CLASS,
@@ -277,6 +278,8 @@ export function PricingPage() {
           </div>
         </Reveal>
       </section>
+
+      <MarketingFooter />
     </>
   );
 }

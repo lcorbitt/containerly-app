@@ -126,6 +126,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Kebab-case component files (`authenticated-top-nav.tsx`) instead of TitleCase folders
 - Nested `hooks/` folders when `useComponentName.ts` beside `index.tsx` is enough
 - Inline Tailwind class constants or config arrays in `index.tsx` instead of `constants.ts`
+- Heavy React Context for simple client/UI state — prefer **Jotai atoms** (see **§9 Client UI state**)
 
 ---
 
@@ -270,6 +271,58 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ---
 
+### 9. Client UI state (prefer Jotai over heavy Context)
+
+**Default:** use **lean, straightforward [Jotai](https://jotai.org/) atoms** for shared **client/UI state**. Do **not** reach for React Context when a simple atom (or a few atoms) is enough.
+
+**State ownership**
+
+| Kind of state | Tool |
+|---------------|------|
+| Server/async data (fetch, cache, invalidate) | **TanStack Query** (`frontend/hooks/queries/`, `mutations/`) |
+| Simple client/UI state (toggles, filters, selection, panel open, form-adjacent UI flags) | **Jotai atoms** |
+| Component-local state | `useState` in colocated `use<Component>.ts` |
+| Imperative app services (toast, confirm, modal host with callbacks) | **Context** only when an imperative API is the right fit |
+
+**Where atoms live**
+
+- **Shared across routes:** `frontend/atoms/<domain>.ts` (e.g. `frontend/atoms/theme.ts`) — one file per small domain; export plain `atom()` / `atomWithStorage()` values and optional derived atoms.
+- **Route- or feature-scoped:** colocated `atoms.ts` beside the feature (same idea as `constants.ts` / `utils.ts`).
+- **Do not** create a Provider wrapper per atom. Use the app-level **`Provider`** from `jotai` once (e.g. in `AppProviders`) if needed; most atoms need no extra setup.
+
+**Prefer Jotai when**
+
+- The “state” is a **single value or a small, obvious shape** (boolean, string, id, enum, `{ open: boolean }`).
+- Multiple distant components need the **same read/write** without prop drilling.
+- You would otherwise add **Context + Provider + custom hook + `useMemo` value object** for little benefit.
+
+**Keep Context (or refactor slowly) when**
+
+- The API is **imperative** (`toast()`, `confirm()`, `openModal()`) and owns **side effects / portals**.
+- Data is **injected once from a layout/server boundary** and truly is tree-scoped config (e.g. organization workspace payload from RSC).
+- A **third-party** library expects a provider.
+
+**Anti-patterns**
+
+- New `createContext` + Provider + `useX()` hook for one boolean, string, or selected id.
+- Context whose only job is avoiding props between 2–3 siblings (use colocated state, lift one level, or a Jotai atom).
+- Giant context value objects that mix **server data**, **UI flags**, and **actions** — split: Query for server data, atoms for UI flags, thin hooks for actions.
+- Duplicating TanStack Query cache in Context or Jotai.
+
+**Jotai style in this repo**
+
+- Atoms are **small and named by meaning** (`shipmentFiltersAtom`, `sidebarCollapsedAtom`), not “AppState”.
+- **Derived state** → `atom((get) => …)` instead of syncing duplicate state in Context effects.
+- **Persistence** (e.g. theme, sidebar) → `atomWithStorage` in one place; avoid custom Context + `localStorage` effects when Jotai covers it.
+- Components/hooks use `useAtom`, `useAtomValue`, or `useSetAtom` — keep reads/writes obvious; no hidden global singletons outside `frontend/atoms/`.
+
+**When refactoring**
+
+- Replace **thin Context wrappers** with atoms first; leave toast/confirm/workspace-style providers until there is a clear win.
+- Do not migrate working imperative Context APIs to Jotai solely for consistency.
+
+---
+
 ## Dependency flow (one direction)
 
 **UI → Supabase / Next (runtime)**
@@ -301,6 +354,8 @@ When refactoring, **identify and move**:
 | Inline constants (classes, labels, config) | Colocated `constants.ts` |
 | Component prop/object shapes | Colocated `types.ts` (`interface` preferred) |
 | Heavy component logic | Colocated `use<ComponentName>.ts` |
+| Thin Context for UI flags / shared client state | `frontend/atoms/<domain>.ts` or colocated `atoms.ts` (Jotai) |
+| Context + Provider boilerplate for one value | Single Jotai `atom()` + `useAtom` |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 
@@ -319,6 +374,9 @@ frontend/app/container-details/components/ComponentName/
 frontend/hooks/
   queries/
   mutations/
+
+frontend/atoms/
+  theme.ts                    # shared client/UI atoms (Jotai)
 
 frontend/services/
   shipment.service.ts       # browser: fetch /api + Edge
@@ -346,6 +404,7 @@ supabase/functions/<slug>/
 - Predictable data flow: UI → Query → **`frontend/services/*.service.ts`** → HTTP → **Supabase** (`supabase/functions/**` including `_lib`, `_models`, `_wire`), or **`frontend/services/*.server.ts`** via `/api` when privileged.
 - No logic leakage into dumb components.
 - Centralized server state (Query + **`frontend/services/`**).
+- **Lean client/UI state** via **Jotai atoms**; reserve **Context** for imperative services and true tree-injected config — not for simple shared variables.
 - **`shared/dto/`** aligns **frontend services** with **Supabase Edge** HTTP contracts.
 - Route-based (App Router) frontend layout.
 - Single responsibility per layer.

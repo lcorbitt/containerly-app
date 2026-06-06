@@ -1,31 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signInWithPassword, signUpWithEmail } from "@/services/auth.service";
 import {
   LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP,
   LOGIN_FORM_LOADING_TITLE_SIGN_IN,
   LOGIN_FORM_LOADING_TITLE_SIGN_UP,
-} from "../constants";
+} from "./constants";
+import type { LoginFormMode } from "./types";
 
-export function useLoginForm() {
+interface UseLoginFormInput {
+  initialMode: LoginFormMode;
+  next: string;
+}
+
+export function useLoginForm({ initialMode, next }: UseLoginFormInput) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<LoginFormMode>(initialMode);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("mode") === "signup") {
-      setMode("signup");
-    }
-  }, [searchParams]);
 
   const loadingTitle =
     mode === "signup" ? LOGIN_FORM_LOADING_TITLE_SIGN_UP : LOGIN_FORM_LOADING_TITLE_SIGN_IN;
