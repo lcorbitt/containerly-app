@@ -1,7 +1,7 @@
 export type DocumentsListStoredFile = {
   id: string;
   name: string;
-  /** Used with `currentUserId` to show rename/remove only for the uploader. */
+  /** Used with `currentUserId` to show rename only for the uploader. */
   uploadedByUserId?: string;
   /** Shown under the file name (e.g. uploader). */
   uploadedByLabel?: string;
@@ -30,7 +30,9 @@ export type DocumentsListProps = {
   uploading?: boolean;
   onRemoveFile?: (id: string) => void;
   removingFileId?: string | null;
-  /** Signed-in user; with `uploadedByUserId` per file, enables uploader-only rename/remove. */
+  /** When false, any file with `onRemoveFile` can show delete (org operators). Default: uploader only. */
+  removeRestrictedToUploader?: boolean;
+  /** Signed-in user; with `uploadedByUserId` per file, enables uploader-only rename. */
   currentUserId?: string | null;
   onRenameFile?: (id: string, newName: string) => void | Promise<void>;
   renamingFileId?: string | null;

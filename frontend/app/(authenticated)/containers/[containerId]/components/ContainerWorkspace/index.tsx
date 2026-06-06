@@ -415,6 +415,7 @@ export function ContainerWorkspace({
                   onPickFiles={(files) => void pickAttachmentFiles(files)}
                   uploading={uploadingAttachments}
                   onRemoveFile={(id) => void removeAttachment(id)}
+                  removeRestrictedToUploader={false}
                   removingFileId={removingAttachmentId}
                   onRenameFile={(id, name) => renameAttachment(id, name)}
                   renamingFileId={renamingAttachmentId}

@@ -143,14 +143,10 @@ export function useShipmentWorkspaceScopePanel({
     async (attachmentId: string) => {
       const row = attachments.find((a) => a.id === attachmentId);
       if (!row) return;
-      if (currentUserId && row.uploaded_by !== currentUserId) {
-        toast("Only the person who uploaded the file can remove it.", "error");
-        return;
-      }
       const ok = await confirm({
-        title: "Remove file?",
+        title: "Delete document?",
         description: `Permanently delete "${row.file_name}" from this shipment?`,
-        confirmLabel: "Remove",
+        confirmLabel: "Delete",
         cancelLabel: "Cancel",
         variant: "danger",
       });
@@ -159,14 +155,14 @@ export function useShipmentWorkspaceScopePanel({
       try {
         await removeWorkspaceAttachmentRow(row);
         invalidateThread();
-        toast("File removed", "success");
+        toast("Document deleted", "success");
       } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not remove file", "error");
+        toast(e instanceof Error ? e.message : "Could not delete document", "error");
       } finally {
         setRemovingAttachmentId(null);
       }
     },
-    [attachments, currentUserId, confirm, invalidateThread, toast],
+    [attachments, confirm, invalidateThread, toast],
   );
 
   return {

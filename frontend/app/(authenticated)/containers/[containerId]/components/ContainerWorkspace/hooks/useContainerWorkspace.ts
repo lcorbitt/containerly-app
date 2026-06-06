@@ -499,14 +499,10 @@ export function useContainerWorkspace({
     async (attachmentId: string) => {
       const row = attachments.find((a) => a.id === attachmentId);
       if (!row) return;
-      if (currentUserId && row.uploaded_by !== currentUserId) {
-        toast("Only the person who uploaded the file can remove it.", "error");
-        return;
-      }
       const ok = await confirm({
-        title: "Remove file?",
+        title: "Delete document?",
         description: `Permanently delete "${row.file_name}" from this request?`,
-        confirmLabel: "Remove",
+        confirmLabel: "Delete",
         cancelLabel: "Cancel",
         variant: "danger",
       });
@@ -518,17 +514,17 @@ export function useContainerWorkspace({
           storagePath: row.storage_path,
         });
         if (storageCleanupIncomplete) {
-          toast("File removed from the list; storage cleanup may be incomplete.", "info");
+          toast("Document deleted; storage cleanup may be incomplete.", "info");
         }
         setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-        toast("File removed", "success");
+        toast("Document deleted", "success");
       } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not remove file", "error");
+        toast(e instanceof Error ? e.message : "Could not delete document", "error");
       } finally {
         setRemovingAttachmentId(null);
       }
     },
-    [attachments, currentUserId, confirm, toast],
+    [attachments, confirm, toast],
   );
 
   return {

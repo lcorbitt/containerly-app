@@ -24,6 +24,7 @@ export function DocumentsList({
   uploading,
   onRemoveFile,
   removingFileId,
+  removeRestrictedToUploader = true,
   currentUserId,
   onRenameFile,
   renamingFileId,
@@ -139,7 +140,9 @@ export function DocumentsList({
               const busyRename = renamingFileId === f.id;
               const busy = busyRemove || busyRename;
               const isUploader = Boolean(currentUserId && f.uploadedByUserId === currentUserId);
-              const showRemove = Boolean(onRemoveFile && isUploader);
+              const showRemove = Boolean(
+                onRemoveFile && (removeRestrictedToUploader ? isUploader : true),
+              );
               const showRename = Boolean(onRenameFile && isUploader);
               const isEditing = editingFileId === f.id;
               const open = async () => {
@@ -283,7 +286,7 @@ export function DocumentsList({
                     {showRemove ? (
                       <button
                         type="button"
-                        aria-label={`Remove ${f.name}`}
+                        aria-label={`Delete ${f.name}`}
                         disabled={busyRemove}
                         onClick={() => onRemoveFile!(f.id)}
                         className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"

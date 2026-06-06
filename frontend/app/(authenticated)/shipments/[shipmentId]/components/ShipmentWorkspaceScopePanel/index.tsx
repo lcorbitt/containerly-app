@@ -151,6 +151,7 @@ export function ShipmentWorkspaceScopePanel({
               onOpen: () => void openAttachment(a),
             }))}
             onRemoveFile={(id) => void removeAttachment(id)}
+            removeRestrictedToUploader={false}
             removingFileId={removingAttachmentId}
             onRenameFile={(id, name) => renameAttachment(id, name)}
             renamingFileId={renamingAttachmentId}
