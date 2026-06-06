@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, FilePlus2, FileText, Loader2 } from "lucide-react";
+import { ExternalLink, FilePlus2, Loader2 } from "lucide-react";
+import { DocumentFileIcon } from "@/components/MessageAttachmentPreviews/AttachmentFileIcons";
 import { DOCUMENTS_LIST_ADD_LABEL } from "@/components/DocumentsList/constants";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -115,10 +116,10 @@ function PortalDocumentRow({
     >
       <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <FileText
-            className="mt-0.5 h-5 w-5 shrink-0 text-zinc-400 dark:text-zinc-500"
-            strokeWidth={1.75}
-            aria-hidden
+          <DocumentFileIcon
+            contentType={attachment.content_type}
+            fileName={attachment.file_name}
+            className="mt-0.5 h-8 w-8 shrink-0"
           />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">{attachment.file_name}</p>

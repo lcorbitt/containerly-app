@@ -49,6 +49,7 @@ function StoredFileThumbnailInner({
     contentType,
     fileName: name,
     displayVariant: "thumb",
+    pdfDisplay: "icon",
     // Thumbnails are shown inside scroll containers; avoid relying on IntersectionObserver.
     lazy: false,
   });

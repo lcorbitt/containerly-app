@@ -26,6 +26,7 @@ import {
 import {
   AttachmentGenericFileIconPlaceholder,
   AttachmentPdfIconPlaceholder,
+  DocumentFileIcon,
 } from "./AttachmentFileIcons";
 import { attachmentIsPdf } from "./utils";
 
@@ -263,7 +264,11 @@ export function StoredMessageAttachmentPreview({
   return (
     <li ref={preview.ref} className={MESSAGE_ATTACHMENT_FILE_LIST_ITEM_CLASS}>
       <div className={MESSAGE_ATTACHMENT_FILE_CARD_CLASS}>
-        <AttachmentGenericFileIconPlaceholder className="h-10 w-10 shrink-0 rounded-md bg-zinc-100 dark:bg-zinc-800/80" />
+        <DocumentFileIcon
+          contentType={row.content_type}
+          fileName={row.file_name}
+          className="h-10 w-10 shrink-0 rounded-md bg-zinc-100 dark:bg-zinc-800/80"
+        />
         <button
           type="button"
           onClick={onOpen}
