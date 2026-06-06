@@ -634,7 +634,7 @@ export async function previewCustomerInvite(token: string): Promise<
     if (!r.res.ok) {
       return { ok: false, status: r.res.status, error: body?.error ?? r.res.statusText };
     }
-    if (!body?.invited_email || !body.invited_email_masked) {
+    if (!body?.invited_email || !body.invited_email_masked || !body.shipment_id?.trim()) {
       return { ok: false, status: 500, error: "Invalid response" };
     }
     return {
