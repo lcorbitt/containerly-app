@@ -16,7 +16,7 @@ export const SIDE_NAV_LINK_HOVER_SURFACE_CLASS =
 
 export const howItWorksNavItem = {
   href: "/container-details",
-  label: "How it works",
+  label: "How It Works",
   icon: CircleHelp,
 } as const;
 

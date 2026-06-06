@@ -225,7 +225,7 @@ export function LandingPage() {
         <Reveal whenInView className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How it works</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-3xl">How It Works</h2>
               <p className="mt-2 max-w-xl text-zinc-600 dark:text-zinc-400">
                 Build the shipment workspace your team trusts, then publish that same clarity to
                 customers through an invite-gated branded portal with document approvals, messaging,
