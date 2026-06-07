@@ -10,13 +10,13 @@ import {
   TONE_STYLES,
   STEP_CARD_BASE,
   STEP_CARD_SURFACE,
-  STEP_CARD_SURFACE_LATEST,
   STEP_CARD_SURFACE_PAST,
   TIMELINE_CARD_TIMESTAMP_CLASS,
   TIMELINE_COMMUNICATION_PREVIEW_CLASS,
   TIMELINE_CONNECTOR_PAST_CLASS,
   TIMELINE_DEFAULT_SUBTITLE_CLASS,
   TIMELINE_LATEST_NODE_CLASS,
+  TIMELINE_LATEST_TIMESTAMP_CLASS,
   TIMELINE_PAST_NODE_CLASS,
 } from "./constants";
 import {
@@ -123,7 +123,7 @@ export function ShipmentTimelineView({
                     : null;
 
                 return (
-                  <li key={ev.id} className="group mb-8 last:mb-0">
+                  <li key={ev.id} className="group mb-8 last:mb-0" aria-current={isLatest ? "step" : undefined}>
                     <div className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3">
                       {index > 0 ? (
                         <span
@@ -154,11 +154,7 @@ export function ShipmentTimelineView({
                       <div className="relative z-10 min-w-0">
                         <div
                           className={`${STEP_CARD_BASE} w-full max-w-none ${
-                            isLatest
-                              ? STEP_CARD_SURFACE_LATEST
-                              : isPast
-                                ? STEP_CARD_SURFACE_PAST
-                                : STEP_CARD_SURFACE
+                            isLatest ? s.latestCard : isPast ? STEP_CARD_SURFACE_PAST : STEP_CARD_SURFACE
                           }`}
                         >
                         <div className="flex items-start justify-between gap-2">
@@ -173,16 +169,16 @@ export function ShipmentTimelineView({
                           </div>
                           <time
                             dateTime={ev.occurred_at}
-                            className={TIMELINE_CARD_TIMESTAMP_CLASS}
+                            className={isLatest ? TIMELINE_LATEST_TIMESTAMP_CLASS : TIMELINE_CARD_TIMESTAMP_CLASS}
                           >
                             {formatTimelineWhen(ev.occurred_at)}
                           </time>
                         </div>
                         <p
-                          className={`mt-1 text-[13px] leading-snug ${
+                          className={`mt-1 leading-snug ${
                             isLatest
-                              ? "font-semibold text-zinc-900 dark:text-zinc-50"
-                              : "font-medium text-zinc-600 dark:text-zinc-400"
+                              ? "text-sm font-semibold text-zinc-900 dark:text-zinc-50"
+                              : "text-[13px] font-medium text-zinc-600 dark:text-zinc-400"
                           }`}
                         >
                           {title}

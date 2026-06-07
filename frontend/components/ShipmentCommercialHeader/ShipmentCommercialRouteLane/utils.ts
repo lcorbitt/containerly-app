@@ -1,18 +1,26 @@
 import { formatShipmentDate } from "../utils";
-import type { ShipmentCommercialRouteLaneProps } from "./types";
+import type { RouteEndpointDate, ShipmentCommercialRouteLaneProps } from "./types";
 
 export function formatRoutePort(value: string | null | undefined): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : "—";
 }
 
-export function routeEndpointEta(
+export function routeEndpointDate(
   kind: "etd" | "eta",
   iso: string | null | undefined,
-): string | null {
-  const formatted = formatShipmentDate(iso);
+): RouteEndpointDate | null {
+  const trimmed = iso?.trim();
+  if (!trimmed) return null;
+
+  const formatted = formatShipmentDate(trimmed);
   if (formatted === "—") return null;
-  return kind === "etd" ? `ETD ${formatted}` : `ETA ${formatted}`;
+
+  return {
+    label: kind === "etd" ? "ETD" : "ETA",
+    date: formatted,
+    iso: trimmed,
+  };
 }
 
 export function shipmentRouteEndpoints({
@@ -23,18 +31,13 @@ export function shipmentRouteEndpoints({
 }: ShipmentCommercialRouteLaneProps): {
   originLabel: string;
   destinationLabel: string;
-  originEta: string | null;
-  destinationEta: string | null;
+  originDate: RouteEndpointDate | null;
+  destinationDate: RouteEndpointDate | null;
 } {
   return {
     originLabel: formatRoutePort(origin),
     destinationLabel: formatRoutePort(destination),
-    originEta: routeEndpointEta("etd", estimatedDepartureAt),
-    destinationEta: routeEndpointEta("eta", estimatedArrivalAt),
+    originDate: routeEndpointDate("etd", estimatedDepartureAt),
+    destinationDate: routeEndpointDate("eta", estimatedArrivalAt),
   };
-}
-
-export function shipmentRouteMetaLine(originEta: string | null, destinationEta: string | null): string | null {
-  const parts = [originEta, destinationEta].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : null;
 }

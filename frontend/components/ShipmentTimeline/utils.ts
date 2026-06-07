@@ -65,19 +65,6 @@ export function eventHeading(
   return { title: humanizeCarrierToken(et), subtitle: null };
 }
 
-export function formatDocumentGroupLabel(group: string): string {
-  switch (group.trim().toLowerCase()) {
-    case "draft":
-      return "Draft";
-    case "revision":
-      return "Revision";
-    case "original":
-      return "Original";
-    default:
-      return humanizeCarrierToken(group);
-  }
-}
-
 export function formatApprovalStatusLabel(status: string): string {
   switch (status.trim().toLowerCase()) {
     case "pending":

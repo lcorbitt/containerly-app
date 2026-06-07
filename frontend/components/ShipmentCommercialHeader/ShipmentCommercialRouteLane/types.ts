@@ -1,3 +1,9 @@
+export interface RouteEndpointDate {
+  label: "ETD" | "ETA";
+  date: string;
+  iso: string;
+}
+
 export interface ShipmentCommercialRouteLaneProps {
   origin: string | null;
   destination: string | null;

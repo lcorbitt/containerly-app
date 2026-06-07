@@ -1,15 +1,13 @@
-export function formatDocumentGroupLabel(group: string | null | undefined): string | null {
-  const normalized = group?.trim().toLowerCase() ?? "";
-  if (!normalized) return null;
-  if (normalized === "draft") return "Draft";
-  if (normalized === "revision") return "Revision";
-  if (normalized === "original") return "Original";
-  return group!.trim();
-}
+import {
+  formatDocumentGroupLabel,
+  formatDocumentTypeLabel,
+} from "@/utils/document-metadata-display";
+
+export { formatDocumentGroupLabel, formatDocumentTypeLabel };
 
 export function hasDocumentMetadata(
   documentType: string | null | undefined,
   documentGroup: string | null | undefined,
 ): boolean {
-  return Boolean(documentType?.trim() || formatDocumentGroupLabel(documentGroup));
+  return Boolean(formatDocumentTypeLabel(documentType) || formatDocumentGroupLabel(documentGroup));
 }

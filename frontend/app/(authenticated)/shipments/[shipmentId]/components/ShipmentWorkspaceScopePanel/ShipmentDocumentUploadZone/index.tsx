@@ -8,7 +8,10 @@ import {
   MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH,
 } from "@/utils/workspace-files";
 import {
+  DOCUMENT_GROUP_FIELD_LABEL,
   DOCUMENT_GROUP_SELECT_OPTIONS,
+  DOCUMENT_TYPE_FIELD_LABEL,
+  DOCUMENT_TYPE_OPTIONAL_HINT,
   DOCUMENT_TYPE_SELECT_OPTIONS,
   UPLOAD_ZONE_BODY_CLASS,
   UPLOAD_ZONE_BUTTON_CLASS,
@@ -16,6 +19,7 @@ import {
   UPLOAD_ZONE_DROP_CLASS,
   UPLOAD_ZONE_IDLE_CLASS,
   UPLOAD_ZONE_METADATA_CLASS,
+  UPLOAD_ZONE_SELECT_LIST_REVEAL_CLASS,
   UPLOAD_ZONE_SELECT_SHELL_CLASS,
 } from "./constants";
 import type { ShipmentDocumentUploadZoneProps } from "./types";
@@ -51,7 +55,8 @@ export function ShipmentDocumentUploadZone({
             id={`${documentTypeSelectId}-label`}
             className="text-xs font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Document type <span className="font-normal text-zinc-500">(optional)</span>
+            {DOCUMENT_TYPE_FIELD_LABEL}{" "}
+            <span className="font-normal text-zinc-500">{DOCUMENT_TYPE_OPTIONAL_HINT}</span>
           </span>
           <div className={UPLOAD_ZONE_SELECT_SHELL_CLASS}>
             <CustomSelect
@@ -64,6 +69,7 @@ export function ShipmentDocumentUploadZone({
               placeholderLabel="None"
               disabled={uploading}
               className="w-full"
+              listRevealClassName={UPLOAD_ZONE_SELECT_LIST_REVEAL_CLASS}
             />
           </div>
         </div>
@@ -72,7 +78,7 @@ export function ShipmentDocumentUploadZone({
             id={`${documentGroupSelectId}-label`}
             className="text-xs font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Document group
+            {DOCUMENT_GROUP_FIELD_LABEL}
           </span>
           <div className={UPLOAD_ZONE_SELECT_SHELL_CLASS}>
             <CustomSelect
@@ -86,6 +92,7 @@ export function ShipmentDocumentUploadZone({
               showAvatars={false}
               disabled={uploading}
               className="w-full"
+              listRevealClassName={UPLOAD_ZONE_SELECT_LIST_REVEAL_CLASS}
             />
           </div>
         </div>

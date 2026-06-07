@@ -120,13 +120,15 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ### 7. UI copy titleization
 
-**Applies to:** button labels, link CTAs, nav items, menu actions, modal/dialog titles, form submit labels, email action buttons, and other short UI chrome strings (usually in colocated **`constants.ts`**).
+**Applies to:** button labels, link CTAs, nav items, menu actions, modal/dialog titles, form field labels, form select option labels, email action buttons, and other short UI chrome strings (usually in colocated **`constants.ts`**).
 
-**Format:** **Title Case with spaces** — capitalize each major word and separate with spaces: `View Shipment`, `Get Started`, `Sign In`, `How It Works`, `Start Free`.
+**Format:** **Title Case with spaces** — capitalize each major word and separate with spaces: `View Shipment`, `Get Started`, `Sign In`, `Document Type`, `Commercial Invoice`, `Draft`.
 
-**Do not use:** concatenated words without spaces (`ViewShipment`), sentence case with only the first word capitalized (`View shipment`), or lower camelCase (`viewShipment`) for these strings.
+**Document metadata:** Field labels use **Document Type** and **Document Group** (not sentence case). Stored `document_type` / `document_group` values shown in UI (upload modals, selects, document lists, timeline pills) must be titleized via **`formatDocumentTypeLabel`** / **`formatDocumentGroupLabel`** in **`frontend/utils/document-metadata-display.ts`** — do not render raw DB/API strings.
 
-**Exceptions (keep normal sentence case):** body copy, descriptions, helper text, toasts, placeholders, tooltips, loading/submitting button states (e.g. `Signing you in…`), and accessibility `aria-label` text when a full phrase reads better for screen readers.
+**Do not use:** concatenated words without spaces (`ViewShipment`), sentence case with only the first word capitalized (`View shipment`, `Document type`), or lower camelCase (`viewShipment`) for these strings.
+
+**Exceptions (keep normal sentence case):** body copy, descriptions, helper text, toasts, placeholders, loading/submitting button states (e.g. `Signing you in…`), and accessibility `aria-label` text when a full phrase reads better for screen readers.
 
 **Agent behavior:** When editing nearby code, match the **Title Case with spaces** convention on that surface. Do not revert spaced labels to concatenated or sentence case, and do not spread inconsistent casing across the same UI surface.
 

@@ -12,7 +12,7 @@ import {
   DOCUMENT_TYPE_PILL_CLASS,
 } from "./constants";
 import type { DocumentsListProps } from "./types";
-import { formatDocumentGroupLabel, hasDocumentMetadata } from "./utils";
+import { formatDocumentGroupLabel, formatDocumentTypeLabel, hasDocumentMetadata } from "./utils";
 
 export type { DocumentsListStoredFile, DocumentsListProps } from "./types";
 
@@ -238,13 +238,13 @@ export function DocumentsList({
                           </span>
                           {hasDocumentMetadata(f.documentType, f.documentGroup) ? (
                             <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                              {f.documentType?.trim() ? (
-                                <span className={DOCUMENT_TYPE_PILL_CLASS} title="Document type">
-                                  {f.documentType.trim()}
+                              {formatDocumentTypeLabel(f.documentType) ? (
+                                <span className={DOCUMENT_TYPE_PILL_CLASS} title="Document Type">
+                                  {formatDocumentTypeLabel(f.documentType)}
                                 </span>
                               ) : null}
                               {formatDocumentGroupLabel(f.documentGroup) ? (
-                                <span className={DOCUMENT_GROUP_PILL_CLASS} title="Document group">
+                                <span className={DOCUMENT_GROUP_PILL_CLASS} title="Document Group">
                                   {formatDocumentGroupLabel(f.documentGroup)}
                                 </span>
                               ) : null}

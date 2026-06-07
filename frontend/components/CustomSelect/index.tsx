@@ -75,6 +75,7 @@ export function CustomSelect({
   className = "",
   showAvatars = true,
   placeholderLabel,
+  listRevealClassName,
 }: {
   id?: string;
   "aria-labelledby"?: string;
@@ -87,6 +88,8 @@ export function CustomSelect({
   showAvatars?: boolean;
   /** Shown on the trigger when `value` does not match any option (e.g. empty = implicit default). */
   placeholderLabel?: string;
+  /** Override dropdown positioning/stacking (e.g. above modal panels). */
+  listRevealClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -137,7 +140,7 @@ export function CustomSelect({
         }
         onClick={() => !disabled && setOpen((o) => !o)}
       />
-      <Reveal show={open} className={listRevealClass}>
+      <Reveal show={open} className={listRevealClassName ?? listRevealClass}>
         <ul id={listId} role="listbox" className={listPanelClass}>
           {options.map((o) => {
             const isSelected = value === o.value;

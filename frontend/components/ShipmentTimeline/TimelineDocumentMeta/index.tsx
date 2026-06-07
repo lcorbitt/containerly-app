@@ -15,10 +15,13 @@ import {
 import type { TimelineDocumentMetaProps } from "./types";
 import {
   formatApprovalStatusLabel,
-  formatDocumentGroupLabel,
   hasTimelineDocumentMeta,
   isBatchDocumentUploadMeta,
 } from "../utils";
+import {
+  formatDocumentGroupLabel,
+  formatDocumentTypeLabel,
+} from "@/utils/document-metadata-display";
 
 function resolveDocumentFileNames(meta: TimelineDocumentMetaProps["meta"]): string[] {
   const fromDocuments = (meta.documents ?? [])
@@ -61,13 +64,13 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
       ) : null}
       <div className="flex flex-wrap items-center gap-1">
         {meta.documentGroup ? (
-          <span className={DOCUMENT_GROUP_PILL_CLASS} title="Document group">
+          <span className={DOCUMENT_GROUP_PILL_CLASS} title="Document Group">
             {formatDocumentGroupLabel(meta.documentGroup)}
           </span>
         ) : null}
         {meta.documentType ? (
-          <span className={DOCUMENT_TYPE_PILL_CLASS} title="Document type">
-            {meta.documentType}
+          <span className={DOCUMENT_TYPE_PILL_CLASS} title="Document Type">
+            {formatDocumentTypeLabel(meta.documentType)}
           </span>
         ) : null}
         {meta.approvalStatus ? (
