@@ -6,4 +6,6 @@ export const AUTHENTICATED_APP_SHELL_BODY_CLASS = "flex min-h-0 flex-1 overflow-
 export const AUTHENTICATED_APP_SHELL_MAIN_CLASS =
   "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain";
 
+export const AUTHENTICATED_APP_SHELL_MAIN_SCROLL_SELECTOR = "[data-authenticated-main-scroll]";
+
 export const AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS = "flex min-h-0 flex-1 flex-col";

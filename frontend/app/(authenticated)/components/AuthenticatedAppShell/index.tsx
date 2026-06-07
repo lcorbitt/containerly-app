@@ -44,7 +44,7 @@ export function AuthenticatedAppShell({
                   email={email}
                   fullName={fullName}
                 />
-                <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS}>
+                <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS} data-authenticated-main-scroll>
                   <div className={AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS}>
                     <AuthenticatedMainPane>{children}</AuthenticatedMainPane>
                   </div>

@@ -5,7 +5,6 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import {
   DASHBOARD_TRIAGE_BREAKDOWN_BAR_FILL_CLASS,
   DASHBOARD_TRIAGE_BREAKDOWN_BAR_TRACK_CLASS,
-  DASHBOARD_TRIAGE_BREAKDOWN_DESC_CLASS,
   DASHBOARD_TRIAGE_BREAKDOWN_EYEBROW_CLASS,
   DASHBOARD_TRIAGE_BREAKDOWN_LINK_CLASS,
   DASHBOARD_TRIAGE_BREAKDOWN_LIST_CLASS,
@@ -46,7 +45,6 @@ export function DashboardTriageBreakdown({
   const counts = resolveTriageBreakdownCounts({ isAdminView, orgTriageCounts, buckets });
   const rows = buildTriageBreakdownRows(counts);
   const total = triageBreakdownTotal(counts);
-  const scopeLabel = isAdminView ? "Org-wide triage buckets." : "Your triage buckets.";
 
   return (
     <section className={DASHBOARD_TRIAGE_BREAKDOWN_PANEL_CLASS} aria-labelledby="dashboard-triage-breakdown-heading">
@@ -55,7 +53,6 @@ export function DashboardTriageBreakdown({
         <h2 id="dashboard-triage-breakdown-heading" className={DASHBOARD_TRIAGE_BREAKDOWN_TITLE_CLASS}>
           Triage breakdown
         </h2>
-        <p className={DASHBOARD_TRIAGE_BREAKDOWN_DESC_CLASS}>{scopeLabel}</p>
 
         {total === 0 ? (
           <p className="mt-4 flex flex-1 items-center text-sm text-zinc-500 dark:text-zinc-400">
