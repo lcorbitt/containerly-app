@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/constants";
 import { useConfirm } from "@/contexts/confirm-dialog";
@@ -55,7 +54,6 @@ export function usePublicContainerReport({
   initial: PublicReportPayload;
   readOnlyMessaging?: boolean;
 }) {
-  const router = useRouter();
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
@@ -153,8 +151,7 @@ export function usePublicContainerReport({
   const refresh = useCallback(async () => {
     const r = await fetchShipment(shipmentId);
     if (r.ok) setPayload(r.data);
-    router.refresh();
-  }, [shipmentId, router]);
+  }, [shipmentId]);
 
   usePostgresRealtimeInvalidation({
     enabled: Boolean(organizationId),
@@ -390,7 +387,23 @@ export function usePublicContainerReport({
         toast(r.error, "error");
         return;
       }
-      await refresh();
+      setPayload((prev) => ({
+        ...prev,
+        attachments: (prev.attachments ?? []).map((attachment) =>
+          attachment.id === r.data.attachment_id
+            ? {
+                ...attachment,
+                approval_status: r.data.approval_status,
+                rejection_reason:
+                  action === "reject" ? rejectReasonById[attachmentId]?.trim() ?? null : null,
+              }
+            : attachment,
+        ),
+        commercial_details: prev.commercial_details
+          ? { ...prev.commercial_details, workflow_status: r.data.workflow_status }
+          : prev.commercial_details,
+      }));
+      void refresh();
       setRejectReasonById((prev) => {
         const next = { ...prev };
         delete next[attachmentId];
