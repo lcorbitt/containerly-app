@@ -41,4 +41,7 @@ export const EDGE_FUNCTION_SLUGS = {
   performance: {
     sendStaleReminders: "send-stale-shipment-reminders",
   },
+  feedback: {
+    submit: "submit-feedback",
+  },
 } as const;
