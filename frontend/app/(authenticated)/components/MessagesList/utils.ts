@@ -1,6 +1,13 @@
 import { formatShortTimestamp } from "@/utils/datetime";
 import { stripMessageMarkup } from "@/utils/message-markup";
-import { MESSAGE_PREVIEW_MAX_LEN, MESSAGES_LIST_ORDER_FALLBACK } from "./constants";
+import {
+  MESSAGE_PREVIEW_MAX_LEN,
+  MESSAGES_LIST_ORDER_FALLBACK,
+  MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS,
+  MESSAGES_LIST_ROW_READ_CLASS,
+  MESSAGES_LIST_ROW_UNREAD_CLASS,
+  MESSAGES_LIST_ROW_UNREAD_NEEDS_REPLY_CLASS,
+} from "./constants";
 
 export function truncateMessagePreview(body: string, maxLen = MESSAGE_PREVIEW_MAX_LEN): string {
   const trimmed = stripMessageMarkup(body).trim();
@@ -40,4 +47,11 @@ export function threadOrderSubtitle(orderNumber: string | null, shipmentId: stri
 
 export function threadHref(shipmentId: string): string {
   return `/shipments/${shipmentId}?tab=messages`;
+}
+
+export function threadRowLinkClass(isUnread: boolean, needsReply: boolean): string {
+  if (isUnread && needsReply) return MESSAGES_LIST_ROW_UNREAD_NEEDS_REPLY_CLASS;
+  if (isUnread) return MESSAGES_LIST_ROW_UNREAD_CLASS;
+  if (needsReply) return MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS;
+  return MESSAGES_LIST_ROW_READ_CLASS;
 }

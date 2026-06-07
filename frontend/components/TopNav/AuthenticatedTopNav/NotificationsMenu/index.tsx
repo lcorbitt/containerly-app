@@ -5,7 +5,6 @@ import { NotificationsList } from "@/app/(authenticated)/components/Notification
 import { Reveal } from "@/components/Reveal";
 import {
   AUTHENTICATED_TOP_NAV_NOTIFICATIONS_BUTTON_CLASS,
-  AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MARK_ALL_CLASS,
   AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_BODY_CLASS,
   AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_CLASS,
   AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_HEADER_CLASS,
@@ -20,8 +19,6 @@ export function NotificationsMenu({
   menuRef,
   onToggle,
   onClose,
-  onMarkAllAsRead,
-  markingAllAsRead = false,
 }: NotificationsMenuProps) {
   return (
     <div className="relative" ref={menuRef}>
@@ -46,16 +43,6 @@ export function NotificationsMenu({
         <div role="menu" className={AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_CLASS}>
           <div className={AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_HEADER_CLASS}>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Notifications</p>
-            {unackedCount > 0 && onMarkAllAsRead ? (
-              <button
-                type="button"
-                onClick={onMarkAllAsRead}
-                disabled={markingAllAsRead}
-                className={AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MARK_ALL_CLASS}
-              >
-                {markingAllAsRead ? "Saving…" : "Mark All As Read"}
-              </button>
-            ) : null}
           </div>
           <div className={AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_BODY_CLASS}>
             <NotificationsList alerts={alerts} onItemNavigate={onClose} />

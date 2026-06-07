@@ -6,19 +6,23 @@ import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   MESSAGES_LIST_AUTHOR_EMAIL_CLASS,
-  MESSAGES_LIST_AUTHOR_TITLE_CLASS,
+  MESSAGES_LIST_AUTHOR_TITLE_READ_CLASS,
+  MESSAGES_LIST_AUTHOR_TITLE_UNREAD_CLASS,
   MESSAGES_LIST_CLASS,
   MESSAGES_LIST_EMPTY_HINT,
   MESSAGES_LIST_EMPTY_TITLE,
-  MESSAGES_LIST_ORDER_SUBTITLE_CLASS,
+  MESSAGES_LIST_ORDER_SUBTITLE_READ_CLASS,
+  MESSAGES_LIST_ORDER_SUBTITLE_UNREAD_CLASS,
   MESSAGES_LIST_PREVIEW_EMPTY_CLASS,
   MESSAGES_LIST_PREVIEW_SHELL_CLASS,
   MESSAGES_LIST_PREVIEW_SHELL_NEEDS_REPLY_CLASS,
-  MESSAGES_LIST_PREVIEW_TEXT_CLASS,
-  MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_READ_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_UNREAD_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_READ_CLASS,
+  MESSAGES_LIST_PREVIEW_TEXT_UNREAD_CLASS,
   MESSAGES_LIST_ROW_LINK_CLASS,
-  MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS,
-  MESSAGES_LIST_TIMESTAMP_CLASS,
+  MESSAGES_LIST_TIMESTAMP_READ_CLASS,
+  MESSAGES_LIST_TIMESTAMP_UNREAD_CLASS,
 } from "./constants";
 import {
   formatMessageListTimestamp,
@@ -27,10 +31,12 @@ import {
   threadHref,
   threadNeedsReply,
   threadOrderSubtitle,
+  threadRowLinkClass,
   truncateMessagePreview,
 } from "./utils";
 
 function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
+  const isUnread = thread.is_unread;
   const needsReply = threadNeedsReply(thread.last_author_kind);
   const preview = truncateMessagePreview(thread.last_message_preview);
   const authorTitle = threadAuthorTitle(thread);
@@ -40,12 +46,15 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
   return (
     <article className="min-w-0">
       <header className="flex items-start justify-between gap-2">
-        <h3 className={MESSAGES_LIST_AUTHOR_TITLE_CLASS} title={authorTitle}>
+        <h3
+          className={isUnread ? MESSAGES_LIST_AUTHOR_TITLE_UNREAD_CLASS : MESSAGES_LIST_AUTHOR_TITLE_READ_CLASS}
+          title={authorTitle}
+        >
           {authorTitle}
         </h3>
         <time
           dateTime={thread.last_message_at}
-          className={MESSAGES_LIST_TIMESTAMP_CLASS}
+          className={isUnread ? MESSAGES_LIST_TIMESTAMP_UNREAD_CLASS : MESSAGES_LIST_TIMESTAMP_READ_CLASS}
         >
           {formatMessageListTimestamp(thread.last_message_at)}
         </time>
@@ -57,7 +66,10 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
         </p>
       ) : null}
 
-      <p className={MESSAGES_LIST_ORDER_SUBTITLE_CLASS} title={orderTitle}>
+      <p
+        className={isUnread ? MESSAGES_LIST_ORDER_SUBTITLE_UNREAD_CLASS : MESSAGES_LIST_ORDER_SUBTITLE_READ_CLASS}
+        title={orderTitle}
+      >
         {orderTitle}
       </p>
 
@@ -72,8 +84,12 @@ function ThreadRowBody({ thread }: { thread: ShipmentMessageThreadSummary }) {
           <p
             className={
               needsReply
-                ? MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_CLASS
-                : MESSAGES_LIST_PREVIEW_TEXT_CLASS
+                ? isUnread
+                  ? MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_UNREAD_CLASS
+                  : MESSAGES_LIST_PREVIEW_TEXT_NEEDS_REPLY_READ_CLASS
+                : isUnread
+                  ? MESSAGES_LIST_PREVIEW_TEXT_UNREAD_CLASS
+                  : MESSAGES_LIST_PREVIEW_TEXT_READ_CLASS
             }
           >
             {preview}
@@ -123,9 +139,7 @@ export function MessagesList({
             <Link
               href={threadHref(thread.shipment_id)}
               onClick={() => handleThreadNavigate(thread)}
-              className={`${MESSAGES_LIST_ROW_LINK_CLASS}${
-                needsReply ? ` ${MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS}` : ""
-              }`}
+              className={`${MESSAGES_LIST_ROW_LINK_CLASS} ${threadRowLinkClass(thread.is_unread, needsReply)}`}
             >
               <ThreadRowBody thread={thread} />
             </Link>

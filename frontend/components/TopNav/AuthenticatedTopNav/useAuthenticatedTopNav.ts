@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
 import { useAcknowledgeAllOrgAlerts } from "@/hooks/mutations/useAcknowledgeAllOrgAlerts";
+import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
 import { useOrgAlerts } from "@/hooks/queries/useAlert";
+import { isMessageShipmentAlert } from "@/utils/alert-inbox";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { fetchShipment } from "@/services/shipment.service";
 import {
@@ -27,6 +29,8 @@ export function useAuthenticatedTopNav() {
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const alerts = useOrgAlerts(selectedOrgId);
   const acknowledgeAllMut = useAcknowledgeAllOrgAlerts(selectedOrgId);
+  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
+  const ackedOnOpenRef = useRef(false);
 
   const unackedCount = useMemo(
     () => alerts.filter((a) => !a.acknowledged_at).length,
@@ -111,6 +115,31 @@ export function useAuthenticatedTopNav() {
   const hubLeafLabel = isHubRoute ? CUSTOMER_PORTAL_BREADCRUMB_LABEL : null;
 
   useEffect(() => {
+    if (!notificationsMenuOpen) {
+      ackedOnOpenRef.current = false;
+      return;
+    }
+    if (ackedOnOpenRef.current || unackedCount === 0 || !selectedOrgId) return;
+    ackedOnOpenRef.current = true;
+
+    const messageShipmentIds = [
+      ...new Set(
+        alerts
+          .filter((a) => !a.acknowledged_at && isMessageShipmentAlert(a) && a.shipment_id)
+          .map((a) => a.shipment_id as string),
+      ),
+    ];
+
+    acknowledgeAllMut.mutate(undefined, {
+      onSuccess: () => {
+        for (const shipmentId of messageShipmentIds) {
+          markThreadReadMut.mutate({ shipmentId });
+        }
+      },
+    });
+  }, [notificationsMenuOpen, unackedCount, selectedOrgId, alerts]);
+
+  useEffect(() => {
     if (!notificationsMenuOpen) return;
     function onPointerDown(e: MouseEvent) {
       const target = e.target as Node;
@@ -129,10 +158,6 @@ export function useAuthenticatedTopNav() {
     setNotificationsMenuOpen(false);
   }, []);
 
-  const markAllNotificationsAsRead = useCallback(() => {
-    acknowledgeAllMut.mutate();
-  }, [acknowledgeAllMut]);
-
   return {
     notificationsMenuOpen,
     notificationsMenuRef,
@@ -150,7 +175,5 @@ export function useAuthenticatedTopNav() {
     openBulkImportModal,
     toggleNotificationsMenu,
     closeNotificationsMenu,
-    markAllNotificationsAsRead,
-    markingAllNotificationsAsRead: acknowledgeAllMut.isPending,
   };
 }
