@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useOrgMessageThreads } from "@/hooks/queries/useOrgMessageThreads";
-import { createClient } from "@/lib/supabase/client";
 
 export type SideNavSecondaryPanel = "messages";
 
@@ -16,35 +15,10 @@ export function useSideNav(isSuperAdmin: boolean) {
     panel: SideNavSecondaryPanel;
   } | null>(null);
   const messageThreads = useOrgMessageThreads(selectedOrgId);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    void createClient()
-      .auth.getUser()
-      .then(({ data }) => {
-        if (!cancelled) setCurrentUserId(data.user?.id ?? null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const needsReplyCount = useMemo(
-    () =>
-      messageThreads.filter((thread) => {
-        if (thread.last_author_kind === "customer") return true;
-        if (
-          thread.last_author_kind === "member" &&
-          thread.last_author_user_id &&
-          currentUserId &&
-          thread.last_author_user_id !== currentUserId
-        ) {
-          return true;
-        }
-        return false;
-      }).length,
-    [messageThreads, currentUserId],
+  const unreadCount = useMemo(
+    () => messageThreads.filter((thread) => thread.is_unread).length,
+    [messageThreads],
   );
 
   const messagesOpen =
@@ -68,7 +42,7 @@ export function useSideNav(isSuperAdmin: boolean) {
     selectedOrgId,
     messagesOpen,
     messageThreads,
-    needsReplyCount,
+    unreadCount,
     isFreight,
     toggleMessages,
     closeSecondaryPanel,

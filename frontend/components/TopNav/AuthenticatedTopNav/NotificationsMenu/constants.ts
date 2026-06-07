@@ -10,7 +10,10 @@ export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_CLASS =
   "origin-top-right overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950";
 
 export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_HEADER_CLASS =
-  "border-b border-zinc-100 px-4 py-3 dark:border-zinc-800";
+  "flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800";
+
+export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MARK_ALL_CLASS =
+  "shrink-0 text-xs font-medium text-zinc-600 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-200";
 
 export const AUTHENTICATED_TOP_NAV_NOTIFICATIONS_MENU_BODY_CLASS =
   "max-h-[min(24rem,70vh)] overflow-y-auto overscroll-contain";

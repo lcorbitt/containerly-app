@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
+import { useAcknowledgeAllOrgAlerts } from "@/hooks/mutations/useAcknowledgeAllOrgAlerts";
 import { useOrgAlerts } from "@/hooks/queries/useAlert";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { fetchShipment } from "@/services/shipment.service";
@@ -25,6 +26,7 @@ export function useAuthenticatedTopNav() {
   const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const alerts = useOrgAlerts(selectedOrgId);
+  const acknowledgeAllMut = useAcknowledgeAllOrgAlerts(selectedOrgId);
 
   const unackedCount = useMemo(
     () => alerts.filter((a) => !a.acknowledged_at).length,
@@ -127,6 +129,10 @@ export function useAuthenticatedTopNav() {
     setNotificationsMenuOpen(false);
   }, []);
 
+  const markAllNotificationsAsRead = useCallback(() => {
+    acknowledgeAllMut.mutate();
+  }, [acknowledgeAllMut]);
+
   return {
     notificationsMenuOpen,
     notificationsMenuRef,
@@ -144,5 +150,7 @@ export function useAuthenticatedTopNav() {
     openBulkImportModal,
     toggleNotificationsMenu,
     closeNotificationsMenu,
+    markAllNotificationsAsRead,
+    markingAllNotificationsAsRead: acknowledgeAllMut.isPending,
   };
 }

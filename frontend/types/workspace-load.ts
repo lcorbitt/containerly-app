@@ -61,6 +61,8 @@ export interface ShipmentMessageThreadSummary {
   /** Customer email for the latest message author, when applicable. */
   last_author_email: string | null;
   message_count: number;
+  /** True when the viewer has not read through the latest message in this thread. */
+  is_unread: boolean;
 }
 
 export type OrgShipmentMessageThreadsResult =

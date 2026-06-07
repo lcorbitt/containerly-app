@@ -22,6 +22,46 @@ export function filterInboxAlertsForViewer(alerts: Alert[], viewerUserId: string
   });
 }
 
+export async function acknowledgeAllOrgAlertsForViewer(
+  supabase: SupabaseClient,
+  organizationId: string,
+  viewerUserId: string,
+): Promise<number> {
+  const { data: rows, error: fetchError } = await supabase
+    .from("alerts")
+    .select("id, alert_type, actor_user_id, recipient_user_id")
+    .eq("organization_id", organizationId)
+    .is("acknowledged_at", null);
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const ids = (rows ?? [])
+    .filter((row) => {
+      const actorUserId = row.actor_user_id as string | null;
+      const alertType = row.alert_type as string;
+      if (actorUserId && actorUserId === viewerUserId && SELF_AUTHORED_MESSAGE_ALERT_TYPES.has(alertType)) {
+        return false;
+      }
+      const recipientUserId = row.recipient_user_id as string | null;
+      return recipientUserId === null || recipientUserId === viewerUserId;
+    })
+    .map((row) => row.id as string);
+
+  if (ids.length === 0) return 0;
+
+  const nowIso = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("alerts")
+    .update({
+      acknowledged_at: nowIso,
+      acknowledged_by: viewerUserId,
+    })
+    .in("id", ids);
+
+  if (updateError) throw new Error(updateError.message);
+  return ids.length;
+}
+
 export async function fetchOrgAlertsPage(
   supabase: SupabaseClient,
   organizationId: string,

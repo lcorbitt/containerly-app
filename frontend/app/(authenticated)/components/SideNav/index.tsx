@@ -36,7 +36,7 @@ export function SideNav({
     isFreight,
     messagesOpen,
     messageThreads,
-    needsReplyCount,
+    unreadCount,
     toggleMessages,
     closeSecondaryPanel,
   } = useSideNav(isSuperAdmin);
@@ -73,7 +73,7 @@ export function SideNav({
                 label="Messages"
                 icon={MessageSquare}
                 active={messagesOpen}
-                badgeCount={needsReplyCount}
+                badgeCount={unreadCount}
                 ariaControls="app-messages-panel"
                 triggerId="app-messages-trigger"
                 onClick={toggleMessages}

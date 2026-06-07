@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
+import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   MESSAGES_LIST_AUTHOR_EMAIL_CLASS,
@@ -91,6 +93,16 @@ export function MessagesList({
   threads: ShipmentMessageThreadSummary[];
   onItemNavigate?: () => void;
 }) {
+  const { selectedOrgId } = useOrganizationWorkspace();
+  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
+
+  function handleThreadNavigate(thread: ShipmentMessageThreadSummary) {
+    onItemNavigate?.();
+    if (thread.is_unread) {
+      markThreadReadMut.mutate({ shipmentId: thread.shipment_id });
+    }
+  }
+
   if (threads.length === 0) {
     return (
       <div className="px-3 py-8 text-center">
@@ -110,7 +122,7 @@ export function MessagesList({
           <li key={thread.shipment_id}>
             <Link
               href={threadHref(thread.shipment_id)}
-              onClick={() => onItemNavigate?.()}
+              onClick={() => handleThreadNavigate(thread)}
               className={`${MESSAGES_LIST_ROW_LINK_CLASS}${
                 needsReply ? ` ${MESSAGES_LIST_ROW_NEEDS_REPLY_CLASS}` : ""
               }`}

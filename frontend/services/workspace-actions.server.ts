@@ -837,6 +837,17 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     /* best-effort */
   }
 
+  try {
+    await markShipmentThreadReadForUser(
+      supabase,
+      userId,
+      input.organizationId,
+      input.shipmentId,
+    );
+  } catch {
+    /* best-effort */
+  }
+
   return { messageId, attachmentErrors };
 }
 
@@ -1003,6 +1014,37 @@ function resolveThreadAuthorEmail(
   return email || null;
 }
 
+export async function markShipmentThreadReadForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  organizationId: string,
+  shipmentId: string,
+): Promise<void> {
+  const { data: shipment, error: shipmentError } = await supabase
+    .from("shipments")
+    .select("id")
+    .eq("id", shipmentId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (shipmentError) throw new Error(shipmentError.message);
+  if (!shipment) throw new Error("Shipment not found.");
+
+  const nowIso = new Date().toISOString();
+  const lastReadAt = nowIso;
+
+  const { error } = await supabase.from("shipment_message_thread_reads").upsert(
+    {
+      organization_id: organizationId,
+      user_id: userId,
+      shipment_id: shipmentId,
+      last_read_at: lastReadAt,
+      updated_at: nowIso,
+    },
+    { onConflict: "user_id,shipment_id" },
+  );
+  if (error) throw new Error(error.message);
+}
+
 export async function loadOrgShipmentMessageThreadsForUser(
   supabase: SupabaseClient,
   userId: string,
@@ -1078,6 +1120,18 @@ export async function loadOrgShipmentMessageThreadsForUser(
     return { ok: true, threads: [] };
   }
 
+  const { data: readRows, error: readErr } = await supabase
+    .from("shipment_message_thread_reads")
+    .select("shipment_id, last_read_at")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .in("shipment_id", shipmentIds);
+  if (readErr) return { ok: false, error: readErr.message };
+
+  const lastReadAtByShipmentId = new Map(
+    (readRows ?? []).map((row) => [row.shipment_id as string, row.last_read_at as string]),
+  );
+
   const { data: shipments, error: shErr } = await supabase
     .from("shipments")
     .select("id, order_number")
@@ -1133,6 +1187,11 @@ export async function loadOrgShipmentMessageThreadsForUser(
           agg.last_author_user_id,
           profileEmailByUserId,
         ),
+        is_unread: (() => {
+          const lastReadAt = lastReadAtByShipmentId.get(shipment_id);
+          if (!lastReadAt) return true;
+          return Date.parse(agg.last_message_at) > Date.parse(lastReadAt);
+        })(),
       };
     })
     .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))

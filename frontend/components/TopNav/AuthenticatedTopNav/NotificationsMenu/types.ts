@@ -8,4 +8,6 @@ export interface NotificationsMenuProps {
   menuRef: RefObject<HTMLDivElement | null>;
   onToggle: () => void;
   onClose: () => void;
+  onMarkAllAsRead?: () => void;
+  markingAllAsRead?: boolean;
 }

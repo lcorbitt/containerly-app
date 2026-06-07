@@ -18,3 +18,10 @@ export async function acknowledgeAlert(alertId: string): Promise<void> {
     method: "PATCH",
   });
 }
+
+export async function acknowledgeAllOrgAlerts(organizationId: string): Promise<{ acknowledged: number }> {
+  return apiJson<{ ok: true; acknowledged: number }>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/alerts/acknowledge-all`,
+    { method: "PATCH" },
+  );
+}

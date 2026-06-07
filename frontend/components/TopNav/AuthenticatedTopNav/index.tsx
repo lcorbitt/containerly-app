@@ -40,6 +40,8 @@ export function AuthenticatedTopNav() {
     openBulkImportModal,
     toggleNotificationsMenu,
     closeNotificationsMenu,
+    markAllNotificationsAsRead,
+    markingAllNotificationsAsRead,
   } = useAuthenticatedTopNav();
 
   const subTabLabel = hubSubTabLabel ?? activeSubTabName;
@@ -120,6 +122,8 @@ export function AuthenticatedTopNav() {
               menuRef={notificationsMenuRef}
               onToggle={toggleNotificationsMenu}
               onClose={closeNotificationsMenu}
+              onMarkAllAsRead={markAllNotificationsAsRead}
+              markingAllAsRead={markingAllNotificationsAsRead}
             />
           ) : null}
         </div>

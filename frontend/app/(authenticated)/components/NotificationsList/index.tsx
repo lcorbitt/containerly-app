@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatTimestamp } from "@/utils/datetime";
 import type { Alert } from "@/types/database";
-import { acknowledgeAlert } from "@/services/alert.service";
-import { orgAlertsQueryKeyRoot } from "@/hooks/queries/useAlert";
+import { useAcknowledgeAlert } from "@/hooks/mutations/useAcknowledgeAlert";
+import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
 import { useResolveCustomerAccessRequest } from "@/hooks/mutations/useResolveCustomerAccessRequest";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
+import { isMessageShipmentAlert } from "@/utils/alert-inbox";
 import { alertTypeIconConfig } from "./utils";
 
 function alertHref(alert: Alert): string | null {
@@ -137,16 +137,29 @@ export function NotificationsList({
 }) {
   const { toast } = useToast();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const qc = useQueryClient();
-  const acknowledgeMut = useMutation({
-    mutationFn: acknowledgeAlert,
-    onSuccess: () => {
-      if (selectedOrgId) {
-        void qc.invalidateQueries({ queryKey: [...orgAlertsQueryKeyRoot, selectedOrgId] });
-      }
-    },
-  });
+  const acknowledgeMut = useAcknowledgeAlert(selectedOrgId);
+  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
   const resolveMut = useResolveCustomerAccessRequest(selectedOrgId);
+
+  function markMessageThreadReadIfNeeded(alert: Alert) {
+    if (!selectedOrgId || !isMessageShipmentAlert(alert) || !alert.shipment_id) return;
+    markThreadReadMut.mutate({ shipmentId: alert.shipment_id });
+  }
+
+  function acknowledgeAlertRow(alert: Alert) {
+    if (alert.acknowledged_at) {
+      markMessageThreadReadIfNeeded(alert);
+      return;
+    }
+    acknowledgeMut.mutate(alert.id, {
+      onSuccess: () => markMessageThreadReadIfNeeded(alert),
+    });
+  }
+
+  function handleRowNavigate(alert: Alert) {
+    onItemNavigate?.();
+    acknowledgeAlertRow(alert);
+  }
 
   async function handleResolve(alert: Alert, action: "approve" | "deny") {
     const requestId = accessRequestIdFromAlert(alert);
@@ -177,9 +190,7 @@ export function NotificationsList({
         const requestId = accessRequestIdFromAlert(a);
         const rowProps = {
           alert: a,
-          onAcknowledge: !a.acknowledged_at
-            ? () => acknowledgeMut.mutate(a.id)
-            : undefined,
+          onAcknowledge: !a.acknowledged_at ? () => acknowledgeAlertRow(a) : undefined,
           acknowledging: acknowledgeMut.isPending && acknowledgeMut.variables === a.id,
           onApproveAccess:
             a.alert_type === "CUSTOMER_ACCESS_REQUESTED" && requestId
@@ -200,7 +211,7 @@ export function NotificationsList({
             {href ? (
               <Link
                 href={href}
-                onClick={() => onItemNavigate?.()}
+                onClick={() => handleRowNavigate(a)}
                 className="block px-3 py-2.5 text-left transition hover:bg-zinc-100/90 dark:hover:bg-zinc-900/80"
               >
                 <AlertRowBody {...rowProps} />

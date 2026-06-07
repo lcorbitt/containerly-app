@@ -58,7 +58,7 @@ export function ShipmentMessagesPanel({
     cancelEditMessage,
     saveEditMessage,
     savingEditMessageId,
-  } = useShipmentMessagesPanel({ shipmentId, initialDraft });
+  } = useShipmentMessagesPanel({ shipmentId, initialDraft, shouldMarkRead: pinToLatest });
 
   if (!selectedOrgId) {
     return (

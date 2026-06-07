@@ -176,7 +176,7 @@ export function suggestShipmentActions(input: SuggestShipmentActionsInput): Sugg
 }
 
 export function shipmentActionAudienceFromPortalViewer(
-  viewer: "importer" | "org_member" | string,
+  viewer?: "importer" | "org_member" | string,
 ): ShipmentActionAudience {
   return viewer === "importer" ? "customer" : "operator";
 }

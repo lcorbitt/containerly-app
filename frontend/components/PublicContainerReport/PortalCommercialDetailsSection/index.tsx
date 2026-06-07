@@ -59,7 +59,7 @@ export function PortalCommercialDetailsSection({
                 variant="grid-cell"
                 shipmentId={shipmentId}
                 organizationId={organizationId}
-                riskLevel={riskLevel}
+                riskLevel={riskLevel ?? null}
                 riskMessage={riskMessage ?? null}
                 primaryCarrierStatus={summary.status}
                 onSaved={() => onRiskSaved?.()}

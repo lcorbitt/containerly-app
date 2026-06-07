@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,14 +31,18 @@ import {
 export function useShipmentMessagesPanel({
   shipmentId,
   initialDraft,
+  shouldMarkRead = false,
 }: {
   shipmentId: string;
   initialDraft?: string | null;
+  /** When true (messages tab visible), mark the thread read for the current viewer. */
+  shouldMarkRead?: boolean;
 }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
+  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
   const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
   const shipmentRowQuery = useShipmentWorkspaceRowQuery({
     shipmentId,
@@ -86,6 +91,12 @@ export function useShipmentMessagesPanel({
         : null;
 
   const loading = threadQuery.isLoading;
+
+  useEffect(() => {
+    if (!shouldMarkRead || !selectedOrgId || loading || loadError) return;
+    markThreadReadMut.mutate({ shipmentId });
+  }, [shouldMarkRead, selectedOrgId, loading, loadError, shipmentId]);
+
   const shipmentLabel =
     shipmentRowQuery.data && shipmentRowQuery.data.ok ? shipmentRowQuery.data.row.order_number : null;
 
