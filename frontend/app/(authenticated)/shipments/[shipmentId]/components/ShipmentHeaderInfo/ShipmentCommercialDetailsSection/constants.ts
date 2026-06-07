@@ -1,5 +1,5 @@
 export const SHIPMENT_COMMERCIAL_DETAILS_SECTION_CLASS =
-  "relative px-4 pb-4 pt-4 sm:px-6 sm:pb-6";
+  "relative p-4 sm:p-6";
 
 export const SHIPMENT_COMMERCIAL_DETAILS_GRID_WRAP_CLASS = "mt-5";
 

@@ -1,3 +1,4 @@
+import { displayValue } from "../../utils";
 import {
   SHIPMENT_COMMERCIAL_SUMMARY_BAR_CELL_CLASS,
   SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_CLASS,
@@ -14,11 +15,11 @@ export function ShipmentCommercialSummaryField({
 }: {
   label: string;
   value: string;
-  /** Shown as a small line under the value (Customer cell only). */
+  /** When set (including null), shown as a small line under the value (Customer cell only). */
   consignee?: string | null;
   className?: string;
 }) {
-  const consigneeText = consignee?.trim();
+  const consigneeDisplay = consignee !== undefined ? displayValue(consignee) : null;
 
   return (
     <div className={className ? `${SHIPMENT_COMMERCIAL_SUMMARY_BAR_CELL_CLASS} ${className}` : SHIPMENT_COMMERCIAL_SUMMARY_BAR_CELL_CLASS}>
@@ -29,9 +30,12 @@ export function ShipmentCommercialSummaryField({
       >
         {value}
       </p>
-      {consigneeText ? (
-        <p className={SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_CLASS} title={consigneeText}>
-          {SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_LABEL}: {consigneeText}
+      {consigneeDisplay !== null ? (
+        <p
+          className={SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_CLASS}
+          title={consigneeDisplay !== "—" ? consigneeDisplay : undefined}
+        >
+          {SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_LABEL}: {consigneeDisplay}
         </p>
       ) : null}
     </div>
