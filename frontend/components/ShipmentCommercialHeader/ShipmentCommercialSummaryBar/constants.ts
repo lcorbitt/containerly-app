@@ -1,6 +1,6 @@
-import { SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS } from "../constants";
+import { SHIPMENT_COMMERCIAL_HEADER_DIVIDE_CLASS } from "../constants";
 
-export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_CLASS = `grid grid-cols-1 gap-4 rounded-lg bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)] md:gap-0 md:divide-x ${SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS}`;
+export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_CLASS = `grid grid-cols-1 gap-4 rounded-lg bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)] md:gap-0 md:divide-x ${SHIPMENT_COMMERCIAL_HEADER_DIVIDE_CLASS}`;
 
 export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_CELL_CLASS =
   "flex min-w-0 flex-col md:px-5 first:md:pl-0 last:md:pr-0";

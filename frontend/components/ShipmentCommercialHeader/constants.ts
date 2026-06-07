@@ -19,6 +19,9 @@ export const SHIPMENT_TITLE_CELL_CLASS = "min-w-0";
 /** Matches ShipmentDetailsCard outer border (`border-zinc-200` / `dark:border-zinc-800`). */
 export const SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS = "border-zinc-200 dark:border-zinc-800";
 
+/** Same tokens for Tailwind `divide-*` utilities (e.g. `divide-x`). */
+export const SHIPMENT_COMMERCIAL_HEADER_DIVIDE_CLASS = "divide-zinc-200 dark:divide-zinc-800";
+
 export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROW_CLASS = `grid grid-cols-1 gap-5 border-b pb-4 md:grid-cols-2 md:items-center md:gap-6 ${SHIPMENT_COMMERCIAL_HEADER_DIVIDER_CLASS}`;
 
 export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_TITLE_COL_CLASS =
