@@ -17,7 +17,13 @@ export function ShipmentCommercialSummaryBar({ source }: ShipmentCommercialSumma
     <div className={SHIPMENT_COMMERCIAL_SUMMARY_BAR_CLASS}>
       {orderPart ? <ShipmentCommercialSummaryField label={orderPart.label} value={orderPart.value} /> : null}
 
-      {customerPart ? <ShipmentCommercialSummaryField label={customerPart.label} value={customerPart.value} /> : null}
+      {customerPart ? (
+        <ShipmentCommercialSummaryField
+          label={customerPart.label}
+          value={customerPart.value}
+          consignee={source.consignee}
+        />
+      ) : null}
 
       <div className={SHIPMENT_COMMERCIAL_SUMMARY_BAR_LANE_CELL_CLASS}>
         <p className={SHIPMENT_COMMERCIAL_SUMMARY_BAR_LABEL_CLASS}>Lane</p>

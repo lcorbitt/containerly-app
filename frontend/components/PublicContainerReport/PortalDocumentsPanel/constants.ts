@@ -1,7 +1,7 @@
 export const PORTAL_DOCUMENTS_PANEL_CLASS = "flex min-h-0 min-w-0 flex-1 flex-col";
 
 export const PORTAL_DOCUMENTS_ACTIONS_CLASS =
-  "flex shrink-0 items-center justify-start border-b border-zinc-100 px-4 py-3 dark:border-zinc-800 sm:px-5";
+  "flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800 sm:px-5";
 
 export const PORTAL_DOCUMENTS_UPLOAD_BUTTON_CLASS =
   "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900";

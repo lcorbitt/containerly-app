@@ -22,14 +22,24 @@ import {
   SHIPMENT_DOCUMENTS_UPLOAD_BUTTON_CLASS,
 } from "./constants";
 import { useShipmentWorkspaceScopePanel } from "./hooks/useShipmentWorkspaceScopePanel";
+import { ShipmentMailTrackingPanel } from "../ShipmentMailTrackingPanel";
+import { isShipmentDocumentsApproved } from "@/utils/shipment-workflow-status";
 
 export function ShipmentWorkspaceScopePanel({
   shipmentId,
   variant = "section",
+  organizationId,
+  workflowStatus,
+  physicalMailTrackingNumber,
+  onTrackingSaved,
 }: {
   shipmentId: string;
   /** `tab` — embedded under Details/Documents tabs without duplicate chrome. */
   variant?: "section" | "tab";
+  organizationId?: string;
+  workflowStatus?: string | null;
+  physicalMailTrackingNumber?: string | null;
+  onTrackingSaved?: () => void;
 }) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -96,6 +106,8 @@ export function ShipmentWorkspaceScopePanel({
   }
 
   const isTab = variant === "tab";
+  const documentsApproved = isShipmentDocumentsApproved(workflowStatus);
+  const resolvedOrgId = organizationId ?? selectedOrgId ?? "";
 
   const uploadButton = (
     <button
@@ -131,7 +143,21 @@ export function ShipmentWorkspaceScopePanel({
       ) : null}
 
       <div className={isTab ? "flex flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5" : "flex flex-col"}>
-        {isTab ? <div className={SHIPMENT_DOCUMENTS_TAB_ACTIONS_CLASS}>{uploadButton}</div> : null}
+        {isTab ? (
+          <div className={SHIPMENT_DOCUMENTS_TAB_ACTIONS_CLASS}>
+            {resolvedOrgId ? (
+              <ShipmentMailTrackingPanel
+                shipmentId={shipmentId}
+                organizationId={resolvedOrgId}
+                initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
+                enabled={documentsApproved}
+                variant="inline"
+                onSaved={onTrackingSaved}
+              />
+            ) : null}
+            {uploadButton}
+          </div>
+        ) : null}
         <div className={SHIPMENT_DOCUMENTS_LIST_SCROLL_CLASS}>
           <DocumentsList
             variant="embedded"

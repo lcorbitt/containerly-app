@@ -114,11 +114,8 @@ export function ShipmentDetailsTabs({
               <ShipmentTimelinePanel
                 shipmentId={shipmentId}
                 organizationId={organizationId}
-                workflowStatus={workflowStatus}
-                physicalMailTrackingNumber={physicalMailTrackingNumber}
                 activityEvents={activityEvents}
                 carrierEvents={carrierEvents}
-                onEnabled={onTrackingEnabled}
               />
               {detailsContent ? (
                 <div className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">{detailsContent}</div>
@@ -137,7 +134,14 @@ export function ShipmentDetailsTabs({
         >
           <Reveal show={isDocumentsTab} keepMounted className={SHIPMENT_DETAILS_TAB_REVEAL_CLASS}>
             <div className={SHIPMENT_DETAILS_TAB_DOCUMENTS_PANEL_CLASS}>
-              <ShipmentWorkspaceScopePanel shipmentId={shipmentId} variant="tab" />
+              <ShipmentWorkspaceScopePanel
+                shipmentId={shipmentId}
+                variant="tab"
+                organizationId={organizationId}
+                workflowStatus={workflowStatus}
+                physicalMailTrackingNumber={physicalMailTrackingNumber}
+                onTrackingSaved={onTrackingEnabled}
+              />
             </div>
           </Reveal>
         </div>

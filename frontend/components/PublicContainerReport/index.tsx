@@ -10,6 +10,7 @@ import {
 import { hasShipmentDraftDocuments } from "@/utils/workspace-tab-counts";
 import type { PortalDetailsTabId } from "./PortalDetailsTabs/types";
 import { ShipmentDocumentUploadModal } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
+import { ShipmentMailTrackingPanel } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentMailTrackingPanel";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
   ShipmentThreadStartBanner,
@@ -36,6 +37,7 @@ import {
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
 import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
 import { SITE_URL } from "@/lib/site-metadata";
+import { isShipmentDocumentsApproved } from "@/utils/shipment-workflow-status";
 
 export function PublicContainerReport({
   shipmentId,
@@ -149,6 +151,19 @@ export function PublicContainerReport({
     ? getOrgImagePublicUrl(createClient(), organization.org_image_path)
     : null;
 
+  const documentsApproved = isShipmentDocumentsApproved(commercialDetails?.workflow_status);
+  const mailTrackingPanel = organization?.id ? (
+    <ShipmentMailTrackingPanel
+      shipmentId={shipmentId}
+      organizationId={organization.id}
+      initialTrackingNumber={commercialDetails?.physical_mail_tracking_number}
+      enabled={documentsApproved}
+      readOnly={payload.viewer === "importer" || threadReadOnly}
+      variant="inline"
+      onSaved={() => void refresh()}
+    />
+  ) : null;
+
   return (
     <div className="min-h-dvh bg-linear-to-b from-zinc-100/90 via-zinc-50/50 to-zinc-100/40 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
@@ -216,11 +231,7 @@ export function PublicContainerReport({
               onTabChange={setDashboardTab}
               tabCounts={tabCounts}
               timelinePanel={
-                <PortalTimelinePanel
-                  shipmentId={shipmentId}
-                  payload={payload}
-                  onRefresh={refresh}
-                />
+                <PortalTimelinePanel shipmentId={shipmentId} payload={payload} />
               }
               documentsPanel={
                 <PortalDocumentsPanel
@@ -237,6 +248,7 @@ export function PublicContainerReport({
                   showUpload={documentsUploadEnabled}
                   uploading={uploadingDocuments}
                   onAddDocumentsClick={() => setUploadModalOpen(true)}
+                  mailTrackingPanel={mailTrackingPanel}
                 />
               }
               messagesPanel={

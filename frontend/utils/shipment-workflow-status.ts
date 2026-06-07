@@ -29,6 +29,11 @@ export function shipmentWorkflowDisplayLabel(status: string | null | undefined):
   return SHIPMENT_WORKFLOW_STATUS_LABELS[normalized] ?? (status ?? "").replace(/_/g, " ");
 }
 
+/** All draft documents approved by the customer (`approved`), or originals already mailed. */
+export function isShipmentDocumentsApproved(status: string | null | undefined): boolean {
+  return isShipmentPostApproval(status);
+}
+
 /** Approved or originals already mailed to customer. */
 export function isShipmentPostApproval(status: string | null | undefined): boolean {
   const normalized = normalizeShipmentWorkflowStatus(status);

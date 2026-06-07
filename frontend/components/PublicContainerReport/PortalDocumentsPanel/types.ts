@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PortalAttachment } from "@shared/dto/shipment.dto";
 
 export interface PortalDocumentsPanelProps {
@@ -12,4 +13,6 @@ export interface PortalDocumentsPanelProps {
   showUpload?: boolean;
   uploading?: boolean;
   onAddDocumentsClick?: () => void;
+  /** Inline mail tracking row at top of panel (operator edit or customer read-only). */
+  mailTrackingPanel?: ReactNode;
 }

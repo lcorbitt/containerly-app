@@ -11,5 +11,10 @@ export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_LABEL_CLASS =
 export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_VALUE_CLASS =
   "mt-1 text-xl font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
 
+export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_CLASS =
+  "mt-1 text-xs leading-snug text-zinc-500 dark:text-zinc-400";
+
+export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_CONSIGNEE_LABEL = "Consignee";
+
 export const SHIPMENT_COMMERCIAL_SUMMARY_BAR_LANE_CELL_CLASS =
   "flex min-w-0 flex-col md:col-span-1 md:px-5 last:md:pr-0";

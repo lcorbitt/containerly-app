@@ -231,22 +231,27 @@ export function PortalDocumentsPanel({
   showUpload = false,
   uploading = false,
   onAddDocumentsClick,
+  mailTrackingPanel,
 }: PortalDocumentsPanelProps) {
   const [rejectPopoverId, setRejectPopoverId] = useState<string | null>(null);
+  const showActionsBar = Boolean(mailTrackingPanel) || (showUpload && onAddDocumentsClick);
 
   return (
     <div className={PORTAL_DOCUMENTS_PANEL_CLASS}>
-      {showUpload && onAddDocumentsClick ? (
+      {showActionsBar ? (
         <div className={PORTAL_DOCUMENTS_ACTIONS_CLASS}>
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={onAddDocumentsClick}
-            className={PORTAL_DOCUMENTS_UPLOAD_BUTTON_CLASS}
-          >
-            <FilePlus2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-            {uploading ? "Uploading…" : DOCUMENTS_LIST_ADD_LABEL}
-          </button>
+          {mailTrackingPanel}
+          {showUpload && onAddDocumentsClick ? (
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={onAddDocumentsClick}
+              className={PORTAL_DOCUMENTS_UPLOAD_BUTTON_CLASS}
+            >
+              <FilePlus2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+              {uploading ? "Uploading…" : DOCUMENTS_LIST_ADD_LABEL}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

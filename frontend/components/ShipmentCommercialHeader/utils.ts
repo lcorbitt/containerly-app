@@ -2,6 +2,7 @@ import type { ShipmentCommercialHeaderSource } from "./types";
 import {
   SHIPMENT_ETA_FIELD_KEYS,
   SHIPMENT_ROUTE_FIELD_KEYS,
+  SHIPMENT_SUMMARY_CONSIGNEE_FIELD_KEY,
   SHIPMENT_TITLE_FIELD_KEYS,
 } from "./constants";
 
@@ -44,6 +45,7 @@ export const SHIPMENT_DETAIL_FIELDS = [
 export const SHIPMENT_DETAIL_GRID_FIELDS = SHIPMENT_DETAIL_FIELDS.filter(
   (field) =>
     !(SHIPMENT_TITLE_FIELD_KEYS as readonly string[]).includes(field.key) &&
+    field.key !== SHIPMENT_SUMMARY_CONSIGNEE_FIELD_KEY &&
     !(SHIPMENT_ROUTE_FIELD_KEYS as readonly string[]).includes(field.key) &&
     !(SHIPMENT_ETA_FIELD_KEYS as readonly string[]).includes(field.key),
 );

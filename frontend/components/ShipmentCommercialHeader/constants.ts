@@ -41,6 +41,9 @@ export const SHIPMENT_DOCUMENTS_STATUS_LABEL = "Documents status";
 
 export const SHIPMENT_TITLE_FIELD_KEYS = ["customer_name", "order_number"] as const;
 
+/** Shown in summary bar under Customer — not repeated in the details grid. */
+export const SHIPMENT_SUMMARY_CONSIGNEE_FIELD_KEY = "consignee" as const;
+
 export const SHIPMENT_ROUTE_FIELD_KEYS = ["port_of_loading", "port_of_destination"] as const;
 
 export const SHIPMENT_ETA_FIELD_KEYS = ["estimated_departure_at", "estimated_arrival_at"] as const;
