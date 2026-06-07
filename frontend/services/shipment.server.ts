@@ -184,7 +184,23 @@ export async function fetchOperatorShipmentsOverviewPage(
 
   const offset = Math.max(0, page) * pageSize;
 
-  const { data, error } = await supabase.rpc("operator_shipments_overview_page", {
+  // Omit optional RPC args when unset — PostgREST matches overload by param names;
+  // passing null for p_eta_* forces the 13-arg function from migration 20260606120000.
+  const rpcArgs: {
+    p_organization_id: string;
+    p_user_id: string | null;
+    p_scope: string;
+    p_search: string;
+    p_sort_column: string;
+    p_sort_asc: boolean;
+    p_limit: number;
+    p_offset: number;
+    p_tag_filter?: string;
+    p_eta_from?: string;
+    p_eta_to?: string;
+    p_etd_from?: string;
+    p_etd_to?: string;
+  } = {
     p_organization_id: organizationId,
     p_user_id: userId,
     p_scope: scope,
@@ -193,12 +209,16 @@ export async function fetchOperatorShipmentsOverviewPage(
     p_sort_asc: sortDirection === "asc",
     p_limit: pageSize,
     p_offset: offset,
-    p_tag_filter: tagFilter?.trim() || null,
-    p_eta_from: dateRangeFilter?.etaFrom ?? null,
-    p_eta_to: dateRangeFilter?.etaTo ?? null,
-    p_etd_from: dateRangeFilter?.etdFrom ?? null,
-    p_etd_to: dateRangeFilter?.etdTo ?? null,
-  });
+  };
+
+  const trimmedTag = tagFilter?.trim();
+  if (trimmedTag) rpcArgs.p_tag_filter = trimmedTag;
+  if (dateRangeFilter?.etaFrom) rpcArgs.p_eta_from = dateRangeFilter.etaFrom;
+  if (dateRangeFilter?.etaTo) rpcArgs.p_eta_to = dateRangeFilter.etaTo;
+  if (dateRangeFilter?.etdFrom) rpcArgs.p_etd_from = dateRangeFilter.etdFrom;
+  if (dateRangeFilter?.etdTo) rpcArgs.p_etd_to = dateRangeFilter.etdTo;
+
+  const { data, error } = await supabase.rpc("operator_shipments_overview_page", rpcArgs);
 
   if (error) throw new Error(error.message);
 
