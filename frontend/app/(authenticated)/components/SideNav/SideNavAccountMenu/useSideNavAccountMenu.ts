@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigationProgress } from "@/components/NavigationProgress";
 import { profileMenuLabels } from "@/components/TopNav/AuthenticatedTopNav/utils";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspaceOptional } from "@/contexts/organization-workspace";
 import { useSessionAvatar } from "@/atoms/session-avatar";
 import { signOutBrowser } from "@/services/auth.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
@@ -27,7 +27,10 @@ function measurePanelPosition(trigger: HTMLElement): SideNavAccountMenuPanelPosi
 export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccountMenuProps) {
   const router = useRouter();
   const { startNavigation } = useNavigationProgress();
-  const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
+  const workspace = useOrganizationWorkspaceOptional();
+  const orgs = workspace?.orgs ?? [];
+  const selectedOrgId = workspace?.selectedOrgId ?? null;
+  const isSuperAdmin = workspace?.isSuperAdmin ?? false;
   const { profileImagePath } = useSessionAvatar();
   const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);

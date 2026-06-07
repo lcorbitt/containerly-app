@@ -102,3 +102,8 @@ export function useOrganizationWorkspace(): OrganizationWorkspaceValue {
   }
   return ctx;
 }
+
+/** Returns null outside OrganizationWorkspaceProvider (e.g. customer shell). */
+export function useOrganizationWorkspaceOptional(): OrganizationWorkspaceValue | null {
+  return useContext(OrganizationWorkspaceContext);
+}
