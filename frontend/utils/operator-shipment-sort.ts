@@ -21,6 +21,7 @@ export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
   "port_of_destination",
   "assignee",
   "workflow_status",
+  "estimated_departure_at",
   "estimated_arrival_at",
   "tags",
 ] as const;

@@ -13,6 +13,7 @@ import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
+import type { OperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 import type { ImporterGrantedShipmentSortColumn } from "@/utils/importer-shipment-sort";
 
 export {
@@ -79,6 +80,7 @@ export type ShipmentOverviewRow = {
   workflow_status: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */
@@ -103,6 +105,7 @@ type RpcOverviewRow = {
   workflow_status: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   owner_user_id: string | null;
@@ -138,6 +141,7 @@ function toOverviewRow(r: RpcOverviewRow): ShipmentOverviewRow {
     workflow_status: r.workflow_status,
     port_of_loading: r.port_of_loading,
     port_of_destination: r.port_of_destination,
+    estimated_departure_at: r.estimated_departure_at,
     estimated_arrival_at: r.estimated_arrival_at,
     created_at: r.created_at,
     owner_user_id: r.owner_user_id,
@@ -158,6 +162,7 @@ export async function fetchOperatorShipmentsOverviewPage(
     scope: OperatorShipmentScope;
     search: string;
     tagFilter?: string | null;
+    dateRangeFilter?: OperatorShipmentDateRangeFilter;
     sortColumn: OperatorShipmentSortColumn;
     sortDirection: SortDirection;
     page: number;
@@ -170,6 +175,7 @@ export async function fetchOperatorShipmentsOverviewPage(
     scope,
     search,
     tagFilter,
+    dateRangeFilter,
     sortColumn,
     sortDirection,
     page,
@@ -188,6 +194,10 @@ export async function fetchOperatorShipmentsOverviewPage(
     p_limit: pageSize,
     p_offset: offset,
     p_tag_filter: tagFilter?.trim() || null,
+    p_eta_from: dateRangeFilter?.etaFrom ?? null,
+    p_eta_to: dateRangeFilter?.etaTo ?? null,
+    p_etd_from: dateRangeFilter?.etdFrom ?? null,
+    p_etd_to: dateRangeFilter?.etdTo ?? null,
   });
 
   if (error) throw new Error(error.message);

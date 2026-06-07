@@ -9,6 +9,7 @@ import {
   type OperatorShipmentScope,
   type ShipmentOverviewRow,
 } from "@/services/shipment.service";
+import { parseOperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 import {
   DEFAULT_OPERATOR_SHIPMENT_SORT_COLUMN,
   defaultSortDirectionForOperatorShipmentColumn,
@@ -30,6 +31,8 @@ import {
   SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS,
 } from "../constants";
 import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
+import { ShipmentOverviewAssigneeCell } from "../ShipmentOverviewAssigneeCell";
+import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "../ShipmentOverviewDateFilters/constants";
 import { displayOverviewText, formatOverviewDate } from "../utils";
 
 export function useOperatorShipmentsOverview() {
@@ -53,6 +56,10 @@ export function useOperatorShipmentsOverview() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [etdFrom, setEtdFrom] = useState("");
+  const [etdTo, setEtdTo] = useState("");
+  const [etaFrom, setEtaFrom] = useState("");
+  const [etaTo, setEtaTo] = useState("");
   const [deletingShipmentId, setDeletingShipmentId] = useState<string | null>(null);
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
@@ -68,7 +75,12 @@ export function useOperatorShipmentsOverview() {
 
   useEffect(() => {
     setPage(0);
-  }, [listFilter, pageSize, sortColumn, sortDirection, tagFilter]);
+  }, [listFilter, pageSize, sortColumn, sortDirection, tagFilter, etdFrom, etdTo, etaFrom, etaTo]);
+
+  const dateRangeFilter = useMemo(
+    () => parseOperatorShipmentDateRangeFilter({ etaFrom, etaTo, etdFrom, etdTo }),
+    [etaFrom, etaTo, etdFrom, etdTo],
+  );
 
   const load = useCallback(async () => {
     if (!selectedOrgId) return;
@@ -80,6 +92,7 @@ export function useOperatorShipmentsOverview() {
         scope: listFilter,
         search: debouncedSearch,
         tagFilter,
+        dateRangeFilter,
         sortColumn,
         sortDirection,
         page,
@@ -101,7 +114,7 @@ export function useOperatorShipmentsOverview() {
     } finally {
       setLoading(false);
     }
-  }, [selectedOrgId, listFilter, debouncedSearch, tagFilter, sortColumn, sortDirection, page, pageSize]);
+  }, [selectedOrgId, listFilter, debouncedSearch, tagFilter, dateRangeFilter, sortColumn, sortDirection, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -148,6 +161,13 @@ export function useOperatorShipmentsOverview() {
 
   const clearTagFilter = useCallback(() => {
     setTagFilter(null);
+  }, []);
+
+  const clearDateFilters = useCallback(() => {
+    setEtdFrom("");
+    setEtdTo("");
+    setEtaFrom("");
+    setEtaTo("");
   }, []);
 
   const handleDeleteShipment = useCallback(
@@ -238,15 +258,14 @@ export function useOperatorShipmentsOverview() {
         id: "assignee",
         header: "Assignee",
         sortable: true,
-        cell: (r) => {
-          const label = r.assignee_user_id ? peopleLabels[r.assignee_user_id] : null;
-          if (!label) return <span className="text-zinc-500">Unassigned</span>;
-          return (
-            <span className="max-w-[10rem] truncate text-sm text-zinc-700 dark:text-zinc-300" title={label}>
-              {label}
-            </span>
-          );
-        },
+        className: "w-16",
+        headerClassName: "whitespace-nowrap",
+        cell: (r) => (
+          <ShipmentOverviewAssigneeCell
+            assigneeUserId={r.assignee_user_id}
+            label={r.assignee_user_id ? (peopleLabels[r.assignee_user_id] ?? null) : null}
+          />
+        ),
       },
       {
         id: "tags",
@@ -276,11 +295,23 @@ export function useOperatorShipmentsOverview() {
           ),
       },
       {
-        id: "estimated_arrival_at",
-        header: "Est. arrival",
+        id: "estimated_departure_at",
+        header: "ETD",
         sortable: true,
+        headerClassName: "whitespace-nowrap",
         cell: (r) => (
-          <span className="whitespace-nowrap text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
+            {formatOverviewDate(r.estimated_departure_at)}
+          </span>
+        ),
+      },
+      {
+        id: "estimated_arrival_at",
+        header: "ETA",
+        sortable: true,
+        headerClassName: "whitespace-nowrap",
+        cell: (r) => (
+          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
             {formatOverviewDate(r.estimated_arrival_at)}
           </span>
         ),
@@ -346,6 +377,15 @@ export function useOperatorShipmentsOverview() {
     setSearchInput,
     tagFilter,
     clearTagFilter,
+    etdFrom,
+    setEtdFrom,
+    etdTo,
+    setEtdTo,
+    etaFrom,
+    setEtaFrom,
+    etaTo,
+    setEtaTo,
+    clearDateFilters,
     load,
     handleSortChange,
     columns,

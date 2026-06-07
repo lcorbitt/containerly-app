@@ -18,6 +18,7 @@ import {
   SHIPMENT_OVERVIEW_TAG_FILTER_CLEAR_CLASS,
   shipmentOverviewFilterButtonClass,
 } from "./constants";
+import { ShipmentOverviewDateFilters } from "./ShipmentOverviewDateFilters";
 import { useOperatorShipmentsOverview } from "./hooks/useOperatorShipmentsOverview";
 
 export function OperatorShipmentsOverview({
@@ -47,6 +48,15 @@ export function OperatorShipmentsOverview({
     setSearchInput,
     tagFilter,
     clearTagFilter,
+    etdFrom,
+    setEtdFrom,
+    etdTo,
+    setEtdTo,
+    etaFrom,
+    setEtaFrom,
+    etaTo,
+    setEtaTo,
+    clearDateFilters,
     load,
     handleSortChange,
     columns,
@@ -129,6 +139,19 @@ export function OperatorShipmentsOverview({
                   </div>
                 </div>
 
+                <ShipmentOverviewDateFilters
+                  etdFrom={etdFrom}
+                  etdTo={etdTo}
+                  etaFrom={etaFrom}
+                  etaTo={etaTo}
+                  disabled={loading}
+                  onEtdFromChange={setEtdFrom}
+                  onEtdToChange={setEtdTo}
+                  onEtaFromChange={setEtaFrom}
+                  onEtaToChange={setEtaTo}
+                  onClear={clearDateFilters}
+                />
+
                 {tagFilter ? (
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <span className={SHIPMENT_OVERVIEW_TAG_FILTER_CLASS}>
@@ -158,9 +181,11 @@ export function OperatorShipmentsOverview({
                 emptyMessage={
                   tagFilter
                     ? `No shipments tagged “${tagFilter}”.`
-                    : listFilter === "all"
-                      ? "No shipments yet."
-                      : "No shipments match this filter."
+                    : etdFrom || etdTo || etaFrom || etaTo
+                      ? "No shipments match these date filters."
+                      : listFilter === "all"
+                        ? "No shipments yet."
+                        : "No shipments match this filter."
                 }
                 onRowClick={navigateToShipment}
                 />

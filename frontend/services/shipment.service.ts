@@ -34,6 +34,7 @@ import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
+import type { OperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 import type { ImporterGrantedShipmentSortColumn } from "@/utils/importer-shipment-sort";
 import type {
   CustomerInvite,
@@ -147,6 +148,7 @@ export type ShipmentOverviewRow = {
   workflow_status: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
   /** Shipment owner (`shipments.created_by`). */
@@ -813,6 +815,7 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
   scope: OperatorShipmentScope;
   search: string;
   tagFilter?: string | null;
+  dateRangeFilter?: OperatorShipmentDateRangeFilter;
   sortColumn: OperatorShipmentSortColumn;
   sortDirection: SortDirection;
   page: number;
@@ -829,6 +832,10 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
   if (args.tagFilter?.trim()) {
     params.set("tagFilter", args.tagFilter.trim());
   }
+  if (args.dateRangeFilter?.etaFrom) params.set("etaFrom", args.dateRangeFilter.etaFrom);
+  if (args.dateRangeFilter?.etaTo) params.set("etaTo", args.dateRangeFilter.etaTo);
+  if (args.dateRangeFilter?.etdFrom) params.set("etdFrom", args.dateRangeFilter.etdFrom);
+  if (args.dateRangeFilter?.etdTo) params.set("etdTo", args.dateRangeFilter.etdTo);
   return apiJson<{ rows: ShipmentOverviewRow[]; totalCount: number }>(
     `/api/organizations/${encodeURIComponent(args.organizationId)}/operator-shipments?${params}`,
   );

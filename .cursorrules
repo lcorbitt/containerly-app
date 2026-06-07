@@ -283,6 +283,21 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 **MUST NOT:** duplicate Edge HTTP contracts in `frontend/types/` — use `shared/dto` for Edge wire format; use `frontend/types/database.ts` (and related) for table-aligned app types.
 
+#### Supabase SQL migrations (`supabase/migrations/`)
+
+**CRITICAL — unique version prefix:** Supabase records migrations by the **14-digit timestamp prefix only** (`YYYYMMDDHHMMSS`). Two files must **never** share the same prefix — the second `db push` fails with `duplicate key value violates unique constraint "schema_migrations_pkey"`.
+
+**Before creating any migration file, the agent MUST:**
+
+1. **List existing files** in `supabase/migrations/` (e.g. `ls supabase/migrations/` or glob `*.sql`).
+2. **Pick a prefix strictly greater than every existing prefix** — do not reuse `20260606120000` if any file already starts with that timestamp.
+3. **Prefer incrementing the sequence** on the same day: if `20260606130000_*.sql` exists, use `20260606140000_…` or later — never guess or copy a timestamp from another migration.
+4. **Never** use round placeholders like `20260606120000` when other migrations may exist from the same session/day.
+
+**Filename format:** `YYYYMMDDHHMMSS_snake_case_description.sql` (one migration per file; descriptive suffix after the underscore).
+
+**If a duplicate was already applied locally:** rename the **not-yet-applied** file to a new unique prefix only — do **not** rename a migration already recorded in `schema_migrations` unless the user explicitly asks to repair that history.
+
 ---
 
 ### 9. Client UI state (prefer Jotai over heavy Context)

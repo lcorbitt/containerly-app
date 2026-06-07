@@ -1,0 +1,3 @@
+export const SHIPMENT_OVERVIEW_ASSIGNEE_UNASSIGNED_CLASS = "text-zinc-500";
+
+export const SHIPMENT_OVERVIEW_ASSIGNEE_AVATAR_WRAP_CLASS = "inline-flex";

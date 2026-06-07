@@ -6,6 +6,7 @@ import {
   type OperatorShipmentScope,
   type SortDirection,
 } from "@/services/shipment.server";
+import { parseOperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 
 export async function GET(
   request: Request,
@@ -29,6 +30,12 @@ export async function GET(
   const sortDirection = (searchParams.get("sortDirection") === "asc" ? "asc" : "desc") as SortDirection;
   const search = searchParams.get("search") ?? "";
   const tagFilter = searchParams.get("tagFilter")?.trim() || null;
+  const dateRangeFilter = parseOperatorShipmentDateRangeFilter({
+    etaFrom: searchParams.get("etaFrom"),
+    etaTo: searchParams.get("etaTo"),
+    etdFrom: searchParams.get("etdFrom"),
+    etdTo: searchParams.get("etdTo"),
+  });
 
   const result = await fetchOperatorShipmentsOverviewPage(supabase, {
     organizationId: orgId,
@@ -36,6 +43,7 @@ export async function GET(
     scope,
     search,
     tagFilter,
+    dateRangeFilter,
     sortColumn,
     sortDirection,
     page,
