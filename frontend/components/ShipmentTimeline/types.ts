@@ -58,6 +58,8 @@ export interface ShipmentTimelineProps {
   className?: string;
   emptyMessage?: string;
   emptyHint?: string;
+  /** Increment to scroll the viewport to the chronologically latest timeline event after data refreshes. */
+  scrollToLatestNonce?: number;
 }
 
 export interface ShipmentTimelineOrder {

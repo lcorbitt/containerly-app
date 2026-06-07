@@ -117,13 +117,13 @@ export const STEP_CARD_SURFACE =
   "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950";
 
 export const STEP_CARD_BASE =
-  "w-full rounded-md border px-2.5 py-2 text-left shadow-[0_1px_0_0_rgba(0,0,0,0.03)] ring-1 ring-slate-200/40 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)] dark:ring-slate-600/30 sm:px-3 sm:py-2.5";
+  "flex w-full flex-col gap-2 rounded-md border px-2.5 py-2 text-left shadow-[0_1px_0_0_rgba(0,0,0,0.03)] ring-1 ring-slate-200/40 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)] dark:ring-slate-600/30 sm:px-3 sm:py-2.5";
 
 export const TIMELINE_COMMUNICATION_PREVIEW_CLASS =
-  "mt-0.5 line-clamp-3 text-sm font-medium leading-snug text-zinc-700 dark:text-zinc-300";
+  "line-clamp-3 text-sm font-medium leading-snug text-zinc-700 dark:text-zinc-300";
 
 export const TIMELINE_DEFAULT_SUBTITLE_CLASS =
-  "mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400";
+  "text-[10px] font-medium text-zinc-500 dark:text-zinc-400";
 
 export const TIMELINE_CARD_TIMESTAMP_CLASS =
   "shrink-0 text-[10px] tabular-nums leading-snug text-zinc-400 dark:text-zinc-500";
@@ -141,3 +141,5 @@ export const TIMELINE_LATEST_NODE_CLASS = "scale-110 ring-[3px] ring-offset-[3px
 
 export const STEP_CARD_SURFACE_PAST =
   "border-zinc-200/45 bg-zinc-50/20 saturate-[0.88] dark:border-zinc-800/45 dark:bg-zinc-950/25";
+
+export const TIMELINE_EVENT_ELEMENT_ID_PREFIX = "shipment-timeline-event-";

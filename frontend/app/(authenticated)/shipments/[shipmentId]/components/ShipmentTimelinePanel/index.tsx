@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import { ShipmentTimeline } from "@/components/ShipmentTimeline";
 import type { PublicTimelineEvent } from "@/types/public-report";
@@ -48,17 +48,24 @@ export function ShipmentTimelinePanel({
   }, [scopeThreadQuery.data]);
 
   const attachmentDisplayNamesById = attachmentDisplayNamesByIdProp ?? attachmentDisplayNamesByIdFromQuery;
+  const [scrollToLatestNonce, setScrollToLatestNonce] = useState(0);
+
+  function handleTrackingSaved() {
+    setScrollToLatestNonce((nonce) => nonce + 1);
+    onEnabled?.();
+  }
 
   return (
     <div className={SHIPMENT_TIMELINE_PANEL_STACK_CLASS}>
-      <ShipmentMailTrackingPanel
-        shipmentId={shipmentId}
-        organizationId={organizationId}
-        initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
-        enabled={postApproval}
-        readOnly={readOnly}
-        onSaved={onEnabled}
-      />
+      {!readOnly ? (
+        <ShipmentMailTrackingPanel
+          shipmentId={shipmentId}
+          organizationId={organizationId}
+          initialTrackingNumber={physicalMailTrackingNumber ?? undefined}
+          enabled={postApproval}
+          onSaved={handleTrackingSaved}
+        />
+      ) : null}
 
       <ShipmentTimeline
         events={carrierEvents}
@@ -66,6 +73,7 @@ export function ShipmentTimelinePanel({
         attachmentDisplayNamesById={attachmentDisplayNamesById}
         className={SHIPMENT_TIMELINE_SECTION_CLASS}
         emptyHint="Document uploads, approvals, and carrier updates will appear here."
+        scrollToLatestNonce={scrollToLatestNonce}
       />
     </div>
   );

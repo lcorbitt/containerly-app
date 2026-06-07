@@ -12,10 +12,12 @@ import {
   MessageSquare,
   Package,
   Shield,
+  ShieldAlert,
   Ship,
   Truck,
 } from "lucide-react";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import { TIMELINE_EVENT_ELEMENT_ID_PREFIX } from "./constants";
 import {
   messageActivityCommunicationTitle,
   truncateMessageActivityPreview,
@@ -235,6 +237,19 @@ export function isTrackingNumberActivityEvent(
   return eventType === "originals_mailed" && Boolean(readMetadataString(metadata ?? {}, "tracking_number"));
 }
 
+function formatRiskLevelLabel(level: string | null | undefined): string {
+  switch (level?.trim().toLowerCase()) {
+    case "low":
+      return "Low";
+    case "medium":
+      return "Medium";
+    case "high":
+      return "High";
+    default:
+      return humanizeCarrierToken(level ?? "Carrier Default");
+  }
+}
+
 export function activityEventTitle(event: ShipmentActivityEvent): string {
   const documentMeta = parseActivityDocumentMeta(event.metadata);
   const showsFileInMeta = Boolean(documentMeta?.fileName?.trim());
@@ -261,6 +276,10 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
     }
     case "tracking_linked":
       return "Carrier tracking linked";
+    case "risk_status_updated": {
+      const riskLevel = readMetadataString(event.metadata ?? {}, "risk_level");
+      return `Risk status set to ${formatRiskLevelLabel(riskLevel)}`;
+    }
     case "customer_message":
     case "operator_message": {
       const meta =
@@ -299,6 +318,11 @@ export function mapActivityEventToTimelineEvent(
   const trackingNumberSubtitle = isTrackingNumberActivityEvent(event.event_type, metadata)
     ? readMetadataString(metadata, "tracking_number")
     : null;
+  const riskMessageSubtitle =
+    event.event_type === "risk_status_updated"
+      ? readMetadataString(metadata, "risk_message")
+      : null;
+  const isTrackingNumberEvent = trackingNumberSubtitle != null;
   return {
     id: event.id,
     event_type: event.event_type,
@@ -307,12 +331,10 @@ export function mapActivityEventToTimelineEvent(
     occurred_at: event.occurred_at,
     source: "activity",
     displayTitle: activityEventTitle(event),
-    displaySubtitle: messagePreview ?? shipmentCreatedSubtitle ?? trackingNumberSubtitle,
-    documentMeta: enrichTimelineDocumentMeta(
-      parsedMeta,
-      metadata,
-      attachmentDisplayNamesById,
-    ),
+    displaySubtitle: messagePreview ?? shipmentCreatedSubtitle ?? trackingNumberSubtitle ?? riskMessageSubtitle,
+    documentMeta: isTrackingNumberEvent
+      ? null
+      : enrichTimelineDocumentMeta(parsedMeta, metadata, attachmentDisplayNamesById),
     activityMetadata: metadata,
   };
 }
@@ -346,6 +368,32 @@ export function getLatestTimelineEventId(
   ).id;
 }
 
+export function timelineEventElementId(eventId: string): string {
+  return `${TIMELINE_EVENT_ELEMENT_ID_PREFIX}${eventId}`;
+}
+
+function runTimelineScrollFlush(run: () => void): void {
+  run();
+  requestAnimationFrame(() => {
+    run();
+    requestAnimationFrame(run);
+  });
+  window.setTimeout(run, 50);
+  window.setTimeout(run, 350);
+  window.setTimeout(run, 550);
+}
+
+export function scrollTimelineEventIntoView(
+  eventId: string,
+  behavior: ScrollBehavior = "smooth",
+): void {
+  const scroll = () => {
+    const target = document.getElementById(timelineEventElementId(eventId));
+    target?.scrollIntoView({ block: "center", behavior, inline: "nearest" });
+  };
+  runTimelineScrollFlush(scroll);
+}
+
 export function inferTimelineVisual(
   eventType: string,
   status: string | null,
@@ -370,6 +418,9 @@ export function inferTimelineVisual(
   }
   if (/originals_mailed|originals_sent/.test(t)) {
     return { tone: "success", Icon: FileInput, label: "Sent" };
+  }
+  if (/risk_status/.test(t)) {
+    return { tone: "customs", Icon: ShieldAlert, label: "Risk" };
   }
   if (/tracking_linked|carrier/.test(t)) {
     return { tone: "system", Icon: Activity, label: "Tracking" };

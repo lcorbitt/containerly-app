@@ -89,7 +89,7 @@ export function ShipmentMailTrackingPanel({
         toast(r.error, "error");
         return;
       }
-      toast("Mail tracking saved — customer notified.", "success");
+      toast("Tracking number added — customer notified.", "success");
       onSaved?.();
     } finally {
       setSaving(false);

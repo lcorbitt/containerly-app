@@ -4,6 +4,7 @@ import {
   fetchMembershipUserIdForOrg,
 } from "@models/organization_members.ts";
 import { fetchProfileRole } from "@models/profiles.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
 import {
   deleteShipmentInOrganization,
   fetchShipmentInOrganization,
@@ -217,6 +218,19 @@ export async function updateCommercialShipment(
 
 const SHIPMENT_RISK_LEVELS = new Set<ShipmentRiskLevel>(["low", "medium", "high"]);
 
+function formatRiskLevelLabel(level: ShipmentRiskLevel | null | undefined): string {
+  switch (level) {
+    case "low":
+      return "Low";
+    case "medium":
+      return "Medium";
+    case "high":
+      return "High";
+    default:
+      return "Carrier Default";
+  }
+}
+
 export async function updateShipmentRisk(
   userClient: SupabaseClient,
   userId: string,
@@ -257,11 +271,28 @@ export async function updateShipmentRisk(
     return { ok: false, status: 400, error: "risk_message is required" };
   }
 
+  const previousLevel = existing.risk_level as ShipmentRiskLevel | null | undefined;
+  const riskLabel = formatRiskLevelLabel(level);
+
   const { error: upErr } = await updateShipmentCommercial(userClient, shipmentId, {
     risk_level: level,
     risk_message: message,
   });
   if (upErr) return { ok: false, status: 500, error: upErr.message };
+
+  const { error: activityErr } = await insertShipmentActivityEvent(userClient, {
+    shipment_id: shipmentId,
+    event_type: "risk_status_updated",
+    body: `Risk status updated to ${riskLabel}`,
+    actor_kind: "operator",
+    actor_user_id: userId,
+    metadata: {
+      risk_level: level,
+      risk_message: message,
+      previous_risk_level: previousLevel ?? null,
+    },
+  });
+  if (activityErr) return { ok: false, status: 500, error: activityErr.message };
 
   return { ok: true, shipment_id: shipmentId };
 }

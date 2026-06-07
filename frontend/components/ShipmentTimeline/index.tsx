@@ -28,8 +28,10 @@ import {
   isCommunicationTimelineEvent,
   communicationTimelinePreview,
   formatLocationSnippet,
+  timelineEventElementId,
 } from "./utils";
 import { useShipmentTimelineOrder } from "./useShipmentTimeline";
+import { useShipmentTimelineScrollToLatest } from "./useShipmentTimelineScrollToLatest";
 import { TimelineDocumentMeta } from "./TimelineDocumentMeta";
 
 export type {
@@ -41,8 +43,9 @@ export type {
   ContainerTimelineViewProps,
 } from "./types";
 export type { TimelineTone } from "./types";
-export { formatTimelineWhen, buildShipmentTimelineEvents, getLatestTimelineEventId } from "./utils";
+export { formatTimelineWhen, buildShipmentTimelineEvents, getLatestTimelineEventId, scrollTimelineEventIntoView } from "./utils";
 export { useShipmentTimelineOrder, useContainerTimelineOrder } from "./useShipmentTimeline";
+export { useShipmentTimelineScrollToLatest } from "./useShipmentTimelineScrollToLatest";
 
 export function TimelineOrderToggle({
   newestFirst,
@@ -76,10 +79,13 @@ export function ShipmentTimelineView({
   className: classNameProp,
   emptyMessage = "No events recorded yet",
   emptyHint = "Shipment milestones and carrier updates will appear here.",
+  scrollToLatestNonce,
 }: ShipmentTimelineViewProps) {
   const { displayEvents, orderFadeOut } = order;
   const eventCount = displayEvents.length;
   const latestEventId = getLatestTimelineEventId(displayEvents);
+
+  useShipmentTimelineScrollToLatest({ displayEvents, scrollToLatestNonce });
 
   return (
     <section
@@ -123,7 +129,12 @@ export function ShipmentTimelineView({
                     : null;
 
                 return (
-                  <li key={ev.id} className="group mb-8 last:mb-0" aria-current={isLatest ? "step" : undefined}>
+                  <li
+                    key={ev.id}
+                    id={timelineEventElementId(ev.id)}
+                    className="group mb-8 last:mb-0 scroll-mt-24"
+                    aria-current={isLatest ? "step" : undefined}
+                  >
                     <div className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3">
                       {index > 0 ? (
                         <span
@@ -175,7 +186,7 @@ export function ShipmentTimelineView({
                           </time>
                         </div>
                         <p
-                          className={`mt-1 leading-snug ${
+                          className={`leading-snug ${
                             isLatest
                               ? "text-sm font-semibold text-zinc-900 dark:text-zinc-50"
                               : "text-[13px] font-medium text-zinc-600 dark:text-zinc-400"
@@ -190,7 +201,7 @@ export function ShipmentTimelineView({
                         ) : null}
                         {ev.documentMeta ? <TimelineDocumentMeta meta={ev.documentMeta} /> : null}
                         {locSnippet || (ev.location && Object.keys(ev.location).length > 0) ? (
-                          <div className="mt-1.5 border-t border-zinc-200/50 pt-1.5 dark:border-zinc-700/50">
+                          <div className="border-t border-zinc-200/50 pt-1.5 dark:border-zinc-700/50">
                             {locSnippet ? (
                               <p className="flex items-start gap-1 text-[10px] leading-snug text-zinc-600 dark:text-zinc-400">
                                 <MapPin

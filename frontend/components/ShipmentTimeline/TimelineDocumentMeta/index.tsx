@@ -49,7 +49,7 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
   const showFileList = previewNames.length > 0 && !showStandaloneFileName;
 
   return (
-    <div className={compact ? "mt-1.5 space-y-1" : "mt-2 space-y-1.5"}>
+    <div className={compact ? "space-y-1" : "space-y-1.5"}>
       {isBatch ? (
         <p className={FILE_COUNT_CLASS}>
           {displayCount} document{displayCount === 1 ? "" : "s"}

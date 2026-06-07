@@ -118,7 +118,7 @@ export async function fetchShipmentInOrganization(
 ) {
   return client
     .from("shipments")
-    .select("id")
+    .select("id, risk_level")
     .eq("id", shipmentId)
     .eq("organization_id", organizationId)
     .maybeSingle();
