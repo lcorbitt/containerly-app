@@ -10,6 +10,10 @@ import { ShipmentAccessSidebar } from "../ShipmentAccessSidebar";
 import { ShipmentDetailsTabs } from "../ShipmentDetailsTabs";
 import type { ShipmentDetailsTabId } from "../ShipmentDetailsTabs/types";
 import { parseShipmentDetailsTabParam } from "../ShipmentDetailsTabs/utils";
+import {
+  scrollShipmentWorkspaceDocumentsTabIntoView,
+  SHIPMENT_WORKSPACE_SCROLL_TARGET_DOCUMENTS_TAB,
+} from "@/utils/workspace-tab-panel";
 import { ShipmentDetailsTabsSection } from "../ShipmentDetailsTabsSection";
 import { ContainerWorkspace } from "@/app/(authenticated)/containers/[containerId]/components/ContainerWorkspace";
 import { ShipmentDetailsCard } from "../ShipmentHeaderInfo/ShipmentDetailsCard";
@@ -137,6 +141,22 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
     },
     [replaceSearchParams],
   );
+
+  useEffect(() => {
+    const scrollTarget = searchParams.get("scroll");
+    if (scrollTarget !== SHIPMENT_WORKSPACE_SCROLL_TARGET_DOCUMENTS_TAB || activeDetailsTab !== "documents") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      scrollShipmentWorkspaceDocumentsTabIntoView();
+      replaceSearchParams((params) => {
+        params.delete("scroll");
+      });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [activeDetailsTab, replaceSearchParams, searchParams]);
 
   const activeContainerId = useMemo(() => {
     const want = searchParams.get("container")?.trim() ?? "";

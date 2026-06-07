@@ -112,6 +112,7 @@ export interface SuggestShipmentActionsInput {
   workflowStatus?: string | null;
   lastMessageAuthorKind?: string | null;
   hasPastEta?: boolean;
+  hasDraftDocuments?: boolean;
 }
 
 export function actionDefinitionById(id: string): ShipmentActionDefinition | undefined {
@@ -150,11 +151,17 @@ export function suggestShipmentActions(input: SuggestShipmentActionsInput): Sugg
       push("escalate_to_carrier");
       push("set_risk_level");
     }
-    if (input.triageBucketKey === "docs" || input.workflowStatus === "pending_drafts") {
+    if (
+      !input.hasDraftDocuments &&
+      (input.triageBucketKey === "docs" || input.workflowStatus === "pending_drafts")
+    ) {
       push("upload_draft_documents");
     }
   } else {
-    if (input.triageBucketKey === "docs" || input.workflowStatus === "pending_drafts") {
+    if (
+      !input.hasDraftDocuments &&
+      (input.triageBucketKey === "docs" || input.workflowStatus === "pending_drafts")
+    ) {
       push("request_missing_document");
     }
     if (input.workflowStatus === "awaiting_review") {

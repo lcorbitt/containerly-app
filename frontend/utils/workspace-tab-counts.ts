@@ -22,3 +22,9 @@ export function countShipmentScopeDocuments(
 export function countShipmentScopeMessages(messages: ReportMessage[]): number {
   return messages.filter((m) => !m.is_internal).length;
 }
+
+export function hasShipmentDraftDocuments(
+  attachments: Pick<WorkspaceAttachment, "document_group">[] | Pick<PortalAttachment, "document_group">[],
+): boolean {
+  return attachments.some((attachment) => attachment.document_group === "draft");
+}

@@ -31,7 +31,7 @@ export const WORKSPACE_TAB_MESSAGES_PANEL_CLASS =
   "flex min-h-0 min-w-0 h-full flex-col overflow-hidden";
 
 export const WORKSPACE_TAB_TIMELINE_PANEL_CLASS =
-  "flex min-h-0 min-w-0 h-full flex-col overflow-y-auto px-4 py-4 sm:px-6";
+  "flex min-h-0 min-w-0 h-full flex-col overflow-y-auto p-4 sm:p-6";
 
 export const WORKSPACE_TAB_ACTIVITY_PANEL_CLASS =
-  "flex min-h-0 min-w-0 h-full flex-col overflow-y-auto px-4 py-4 sm:px-6";
+  "flex min-h-0 min-w-0 h-full flex-col overflow-y-auto p-4 sm:p-6";

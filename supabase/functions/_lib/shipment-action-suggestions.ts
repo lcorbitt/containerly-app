@@ -98,6 +98,7 @@ export function suggestShipmentActions(input: {
   triage_bucket_key?: TriageBucketKey | null;
   workflow_status?: string | null;
   last_message_author_kind?: string | null;
+  has_draft_documents?: boolean;
 }): SuggestedShipmentAction[] {
   const out: SuggestedShipmentAction[] = [];
   const push = (id: string) => {
@@ -121,11 +122,17 @@ export function suggestShipmentActions(input: {
       push("escalate_to_carrier");
       push("set_risk_level");
     }
-    if (input.triage_bucket_key === "docs" || input.workflow_status === "pending_drafts") {
+    if (
+      !input.has_draft_documents &&
+      (input.triage_bucket_key === "docs" || input.workflow_status === "pending_drafts")
+    ) {
       push("upload_draft_documents");
     }
   } else {
-    if (input.triage_bucket_key === "docs" || input.workflow_status === "pending_drafts") {
+    if (
+      !input.has_draft_documents &&
+      (input.triage_bucket_key === "docs" || input.workflow_status === "pending_drafts")
+    ) {
       push("request_missing_document");
     }
     if (input.workflow_status === "awaiting_review") push("review_documents");

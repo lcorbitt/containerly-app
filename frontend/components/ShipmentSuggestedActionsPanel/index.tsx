@@ -8,6 +8,7 @@ import {
   shipmentActionTabForHandler,
   suggestShipmentActions,
 } from "@/utils/shipment-actions";
+import { SHIPMENT_WORKSPACE_SCROLL_TARGET_DOCUMENTS_TAB } from "@/utils/workspace-tab-panel";
 import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
 import type { ShipmentSuggestedActionsPanelProps } from "./types";
 
@@ -45,6 +46,9 @@ export function ShipmentSuggestedActionsPanel({
       const params = new URLSearchParams();
       if (tab) params.set("tab", tab);
       if (template) params.set("draft", template);
+      if (action.handler_key === "upload_draft_documents") {
+        params.set("scroll", SHIPMENT_WORKSPACE_SCROLL_TARGET_DOCUMENTS_TAB);
+      }
       const query = params.toString();
       router.push(query ? `/shipments/${shipmentId}?${query}` : `/shipments/${shipmentId}`, {
         scroll: false,

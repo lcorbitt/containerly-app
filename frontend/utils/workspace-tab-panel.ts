@@ -25,3 +25,14 @@ export function workspaceTabButtonClass(active: boolean): string {
 export function formatWorkspaceTabLabel(label: string, count: number): string {
   return `${label} (${count})`;
 }
+
+export const SHIPMENT_WORKSPACE_DOCUMENTS_TAB_ID = "shipment-tab-documents";
+
+export const SHIPMENT_WORKSPACE_SCROLL_TARGET_DOCUMENTS_TAB = "documents-tab";
+
+export function scrollShipmentWorkspaceDocumentsTabIntoView() {
+  document.getElementById(SHIPMENT_WORKSPACE_DOCUMENTS_TAB_ID)?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+}

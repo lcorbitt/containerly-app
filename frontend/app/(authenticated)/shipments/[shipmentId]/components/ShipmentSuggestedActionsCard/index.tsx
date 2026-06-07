@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import type { ShipmentWorkspaceRow } from "@/services/shipment.service";
 import { ShipmentSuggestedActionsPanel } from "@/components/ShipmentSuggestedActionsPanel";
+import { useShipmentScopeThreadQuery } from "@/hooks/queries/useShipment";
 import { suggestShipmentActions } from "@/utils/shipment-actions";
+import { hasShipmentDraftDocuments } from "@/utils/workspace-tab-counts";
 import {
   SHIPMENT_SUGGESTED_ACTIONS_CARD_BODY_CLASS,
   SHIPMENT_SUGGESTED_ACTIONS_CARD_CLASS,
@@ -11,7 +13,18 @@ import {
 import { operatorShipmentSuggestionContext } from "./utils";
 
 export function ShipmentSuggestedActionsCard({ row }: { row: ShipmentWorkspaceRow }) {
-  const suggestionContext = useMemo(() => operatorShipmentSuggestionContext(row), [row]);
+  const threadQuery = useShipmentScopeThreadQuery(row.organization_id, row.id);
+  const attachments = threadQuery.data?.ok ? threadQuery.data.attachments : [];
+  const hasDraftDocuments = useMemo(() => hasShipmentDraftDocuments(attachments), [attachments]);
+
+  const suggestionContext = useMemo(
+    () => ({
+      ...operatorShipmentSuggestionContext(row),
+      hasDraftDocuments,
+    }),
+    [hasDraftDocuments, row],
+  );
+
   const actions = useMemo(
     () => suggestShipmentActions({ audience: "operator", ...suggestionContext }),
     [suggestionContext],
