@@ -1,39 +1,57 @@
 import {
   SHIPMENT_OVERVIEW_DATE_FILTER_CLEAR_CLASS,
-  SHIPMENT_OVERVIEW_DATE_FILTER_FIELD_CLASS,
-  SHIPMENT_OVERVIEW_DATE_FILTER_FIELD_LABEL_CLASS,
-  SHIPMENT_OVERVIEW_DATE_FILTER_GROUP_CLASS,
-  SHIPMENT_OVERVIEW_DATE_FILTER_INPUT_CLASS,
-  SHIPMENT_OVERVIEW_DATE_FILTER_LABEL_CLASS,
   SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS,
+  SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_CLASS,
+  SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_LABEL_CLASS,
+  SHIPMENT_OVERVIEW_DATE_RANGE_INPUT_CLASS,
+  SHIPMENT_OVERVIEW_DATE_RANGE_SEPARATOR_CLASS,
 } from "./constants";
 import type { ShipmentOverviewDateFiltersProps } from "./types";
 
-function DateField({
-  id,
+function DateRangeGroup({
   label,
-  value,
+  fromId,
+  toId,
+  fromValue,
+  toValue,
   disabled,
-  onChange,
+  onFromChange,
+  onToChange,
 }: {
-  id: string;
   label: string;
-  value: string;
+  fromId: string;
+  toId: string;
+  fromValue: string;
+  toValue: string;
   disabled?: boolean;
-  onChange: (value: string) => void;
+  onFromChange: (value: string) => void;
+  onToChange: (value: string) => void;
 }) {
   return (
-    <label className={SHIPMENT_OVERVIEW_DATE_FILTER_FIELD_CLASS} htmlFor={id}>
-      <span className={SHIPMENT_OVERVIEW_DATE_FILTER_FIELD_LABEL_CLASS}>{label}</span>
+    <div className={SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_CLASS}>
+      <span className={SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_LABEL_CLASS}>{label}</span>
       <input
-        id={id}
+        id={fromId}
         type="date"
-        value={value}
+        value={fromValue}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className={SHIPMENT_OVERVIEW_DATE_FILTER_INPUT_CLASS}
+        aria-label={`${label} from`}
+        onChange={(e) => onFromChange(e.target.value)}
+        className={SHIPMENT_OVERVIEW_DATE_RANGE_INPUT_CLASS}
       />
-    </label>
+      <span className={SHIPMENT_OVERVIEW_DATE_RANGE_SEPARATOR_CLASS} aria-hidden>
+        –
+      </span>
+      <input
+        id={toId}
+        type="date"
+        value={toValue}
+        disabled={disabled}
+        aria-label={`${label} to`}
+        onChange={(e) => onToChange(e.target.value)}
+        className={SHIPMENT_OVERVIEW_DATE_RANGE_INPUT_CLASS}
+      />
+    </div>
   );
 }
 
@@ -53,50 +71,36 @@ export function ShipmentOverviewDateFilters({
 
   return (
     <div className={SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS}>
-      <div className={SHIPMENT_OVERVIEW_DATE_FILTER_GROUP_CLASS}>
-        <span className={SHIPMENT_OVERVIEW_DATE_FILTER_LABEL_CLASS}>ETD</span>
-        <DateField
-          id="shipments-overview-etd-from"
-          label="From"
-          value={etdFrom}
+      <DateRangeGroup
+        label="ETD"
+        fromId="shipments-overview-etd-from"
+        toId="shipments-overview-etd-to"
+        fromValue={etdFrom}
+        toValue={etdTo}
+        disabled={disabled}
+        onFromChange={onEtdFromChange}
+        onToChange={onEtdToChange}
+      />
+      <DateRangeGroup
+        label="ETA"
+        fromId="shipments-overview-eta-from"
+        toId="shipments-overview-eta-to"
+        fromValue={etaFrom}
+        toValue={etaTo}
+        disabled={disabled}
+        onFromChange={onEtaFromChange}
+        onToChange={onEtaToChange}
+      />
+      {hasFilters ? (
+        <button
+          type="button"
           disabled={disabled}
-          onChange={onEtdFromChange}
-        />
-        <DateField
-          id="shipments-overview-etd-to"
-          label="To"
-          value={etdTo}
-          disabled={disabled}
-          onChange={onEtdToChange}
-        />
-      </div>
-
-      <div className={SHIPMENT_OVERVIEW_DATE_FILTER_GROUP_CLASS}>
-        <span className={SHIPMENT_OVERVIEW_DATE_FILTER_LABEL_CLASS}>ETA</span>
-        <DateField
-          id="shipments-overview-eta-from"
-          label="From"
-          value={etaFrom}
-          disabled={disabled}
-          onChange={onEtaFromChange}
-        />
-        <DateField
-          id="shipments-overview-eta-to"
-          label="To"
-          value={etaTo}
-          disabled={disabled}
-          onChange={onEtaToChange}
-        />
-      </div>
-
-      <button
-        type="button"
-        disabled={disabled || !hasFilters}
-        onClick={onClear}
-        className={SHIPMENT_OVERVIEW_DATE_FILTER_CLEAR_CLASS}
-      >
-        Clear Dates
-      </button>
+          onClick={onClear}
+          className={SHIPMENT_OVERVIEW_DATE_FILTER_CLEAR_CLASS}
+        >
+          Clear Dates
+        </button>
+      ) : null}
     </div>
   );
 }
