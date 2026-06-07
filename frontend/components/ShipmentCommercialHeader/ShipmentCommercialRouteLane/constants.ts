@@ -12,13 +12,14 @@ export const SHIPMENT_COMMERCIAL_ROUTE_LANE_LABEL_CLASS = SHIPMENT_COMMERCIAL_LA
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_VALUE_CLASS =
   "mt-1 truncate text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-50";
 
-export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_BLOCK_CLASS = "mt-2 min-w-0";
-
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS =
   "text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_VALUE_CLASS =
-  "mt-0.5 text-sm font-semibold tabular-nums leading-snug text-zinc-800 dark:text-zinc-200";
+  "font-medium tabular-nums text-zinc-600 dark:text-zinc-300";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_INLINE_CLASS =
+  "mt-1 text-xs leading-snug text-zinc-600 dark:text-zinc-300";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS =
   "flex w-full items-center gap-2 px-1 sm:gap-2.5 sm:px-2";
@@ -35,14 +36,15 @@ export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ROUTE_CLASS =
   "flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_PORT_CLASS =
-  "break-words text-base font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
+  "break-words text-xl font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ARROW_CLASS =
   "h-3.5 w-3.5 shrink-0 text-primary-orange";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATES_CLASS =
-  "mt-2.5 flex flex-wrap items-start gap-x-5 gap-y-2 border-t border-zinc-200/80 pt-2.5 dark:border-zinc-700/80";
+  "mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xs leading-snug";
 
-export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_CELL_CLASS = "min-w-0";
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_ITEM_CLASS =
+  "inline-flex items-baseline gap-1";
 
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ARROW_CLASS = "h-3.5 w-3.5 text-primary-orange";

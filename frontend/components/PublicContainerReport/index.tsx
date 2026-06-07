@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { ShipmentSuggestedActionsPanel } from "@/components/ShipmentSuggestedActionsPanel";
 import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
 import {
   messageTemplateForAction,
   shipmentActionAudienceFromPortalViewer,
   shipmentActionTabForHandler,
 } from "@/utils/shipment-actions";
+import { hasShipmentDraftDocuments } from "@/utils/workspace-tab-counts";
 import type { PortalDetailsTabId } from "./PortalDetailsTabs/types";
 import { ShipmentDocumentUploadModal } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
@@ -21,11 +21,11 @@ import {
 } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentMessagesPanel/constants";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
-import { riskInsightBadgeClass } from "@/utils/report-insights";
 import type { PublicReportPayload } from "@/types/public-report";
 import { BrandedHeader } from "@/components/BrandedHeader";
 import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
 import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
+import { PortalSuggestedActionsCard } from "./PortalSuggestedActionsCard";
 import { PortalDetailsTabs } from "./PortalDetailsTabs";
 import { PortalTimelinePanel } from "./PortalTimelinePanel";
 import {
@@ -56,7 +56,6 @@ export function PublicContainerReport({
     attachments,
     logisticsHints,
 
-    fresh,
     threadReadOnly,
     threadMessages,
     shipmentLabel,
@@ -91,7 +90,6 @@ export function PublicContainerReport({
     handleSetupDismiss,
     handleDocumentOpen,
     commercialDetails,
-    hasTracking,
     reviewBusyId,
     rejectReasonById,
     setRejectReasonById,
@@ -112,6 +110,16 @@ export function PublicContainerReport({
   const suggestedActionAudience = useMemo(
     () => shipmentActionAudienceFromPortalViewer(payload.viewer),
     [payload.viewer],
+  );
+
+  const hasDraftDocuments = useMemo(() => hasShipmentDraftDocuments(attachments), [attachments]);
+
+  const suggestionContext = useMemo(
+    () => ({
+      workflowStatus: commercialDetails?.workflow_status,
+      hasDraftDocuments,
+    }),
+    [commercialDetails?.workflow_status, hasDraftDocuments],
   );
 
   const handleSuggestedAction = useCallback(
@@ -170,6 +178,13 @@ export function PublicContainerReport({
               </button>
             </div>
           ) : null}
+
+          <PortalSuggestedActionsCard
+            audience={suggestedActionAudience}
+            suggestionContext={suggestionContext}
+            onAction={handleSuggestedAction}
+          />
+
           <header className={PORTAL_COMMERCIAL_CARD_CLASS}>
             <BrandedHeader
               variant="embedded"
@@ -178,30 +193,18 @@ export function PublicContainerReport({
               actions={headerActions}
             />
 
-            <PortalCommercialDetailsSection commercialDetails={commercialDetails} summary={summary} />
-
-            <div className="mt-3">
-              <ShipmentSuggestedActionsPanel
-                audience={suggestedActionAudience}
-                variant="chips"
-                suggestionContext={{
-                  workflowStatus: commercialDetails?.workflow_status,
-                }}
-                onAction={handleSuggestedAction}
-              />
-            </div>
+            <PortalCommercialDetailsSection
+              commercialDetails={commercialDetails}
+              summary={summary}
+              shipmentId={shipmentId}
+              organizationId={organization?.id}
+              viewer={payload.viewer}
+              riskLevel={insights.risk_level}
+              riskMessage={summary.customer_note}
+              onRiskSaved={refresh}
+            />
 
             <div className={PORTAL_STATUS_STRIP_CLASS}>
-              {hasTracking ? (
-                <div className={`flex flex-wrap items-center gap-2${payload.viewer === "org_member" ? " mt-3" : ""}`}>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${riskInsightBadgeClass(insights.risk_level)}`}
-                  >
-                    {insights.risk_level.toUpperCase()} risk
-                  </span>
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400">Carrier data · {fresh}</span>
-                </div>
-              ) : null}
               {summary.customer_note?.trim() ? (
                 <p className={PORTAL_CUSTOMER_NOTE_CLASS}>{summary.customer_note.trim()}</p>
               ) : null}

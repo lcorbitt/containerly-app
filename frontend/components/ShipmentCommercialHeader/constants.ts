@@ -7,7 +7,7 @@ export const SHIPMENT_DETAIL_VALUE_CLASS = "mt-0.5 text-sm text-zinc-900 dark:te
 export const SHIPMENT_HEADER_COMMERCIAL_GRID_CLASS = "grid gap-4 sm:grid-cols-3 lg:grid-cols-4";
 
 export const SHIPMENT_TITLE_VALUE_CLASS =
-  "mt-0.5 text-lg font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
+  "mt-0.5 text-xl font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
 
 export const SHIPMENT_TITLE_PRIMARY_GRID_CLASS =
   "grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-0";

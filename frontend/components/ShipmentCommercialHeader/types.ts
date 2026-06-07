@@ -17,5 +17,4 @@ export interface ShipmentCommercialHeaderSource {
 
 export interface ShipmentCommercialHeaderProps {
   source: ShipmentCommercialHeaderSource;
-  workflowStatus?: string | null;
 }

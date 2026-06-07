@@ -25,4 +25,4 @@ export const SHIPMENT_MAIL_TRACKING_CUSTOMER_STANDBY_PRE_APPROVAL =
   "Your operator will share the tracking number here after your original documents are approved.";
 
 export const SHIPMENT_MAIL_TRACKING_CUSTOMER_STANDBY_POST_APPROVAL =
-  "Your operator has not added a tracking number yet. It will appear here once original documents are mailed.";
+  "The exporter has not added a tracking number yet. It will appear here once original documents are mailed.";

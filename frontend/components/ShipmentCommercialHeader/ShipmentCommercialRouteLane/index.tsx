@@ -5,12 +5,12 @@ import {
   SHIPMENT_COMMERCIAL_ROUTE_LANE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ARROW_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_CLASS,
-  SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_CELL_CLASS,
+  SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_ITEM_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATES_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_PORT_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ROUTE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS,
-  SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_BLOCK_CLASS,
+  SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_INLINE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_VALUE_CLASS,
   SHIPMENT_COMMERCIAL_ROUTE_LANE_DESTINATION_CLASS,
@@ -22,27 +22,14 @@ import {
 import type { RouteEndpointDate, ShipmentCommercialRouteLaneProps } from "./types";
 import { shipmentRouteEndpoints } from "./utils";
 
-function RouteEndpointDateBlock({
-  endpoint,
-  align = "start",
-  className,
-}: {
-  endpoint: RouteEndpointDate;
-  align?: "start" | "center" | "end";
-  className?: string;
-}) {
-  const alignClass =
-    align === "center" ? "text-center" : align === "end" ? "text-right" : "text-left";
-
+function RouteEndpointDateInline({ endpoint }: { endpoint: RouteEndpointDate }) {
   return (
-    <div
-      className={`${SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_BLOCK_CLASS} ${alignClass}${className ? ` ${className}` : ""}`}
-    >
-      <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS}>{endpoint.label}</p>
+    <span className={SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_ITEM_CLASS}>
+      <span className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS}>{endpoint.label}</span>
       <time dateTime={endpoint.iso} className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_VALUE_CLASS}>
         {endpoint.date}
       </time>
-    </div>
+    </span>
   );
 }
 
@@ -92,20 +79,10 @@ export function ShipmentCommercialRouteLane({
           </span>
         </div>
         {hasDates ? (
-          <div className={SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATES_CLASS}>
-            {originDate ? (
-              <RouteEndpointDateBlock
-                endpoint={originDate}
-                className={SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_CELL_CLASS}
-              />
-            ) : null}
-            {destinationDate ? (
-              <RouteEndpointDateBlock
-                endpoint={destinationDate}
-                className={SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATE_CELL_CLASS}
-              />
-            ) : null}
-          </div>
+          <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_DATES_CLASS}>
+            {originDate ? <RouteEndpointDateInline endpoint={originDate} /> : null}
+            {destinationDate ? <RouteEndpointDateInline endpoint={destinationDate} /> : null}
+          </p>
         ) : null}
       </div>
     );
@@ -125,7 +102,14 @@ export function ShipmentCommercialRouteLane({
         >
           {originLabel}
         </p>
-        {originDate ? <RouteEndpointDateBlock endpoint={originDate} align="center" /> : null}
+        {originDate ? (
+          <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_INLINE_CLASS}>
+            <span className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS}>{originDate.label}</span>{" "}
+            <time dateTime={originDate.iso} className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_VALUE_CLASS}>
+              {originDate.date}
+            </time>
+          </p>
+        ) : null}
       </div>
 
       <div className={SHIPMENT_COMMERCIAL_ROUTE_LANE_CONNECTOR_CLASS} aria-hidden>
@@ -144,7 +128,14 @@ export function ShipmentCommercialRouteLane({
         >
           {destinationLabel}
         </p>
-        {destinationDate ? <RouteEndpointDateBlock endpoint={destinationDate} align="center" /> : null}
+        {destinationDate ? (
+          <p className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_INLINE_CLASS}>
+            <span className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_LABEL_CLASS}>{destinationDate.label}</span>{" "}
+            <time dateTime={destinationDate.iso} className={SHIPMENT_COMMERCIAL_ROUTE_LANE_DATE_VALUE_CLASS}>
+              {destinationDate.date}
+            </time>
+          </p>
+        ) : null}
       </div>
     </div>
   );
