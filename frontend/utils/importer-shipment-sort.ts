@@ -9,6 +9,7 @@ export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
   "created_at",
   "order_number",
   "customer_name",
+  "consignee",
   "organization_name",
   "port_of_loading",
   "port_of_destination",
@@ -29,6 +30,7 @@ const DESCENDING_BY_DEFAULT: ReadonlySet<ImporterGrantedShipmentSortColumn> = ne
 
 const ASCENDING_BY_DEFAULT: ReadonlySet<ImporterGrantedShipmentSortColumn> = new Set([
   "customer_name",
+  "consignee",
   "order_number",
   "organization_name",
   "port_of_loading",

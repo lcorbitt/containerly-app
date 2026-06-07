@@ -35,6 +35,7 @@ function headerToShipmentRow(header: ShipmentCommercialHeader, userId: string) {
     carrier_booking_number: header.carrier_booking_number.trim(),
     container_number: header.container_number.trim(),
     customer_name: header.customer_name?.trim() || null,
+    consignee: header.consignee?.trim() || null,
     country: header.country?.trim() || null,
     port_of_loading: header.port_of_loading?.trim() || null,
     port_of_destination: header.port_of_destination?.trim() || null,
@@ -157,6 +158,7 @@ export async function updateCommercialShipment(
     }
     if (h.container_number !== undefined) updateFields.container_number = h.container_number.trim();
     if (h.customer_name !== undefined) updateFields.customer_name = h.customer_name?.trim() || null;
+    if (h.consignee !== undefined) updateFields.consignee = h.consignee?.trim() || null;
     if (h.country !== undefined) updateFields.country = h.country?.trim() || null;
     if (h.port_of_loading !== undefined) {
       updateFields.port_of_loading = h.port_of_loading?.trim() || null;

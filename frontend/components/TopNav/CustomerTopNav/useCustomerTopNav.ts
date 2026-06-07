@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
-import { CUSTOMER_TOP_NAV_SHARED_SHIPMENTS_PATH } from "./constants";
+import { CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH } from "./constants";
 
 export function useCustomerTopNav() {
   const [signedIn, setSignedIn] = useState(false);
@@ -28,7 +28,7 @@ export function useCustomerTopNav() {
     };
   }, []);
 
-  const brandHref = signedIn ? CUSTOMER_TOP_NAV_SHARED_SHIPMENTS_PATH : "/";
+  const brandHref = signedIn ? CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH : "/";
 
   return {
     signedIn,

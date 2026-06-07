@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createWorkspaceStorageSignedUrlQuery } from "@/services/workspace-actions.server";
+import { createAuthorizedWorkspaceStorageSignedUrlForUser } from "@/services/workspace-actions.server";
 import {
   usesWorkspaceStorageImageTransform,
   workspaceStorageImageTransform,
@@ -9,6 +9,12 @@ import {
 
 function isLikelyUuid(segment: string): boolean {
   return /^[0-9a-f-]{36}$/i.test(segment);
+}
+
+function errorStatus(message: string): number {
+  if (message === "Attachment not found") return 404;
+  if (message === "No access to this file") return 403;
+  return 400;
 }
 
 export async function POST(request: Request) {
@@ -51,15 +57,19 @@ export async function POST(request: Request) {
       : undefined;
 
   try {
-    const url = await createWorkspaceStorageSignedUrlQuery(supabase, storagePath, expiresSec, {
-      downloadFileName,
-      transform,
-    });
+    const url = await createAuthorizedWorkspaceStorageSignedUrlForUser(
+      supabase,
+      user.id,
+      storagePath,
+      expiresSec,
+      {
+        downloadFileName,
+        transform,
+      },
+    );
     return NextResponse.json({ url });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Could not create signed URL" },
-      { status: 400 },
-    );
+    const message = e instanceof Error ? e.message : "Could not create signed URL";
+    return NextResponse.json({ error: message }, { status: errorStatus(message) });
   }
 }

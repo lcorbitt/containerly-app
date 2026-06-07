@@ -14,3 +14,6 @@ export const SHIPMENT_COMMERCIAL_DETAILS_CELL_LABEL_CLASS =
 
 export const SHIPMENT_COMMERCIAL_DETAILS_CELL_VALUE_CLASS =
   "mt-0.5 truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100";
+
+export const CARRIER_TRACKING_LINK_CLASS =
+  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sky-800 transition-colors hover:bg-sky-100 dark:text-sky-300 dark:hover:bg-sky-950/40";

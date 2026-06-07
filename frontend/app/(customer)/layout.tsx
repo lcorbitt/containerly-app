@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { CustomerTopNav } from "@/components/TopNav";
+import { CustomerAppShell } from "./components/CustomerAppShell";
 import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
 
-/** Customer-only shell: no operator SideNav, no operator routes. Operators are bounced out. */
+/** Customer-only shell: sidenav + personal settings; operators are bounced out. */
 export default async function CustomerLayout({
   children,
 }: Readonly<{
@@ -19,9 +19,13 @@ export default async function CustomerLayout({
   }
 
   return (
-    <div className="portal-shell flex min-h-0 flex-1 flex-col">
-      <CustomerTopNav sharedShipmentsHref="/my-shipments" />
-      <main className="relative flex min-h-0 flex-1 flex-col">{children}</main>
-    </div>
+    <CustomerAppShell
+      userId={session.user.id}
+      email={session.user.email ?? ""}
+      fullName={session.profile?.full_name ?? null}
+      initialProfileImagePath={session.profile?.profile_image_path ?? null}
+    >
+      {children}
+    </CustomerAppShell>
   );
 }

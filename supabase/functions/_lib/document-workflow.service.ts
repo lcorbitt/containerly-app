@@ -26,6 +26,20 @@ function formatActivityDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
 }
 
+async function insertActivityEventOrFail(
+  admin: SupabaseClient | null,
+  row: Parameters<typeof insertShipmentActivityEvent>[1],
+): Promise<Err | null> {
+  if (!admin) {
+    return { ok: false, status: 500, error: "Activity logging unavailable" };
+  }
+  const { error } = await insertShipmentActivityEvent(admin, row);
+  if (error) {
+    return { ok: false, status: 500, error: error.message };
+  }
+  return null;
+}
+
 async function recomputeWorkflowStatus(
   client: SupabaseClient,
   shipmentId: string,
@@ -121,7 +135,7 @@ export async function reviewShipmentDocument(
   void shipRow;
 
   if (input.action === "reject") {
-    await insertShipmentActivityEvent(db, {
+    const activityErr = await insertActivityEventOrFail(admin, {
       shipment_id: shipmentId,
       event_type: "documents_rejected",
       body: `${dateStr} — Document rejected: ${att.file_name}. Reason: ${input.rejection_reason!.trim()}`,
@@ -136,6 +150,7 @@ export async function reviewShipmentDocument(
         rejection_reason: input.rejection_reason!.trim(),
       },
     });
+    if (activityErr) return activityErr;
 
     if (admin) {
       await notifyOperatorsDocumentRejected(admin, {
@@ -147,15 +162,14 @@ export async function reviewShipmentDocument(
         reason: input.rejection_reason!.trim(),
       });
     }
-  } else if (workflowStatus === "approved") {
-    await insertShipmentActivityEvent(db, {
+  } else {
+    const perDocErr = await insertActivityEventOrFail(admin, {
       shipment_id: shipmentId,
       event_type: "documents_approved",
-      body: `${dateStr} — Draft documents are approved — Please send to mailing address on file`,
+      body: `${dateStr} — Document approved: ${att.file_name}`,
       actor_kind: "customer",
       actor_user_id: userId,
       metadata: {
-        shipment_id: shipmentId,
         attachment_id: attachmentId,
         file_name: att.file_name as string,
         document_type: (att.document_type as string | null) ?? null,
@@ -163,13 +177,29 @@ export async function reviewShipmentDocument(
         approval_status: "approved",
       },
     });
+    if (perDocErr) return perDocErr;
 
-    if (admin) {
-      await notifyOperatorsDocumentsApproved(admin, {
-        organizationId: orgId,
-        shipmentId,
-        orgName,
+    if (workflowStatus === "approved") {
+      const batchErr = await insertActivityEventOrFail(admin, {
+        shipment_id: shipmentId,
+        event_type: "documents_approved",
+        body: `${dateStr} — Draft documents are approved — Please send to mailing address on file`,
+        actor_kind: "customer",
+        actor_user_id: userId,
+        metadata: {
+          shipment_id: shipmentId,
+          approval_status: "approved",
+        },
       });
+      if (batchErr) return batchErr;
+
+      if (admin) {
+        await notifyOperatorsDocumentsApproved(admin, {
+          organizationId: orgId,
+          shipmentId,
+          orgName,
+        });
+      }
     }
   }
 

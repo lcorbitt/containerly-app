@@ -10,6 +10,7 @@ export function commercialDetailsToHeaderSource(
 
   return {
     customer_name: details.customer_name,
+    consignee: details.consignee ?? line?.consignee ?? null,
     order_number:
       details.order_number?.trim() ||
       summary.order_number?.trim() ||

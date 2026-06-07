@@ -16,6 +16,7 @@ export const OPERATOR_SHIPMENT_SORT_COLUMNS = [
   "order_number",
   "bill_of_lading",
   "customer_name",
+  "consignee",
   "container_number",
   "port_of_loading",
   "port_of_destination",
@@ -40,6 +41,7 @@ const DESCENDING_BY_DEFAULT: ReadonlySet<OperatorShipmentSortColumn> = new Set([
 const ASCENDING_BY_DEFAULT: ReadonlySet<OperatorShipmentSortColumn> = new Set([
   "tags",
   "customer_name",
+  "consignee",
   "order_number",
   "port_of_loading",
   "port_of_destination",

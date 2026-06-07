@@ -56,6 +56,7 @@ export type ShipmentLineInput = {
   order_number?: string | null;
   carrier_booking_number?: string | null;
   customer_name?: string | null;
+  consignee?: string | null;
   country?: string | null;
   port_of_loading?: string | null;
   port_of_destination?: string | null;
@@ -74,6 +75,7 @@ export type ShipmentCommercialHeader = {
   carrier_booking_number: string;
   container_number: string;
   customer_name?: string | null;
+  consignee?: string | null;
   country?: string | null;
   port_of_loading?: string | null;
   port_of_destination?: string | null;
@@ -146,6 +148,7 @@ export type ShipmentLineDto = {
   order_number: string | null;
   carrier_booking_number: string | null;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
@@ -161,6 +164,7 @@ export type ShipmentLineDto = {
 
 export type ShipmentCommercialDetails = {
   customer_name: string | null;
+  consignee: string | null;
   order_number: string | null;
   carrier_booking_number: string | null;
   container_number: string | null;

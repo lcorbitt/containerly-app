@@ -30,7 +30,7 @@ export function portalDocumentScopeLabel(
 ): string | null {
   if (!showScopeLabels) return null;
   if (attachment.scope === "shipment" || attachment.container_id == null) {
-    return "Entire shipment";
+    return null;
   }
   const unit = attachment.container_number?.trim();
   return unit ? `Unit · ${unit}` : "Unit";

@@ -302,6 +302,7 @@ export async function buildShipmentPortalPayload(
     order_number: line.order_number ?? null,
     carrier_booking_number: line.carrier_booking_number ?? null,
     customer_name: line.customer_name ?? shipment.customer_name ?? null,
+    consignee: line.consignee ?? shipment.consignee ?? null,
     country: line.country ?? shipment.country ?? null,
     port_of_loading: line.port_of_loading ?? shipment.port_of_loading ?? null,
     port_of_destination: line.port_of_destination ?? shipment.port_of_destination ?? null,
@@ -353,6 +354,7 @@ export async function buildShipmentPortalPayload(
     container_lines: containerLines,
     commercial_details: {
       customer_name: shipment.customer_name ?? null,
+      consignee: shipment.consignee ?? null,
       order_number: shipment.order_number ?? null,
       carrier_booking_number: shipment.carrier_booking_number ?? null,
       container_number:

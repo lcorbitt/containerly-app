@@ -54,7 +54,6 @@ export function PublicContainerReport({
     summary,
     insights,
     attachments,
-    logisticsHints,
 
     threadReadOnly,
     threadMessages,
@@ -207,17 +206,6 @@ export function PublicContainerReport({
             <div className={PORTAL_STATUS_STRIP_CLASS}>
               {summary.customer_note?.trim() ? (
                 <p className={PORTAL_CUSTOMER_NOTE_CLASS}>{summary.customer_note.trim()}</p>
-              ) : null}
-              {logisticsHints?.note ? (
-                <div className="mt-4 rounded-lg border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/45 dark:bg-amber-950/30 dark:text-amber-100">
-                  <p className="font-medium">Logistics hint</p>
-                  <p className="mt-1 leading-relaxed opacity-95">{logisticsHints.note}</p>
-                  {typeof logisticsHints.ais_vs_carrier_eta_hours === "number" ? (
-                    <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
-                      Estimated divergence: {Math.round(Math.abs(logisticsHints.ais_vs_carrier_eta_hours))} hours
-                    </p>
-                  ) : null}
-                </div>
               ) : null}
             </div>
           </header>

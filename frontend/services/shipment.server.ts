@@ -74,6 +74,7 @@ export type ShipmentOverviewRow = {
   carrier_booking_number: string;
   container_number: string;
   customer_name: string | null;
+  consignee: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
@@ -99,6 +100,7 @@ type RpcOverviewRow = {
   carrier_booking_number: string;
   container_number: string;
   customer_name: string | null;
+  consignee: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
@@ -135,6 +137,7 @@ function toOverviewRow(r: RpcOverviewRow): ShipmentOverviewRow {
     carrier_booking_number: r.carrier_booking_number,
     container_number: r.container_number,
     customer_name: r.customer_name,
+    consignee: r.consignee,
     bill_of_lading: r.bill_of_lading,
     shipping_line: r.shipping_line,
     shipment_group_id: r.shipment_group_id,
@@ -246,6 +249,7 @@ export type ImporterGrantedShipmentRow = {
   organization_name: string;
   order_number: string;
   customer_name: string | null;
+  consignee: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
@@ -261,6 +265,7 @@ type RpcImporterOverviewRow = {
   organization_name: string;
   order_number: string;
   customer_name: string | null;
+  consignee: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
@@ -276,6 +281,7 @@ function toImporterOverviewRow(r: RpcImporterOverviewRow): ImporterGrantedShipme
     organization_name: r.organization_name?.trim() || "—",
     order_number: r.order_number,
     customer_name: r.customer_name,
+    consignee: r.consignee,
     port_of_loading: r.port_of_loading,
     port_of_destination: r.port_of_destination,
     workflow_status: r.workflow_status,
@@ -697,6 +703,7 @@ export type ShipmentWorkspaceRow = {
   creator_display_name: string | null;
   assignee_user_id: string | null;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
@@ -746,6 +753,7 @@ export async function fetchShipmentWorkspaceRow(
           created_by,
           assignee_user_id,
           customer_name,
+          consignee,
           country,
           port_of_loading,
           port_of_destination,
@@ -799,8 +807,9 @@ export async function fetchShipmentWorkspaceRow(
     created_at: string;
     created_by: string | null;
     assignee_user_id: string | null;
-    customer_name: string | null;
-    country: string | null;
+  customer_name: string | null;
+  consignee: string | null;
+  country: string | null;
     port_of_loading: string | null;
     port_of_destination: string | null;
     estimated_departure_at: string | null;
@@ -954,6 +963,7 @@ export async function fetchShipmentWorkspaceRow(
       creator_display_name: creatorDisplayName,
       assignee_user_id: raw.assignee_user_id ?? null,
       customer_name: raw.customer_name,
+      consignee: raw.consignee,
       country: raw.country,
       port_of_loading: raw.port_of_loading,
       port_of_destination: raw.port_of_destination,

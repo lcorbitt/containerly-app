@@ -1,8 +1,9 @@
 import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
 import { AuthenticatedAppShell } from "@/app/(authenticated)/components/AuthenticatedAppShell";
+import { CustomerAppShell } from "@/app/(customer)/components/CustomerAppShell";
 import { PortalLayoutShell } from "./components/PortalLayoutShell";
 
-/** Shipment portal — full operator shell on hub routes; customer nav for importers and guests. */
+/** Shipment portal — full operator shell on hub routes; customer sidenav for importers; guest top nav only. */
 export default async function PortalLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await loadAuthenticatedLayoutSession();
 
@@ -19,6 +20,19 @@ export default async function PortalLayout({ children }: Readonly<{ children: Re
       >
         {children}
       </AuthenticatedAppShell>
+    );
+  }
+
+  if (session?.isCustomer) {
+    return (
+      <CustomerAppShell
+        userId={session.user.id}
+        email={session.user.email ?? ""}
+        fullName={session.profile?.full_name ?? null}
+        initialProfileImagePath={session.profile?.profile_image_path ?? null}
+      >
+        {children}
+      </CustomerAppShell>
     );
   }
 

@@ -10,6 +10,7 @@ export type ShipmentLineRow = {
   order_number: string | null;
   carrier_booking_number: string | null;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
@@ -31,6 +32,7 @@ function lineToInsert(shipmentId: string, line: ShipmentLineInput, sortOrder: nu
     order_number: line.order_number?.trim() || null,
     carrier_booking_number: line.carrier_booking_number?.trim() || null,
     customer_name: line.customer_name?.trim() || null,
+    consignee: line.consignee?.trim() || null,
     country: line.country?.trim() || null,
     port_of_loading: line.port_of_loading?.trim() || null,
     port_of_destination: line.port_of_destination?.trim() || null,

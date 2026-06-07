@@ -142,6 +142,7 @@ export type ShipmentOverviewRow = {
   carrier_booking_number: string;
   container_number: string;
   customer_name: string | null;
+  consignee: string | null;
   bill_of_lading: string | null;
   shipping_line: string | null;
   shipment_group_id: string | null;
@@ -205,6 +206,7 @@ export type ImporterGrantedShipmentRow = {
   organization_name: string;
   order_number: string;
   customer_name: string | null;
+  consignee: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
@@ -378,6 +380,7 @@ export type ShipmentWorkspaceRow = {
   creator_display_name: string | null;
   assignee_user_id: string | null;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;

@@ -18,6 +18,7 @@ import {
   hasTimelineDocumentMeta,
   isBatchDocumentUploadMeta,
 } from "../utils";
+import { formatTimelineRejectionReason } from "./utils";
 import {
   formatDocumentGroupLabel,
   formatDocumentTypeLabel,
@@ -98,7 +99,7 @@ export function TimelineDocumentMeta({ meta, compact = true }: TimelineDocumentM
       ) : null}
       {meta.rejectionReason ? (
         <p className={REJECTION_REASON_CLASS} title={meta.rejectionReason}>
-          {meta.rejectionReason}
+          {formatTimelineRejectionReason(meta.rejectionReason)}
         </p>
       ) : null}
     </div>

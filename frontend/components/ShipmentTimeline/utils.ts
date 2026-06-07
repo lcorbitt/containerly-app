@@ -414,7 +414,7 @@ export function inferTimelineVisual(
     return { tone: "success", Icon: FileCheck, label: "Approved" };
   }
   if (/documents_rejected/.test(t)) {
-    return { tone: "success", Icon: FileX, label: "Rejected" };
+    return { tone: "rejected", Icon: FileX, label: "Rejected" };
   }
   if (/originals_mailed|originals_sent/.test(t)) {
     return { tone: "success", Icon: FileInput, label: "Sent" };

@@ -13,7 +13,8 @@ export type TimelineTone =
   | "customerMessage"
   | "trackingNumber"
   | "shipmentCreated"
-  | "success";
+  | "success"
+  | "rejected";
 
 /** One file within a batch upload activity event. */
 export interface TimelineDocumentMetaItem {

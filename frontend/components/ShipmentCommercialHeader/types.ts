@@ -1,5 +1,6 @@
 export interface ShipmentCommercialHeaderSource {
   customer_name: string | null;
+  consignee: string | null;
   order_number: string | null;
   carrier_booking_number: string | null;
   container_number: string | null;

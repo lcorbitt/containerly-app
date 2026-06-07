@@ -103,6 +103,64 @@ export async function createWorkspaceStorageSignedUrlQuery(
   return data.signedUrl;
 }
 
+export async function createAuthorizedWorkspaceStorageSignedUrlForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  storagePath: string,
+  expiresSec = 3600,
+  options?: {
+    downloadFileName?: string;
+    transform?: { width: number; height: number; quality?: number; resize?: "contain" | "cover" | "fill" };
+  },
+): Promise<string> {
+  const { data: att, error: attErr } = await supabase
+    .from("workspace_attachments")
+    .select("id, organization_id, shipment_id, container_id, is_internal")
+    .eq("storage_path", storagePath)
+    .maybeSingle();
+  if (attErr) throw new Error(attErr.message);
+  if (!att) throw new Error("Attachment not found");
+  if (att.is_internal) throw new Error("No access to this file");
+
+  let shipmentId = att.shipment_id as string | null;
+  if (!shipmentId && att.container_id) {
+    const { data: container, error: containerErr } = await supabase
+      .from("containers")
+      .select("shipment_id")
+      .eq("id", att.container_id as string)
+      .maybeSingle();
+    if (containerErr) throw new Error(containerErr.message);
+    shipmentId = (container?.shipment_id as string | null) ?? null;
+  }
+
+  const organizationId = att.organization_id as string;
+  const { data: member, error: memberErr } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (memberErr) throw new Error(memberErr.message);
+
+  let allowed = Boolean(member);
+  if (!allowed && shipmentId) {
+    const { data: access, error: accessErr } = await supabase
+      .from("shipment_customer_access")
+      .select("id")
+      .eq("shipment_id", shipmentId)
+      .eq("customer_user_id", userId)
+      .is("revoked_at", null)
+      .maybeSingle();
+    if (accessErr) throw new Error(accessErr.message);
+    allowed = Boolean(access);
+  }
+
+  if (!allowed) throw new Error("No access to this file");
+
+  const admin = createAdminClient();
+  return createWorkspaceStorageSignedUrlQuery(admin, storagePath, expiresSec, options);
+}
+
 export async function updateReportMessageByIdForUser(
   supabase: SupabaseClient,
   userId: string,

@@ -7,6 +7,7 @@ export const SHIPMENT_COMMERCIAL_FIELD_CLASS =
 export const SHIPMENT_COMMERCIAL_TITLE_FIELD_DEFS = [
   { key: "orderNumber" as const, label: "Order No", required: true },
   { key: "customerName" as const, label: "Customer" },
+  { key: "consignee" as const, label: "Consignee" },
 ];
 
 export const SHIPMENT_COMMERCIAL_GRID_FIELD_DEFS = [

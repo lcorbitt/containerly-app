@@ -113,6 +113,19 @@ export function useImporterShipmentsList() {
         ),
       },
       {
+        id: "consignee",
+        header: "Consignee",
+        sortable: true,
+        cell: (r) => (
+          <span
+            className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
+            title={r.consignee ?? undefined}
+          >
+            {displayOverviewText(r.consignee)}
+          </span>
+        ),
+      },
+      {
         id: "order_number",
         header: "Order no.",
         sortable: true,

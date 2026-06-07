@@ -56,6 +56,7 @@ export type Shipment = {
   /** Primary operator for triage (defaults to `created_by` on insert). */
   assignee_user_id?: string | null;
   customer_name?: string | null;
+  consignee?: string | null;
   country?: string | null;
   port_of_loading?: string | null;
   port_of_destination?: string | null;
@@ -84,6 +85,7 @@ export type ShipmentLine = {
   order_number: string | null;
   carrier_booking_number: string | null;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;

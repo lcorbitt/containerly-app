@@ -17,3 +17,5 @@ export const CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS =
 export const CUSTOMER_TOP_NAV_LOGIN_PATH = "/login";
 
 export const CUSTOMER_TOP_NAV_SHARED_SHIPMENTS_PATH = "/shipments";
+
+export const CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH = "/my-shipments";

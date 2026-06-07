@@ -110,6 +110,14 @@ export const TONE_STYLES: Record<
     latestCard:
       "border-l-[3px] border-l-emerald-500 border-zinc-200/80 bg-white shadow-[0_4px_18px_-8px_rgba(16,185,129,0.24)] ring-1 ring-emerald-200/55 dark:border-l-emerald-400 dark:border-zinc-700/80 dark:bg-zinc-950 dark:shadow-[0_4px_18px_-8px_rgba(16,185,129,0.16)] dark:ring-emerald-900/45",
   },
+  rejected: {
+    node: "bg-rose-50 text-rose-800 ring-[#fff1f2] dark:bg-rose-950 dark:text-rose-200 dark:ring-zinc-950",
+    connector: "bg-rose-400/50 dark:bg-rose-500/38",
+    chip: "bg-rose-100/90 text-rose-900 dark:bg-rose-950/80 dark:text-rose-100",
+    iconGlow: "shadow-[0_0_22px_-2px_rgba(244,63,94,0.38)] dark:shadow-[0_0_26px_-4px_rgba(251,113,133,0.26)]",
+    latestCard:
+      "border-l-[3px] border-l-rose-500 border-zinc-200/80 bg-white shadow-[0_4px_18px_-8px_rgba(244,63,94,0.22)] ring-1 ring-rose-200/55 dark:border-l-rose-400 dark:border-zinc-700/80 dark:bg-zinc-950 dark:shadow-[0_4px_18px_-8px_rgba(244,63,94,0.14)] dark:ring-rose-900/45",
+  },
 };
 
 /** Neutral card surface — tone color lives on the timeline node icon only. */

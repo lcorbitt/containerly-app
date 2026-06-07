@@ -324,7 +324,7 @@ export function usePublicContainerReport({
         return;
       }
       await refresh();
-      toast("Got it — you can update your profile anytime from account settings.", "success");
+      toast("Got it — you can update your profile anytime from Settings in the sidenav.", "success");
     } finally {
       setSetupDismissBusy(false);
     }

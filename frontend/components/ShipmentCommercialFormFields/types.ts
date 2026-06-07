@@ -3,6 +3,7 @@ export type ShipmentCommercialFormValues = {
   carrierBookingNumber: string;
   containerNumber: string;
   customerName: string;
+  consignee: string;
   country: string;
   portOfLoading: string;
   portOfDestination: string;
@@ -20,6 +21,7 @@ export type ShipmentCommercialFormSource = {
   carrier_booking_number: string;
   container_number: string;
   customer_name: string | null;
+  consignee: string | null;
   country: string | null;
   port_of_loading: string | null;
   port_of_destination: string | null;
