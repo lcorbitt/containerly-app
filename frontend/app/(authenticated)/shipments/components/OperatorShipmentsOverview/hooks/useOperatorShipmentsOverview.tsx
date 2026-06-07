@@ -224,6 +224,8 @@ export function useOperatorShipmentsOverview() {
         id: "order_number",
         header: "Order no.",
         sortable: true,
+        className: "min-w-[6.5rem] w-[7rem] whitespace-nowrap",
+        headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <span className="font-medium text-zinc-900 dark:text-zinc-50">{r.order_number}</span>
         ),
@@ -271,7 +273,7 @@ export function useOperatorShipmentsOverview() {
         id: "tags",
         header: "Tags",
         sortable: true,
-        className: "max-w-[12rem] w-[12rem]",
+        className: "max-w-[10rem] w-[10rem]",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <ShipmentOverviewTagsCell

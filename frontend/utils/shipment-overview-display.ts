@@ -1,8 +1,8 @@
 export function formatOverviewDate(iso: string | null | undefined): string {
   if (!iso?.trim()) return "—";
   try {
-    return new Intl.DateTimeFormat(undefined, {
-      month: "short",
+    return new Intl.DateTimeFormat("en-US", {
+      month: "numeric",
       day: "numeric",
       year: "numeric",
     }).format(new Date(iso));
