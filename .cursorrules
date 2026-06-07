@@ -122,13 +122,13 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 **Applies to:** button labels, link CTAs, nav items, menu actions, modal/dialog titles, form submit labels, email action buttons, and other short UI chrome strings (usually in colocated **`constants.ts`**).
 
-**Format:** **TitleCase** — capitalize each word and **concatenate without spaces**: `ViewShipment`, `GetStarted`, `SignIn`, `HowItWorks`, `StartFree`.
+**Format:** **Title Case with spaces** — capitalize each major word and separate with spaces: `View Shipment`, `Get Started`, `Sign In`, `How It Works`, `Start Free`.
 
-**Do not use:** sentence case (`View shipment`, `Get started`) or lower camelCase (`viewShipment`) for these strings.
+**Do not use:** concatenated words without spaces (`ViewShipment`), sentence case with only the first word capitalized (`View shipment`), or lower camelCase (`viewShipment`) for these strings.
 
 **Exceptions (keep normal sentence case):** body copy, descriptions, helper text, toasts, placeholders, tooltips, loading/submitting button states (e.g. `Signing you in…`), and accessibility `aria-label` text when a full phrase reads better for screen readers.
 
-**Agent behavior:** When editing nearby code, **do not revert or “normalize”** the user’s TitleCase labels back to sentence case. If existing copy in the same surface is still sentence case, match the **TitleCase** convention above — do not spread sentence case.
+**Agent behavior:** When editing nearby code, match the **Title Case with spaces** convention on that surface. Do not revert spaced labels to concatenated or sentence case, and do not spread inconsistent casing across the same UI surface.
 
 ---
 

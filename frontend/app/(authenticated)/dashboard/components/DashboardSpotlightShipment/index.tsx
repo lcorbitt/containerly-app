@@ -39,7 +39,7 @@ export function DashboardSpotlightShipment({ spotlight, context }: DashboardSpot
             No urgent items in your triage queue.
           </p>
           <Link href="/shipments" className={`${DASHBOARD_SPOTLIGHT_LINK_CLASS} mt-auto pt-3`}>
-            ViewShipments
+            View Shipments
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
