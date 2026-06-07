@@ -33,3 +33,8 @@ export function shipmentRouteEndpoints({
     destinationEta: routeEndpointEta("eta", estimatedArrivalAt),
   };
 }
+
+export function shipmentRouteMetaLine(originEta: string | null, destinationEta: string | null): string | null {
+  const parts = [originEta, destinationEta].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}

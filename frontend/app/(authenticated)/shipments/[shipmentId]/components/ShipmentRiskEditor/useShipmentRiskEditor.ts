@@ -20,12 +20,11 @@ export function useShipmentRiskEditor({
   const serverRiskSelect = shipmentRiskSelectValue(riskLevel, primaryCarrierStatus);
   const savedMessage = riskMessage?.trim() ?? "";
 
-  const [pendingRiskSelect, setPendingRiskSelect] = useState<ShipmentRiskSelectValue | null>(null);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [modalRiskSelect, setModalRiskSelect] = useState<ShipmentRiskSelectValue>(serverRiskSelect);
 
-  const riskSelect = pendingRiskSelect ?? serverRiskSelect;
-  const displayRisk = riskSelect;
+  const displayRisk = serverRiskSelect;
 
   const persistRisk = useCallback(
     async (level: ShipmentRiskSelectValue, message: string) => {
@@ -48,7 +47,6 @@ export function useShipmentRiskEditor({
       }
 
       toast("Shipment risk updated", "success");
-      setPendingRiskSelect(null);
       onSaved();
       return true;
     },
@@ -59,39 +57,32 @@ export function useShipmentRiskEditor({
     if (mutation.isPending) return;
     setMessageModalOpen(false);
     setModalMessage("");
-    setPendingRiskSelect(null);
   }, [mutation.isPending]);
 
-  const handleRiskSelectChange = useCallback(
-    (next: ShipmentRiskSelectValue) => {
-      if (next === serverRiskSelect) {
-        setPendingRiskSelect(null);
-        return;
-      }
+  const openChangeModal = useCallback(() => {
+    setModalRiskSelect(serverRiskSelect);
+    setModalMessage(savedMessage);
+    setMessageModalOpen(true);
+  }, [savedMessage, serverRiskSelect]);
 
-      setPendingRiskSelect(next);
-      setModalMessage(savedMessage);
-      setMessageModalOpen(true);
-    },
-    [savedMessage, serverRiskSelect],
-  );
+  const handleModalRiskChange = useCallback((next: ShipmentRiskSelectValue) => {
+    setModalRiskSelect(next);
+  }, []);
 
   const saveMessageFromModal = useCallback(async () => {
-    const ok = await persistRisk(riskSelect, modalMessage);
+    const ok = await persistRisk(modalRiskSelect, modalMessage);
     if (ok) {
       setMessageModalOpen(false);
       setModalMessage("");
     }
-  }, [modalMessage, persistRisk, riskSelect]);
-
-  const destinationRisk = pendingRiskSelect ?? serverRiskSelect;
+  }, [modalMessage, modalRiskSelect, persistRisk]);
 
   return {
-    riskSelect,
     displayRisk,
     currentRisk: serverRiskSelect,
-    destinationRisk,
-    handleRiskSelectChange,
+    destinationRisk: modalRiskSelect,
+    openChangeModal,
+    handleModalRiskChange,
     messageModalOpen,
     closeMessageModal,
     modalMessage,

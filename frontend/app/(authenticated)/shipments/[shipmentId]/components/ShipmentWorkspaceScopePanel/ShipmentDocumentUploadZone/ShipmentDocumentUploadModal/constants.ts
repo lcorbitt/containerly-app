@@ -12,6 +12,8 @@ export const SHIPMENT_DOCUMENT_UPLOAD_MODAL_PANEL_CLASS =
 export const SHIPMENT_DOCUMENT_UPLOAD_MODAL_HEADER_CLASS =
   "flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800";
 
+export const SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE = "Upload Documents";
+
 export const SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE_CLASS =
   "text-xl font-semibold text-zinc-900 dark:text-zinc-50";
 

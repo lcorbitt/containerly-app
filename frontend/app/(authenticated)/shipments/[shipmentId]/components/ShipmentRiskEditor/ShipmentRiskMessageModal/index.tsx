@@ -15,6 +15,7 @@ import {
   SHIPMENT_RISK_MESSAGE_MODAL_SAVE_CLASS,
   SHIPMENT_RISK_MESSAGE_MODAL_SHELL_CLASS,
   SHIPMENT_RISK_MESSAGE_MODAL_TEXTAREA_CLASS,
+  SHIPMENT_RISK_MESSAGE_MODAL_TITLE,
   SHIPMENT_RISK_MESSAGE_MODAL_TITLE_CLASS,
 } from "./constants";
 import { ShipmentRiskChangeSummary } from "./ShipmentRiskChangeSummary";
@@ -34,6 +35,7 @@ export function ShipmentRiskMessageModal({
   destinationRisk,
   message,
   saving,
+  onDestinationRiskChange,
   onMessageChange,
   onClose,
   onSave,
@@ -84,7 +86,7 @@ export function ShipmentRiskMessageModal({
         >
           <div className={SHIPMENT_RISK_MESSAGE_MODAL_HEADER_CLASS}>
             <h2 id={titleId} className={SHIPMENT_RISK_MESSAGE_MODAL_TITLE_CLASS}>
-              Add risk update message
+              {SHIPMENT_RISK_MESSAGE_MODAL_TITLE}
             </h2>
             <DialogCloseButton
               onClick={() => {
@@ -95,7 +97,12 @@ export function ShipmentRiskMessageModal({
           </div>
 
           <div className={SHIPMENT_RISK_MESSAGE_MODAL_BODY_CLASS}>
-            <ShipmentRiskChangeSummary currentRisk={currentRisk} destinationRisk={destinationRisk} />
+            <ShipmentRiskChangeSummary
+              currentRisk={currentRisk}
+              destinationRisk={destinationRisk}
+              onDestinationRiskChange={onDestinationRiskChange}
+              disabled={saving}
+            />
 
             <form
               onSubmit={(e) => {

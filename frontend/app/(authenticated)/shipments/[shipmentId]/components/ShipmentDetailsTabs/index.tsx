@@ -31,7 +31,6 @@ export function ShipmentDetailsTabs({
   physicalMailTrackingNumber,
   activityEvents = [],
   carrierEvents = [],
-  metrics,
   detailsContent,
   activeTab: controlledActiveTab,
   onTabChange,
@@ -119,7 +118,6 @@ export function ShipmentDetailsTabs({
                 physicalMailTrackingNumber={physicalMailTrackingNumber}
                 activityEvents={activityEvents}
                 carrierEvents={carrierEvents}
-                metrics={metrics}
                 onEnabled={onTrackingEnabled}
               />
               {detailsContent ? (

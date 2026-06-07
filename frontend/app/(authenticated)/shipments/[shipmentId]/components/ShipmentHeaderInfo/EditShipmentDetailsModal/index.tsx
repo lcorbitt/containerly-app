@@ -13,6 +13,11 @@ import {
 } from "@/components/ShipmentCommercialFormFields/utils";
 import type { ShipmentCommercialFormSource } from "@/components/ShipmentCommercialFormFields/types";
 import { updateCommercialShipment } from "@/services/shipment.service";
+import {
+  EDIT_SHIPMENT_DETAILS_MODAL_DESCRIPTION,
+  EDIT_SHIPMENT_DETAILS_MODAL_SAVE_LABEL,
+  EDIT_SHIPMENT_DETAILS_MODAL_TITLE,
+} from "./constants";
 
 export function EditShipmentDetailsModal({
   open,
@@ -116,10 +121,10 @@ export function EditShipmentDetailsModal({
         <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <div>
             <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              Edit shipment details
+              {EDIT_SHIPMENT_DETAILS_MODAL_TITLE}
             </h2>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Update commercial header fields for this shipment.
+              {EDIT_SHIPMENT_DETAILS_MODAL_DESCRIPTION}
             </p>
           </div>
           <DialogCloseButton
@@ -143,7 +148,7 @@ export function EditShipmentDetailsModal({
               disabled={saving}
               className="inline-flex h-10 w-full items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
             >
-              {saving ? "Saving…" : "Save changes"}
+              {saving ? "Saving…" : EDIT_SHIPMENT_DETAILS_MODAL_SAVE_LABEL}
             </button>
           </div>
         </form>

@@ -24,4 +24,18 @@ export const SHIPMENT_COMMERCIAL_ROUTE_LANE_LINE_CLASS =
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ARROW_WRAP_CLASS =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950";
 
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_CLASS = "min-w-0 text-left";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ROUTE_CLASS =
+  "flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_PORT_CLASS =
+  "break-words text-base font-bold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_ARROW_CLASS =
+  "h-3.5 w-3.5 shrink-0 text-primary-orange";
+
+export const SHIPMENT_COMMERCIAL_ROUTE_LANE_COMPACT_META_CLASS =
+  "mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400";
+
 export const SHIPMENT_COMMERCIAL_ROUTE_LANE_ARROW_CLASS = "h-3.5 w-3.5 text-primary-orange";

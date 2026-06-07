@@ -28,6 +28,12 @@ export const SHIPMENT_COMMERCIAL_HEADER_SUMMARY_ROUTE_COL_CLASS = `flex min-w-0 
 
 export const SHIPMENT_COMMERCIAL_HEADER_GRID_WRAP_CLASS = "pt-4";
 
+export const SHIPMENT_COMMERCIAL_HEADER_STATUS_ROW_CLASS =
+  "mt-4 flex flex-wrap items-center gap-2 border-b pb-4 border-zinc-200 dark:border-zinc-800";
+
+export const SHIPMENT_COMMERCIAL_HEADER_STATUS_ROW_LABEL_CLASS =
+  "text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500";
+
 export const SHIPMENT_DOCUMENTS_STATUS_LABEL = "Documents status";
 
 export const SHIPMENT_TITLE_FIELD_KEYS = ["customer_name", "order_number"] as const;

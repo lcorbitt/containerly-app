@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { ShipmentWorkspaceRow } from "@/services/shipment.service";
 import { SuggestedShipmentActions } from "@/components/SuggestedShipmentActions";
 import {
   messageTemplateForAction,
@@ -10,31 +9,35 @@ import {
   suggestShipmentActions,
 } from "@/utils/shipment-actions";
 import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
+import type { ShipmentSuggestedActionsPanelProps } from "./types";
 
 export function ShipmentSuggestedActionsPanel({
-  row,
+  audience,
   shipmentId,
-}: {
-  row: ShipmentWorkspaceRow;
-  shipmentId: string;
-}) {
+  suggestionContext,
+  onAction,
+  variant = "card",
+}: ShipmentSuggestedActionsPanelProps) {
   const router = useRouter();
 
   const actions = useMemo(
     () =>
       suggestShipmentActions({
-        triageBucketKey: row.context.triage_bucket_key,
-        workflowStatus: row.workflow_status,
-        lastMessageAuthorKind:
-          row.metrics.message_count > 0 && row.insight_cards.some((c) => c.id === "customer_waiting")
-            ? "customer"
-            : null,
+        audience,
+        ...suggestionContext,
       }),
-    [row],
+    [audience, suggestionContext],
   );
 
   const handleAction = useCallback(
     (action: SuggestedShipmentAction) => {
+      if (onAction) {
+        onAction(action);
+        return;
+      }
+
+      if (!shipmentId) return;
+
       const tab = shipmentActionTabForHandler(
         action.handler_key as Parameters<typeof shipmentActionTabForHandler>[0],
       );
@@ -42,10 +45,13 @@ export function ShipmentSuggestedActionsPanel({
       const params = new URLSearchParams();
       if (tab) params.set("tab", tab);
       if (template) params.set("draft", template);
-      router.push(`/shipments/${shipmentId}?${params.toString()}`, { scroll: false });
+      const query = params.toString();
+      router.push(query ? `/shipments/${shipmentId}?${query}` : `/shipments/${shipmentId}`, {
+        scroll: false,
+      });
     },
-    [router, shipmentId],
+    [onAction, router, shipmentId],
   );
 
-  return <SuggestedShipmentActions actions={actions} onAction={handleAction} />;
+  return <SuggestedShipmentActions actions={actions} onAction={handleAction} variant={variant} />;
 }

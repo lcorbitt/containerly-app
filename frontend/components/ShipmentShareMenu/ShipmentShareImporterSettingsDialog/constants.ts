@@ -1,3 +1,5 @@
+export const SHIPMENT_SHARE_IMPORTER_SETTINGS_DIALOG_TITLE = "Customer Settings";
+
 export const SHIPMENT_SHARE_IMPORTER_SETTINGS_DIALOG_CLASS =
   "fixed inset-0 z-[250] flex items-center justify-center bg-black/50 p-4";
 

@@ -8,6 +8,7 @@ export interface ShipmentRiskEditorProps {
   riskMessage: string | null;
   primaryCarrierStatus: string | null;
   onSaved: () => void;
+  variant?: "default" | "inline" | "grid-cell";
 }
 
 export type ShipmentRiskSelectValue = ShipmentRiskLevel;

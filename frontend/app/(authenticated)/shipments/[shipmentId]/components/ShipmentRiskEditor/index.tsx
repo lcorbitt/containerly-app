@@ -1,27 +1,34 @@
 "use client";
 
-import { CustomSelect } from "@/components/CustomSelect";
+import { BarChart3 } from "lucide-react";
+import {
+  SHIPMENT_DETAILS_ASSESSMENT_ROW_CLASS,
+  SHIPMENT_DETAILS_ASSESSMENT_ROW_CONTENT_CLASS,
+  SHIPMENT_DETAILS_ASSESSMENT_ROW_ICON_CLASS,
+  SHIPMENT_DETAILS_ASSESSMENT_ROW_LABEL_CLASS,
+  SHIPMENT_DETAILS_ASSESSMENT_ROW_TRAILING_CLASS,
+} from "@/components/ShipmentDetailsSubCard";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { ShipmentRiskMessageModal } from "./ShipmentRiskMessageModal";
 import {
+  SHIPMENT_RISK_EDITOR_CHANGE_BUTTON_CLASS,
+  SHIPMENT_RISK_EDITOR_GRID_CONTROLS_CLASS,
+  SHIPMENT_RISK_EDITOR_INLINE_CLASS,
   SHIPMENT_RISK_EDITOR_LABEL_CLASS,
   SHIPMENT_RISK_EDITOR_PILL_CLASS,
   SHIPMENT_RISK_EDITOR_ROW_CLASS,
   SHIPMENT_RISK_EDITOR_SECTION_CLASS,
-  SHIPMENT_RISK_EDITOR_SELECT_SHELL_CLASS,
-  SHIPMENT_RISK_SELECT_OPTIONS,
 } from "./constants";
 import type { ShipmentRiskEditorProps } from "./types";
-import { shipmentRiskSelectFromValue } from "./utils";
 import { useShipmentRiskEditor } from "./useShipmentRiskEditor";
 
-export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
+export function ShipmentRiskEditor({ variant = "default", ...props }: ShipmentRiskEditorProps) {
   const {
-    riskSelect,
     displayRisk,
     currentRisk,
     destinationRisk,
-    handleRiskSelectChange,
+    openChangeModal,
+    handleModalRiskChange,
     messageModalOpen,
     closeMessageModal,
     modalMessage,
@@ -30,30 +37,49 @@ export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
     saving,
   } = useShipmentRiskEditor(props);
 
+  const riskControls = (
+    <div className={SHIPMENT_RISK_EDITOR_INLINE_CLASS}>
+      <span
+        className={`${SHIPMENT_RISK_EDITOR_PILL_CLASS} ${riskInsightBadgeClass(displayRisk)}`}
+        aria-label={`${displayRisk} risk`}
+      >
+        {displayRisk.toUpperCase()} risk
+      </span>
+      <button
+        type="button"
+        disabled={saving}
+        onClick={openChangeModal}
+        className={SHIPMENT_RISK_EDITOR_CHANGE_BUTTON_CLASS}
+      >
+        Change
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <section className={SHIPMENT_RISK_EDITOR_SECTION_CLASS} aria-label="Shipment risk">
-        <div className={SHIPMENT_RISK_EDITOR_ROW_CLASS}>
-          <span className={SHIPMENT_RISK_EDITOR_LABEL_CLASS}>Risk</span>
-          <div className={SHIPMENT_RISK_EDITOR_SELECT_SHELL_CLASS}>
-            <CustomSelect
-              value={riskSelect}
-              onValueChange={(value) => handleRiskSelectChange(shipmentRiskSelectFromValue(value))}
-              options={SHIPMENT_RISK_SELECT_OPTIONS}
-              showAvatars={false}
-              disabled={saving}
-              aria-label="Risk level"
-              className="w-full"
-            />
-          </div>
-          <span
-            className={`${SHIPMENT_RISK_EDITOR_PILL_CLASS} ${riskInsightBadgeClass(displayRisk)}`}
-            aria-label={`${displayRisk} risk`}
-          >
-            {displayRisk.toUpperCase()} risk
+      {variant === "grid-cell" ? (
+        <div className={SHIPMENT_RISK_EDITOR_GRID_CONTROLS_CLASS}>{riskControls}</div>
+      ) : variant === "inline" ? (
+        <div className={SHIPMENT_DETAILS_ASSESSMENT_ROW_CLASS}>
+          <span className={SHIPMENT_DETAILS_ASSESSMENT_ROW_ICON_CLASS} aria-hidden>
+            <BarChart3 className="h-4 w-4" />
           </span>
+          <div className={SHIPMENT_DETAILS_ASSESSMENT_ROW_CONTENT_CLASS}>
+            <p className={SHIPMENT_DETAILS_ASSESSMENT_ROW_LABEL_CLASS}>Risk Level</p>
+          </div>
+          <div className={`${SHIPMENT_DETAILS_ASSESSMENT_ROW_TRAILING_CLASS} flex flex-wrap items-center gap-2`}>
+            {riskControls}
+          </div>
         </div>
-      </section>
+      ) : (
+        <section className={SHIPMENT_RISK_EDITOR_SECTION_CLASS} aria-label="Shipment risk">
+          <div className={SHIPMENT_RISK_EDITOR_ROW_CLASS}>
+            <span className={SHIPMENT_RISK_EDITOR_LABEL_CLASS}>Risk</span>
+            {riskControls}
+          </div>
+        </section>
+      )}
 
       <ShipmentRiskMessageModal
         open={messageModalOpen}
@@ -61,6 +87,7 @@ export function ShipmentRiskEditor(props: ShipmentRiskEditorProps) {
         destinationRisk={destinationRisk}
         message={modalMessage}
         saving={saving}
+        onDestinationRiskChange={handleModalRiskChange}
         onMessageChange={setModalMessage}
         onClose={closeMessageModal}
         onSave={() => void saveMessageFromModal()}

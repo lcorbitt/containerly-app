@@ -23,7 +23,7 @@ export function ShipmentSharePeopleList({ rows, state }: ShipmentSharePeopleList
 
   async function revokePendingInvite(id: string) {
     const ok = await confirm({
-      title: "Revoke invite?",
+      title: "Revoke Invite?",
       description: "They won't be able to accept this invite anymore.",
       confirmLabel: "Revoke",
       cancelLabel: "Cancel",
@@ -35,7 +35,7 @@ export function ShipmentSharePeopleList({ rows, state }: ShipmentSharePeopleList
 
   async function revokeActiveAccess(id: string) {
     const ok = await confirm({
-      title: "Revoke customer access?",
+      title: "Revoke Customer Access?",
       description: "They will no longer see this shipment or documents.",
       confirmLabel: "Revoke",
       cancelLabel: "Cancel",

@@ -144,7 +144,7 @@ export function useShipmentWorkspaceScopePanel({
       const row = attachments.find((a) => a.id === attachmentId);
       if (!row) return;
       const ok = await confirm({
-        title: "Delete document?",
+        title: "Delete Document?",
         description: `Permanently delete "${row.file_name}" from this shipment?`,
         confirmLabel: "Delete",
         cancelLabel: "Cancel",

@@ -107,7 +107,7 @@ export function GrantAccessSettingsEditor({
           onClick={() => void openPreview()}
           className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200"
         >
-          Preview customer portal
+          Preview Customer Portal
         </button>
       </div>
 
@@ -120,7 +120,7 @@ export function GrantAccessSettingsEditor({
         >
           <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer portal preview</p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer Portal Preview</p>
               <DialogCloseButton onClick={closePreview} />
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-2">

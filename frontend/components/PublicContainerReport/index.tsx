@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { ShipmentSuggestedActionsPanel } from "@/components/ShipmentSuggestedActionsPanel";
+import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
+import {
+  messageTemplateForAction,
+  shipmentActionAudienceFromPortalViewer,
+  shipmentActionTabForHandler,
+} from "@/utils/shipment-actions";
+import type { PortalDetailsTabId } from "./PortalDetailsTabs/types";
 import { ShipmentDocumentUploadModal } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/ShipmentDocumentUploadModal";
 import { ThreadPanel } from "@/components/WorkspaceThreadPanel";
 import {
@@ -101,6 +109,27 @@ export function PublicContainerReport({
     uploadDocuments,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
 
+  const suggestedActionAudience = useMemo(
+    () => shipmentActionAudienceFromPortalViewer(payload.viewer),
+    [payload.viewer],
+  );
+
+  const handleSuggestedAction = useCallback(
+    (action: SuggestedShipmentAction) => {
+      const tab = shipmentActionTabForHandler(
+        action.handler_key as Parameters<typeof shipmentActionTabForHandler>[0],
+      );
+      if (tab) setDashboardTab(tab as PortalDetailsTabId);
+
+      const template = messageTemplateForAction(action.id);
+      if (template) {
+        setReplyParentId(null);
+        setBody(template);
+      }
+    },
+    [setBody, setDashboardTab, setReplyParentId],
+  );
+
   const handlePortalDocumentUpload = useCallback(
     async (files: File[]) => {
       const ok = await uploadDocuments(files);
@@ -150,6 +179,17 @@ export function PublicContainerReport({
             />
 
             <PortalCommercialDetailsSection commercialDetails={commercialDetails} summary={summary} />
+
+            <div className="mt-3">
+              <ShipmentSuggestedActionsPanel
+                audience={suggestedActionAudience}
+                variant="chips"
+                suggestionContext={{
+                  workflowStatus: commercialDetails?.workflow_status,
+                }}
+                onAction={handleSuggestedAction}
+              />
+            </div>
 
             <div className={PORTAL_STATUS_STRIP_CLASS}>
               {hasTracking ? (

@@ -1,4 +1,5 @@
 import type { RiskLevel } from "@/utils/report-insights";
+import type { ShipmentRiskSelectValue } from "../types";
 
 export interface ShipmentRiskMessageModalProps {
   open: boolean;
@@ -6,6 +7,7 @@ export interface ShipmentRiskMessageModalProps {
   destinationRisk: RiskLevel;
   message: string;
   saving: boolean;
+  onDestinationRiskChange: (value: ShipmentRiskSelectValue) => void;
   onMessageChange: (value: string) => void;
   onClose: () => void;
   onSave: () => void;

@@ -12,6 +12,7 @@ import {
   SHIPMENT_DOCUMENT_UPLOAD_MODAL_PANEL_CLASS,
   SHIPMENT_DOCUMENT_UPLOAD_MODAL_REVEAL_CLASS,
   SHIPMENT_DOCUMENT_UPLOAD_MODAL_SHELL_CLASS,
+  SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE,
   SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE_CLASS,
 } from "./constants";
 import type { ShipmentDocumentUploadModalProps } from "./types";
@@ -71,7 +72,7 @@ export function ShipmentDocumentUploadModal({
         >
           <div className={SHIPMENT_DOCUMENT_UPLOAD_MODAL_HEADER_CLASS}>
             <h2 id={titleId} className={SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE_CLASS}>
-              Upload Documents
+              {SHIPMENT_DOCUMENT_UPLOAD_MODAL_TITLE}
             </h2>
             <DialogCloseButton
               onClick={() => {

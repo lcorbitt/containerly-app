@@ -155,7 +155,7 @@ export function useOperatorShipmentsOverview() {
       if (!selectedOrgId || !canDeleteShipments) return;
       const label = row.order_number?.trim() || row.customer_name?.trim() || "this shipment";
       const ok = await confirm({
-        title: "Delete shipment?",
+        title: "Delete Shipment?",
         description: `Permanently delete ${label}? This removes documents, messages, and tracking linked to the shipment.`,
         confirmLabel: "Delete",
         cancelLabel: "Cancel",

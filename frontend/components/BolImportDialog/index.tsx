@@ -56,7 +56,7 @@ export function BolImportDialog({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              Bulk carrier import (premium)
+              Bulk Carrier Import (Premium)
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               Optional after document approval: one BOL can list many container numbers. We create one shipment with a

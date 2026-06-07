@@ -13,6 +13,7 @@ import { parseShipmentDetailsTabParam } from "../ShipmentDetailsTabs/utils";
 import { ShipmentDetailsTabsSection } from "../ShipmentDetailsTabsSection";
 import { ContainerWorkspace } from "@/app/(authenticated)/containers/[containerId]/components/ContainerWorkspace";
 import { ShipmentDetailsCard } from "../ShipmentHeaderInfo/ShipmentDetailsCard";
+import { ShipmentSuggestedActionsCard } from "../ShipmentSuggestedActionsCard";
 import { ShipmentCommercialDetailsSection } from "../ShipmentHeaderInfo/ShipmentCommercialDetailsSection";
 import { EditShipmentDetailsModal } from "../ShipmentHeaderInfo/EditShipmentDetailsModal";
 import {
@@ -168,7 +169,7 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
     if (!selectedOrgId || !canDeleteShipment) return;
     const label = row?.order_number?.trim() || row?.customer_name?.trim() || "this shipment";
     const ok = await confirm({
-      title: "Delete shipment?",
+      title: "Delete Shipment?",
       description: `Permanently delete ${label}? This removes documents, messages, and tracking linked to the shipment.`,
       confirmLabel: "Delete",
       cancelLabel: "Cancel",
@@ -244,6 +245,8 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
 
   const shipmentMainColumn = (
     <div className="flex min-w-0 flex-col gap-6">
+      <ShipmentSuggestedActionsCard row={row} />
+
       <ShipmentDetailsCard
         createdAt={row.created_at}
         creatorName={row.creator_display_name}
@@ -267,7 +270,6 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
           physicalMailTrackingNumber={row.physical_mail_tracking_number}
           activityEvents={row.activity_events ?? []}
           carrierEvents={row.carrier_timeline ?? []}
-          metrics={row.metrics}
           activeTab={activeDetailsTab}
           onTabChange={selectDetailsTab}
           onTrackingEnabled={refetchShipment}

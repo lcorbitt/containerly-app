@@ -11,11 +11,13 @@ export function ShipmentRootCauseSection({
   organizationId,
   initialRootCause,
   onSaved,
+  variant = "default",
 }: {
   shipmentId: string;
   organizationId: string;
   initialRootCause: ShipmentRootCause | null;
   onSaved?: () => void;
+  variant?: "default" | "inline";
 }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -42,5 +44,12 @@ export function ShipmentRootCauseSection({
     [initialRootCause, onSaved, organizationId, shipmentId, toast],
   );
 
-  return <ShipmentRootCauseEditor value={value} saving={saving} onChange={(v) => void handleChange(v)} />;
+  return (
+    <ShipmentRootCauseEditor
+      value={value}
+      saving={saving}
+      variant={variant}
+      onChange={(v) => void handleChange(v)}
+    />
+  );
 }
