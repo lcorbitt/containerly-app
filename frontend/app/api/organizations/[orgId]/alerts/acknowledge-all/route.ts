@@ -15,6 +15,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const acknowledged = await acknowledgeAllOrgAlertsForViewer(supabase, orgId, user.id);
-  return NextResponse.json({ ok: true, acknowledged });
+  try {
+    const acknowledged = await acknowledgeAllOrgAlertsForViewer(supabase, orgId, user.id);
+    return NextResponse.json({ ok: true, acknowledged });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not acknowledge notifications";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

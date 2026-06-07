@@ -15,6 +15,11 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await loadOrgShipmentMessageThreadsForUser(supabase, user.id, orgId);
-  return NextResponse.json(result);
+  try {
+    const result = await loadOrgShipmentMessageThreadsForUser(supabase, user.id, orgId);
+    return NextResponse.json(result);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not load message threads";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

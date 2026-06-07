@@ -8,7 +8,7 @@ export function ShipmentThreadStartBanner({ shipmentLabel }: { shipmentLabel: st
         {shipmentLabel ? (
           <span className="font-bold">
             {" "}
-            Order No. <span className="font-mono">{shipmentLabel}</span>. This is your direct message
+            Order No. <span className="font-mono">{shipmentLabel}</span>. This is the beginning of your direct message
             thread.
           </span>
         ) : null}

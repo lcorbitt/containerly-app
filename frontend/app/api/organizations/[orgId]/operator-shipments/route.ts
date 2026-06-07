@@ -37,18 +37,23 @@ export async function GET(
     etdTo: searchParams.get("etdTo"),
   });
 
-  const result = await fetchOperatorShipmentsOverviewPage(supabase, {
-    organizationId: orgId,
-    userId: user.id,
-    scope,
-    search,
-    tagFilter,
-    dateRangeFilter,
-    sortColumn,
-    sortDirection,
-    page,
-    pageSize,
-  });
+  try {
+    const result = await fetchOperatorShipmentsOverviewPage(supabase, {
+      organizationId: orgId,
+      userId: user.id,
+      scope,
+      search,
+      tagFilter,
+      dateRangeFilter,
+      sortColumn,
+      sortDirection,
+      page,
+      pageSize,
+    });
 
-  return NextResponse.json(result);
+    return NextResponse.json(result);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not load shipments";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
