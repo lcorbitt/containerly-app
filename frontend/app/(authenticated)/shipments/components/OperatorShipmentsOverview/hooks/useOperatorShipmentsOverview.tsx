@@ -327,7 +327,7 @@ export function useOperatorShipmentsOverview() {
           displayOverviewText(
             r.assignee_user_id ? exportPeopleLabelsRef.current[r.assignee_user_id] : null,
           ),
-        className: "w-16",
+        className: "w-16 text-center",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <ShipmentOverviewAssigneeCell

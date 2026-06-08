@@ -27,7 +27,7 @@ export function TablePagination({
   const canNext = totalPages > 0 && page < totalPages - 1;
 
   return (
-    <div className="flex flex-col gap-3 border-t border-zinc-100 pt-3 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+    <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {totalCount === 0 ? (
           "No rows"

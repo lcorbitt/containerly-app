@@ -1,5 +1,5 @@
 export const SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS =
-  "mb-3 flex flex-wrap items-center gap-2 sm:gap-3";
+  "mb-4 flex flex-wrap items-center gap-2 sm:gap-3";
 
 export const SHIPMENT_OVERVIEW_DATE_FILTERS_TRAILING_CLASS = "ml-auto shrink-0";
 
