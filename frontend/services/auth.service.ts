@@ -1,3 +1,4 @@
+import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 export async function getBrowserAuthUserId(): Promise<string | null> {
@@ -17,10 +18,12 @@ export async function getBrowserAuthSession() {
  * UI (e.g. the portal top nav in the layout) react to an in-page sign-in without a full reload.
  * Returns an unsubscribe function.
  */
-export function subscribeToAuthState(callback: (signedIn: boolean) => void): () => void {
+export function subscribeToAuthState(
+  callback: (signedIn: boolean, session: Session | null) => void,
+): () => void {
   const supabase = createClient();
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(Boolean(session));
+    callback(Boolean(session), session ?? null);
   });
   return () => data.subscription.unsubscribe();
 }

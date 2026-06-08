@@ -31,8 +31,8 @@ export function CustomerTopNav({
   sharedShipmentsHref = CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH,
   shellMode = false,
 }: CustomerTopNavProps = {}) {
-  const { signedIn, sessionReady, brandHref } = useCustomerTopNav();
-  const notifications = useCustomerNotifications();
+  const { signedIn, sessionReady, userId, brandHref } = useCustomerTopNav();
+  const notifications = useCustomerNotifications(userId);
 
   const notificationsBell = (
     <CustomerNotificationsMenu

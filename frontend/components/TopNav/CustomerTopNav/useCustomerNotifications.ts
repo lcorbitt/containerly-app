@@ -1,39 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
-import { createClient } from "@/lib/supabase/client";
 import { useMyAlerts } from "@/hooks/queries/useMyAlerts";
 import { useAcknowledgeAllMyAlerts } from "@/hooks/mutations/useAcknowledgeAllMyAlerts";
 import { useMarkImporterShipmentThreadRead } from "@/hooks/mutations/useMarkImporterShipmentThreadRead";
 import { isMessageShipmentAlert } from "@/utils/alert-inbox";
 
-export function useCustomerNotifications() {
-  const [userId, setUserId] = useState<string | null>(null);
+/** Drives the customer top-nav notification bell. `userId` comes from the shared session in
+ *  `useCustomerTopNav` so we don't spin up a second auth client / subscription in the shell. */
+export function useCustomerNotifications(userId: string | null) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const ackedOnOpenRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const session = await getBrowserAuthSession();
-      if (cancelled) return;
-      setUserId(session?.user.id ?? null);
-    })();
-    const unsubscribe = subscribeToAuthState(async (signedIn) => {
-      if (!signedIn) {
-        setUserId(null);
-        return;
-      }
-      const { data } = await createClient().auth.getUser();
-      setUserId(data.user?.id ?? null);
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
 
   const alerts = useMyAlerts(userId);
   const acknowledgeAllMut = useAcknowledgeAllMyAlerts(userId);
