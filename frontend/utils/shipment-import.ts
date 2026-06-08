@@ -6,6 +6,7 @@ export type ShipmentImportDraft = {
   carrierBookingNumber: string;
   containerNumber: string;
   customerName: string;
+  consignee: string;
   country: string;
   portOfLoading: string;
   portOfDestination: string;
@@ -41,6 +42,8 @@ const HEADER_ALIASES: Record<string, keyof ShipmentImportDraft> = {
   container: "containerNumber",
   customer_name: "customerName",
   customer: "customerName",
+  consignee: "consignee",
+  consignee_name: "consignee",
   country: "country",
   port_of_loading: "portOfLoading",
   pol: "portOfLoading",
@@ -84,6 +87,7 @@ function emptyDraft(): ShipmentImportDraft {
     carrierBookingNumber: "",
     containerNumber: "",
     customerName: "",
+    consignee: "",
     country: "",
     portOfLoading: "",
     portOfDestination: "",
@@ -122,6 +126,7 @@ function mergeDrafts(base: ShipmentImportDraft, row: ShipmentImportDraft) {
   if (row.carrierBookingNumber.trim()) base.carrierBookingNumber = row.carrierBookingNumber.trim();
   if (row.containerNumber.trim()) base.containerNumber = row.containerNumber.trim();
   if (row.customerName.trim()) base.customerName = row.customerName.trim();
+  if (row.consignee.trim()) base.consignee = row.consignee.trim();
   if (row.country.trim()) base.country = row.country.trim();
   if (row.portOfLoading.trim()) base.portOfLoading = row.portOfLoading.trim();
   if (row.portOfDestination.trim()) base.portOfDestination = row.portOfDestination.trim();
@@ -255,6 +260,7 @@ export function draftToCreateShipmentBody(organizationId: string, draft: Shipmen
     carrier_booking_number: draft.carrierBookingNumber.trim(),
     container_number: draft.containerNumber.trim(),
     customer_name: draft.customerName.trim() || null,
+    consignee: draft.consignee.trim() || null,
     country: draft.country.trim() || null,
     sort_order: 0,
   };
@@ -266,6 +272,7 @@ export function draftToCreateShipmentBody(organizationId: string, draft: Shipmen
       carrier_booking_number: draft.carrierBookingNumber.trim(),
       container_number: draft.containerNumber.trim(),
       customer_name: draft.customerName.trim() || null,
+      consignee: draft.consignee.trim() || null,
       country: draft.country.trim() || null,
       port_of_loading: draft.portOfLoading.trim() || null,
       port_of_destination: draft.portOfDestination.trim() || null,
@@ -388,14 +395,14 @@ export async function parseShipmentImportFileAsync(file: File): Promise<Shipment
   return parseShipmentImportFile(text, file.name);
 }
 
-export const SHIPMENT_IMPORT_CSV_TEMPLATE = `order_number,carrier_booking_number,container_number,customer_name,country,port_of_loading,port_of_destination,estimated_departure_at,estimated_arrival_at,freight_booking_carrier,vessel,voyage,health_certificate_no,trade_terms
-PO-44201-A,BK-SE601W,MSKU1234567,Costco Wholesale,US,Santos BR,Long Beach US,2026-06-15,2026-07-10,MSC,MSC Sealand,SE601W,HC-BR-2026-0142,CIF
+export const SHIPMENT_IMPORT_CSV_TEMPLATE = `order_number,carrier_booking_number,container_number,customer_name,consignee,country,port_of_loading,port_of_destination,estimated_departure_at,estimated_arrival_at,freight_booking_carrier,vessel,voyage,health_certificate_no,trade_terms
+PO-44201-A,BK-SE601W,MSKU1234567,Costco Wholesale,Kenji Takahashi,JP,Los Angeles US,Tokyo JP,2026-06-15,2026-07-10,MSC,MSC Sealand,SE601W,HC-US-2026-0142,CIF
 `;
 
-export const SHIPMENT_BULK_IMPORT_CSV_TEMPLATE = `order_number,carrier_booking_number,container_number,customer_name,country,port_of_loading,port_of_destination,estimated_departure_at,estimated_arrival_at,freight_booking_carrier,vessel,voyage,health_certificate_no,trade_terms
-PO-44201-A,BK-SE601W,MSKU1234567,Costco Wholesale,US,Santos BR,Long Beach US,2026-06-15,2026-07-10,MSC,MSC Sealand,SE601W,HC-BR-2026-0142,CIF
-PO-44202-A,BK-SE602W,MSKU1234568,Walmart Inc,US,Santos BR,Oakland US,2026-06-20,2026-07-15,MSC,MSC Sealand,SE602W,HC-BR-2026-0143,CIF
-PO-44203-A,BK-MO701E,TGHU9876543,Target Corp,US,Paranagua BR,Seattle US,2026-06-22,2026-07-18,MAERSK,MAERSK Ohio,MO701E,HC-BR-2026-0144,FOB
+export const SHIPMENT_BULK_IMPORT_CSV_TEMPLATE = `order_number,carrier_booking_number,container_number,customer_name,consignee,country,port_of_loading,port_of_destination,estimated_departure_at,estimated_arrival_at,freight_booking_carrier,vessel,voyage,health_certificate_no,trade_terms
+PO-44201-A,BK-SE601W,MSKU1234567,Costco Wholesale,Kenji Takahashi,JP,Los Angeles US,Tokyo JP,2026-06-15,2026-07-10,MSC,MSC Sealand,SE601W,HC-US-2026-0142,CIF
+PO-44202-A,BK-SE602W,MSKU1234568,Walmart Inc,Wei Chen,CN,Houston US,Shanghai CN,2026-06-20,2026-07-15,MSC,MSC Sealand,SE602W,HC-US-2026-0143,CIF
+PO-44203-A,BK-MO701E,TGHU9876543,Target Corp,Sophie van Dijk,NL,Savannah US,Rotterdam NL,2026-06-22,2026-07-18,MAERSK,MAERSK Ohio,MO701E,HC-US-2026-0144,FOB
 `;
 
 export const SHIPMENT_IMPORT_FILE_ACCEPT =

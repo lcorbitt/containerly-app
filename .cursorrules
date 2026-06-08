@@ -300,6 +300,21 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 **If a duplicate was already applied locally:** rename the **not-yet-applied** file to a new unique prefix only — do **not** rename a migration already recorded in `schema_migrations` unless the user explicitly asks to repair that history.
 
+#### Changing a function/RPC signature (avoid overload ambiguity)
+
+**CRITICAL — never leave stale overloads.** Postgres identifies functions by their **argument type list**, not by name or by default values. When you change a function's parameters (add/remove/reorder/retype), Postgres creates a **new overload** instead of replacing the old one. If two overloads can match the same call (common when new params have `DEFAULT`), every call fails with:
+
+> `Could not choose the best candidate function between: public.<fn>(…), public.<fn>(…)`
+
+**When changing any `public.*` function signature, the migration MUST:**
+
+1. **`drop function if exists public.<fn>(<exact OLD arg type list>);`** — list the **types** in order (e.g. `uuid, uuid, text, …`), matching the previous signature exactly. `create or replace function` does **NOT** drop a differing-arity overload.
+2. Then `create function public.<fn>(<new params…>)`.
+3. **Re-grant** execute on the **new** signature (`grant execute on function public.<fn>(<new arg types>) to …`) — grants are tied to the specific overload, so the new one starts with none.
+4. If earlier signatures may still exist on **production** (e.g. an even older arity from a prior migration), drop those too in the same migration. Adding defaults to params is what makes two overloads ambiguous — assume any prior arity can linger on prod.
+
+**Why "it works locally" is not enough:** `supabase db reset` rebuilds from scratch so it ends with only the latest overload. **Production** applies migrations incrementally and tracks them by timestamp prefix — if a signature-changing migration was recorded as applied **before** it included the matching `DROP` (or the drop's type list didn't match), the old overload is **orphaned forever** and editing that file never re-runs it. Fix prod with a **new forward-only** migration that `drop function if exists` the stale overload(s); never edit an already-applied migration. See `20260608120000_drop_stale_overview_overloads.sql`.
+
 ---
 
 ### 9. Client UI state (prefer Jotai over heavy Context)

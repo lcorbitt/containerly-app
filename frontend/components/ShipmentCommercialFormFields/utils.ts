@@ -59,7 +59,7 @@ export function formValuesFromImportDraft(draft: ShipmentImportDraft): ShipmentC
     carrierBookingNumber: draft.carrierBookingNumber,
     containerNumber: draft.containerNumber,
     customerName: draft.customerName,
-    consignee: "",
+    consignee: draft.consignee,
     country: draft.country,
     portOfLoading: draft.portOfLoading,
     portOfDestination: draft.portOfDestination,
