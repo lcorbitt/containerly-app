@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom, useAtomValue } from "jotai";
-import { useCallback, useContext, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { feedbackWidgetCategoryAtom, feedbackWidgetOpenAtom } from "@/atoms/feedback-widget";
 import { useToast } from "@/contexts/toast";
@@ -29,8 +29,6 @@ export function useFeedbackWidget() {
     category: defaultCategory,
     message: "",
   });
-  const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,24 +94,6 @@ export function useFeedbackWidget() {
     }
   }, [form, context, submitMutation, toast, close]);
 
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        close();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-
   const trimmedLength = form.message.trim().length;
   const canSubmit = trimmedLength >= FEEDBACK_MIN_MESSAGE_LENGTH && !submitMutation.isPending;
 
@@ -129,8 +109,6 @@ export function useFeedbackWidget() {
     canSubmit,
     isSubmitting: submitMutation.isPending,
     context,
-    titleId,
-    panelRef,
     messageTooShort: trimmedLength > 0 && trimmedLength < FEEDBACK_MIN_MESSAGE_LENGTH,
   };
 }

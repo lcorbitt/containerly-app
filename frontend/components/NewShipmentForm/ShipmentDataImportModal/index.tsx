@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, FileUp, Loader2, Upload } from "lucide-react";
-import { DialogCloseButton } from "@/components/DialogCloseButton";
-import { Reveal } from "@/components/Reveal";
+import { Modal } from "@/components/Modal";
 import {
   bulkCreateCommercialShipments,
   type BulkImportResult,
@@ -20,12 +18,7 @@ import {
   type ShipmentBulkImportParseResult,
   type ShipmentImportDraft,
 } from "@/utils/shipment-import";
-import {
-  SHIPMENT_DATA_IMPORT_MODAL_BACKDROP_CLASS,
-  SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS,
-  SHIPMENT_DATA_IMPORT_MODAL_REVEAL_CLASS,
-  SHIPMENT_DATA_IMPORT_MODAL_SHELL_CLASS,
-} from "./constants";
+import { SHIPMENT_DATA_IMPORT_MODAL_OVERLAY_CLASS } from "./constants";
 
 /** `single` pre-fills the new shipment form; `bulk` creates one shipment per spreadsheet row. */
 export type ShipmentImportVariant = "single" | "bulk";
@@ -53,9 +46,7 @@ export function ShipmentDataImportModal({
   onBulkComplete,
 }: ShipmentDataImportModalProps) {
   const isBulk = variant === "bulk";
-  const titleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [bulkParse, setBulkParse] = useState<ShipmentBulkImportParseResult | null>(null);
@@ -65,12 +56,7 @@ export function ShipmentDataImportModal({
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
-  const [portalReady, setPortalReady] = useState(false);
   const busy = parsing || creating;
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -84,24 +70,6 @@ export function ShipmentDataImportModal({
       setBulkResult(null);
     }
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !busy) {
-        e.preventDefault();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose, busy]);
 
   const parseFile = useCallback(async (file: File) => {
     setError(null);
@@ -193,43 +161,75 @@ export function ShipmentDataImportModal({
   const showBulkResults = Boolean(bulkResult);
   const bulkCount = bulkParse?.rows.length ?? 0;
 
-  const modal =
-    portalReady && typeof document !== "undefined"
-      ? createPortal(
-          <Reveal show={open} className={SHIPMENT_DATA_IMPORT_MODAL_REVEAL_CLASS}>
-            <div className={SHIPMENT_DATA_IMPORT_MODAL_SHELL_CLASS}>
-              <button
-                type="button"
-                aria-label="Close dialog"
-                className={SHIPMENT_DATA_IMPORT_MODAL_BACKDROP_CLASS}
-                onClick={() => {
-                  if (!busy) onClose();
-                }}
-              />
-              <div
-                ref={panelRef}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
-                tabIndex={-1}
-                className={SHIPMENT_DATA_IMPORT_MODAL_PANEL_CLASS}
-              >
-        <div className="relative">
-          <div className={`transition-[filter,opacity] ${parsing ? "pointer-events-none blur-[2px] opacity-60" : ""}`}>
-            <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-              <div>
-                <h2 id={titleId} className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                  {isBulk ? "Bulk Import Shipments" : "Import Shipment"}
-                </h2>
-              </div>
-              <DialogCloseButton
-                onClick={() => {
-                  if (!busy) onClose();
-                }}
-              />
-            </div>
+  const footer = showBulkResults ? (
+    <button
+      type="button"
+      onClick={onClose}
+      className="inline-flex h-9 items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+    >
+      Done
+    </button>
+  ) : (
+    <>
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={creating}
+        className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 px-4 text-sm font-medium text-zinc-700 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200"
+      >
+        Cancel
+      </button>
+      {isBulk ? (
+        <button
+          type="button"
+          disabled={creating || parsing}
+          onClick={() => void handleBulkCreate()}
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {creating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Creating…
+            </>
+          ) : bulkCount > 0 ? (
+            `Create ${bulkCount} shipment${bulkCount === 1 ? "" : "s"}`
+          ) : (
+            "Create Shipments"
+          )}
+        </button>
+      ) : null}
+    </>
+  );
 
-            <div className="space-y-4 px-5 py-4">
+  const overlay = parsing ? (
+    <div
+      className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-zinc-950/50"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-4 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-950/70">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
+        <div>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Parsing shipment file…</p>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            We’re reading your file and preparing a pre-filled shipment draft.
+          </p>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isBulk ? "Bulk Import Shipments" : "Import Shipment"}
+      busy={busy}
+      overlay={overlay}
+      overlayClassName={SHIPMENT_DATA_IMPORT_MODAL_OVERLAY_CLASS}
+      bodyClassName="space-y-4"
+      footer={footer}
+    >
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             {isBulk ? (
               <>
@@ -424,75 +424,6 @@ export function ShipmentDataImportModal({
           )}
 
           {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">
-          {showBulkResults ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex h-9 items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-            >
-              Done
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={creating}
-                className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 px-4 text-sm font-medium text-zinc-700 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200"
-              >
-                Cancel
-              </button>
-              {isBulk ? (
-                <button
-                  type="button"
-                  disabled={creating || parsing}
-                  onClick={() => void handleBulkCreate()}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-                >
-                  {creating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                      Creating…
-                    </>
-                  ) : bulkCount > 0 ? (
-                    `Create ${bulkCount} shipment${bulkCount === 1 ? "" : "s"}`
-                  ) : (
-                    "Create Shipments"
-                  )}
-                </button>
-              ) : null}
-            </>
-          )}
-            </div>
-          </div>
-
-          {parsing ? (
-            <div
-              className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-zinc-950/50"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-4 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-zinc-950/70">
-                <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
-                <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Parsing shipment file…</p>
-                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                    We’re reading your file and preparing a pre-filled shipment draft.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-              </div>
-            </div>
-          </Reveal>,
-          document.body,
-        )
-      : null;
-
-  return modal;
+    </Modal>
+  );
 }

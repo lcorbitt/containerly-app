@@ -283,10 +283,18 @@ begin
   where id = v_importer_user_id;
 end $$;
 
--- Four demo shipments (same org): commercial header + optional container tracking.
--- MSCU1000001 — just started (1 timeline event); MSCU2000002 — early origin (6 events);
--- MSCU1234567 — full completed journey (~24 events) + importer grant + docs awaiting review;
--- JBS-EXP-2026-0142 — documentation-only export (no containers), pending customer doc review.
+-- Six demo shipments (same org): US-origin EXPORTS (US port of loading → international destination).
+-- Each models a distinct, chronologically-consistent lifecycle stage. Timeline order across
+-- shipment_activity_events + tracking_events is:
+--   created → drafts attached → approved/rejected(+revision) → originals mailed
+--   → carrier tracking # added (WEBHOOK linked) → carrier SYNC updates.
+--
+-- MSCU1234567 (c…099) — COMPLETE: full lifecycle done, carrier journey delivered (LA → Tokyo). originals_sent. Importer grant f2.
+-- MSCU2000002 (c…097) — IN TRANSIT: approved + originals sent, carrier mid-ocean (Houston → Shanghai). originals_sent.
+-- MSCU1000001 (c…098) — REJECTION + REVISION: customer rejected a draft w/ reason, operator re-uploaded a revision (Savannah → Rotterdam). rejected.
+-- JBS-EXP-2026-0142 (c…096) — DOCS-ONLY EXPORT: drafts awaiting customer review, no containers (Houston → Rotterdam). awaiting_review. Importer grant f3.
+-- c…095 — APPROVED, TRACKING REQUESTED BY CUSTOMER: docs approved, no carrier tracking yet, customer asked for a tracking number (Newark → Hamburg). approved.
+-- c…094 — JUST CREATED: shipment_created only, no docs, no tracking (Long Beach → Busan). pending_drafts.
 insert into public.shipments (
   id,
   organization_id,
@@ -308,6 +316,8 @@ insert into public.shipments (
   voyage,
   health_certificate_no,
   trade_terms,
+  physical_mail_tracking_number,
+  physical_mail_sent_at,
   workflow_status,
   tags
 ) values
@@ -322,17 +332,19 @@ insert into public.shipments (
     'MEDUSH914201',
     'MSC',
     'Costco Wholesale',
-    'US',
-    'Shanghai, CN',
+    'JP',
     'Los Angeles, US',
-    '2025-01-06 18:00+00',
-    '2025-02-05 00:00+00',
+    'Tokyo, JP',
+    '2026-05-10 18:00+00',
+    '2026-05-27 00:00+00',
     'MSC',
     'MSC LORETO',
     'FY428W',
-    'HC-CN-2025-8891',
+    'HC-US-2026-8891',
     'CIF',
-    'awaiting_review',
+    'FEDEX 7789 1234 5521',
+    now() - interval '35 days',
+    'originals_sent',
     array['Costco', 'Priority']::text[]
   ),
   (
@@ -346,17 +358,19 @@ insert into public.shipments (
     null,
     'MSC',
     'Target Corp',
-    'US',
-    'Ningbo, CN',
-    'Long Beach, US',
-    '2026-04-10 08:00+00',
-    '2026-05-01 00:00+00',
+    'NL',
+    'Savannah, US',
+    'Rotterdam, NL',
+    '2026-06-18 08:00+00',
+    '2026-07-05 00:00+00',
     'MSC',
     null,
     null,
     null,
     'FOB',
-    'pending_drafts',
+    null,
+    null,
+    'rejected',
     '{}'::text[]
   ),
   (
@@ -370,16 +384,18 @@ insert into public.shipments (
     null,
     'MSC',
     'Walmart',
-    'US',
+    'CN',
+    'Houston, US',
     'Shanghai, CN',
-    'Los Angeles, US',
-    '2026-03-20 14:00+00',
-    '2026-04-15 00:00+00',
+    '2026-05-26 14:00+00',
+    '2026-06-20 00:00+00',
     'MSC',
     'MSC IRINA',
     'MA412E',
     null,
     'CIF',
+    'DHL 4471 9920 0087',
+    now() - interval '18 days',
     'originals_sent',
     array['Walmart']::text[]
   ),
@@ -394,17 +410,71 @@ insert into public.shipments (
     null,
     null,
     'Costco Wholesale',
-    'US',
-    'Santos, BR',
-    'Long Beach, US',
-    '2026-06-15 08:00+00',
-    '2026-07-10 00:00+00',
+    'NL',
+    'Houston, US',
+    'Rotterdam, NL',
+    '2026-06-25 08:00+00',
+    '2026-07-18 00:00+00',
     'MSC',
     'MSC Sealand',
     'SE601W',
-    'HC-BR-2026-0142',
+    'HC-US-2026-0142',
     'CIF',
+    null,
+    null,
     'awaiting_review',
+    '{}'::text[]
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000004',
+    'PO-TARGET-3003',
+    'BK-MSC-3003',
+    'PENDING',
+    null,
+    'MSC',
+    'Target Corp',
+    'DE',
+    'Newark, US',
+    'Hamburg, DE',
+    '2026-06-22 08:00+00',
+    '2026-07-09 00:00+00',
+    'MSC',
+    null,
+    null,
+    null,
+    'CIF',
+    null,
+    null,
+    'approved',
+    array['Target']::text[]
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000094',
+    'a0000001-0000-4000-8000-000000000001',
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000004-0000-4000-8000-000000000004',
+    'PO-WALMART-4004',
+    'BK-MSC-4004',
+    'PENDING',
+    null,
+    'MSC',
+    'Walmart',
+    'KR',
+    'Long Beach, US',
+    'Busan, KR',
+    '2026-07-01 08:00+00',
+    '2026-07-20 00:00+00',
+    'MSC',
+    null,
+    null,
+    null,
+    'FOB',
+    null,
+    null,
+    'pending_drafts',
     '{}'::text[]
   );
 
@@ -435,24 +505,24 @@ insert into public.containers (
     "tare": 3900,
     "shipping_line_name": "Mediterranean Shipping Company",
     "shipping_line_id": "0015",
-    "shipped_from": "SHANGHAI, CN",
-    "shipped_from_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4",
-    "shipped_to": "LOS ANGELES, US",
-    "shipped_to_terminal": "APM TERMINALS PIER 400",
-    "loading_port": "SHANGHAI, CN",
-    "discharging_port": "LOS ANGELES, US",
-    "last_location": "LOS ANGELES, US",
-    "last_location_terminal": "APM TERMINALS PIER 400",
-    "next_location": "LOS ANGELES, US — CY depot",
-    "next_location_terminal": "APM EMPTY DEPOT",
-    "atd_origin": "2025-01-06 18:00",
-    "eta_final_destination": "2025-02-05 00:00",
-    "atd_last_location": "2025-02-03 08:00",
-    "eta_next_destination": "2025-02-03 12:00",
-    "customs_clearance": "2025-01-26 16:00",
-    "timestamp_of_last_location": "2025-02-04 10:00",
-    "last_movement_timestamp": "2025-02-04 10:00",
-    "last_updated": "2025-02-04 10:00",
+    "shipped_from": "LOS ANGELES, US",
+    "shipped_from_terminal": "APM TERMINALS PIER 400",
+    "shipped_to": "TOKYO, JP",
+    "shipped_to_terminal": "TOKYO OHI TERMINAL",
+    "loading_port": "LOS ANGELES, US",
+    "discharging_port": "TOKYO, JP",
+    "last_location": "TOKYO, JP",
+    "last_location_terminal": "TOKYO OHI TERMINAL",
+    "next_location": "TOKYO, JP — CY depot",
+    "next_location_terminal": "MOL EMPTY DEPOT — TOKYO",
+    "atd_origin": "2026-05-10 18:00",
+    "eta_final_destination": "2026-05-27 00:00",
+    "atd_last_location": "2026-06-05 08:00",
+    "eta_next_destination": "2026-06-05 12:00",
+    "customs_clearance": "2026-05-31 16:00",
+    "timestamp_of_last_location": "2026-06-07 10:00",
+    "last_movement_timestamp": "2026-06-07 10:00",
+    "last_updated": "2026-06-07 10:00",
     "last_vessel_name": "MSC LORETO",
     "last_voyage_number": "FY428W",
     "current_vessel_name": "MSC LORETO",
@@ -467,29 +537,29 @@ insert into public.containers (
       "shipping_line_name": "Mediterranean Shipping Company",
       "shipping_line_id": "0015",
       "tare": 3900,
-      "shipped_from": "SHANGHAI, CN",
-      "shipped_from_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4",
-      "shipped_to": "LOS ANGELES, US",
-      "shipped_to_terminal": "APM TERMINALS PIER 400",
-      "atd_origin": "2025-01-06 18:00",
-      "eta_final_destination": "2025-02-05 00:00",
-      "last_location": "LOS ANGELES, US",
-      "last_location_terminal": "APM TERMINALS PIER 400",
-      "next_location": "LOS ANGELES, US — CY depot",
-      "next_location_terminal": "APM EMPTY DEPOT",
-      "atd_last_location": "2025-02-03 08:00",
-      "eta_next_destination": "2025-02-03 12:00",
-      "timestamp_of_last_location": "2025-02-04 10:00",
-      "last_movement_timestamp": "2025-02-04 10:00",
-      "loading_port": "SHANGHAI, CN",
-      "discharging_port": "LOS ANGELES, US",
-      "customs_clearance": "2025-01-26 16:00",
+      "shipped_from": "LOS ANGELES, US",
+      "shipped_from_terminal": "APM TERMINALS PIER 400",
+      "shipped_to": "TOKYO, JP",
+      "shipped_to_terminal": "TOKYO OHI TERMINAL",
+      "atd_origin": "2026-05-10 18:00",
+      "eta_final_destination": "2026-05-27 00:00",
+      "last_location": "TOKYO, JP",
+      "last_location_terminal": "TOKYO OHI TERMINAL",
+      "next_location": "TOKYO, JP — CY depot",
+      "next_location_terminal": "MOL EMPTY DEPOT — TOKYO",
+      "atd_last_location": "2026-06-05 08:00",
+      "eta_next_destination": "2026-06-05 12:00",
+      "timestamp_of_last_location": "2026-06-07 10:00",
+      "last_movement_timestamp": "2026-06-07 10:00",
+      "loading_port": "LOS ANGELES, US",
+      "discharging_port": "TOKYO, JP",
+      "customs_clearance": "2026-05-31 16:00",
       "bill_of_lading": "MEDUSH914201",
       "last_vessel_name": "MSC LORETO",
       "last_voyage_number": "FY428W",
       "current_vessel_name": "MSC LORETO",
       "current_voyage_number": "FY428W",
-      "last_updated": "2025-02-04 10:00"
+      "last_updated": "2026-06-07 10:00"
     }
   }$SHIP_RAW$::jsonb,
   now(),
@@ -521,15 +591,15 @@ insert into public.containers (
     "container_type": "40' HIGH CUBE",
     "container_status": "Booking confirmed",
     "shipping_line_name": "Mediterranean Shipping Company",
-    "shipped_from": "NINGBO, CN",
-    "shipped_to": "LONG BEACH, US",
-    "loading_port": "NINGBO, CN",
-    "discharging_port": "LONG BEACH, US",
-    "last_location": "NINGBO, CN",
-    "last_location_terminal": "NINGBO ZHOUSHAN — PHASE 3",
-    "last_updated": "2026-04-04 08:00"
+    "shipped_from": "SAVANNAH, US",
+    "shipped_to": "ROTTERDAM, NL",
+    "loading_port": "SAVANNAH, US",
+    "discharging_port": "ROTTERDAM, NL",
+    "last_location": "SAVANNAH, US",
+    "last_location_terminal": "GARDEN CITY TERMINAL",
+    "last_updated": "2026-06-06 08:00"
   }$LOC_A$::jsonb,
-  $RAW_A${"data": {"container_id": "MSCU1000001", "container_status": "Booking confirmed", "last_updated": "2026-04-04T08:00:00Z"}}$RAW_A$::jsonb,
+  $RAW_A${"data": {"container_id": "MSCU1000001", "container_status": "Booking confirmed", "last_updated": "2026-06-06T08:00:00Z"}}$RAW_A$::jsonb,
   now(),
   now()
 );
@@ -553,23 +623,23 @@ insert into public.containers (
   'MSCU2000002',
   'MSCU2000002',
   'MSC',
-  'Loaded on vessel',
+  'In transit — ocean',
   $LOC_B${
     "container_id": "MSCU2000002",
     "container_type": "40' HIGH CUBE REEFER",
-    "container_status": "Loaded on vessel",
+    "container_status": "In transit — ocean",
     "shipping_line_name": "Mediterranean Shipping Company",
-    "shipped_from": "SHANGHAI, CN",
-    "shipped_to": "LOS ANGELES, US",
-    "loading_port": "SHANGHAI, CN",
-    "discharging_port": "LOS ANGELES, US",
-    "last_location": "SHANGHAI, CN",
-    "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4",
+    "shipped_from": "HOUSTON, US",
+    "shipped_to": "SHANGHAI, CN",
+    "loading_port": "HOUSTON, US",
+    "discharging_port": "SHANGHAI, CN",
+    "last_location": "PACIFIC OCEAN",
+    "last_location_terminal": null,
     "last_vessel_name": "MSC IRINA",
     "current_vessel_name": "MSC IRINA",
-    "last_updated": "2026-03-28 14:00"
+    "last_updated": "2026-06-06 14:00"
   }$LOC_B$::jsonb,
-  $RAW_B${"data": {"container_id": "MSCU2000002", "container_status": "Loaded on vessel", "last_vessel_name": "MSC IRINA", "last_updated": "2026-03-28T14:00:00Z"}}$RAW_B$::jsonb,
+  $RAW_B${"data": {"container_id": "MSCU2000002", "container_status": "In transit — ocean", "last_vessel_name": "MSC IRINA", "last_updated": "2026-06-06T14:00:00Z"}}$RAW_B$::jsonb,
   now(),
   now()
 );
@@ -601,13 +671,13 @@ insert into public.shipment_lines (
     'MSCU1234567',
     'PO-88421',
     'Costco Wholesale',
-    'US',
-    'Shanghai, CN',
+    'JP',
     'Los Angeles, US',
+    'Tokyo, JP',
     'MSC',
     'MSC LORETO',
     'FY428W',
-    'HC-CN-2025-8891',
+    'HC-US-2026-8891',
     'CIF',
     0
   ),
@@ -619,9 +689,9 @@ insert into public.shipment_lines (
     'MSCU1000001',
     'PO-99102',
     'Target Corp',
-    'US',
-    'Ningbo, CN',
-    'Long Beach, US',
+    'NL',
+    'Savannah, US',
+    'Rotterdam, NL',
     'MSC',
     null,
     null,
@@ -637,9 +707,9 @@ insert into public.shipment_lines (
     'MSCU2000002',
     'PO-77201',
     'Walmart',
-    'US',
+    'CN',
+    'Houston, US',
     'Shanghai, CN',
-    'Los Angeles, US',
     'MSC',
     'MSC IRINA',
     'MA412E',
@@ -655,13 +725,13 @@ insert into public.shipment_lines (
     null,
     'PO-44201-A',
     'Costco Wholesale',
-    'US',
-    'Santos, BR',
-    'Long Beach, US',
+    'NL',
+    'Houston, US',
+    'Rotterdam, NL',
     'MSC',
     'MSC Sealand',
     'SE601W',
-    'HC-BR-2026-0142',
+    'HC-US-2026-0142',
     'CIF',
     0
   ),
@@ -673,15 +743,51 @@ insert into public.shipment_lines (
     null,
     'PO-44201-B',
     'Costco Wholesale',
-    'US',
-    'Santos, BR',
-    'Long Beach, US',
+    'NL',
+    'Houston, US',
+    'Rotterdam, NL',
     'MSC',
     'MSC Sealand',
     'SE601W',
-    'HC-BR-2026-0142',
+    'HC-US-2026-0142',
     'CIF',
     1
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000095',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'PO-30031',
+    'Target Corp',
+    'DE',
+    'Newark, US',
+    'Hamburg, DE',
+    'MSC',
+    null,
+    null,
+    null,
+    'CIF',
+    0
+  ),
+  (
+    'd0000001-0000-4000-8000-000000000094',
+    'c0000001-0000-4000-8000-000000000094',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'PO-40041',
+    'Walmart',
+    'KR',
+    'Long Beach, US',
+    'Busan, KR',
+    'MSC',
+    null,
+    null,
+    null,
+    'FOB',
+    0
   );
 
 update public.containers
@@ -689,11 +795,11 @@ set enrichment = jsonb_build_object(
   'source_last_fetched_at', now(),
   'vessel_ais', jsonb_build_object(
     'name', 'MSC LORETO',
-    'lat', 22.45,
-    'lon', 118.28,
-    'speed', 12.4,
-    'last_position_UTC', '2025-02-04T10:00:00Z',
-    'eta_UTC', '2025-02-08T12:00:00Z'
+    'lat', 35.45,
+    'lon', 139.78,
+    'speed', 0.2,
+    'last_position_UTC', '2026-06-07T10:00:00Z',
+    'eta_UTC', '2026-05-27T00:00:00Z'
   ),
   'vessel_specs', jsonb_build_object('teu', '4500', 'type_specific', 'Container Ship')
 )
@@ -759,9 +865,12 @@ insert into public.tracking_requests (
 insert into public.shipment_participants (shipment_id, user_id) values
   ('c0000001-0000-4000-8000-000000000099', 'a0000004-0000-4000-8000-000000000004'),
   ('c0000001-0000-4000-8000-000000000098', 'a0000002-0000-4000-8000-000000000002'),
-  ('c0000001-0000-4000-8000-000000000097', 'a0000002-0000-4000-8000-000000000002');
+  ('c0000001-0000-4000-8000-000000000097', 'a0000002-0000-4000-8000-000000000002'),
+  ('c0000001-0000-4000-8000-000000000095', 'a0000002-0000-4000-8000-000000000002'),
+  ('c0000001-0000-4000-8000-000000000094', 'a0000002-0000-4000-8000-000000000002');
 
--- Full demo journey (Shanghai → LA): mix of event_type values (WEBHOOK, SYNC, …) for UI phases; final carrier-facing status matches containers.status.
+-- Full export journey (Los Angeles → Tokyo): carrier tracking # added (WEBHOOK linked) AFTER originals were
+-- mailed, then SYNC milestones to delivery. Final carrier-facing status matches containers.status.
 insert into public.tracking_events (
   container_id,
   tracking_request_id,
@@ -776,8 +885,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'WEBHOOK',
     'Webhook — carrier data linked',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '25 days',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '34 days',
     '{}'::jsonb
   ),
   (
@@ -785,8 +894,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Booking confirmed',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '24 days',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '33 days',
     '{}'::jsonb
   ),
   (
@@ -794,26 +903,17 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Packed — cartons sealed at shipper warehouse',
-    '{"last_location": "KUNSHAN, CN", "last_location_terminal": "JBS FOODS — EXPORT CFS"}'::jsonb,
-    now() - interval '23 days',
+    '{"last_location": "VERNON, CA", "last_location_terminal": "JBS FOODS — EXPORT CFS"}'::jsonb,
+    now() - interval '32 days',
     '{}'::jsonb
   ),
   (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'Gate out empty for loading',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '22 days',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
-    'Rail arrival at quay',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "INTERMODAL RAMP — NANHUI"}'::jsonb,
-    now() - interval '21 days 18 hours',
+    'Gate in full at export terminal',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '31 days',
     '{}'::jsonb
   ),
   (
@@ -821,8 +921,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Loaded on vessel',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '21 days',
+    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    now() - interval '30 days',
     '{}'::jsonb
   ),
   (
@@ -830,17 +930,17 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Vessel departed origin',
-    '{"last_location": "EAST CHINA SEA"}'::jsonb,
-    now() - interval '20 days',
+    '{"last_location": "LOS ANGELES, US"}'::jsonb,
+    now() - interval '29 days',
     '{}'::jsonb
   ),
   (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'In transit — ocean',
+    'In transit — Pacific',
     '{"last_location": "PACIFIC OCEAN"}'::jsonb,
-    now() - interval '18 days',
+    now() - interval '27 days',
     '{}'::jsonb
   ),
   (
@@ -849,7 +949,7 @@ insert into public.tracking_events (
     'SYNC',
     'Discharged at transshipment hub',
     '{"last_location": "BUSAN, KR", "last_location_terminal": "HMM PUSAN NEW PORT"}'::jsonb,
-    now() - interval '15 days',
+    now() - interval '22 days',
     '{}'::jsonb
   ),
   (
@@ -858,34 +958,16 @@ insert into public.tracking_events (
     'SYNC',
     'Reloaded on mainline vessel',
     '{"last_location": "BUSAN, KR", "last_location_terminal": "HMM PUSAN NEW PORT"}'::jsonb,
-    now() - interval '14 days',
+    now() - interval '21 days',
     '{}'::jsonb
   ),
   (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'Customs exam scheduled (T/S)',
-    '{"last_location": "BUSAN, KR", "last_location_terminal": "CUSTOMS EXAM AREA"}'::jsonb,
-    now() - interval '13 days',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
-    'In transit — Pacific main leg',
-    '{"last_location": "PACIFIC OCEAN"}'::jsonb,
-    now() - interval '12 days',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
-    'Delayed — awaiting berth window',
-    '{"last_location": "LOS ANGELES ANCHORAGE"}'::jsonb,
-    now() - interval '10 days',
+    'In transit — East China Sea',
+    '{"last_location": "EAST CHINA SEA"}'::jsonb,
+    now() - interval '19 days',
     '{}'::jsonb
   ),
   (
@@ -893,8 +975,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Vessel arrived POD',
-    '{"last_location": "LOS ANGELES, US"}'::jsonb,
-    now() - interval '9 days',
+    '{"last_location": "TOKYO, JP"}'::jsonb,
+    now() - interval '12 days',
     '{}'::jsonb
   ),
   (
@@ -902,8 +984,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Berthed alongside',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
-    now() - interval '8 days',
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "TOKYO OHI TERMINAL"}'::jsonb,
+    now() - interval '11 days',
     '{}'::jsonb
   ),
   (
@@ -911,16 +993,25 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Discharged from vessel',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
-    now() - interval '7 days',
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "TOKYO OHI TERMINAL"}'::jsonb,
+    now() - interval '10 days',
     '{}'::jsonb
   ),
   (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'Customs clearance released',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "CBP — LONG BEACH"}'::jsonb,
+    'Customs import clearance released',
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "TOKYO CUSTOMS"}'::jsonb,
+    now() - interval '8 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000010',
+    'b0000001-0000-4000-8000-000000000011',
+    'SYNC',
+    'Available for pickup',
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "OHI OFF-DOCK CFS"}'::jsonb,
     now() - interval '6 days',
     '{}'::jsonb
   ),
@@ -928,17 +1019,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'CFS available for pickup',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "OFF-DOCK CFS"}'::jsonb,
-    now() - interval '5 days',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
     'Truck dispatched for delivery',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "PIER 400 — OUTGATE"}'::jsonb,
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "OHI TERMINAL OUTGATE"}'::jsonb,
     now() - interval '4 days',
     '{}'::jsonb
   ),
@@ -947,7 +1029,7 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
     'Delivered to consignee door',
-    '{"last_location": "COMMERCE, CA", "last_location_terminal": "JBS FOODS — DC 7"}'::jsonb,
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "COSTCO JAPAN — DC"}'::jsonb,
     now() - interval '3 days',
     '{}'::jsonb
   ),
@@ -955,17 +1037,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'Rail arrived at inland ramp',
-    '{"last_location": "SAN BERNARDINO, CA", "last_location_terminal": "BNSF INTERMODAL"}'::jsonb,
-    now() - interval '2 days 12 hours',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
-    'Devanning complete — storage yard',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM EMPTY DEPOT"}'::jsonb,
+    'Empty returned to depot',
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "MOL EMPTY DEPOT — TOKYO"}'::jsonb,
     now() - interval '2 days',
     '{}'::jsonb
   ),
@@ -973,22 +1046,13 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000010',
     'b0000001-0000-4000-8000-000000000011',
     'SYNC',
-    'Empty received at CY',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
-    now() - interval '36 hours',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000010',
-    'b0000001-0000-4000-8000-000000000011',
-    'SYNC',
     'Shipment complete',
-    '{"last_location": "LOS ANGELES, US", "last_location_terminal": "APM TERMINALS PIER 400"}'::jsonb,
+    '{"last_location": "TOKYO, JP", "last_location_terminal": "TOKYO OHI TERMINAL"}'::jsonb,
     now() - interval '24 hours',
     '{}'::jsonb
   );
 
--- Just started: single carrier-linked event (today).
+-- Rejection scenario (Savannah → Rotterdam): carrier tracking added recently — just linked + booking confirmed.
 insert into public.tracking_events (
   container_id,
   tracking_request_id,
@@ -997,17 +1061,27 @@ insert into public.tracking_events (
   location,
   occurred_at,
   raw_payload
-) values (
-  'b0000001-0000-4000-8000-000000000012',
-  'b0000001-0000-4000-8000-000000000013',
-  'WEBHOOK',
-  'Webhook — carrier data linked',
-  '{"last_location": "NINGBO, CN", "last_location_terminal": "NINGBO ZHOUSHAN — PHASE 3"}'::jsonb,
-  now() - interval '2 hours',
-  '{}'::jsonb
-);
+) values
+  (
+    'b0000001-0000-4000-8000-000000000012',
+    'b0000001-0000-4000-8000-000000000013',
+    'WEBHOOK',
+    'Webhook — carrier data linked',
+    '{"last_location": "SAVANNAH, US", "last_location_terminal": "GARDEN CITY TERMINAL"}'::jsonb,
+    now() - interval '3 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000012',
+    'b0000001-0000-4000-8000-000000000013',
+    'SYNC',
+    'Booking confirmed',
+    '{"last_location": "SAVANNAH, US", "last_location_terminal": "GARDEN CITY TERMINAL"}'::jsonb,
+    now() - interval '2 days',
+    '{}'::jsonb
+  );
 
--- In progress: first six milestones of the Shanghai → LA pattern (origin / loading).
+-- In transit (Houston → Shanghai): approved + originals sent, carrier tracking linked, now mid-Pacific.
 insert into public.tracking_events (
   container_id,
   tracking_request_id,
@@ -1022,16 +1096,7 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000015',
     'WEBHOOK',
     'Webhook — carrier data linked',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '18 days',
-    '{}'::jsonb
-  ),
-  (
-    'b0000001-0000-4000-8000-000000000014',
-    'b0000001-0000-4000-8000-000000000015',
-    'SYNC',
-    'Booking confirmed',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    '{"last_location": "HOUSTON, US", "last_location_terminal": "BAYPORT CONTAINER TERMINAL"}'::jsonb,
     now() - interval '17 days',
     '{}'::jsonb
   ),
@@ -1039,8 +1104,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000014',
     'b0000001-0000-4000-8000-000000000015',
     'SYNC',
-    'Packed — cartons sealed at shipper warehouse',
-    '{"last_location": "KUNSHAN, CN", "last_location_terminal": "JBS FOODS — EXPORT CFS"}'::jsonb,
+    'Booking confirmed',
+    '{"last_location": "HOUSTON, US", "last_location_terminal": "BAYPORT CONTAINER TERMINAL"}'::jsonb,
     now() - interval '16 days',
     '{}'::jsonb
   ),
@@ -1048,8 +1113,8 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000014',
     'b0000001-0000-4000-8000-000000000015',
     'SYNC',
-    'Gate out empty for loading',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
+    'Packed — cartons sealed at shipper warehouse',
+    '{"last_location": "GREELEY, CO", "last_location_terminal": "JBS FOODS — EXPORT CFS"}'::jsonb,
     now() - interval '15 days',
     '{}'::jsonb
   ),
@@ -1057,9 +1122,9 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000014',
     'b0000001-0000-4000-8000-000000000015',
     'SYNC',
-    'Rail arrival at quay',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "INTERMODAL RAMP — NANHUI"}'::jsonb,
-    now() - interval '14 days 18 hours',
+    'Gate in full at export terminal',
+    '{"last_location": "HOUSTON, US", "last_location_terminal": "BAYPORT CONTAINER TERMINAL"}'::jsonb,
+    now() - interval '14 days',
     '{}'::jsonb
   ),
   (
@@ -1067,8 +1132,44 @@ insert into public.tracking_events (
     'b0000001-0000-4000-8000-000000000015',
     'SYNC',
     'Loaded on vessel',
-    '{"last_location": "SHANGHAI, CN", "last_location_terminal": "SHANGHAI CNTS — YANGSHAN PHASE 4"}'::jsonb,
-    now() - interval '14 days',
+    '{"last_location": "HOUSTON, US", "last_location_terminal": "BAYPORT CONTAINER TERMINAL"}'::jsonb,
+    now() - interval '13 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000014',
+    'b0000001-0000-4000-8000-000000000015',
+    'SYNC',
+    'Vessel departed origin',
+    '{"last_location": "HOUSTON, US"}'::jsonb,
+    now() - interval '12 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000014',
+    'b0000001-0000-4000-8000-000000000015',
+    'SYNC',
+    'Transited Panama Canal',
+    '{"last_location": "PANAMA CANAL"}'::jsonb,
+    now() - interval '8 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000014',
+    'b0000001-0000-4000-8000-000000000015',
+    'SYNC',
+    'In transit — Pacific',
+    '{"last_location": "PACIFIC OCEAN"}'::jsonb,
+    now() - interval '5 days',
+    '{}'::jsonb
+  ),
+  (
+    'b0000001-0000-4000-8000-000000000014',
+    'b0000001-0000-4000-8000-000000000015',
+    'SYNC',
+    'In transit — ocean',
+    '{"last_location": "PACIFIC OCEAN"}'::jsonb,
+    now() - interval '2 days',
     '{}'::jsonb
   );
 
@@ -1129,6 +1230,8 @@ insert into public.shipment_customer_access (
 );
 
 -- Customer-facing documents (metadata only; storage paths are demo placeholders).
+-- Per scenario: c…099 + c…097 fully approved (drafts) with originals on file; c…098 rejected draft + pending
+-- revision; c…096 drafts awaiting review; c…095 approved drafts; c…094 has no documents yet.
 insert into public.workspace_attachments (
   id,
   organization_id,
@@ -1139,11 +1242,16 @@ insert into public.workspace_attachments (
   content_type,
   file_size_bytes,
   uploaded_by,
+  uploaded_by_kind,
   document_type,
   document_group,
   approval_status,
+  rejection_reason,
+  reviewed_at,
+  reviewed_by_user_id,
   shipment_line_id
 ) values
+  -- c…099 (MSCU1234567): drafts approved by customer, physical originals on file.
   (
     'e0000001-0000-4000-8000-000000000001',
     'a0000001-0000-4000-8000-000000000001',
@@ -1154,9 +1262,13 @@ insert into public.workspace_attachments (
     'application/pdf',
     245760,
     'a0000004-0000-4000-8000-000000000004',
+    'operator',
     'Commercial Invoice',
     'draft',
-    'pending',
+    'approved',
+    null,
+    now() - interval '37 days',
+    'a0000005-0000-4000-8000-000000000005',
     'd0000001-0000-4000-8000-000000000099'
   ),
   (
@@ -1169,11 +1281,151 @@ insert into public.workspace_attachments (
     'application/pdf',
     98304,
     'a0000004-0000-4000-8000-000000000004',
+    'operator',
     'Packing List',
     'draft',
-    'pending',
+    'approved',
+    null,
+    now() - interval '37 days',
+    'a0000005-0000-4000-8000-000000000005',
     'd0000001-0000-4000-8000-000000000099'
   ),
+  (
+    'e0000001-0000-4000-8000-000000000005',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000099',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000099/commercial-invoice-original.pdf',
+    'Commercial Invoice (Original) — MSCU1234567.pdf',
+    'application/pdf',
+    251904,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'original',
+    'pending',
+    null,
+    null,
+    null,
+    'd0000001-0000-4000-8000-000000000099'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000006',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000099',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000099/packing-list-original.pdf',
+    'Packing List (Original) — MSCU1234567.pdf',
+    'application/pdf',
+    101376,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Packing List',
+    'original',
+    'pending',
+    null,
+    null,
+    null,
+    'd0000001-0000-4000-8000-000000000099'
+  ),
+  -- c…097 (MSCU2000002): drafts approved, original commercial invoice mailed.
+  (
+    'e0000001-0000-4000-8000-000000000007',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000097',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000097/commercial-invoice.pdf',
+    'Commercial Invoice — MSCU2000002.pdf',
+    'application/pdf',
+    238592,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'draft',
+    'approved',
+    null,
+    now() - interval '19 days',
+    'a0000005-0000-4000-8000-000000000005',
+    'd0000001-0000-4000-8000-000000000097'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000008',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000097',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000097/packing-list.pdf',
+    'Packing List — MSCU2000002.pdf',
+    'application/pdf',
+    91136,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Packing List',
+    'draft',
+    'approved',
+    null,
+    now() - interval '19 days',
+    'a0000005-0000-4000-8000-000000000005',
+    'd0000001-0000-4000-8000-000000000097'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000009',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000097',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000097/commercial-invoice-original.pdf',
+    'Commercial Invoice (Original) — MSCU2000002.pdf',
+    'application/pdf',
+    244736,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'original',
+    'pending',
+    null,
+    null,
+    null,
+    'd0000001-0000-4000-8000-000000000097'
+  ),
+  -- c…098 (MSCU1000001): customer rejected the draft commercial invoice; operator re-uploaded a revision.
+  (
+    'e0000001-0000-4000-8000-000000000010',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000098',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000098/commercial-invoice.pdf',
+    'Commercial Invoice — MSCU1000001.pdf',
+    'application/pdf',
+    229376,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'draft',
+    'rejected',
+    'Incoterm shows FOB but the PO requires CIF, and the consignee address is missing the postal code. Please correct and re-issue.',
+    now() - interval '5 days',
+    'a0000005-0000-4000-8000-000000000005',
+    'd0000001-0000-4000-8000-000000000098'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000011',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000098',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000098/commercial-invoice-rev2.pdf',
+    'Commercial Invoice (Rev 2) — MSCU1000001.pdf',
+    'application/pdf',
+    231424,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'revision',
+    'pending',
+    null,
+    null,
+    null,
+    'd0000001-0000-4000-8000-000000000098'
+  ),
+  -- c…096 (JBS-EXP-2026-0142): documentation-only export, drafts awaiting customer review.
   (
     'e0000001-0000-4000-8000-000000000003',
     'a0000001-0000-4000-8000-000000000001',
@@ -1184,9 +1436,13 @@ insert into public.workspace_attachments (
     'application/pdf',
     312000,
     'a0000004-0000-4000-8000-000000000004',
+    'operator',
     'Commercial Invoice',
     'draft',
     'pending',
+    null,
+    null,
+    null,
     'd0000001-0000-4000-8000-000000000091'
   ),
   (
@@ -1195,16 +1451,61 @@ insert into public.workspace_attachments (
     'c0000001-0000-4000-8000-000000000096',
     false,
     'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000096/health-certificate.pdf',
-    'Health Certificate — HC-BR-2026-0142.pdf',
+    'Health Certificate — HC-US-2026-0142.pdf',
     'application/pdf',
     156000,
     'a0000004-0000-4000-8000-000000000004',
+    'operator',
     'Health Certificate',
     'draft',
     'pending',
+    null,
+    null,
+    null,
     'd0000001-0000-4000-8000-000000000091'
+  ),
+  -- c…095 (Target / Hamburg): drafts approved; awaiting originals + carrier tracking number.
+  (
+    'e0000001-0000-4000-8000-000000000012',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000095',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000095/commercial-invoice.pdf',
+    'Commercial Invoice — PO-TARGET-3003.pdf',
+    'application/pdf',
+    221184,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Commercial Invoice',
+    'draft',
+    'approved',
+    null,
+    now() - interval '3 days',
+    'a0000005-0000-4000-8000-000000000005',
+    'd0000001-0000-4000-8000-000000000095'
+  ),
+  (
+    'e0000001-0000-4000-8000-000000000013',
+    'a0000001-0000-4000-8000-000000000001',
+    'c0000001-0000-4000-8000-000000000095',
+    false,
+    'a0000001-0000-4000-8000-000000000001/shipments/c0000001-0000-4000-8000-000000000095/packing-list.pdf',
+    'Packing List — PO-TARGET-3003.pdf',
+    'application/pdf',
+    87040,
+    'a0000004-0000-4000-8000-000000000004',
+    'operator',
+    'Packing List',
+    'draft',
+    'approved',
+    null,
+    now() - interval '3 days',
+    'a0000005-0000-4000-8000-000000000005',
+    'd0000001-0000-4000-8000-000000000095'
   );
 
+-- Business timeline (merged with carrier tracking_events in the UI, sorted by occurred_at).
+-- Each shipment's events follow: created → drafts → approve/reject(+revision) → originals → (carrier link).
 insert into public.shipment_activity_events (
   id,
   shipment_id,
@@ -1216,38 +1517,308 @@ insert into public.shipment_activity_events (
   metadata,
   occurred_at
 ) values
+  -- ── c…099 (MSCU1234567): complete happy path ──────────────────────────────
   (
-    'f0000001-0000-4000-8000-000000000000',
+    'f0000001-0000-4000-8000-0000000000a1',
     'c0000001-0000-4000-8000-000000000099',
     'a0000001-0000-4000-8000-000000000001',
     'shipment_created',
     'Shipment created',
     'operator',
     'a0000004-0000-4000-8000-000000000004',
-    '{"order_number":"PO-COSTCO-8891","customer_name":"Costco Wholesale","container_number":"MSCU1234567","carrier_booking_number":"MEDUSH914201","port_of_loading":"Shanghai, CN","port_of_destination":"Los Angeles, US","line_count":2}'::jsonb,
-    now() - interval '5 days'
+    '{"order_number":"PO-COSTCO-8891","customer_name":"Costco Wholesale","container_number":"MSCU1234567","carrier_booking_number":"MEDUSH914201","port_of_loading":"Los Angeles, US","port_of_destination":"Tokyo, JP","line_count":1}'::jsonb,
+    now() - interval '40 days'
   ),
   (
-    'f0000001-0000-4000-8000-000000000001',
+    'f0000001-0000-4000-8000-0000000000a2',
     'c0000001-0000-4000-8000-000000000099',
     'a0000001-0000-4000-8000-000000000001',
     'drafts_attached',
     'Draft export documents uploaded for customer review.',
     'operator',
     'a0000004-0000-4000-8000-000000000004',
-    '{}'::jsonb,
-    now() - interval '4 hours'
+    '{"file_count":2,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000001","file_name":"Commercial Invoice — MSCU1234567.pdf","document_type":"Commercial Invoice","document_group":"draft"},{"attachment_id":"e0000001-0000-4000-8000-000000000002","file_name":"Packing List — MSCU1234567.pdf","document_type":"Packing List","document_group":"draft"}]}'::jsonb,
+    now() - interval '39 days'
   ),
   (
-    'f0000001-0000-4000-8000-000000000002',
+    'f0000001-0000-4000-8000-0000000000a3',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Commercial Invoice approved.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"attachment_id":"e0000001-0000-4000-8000-000000000001","file_name":"Commercial Invoice — MSCU1234567.pdf","document_type":"Commercial Invoice","document_group":"draft","approval_status":"approved"}'::jsonb,
+    now() - interval '37 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000a4',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Packing List approved.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"attachment_id":"e0000001-0000-4000-8000-000000000002","file_name":"Packing List — MSCU1234567.pdf","document_type":"Packing List","document_group":"draft","approval_status":"approved"}'::jsonb,
+    now() - interval '36 days 22 hours'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000a5',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Draft documents are approved — please send to the mailing address on file.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"file_count":2}'::jsonb,
+    now() - interval '36 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000a6',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'originals_mailed',
+    'Original documents have been mailed.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"document_group":"original"}'::jsonb,
+    now() - interval '35 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000a7',
+    'c0000001-0000-4000-8000-000000000099',
+    'a0000001-0000-4000-8000-000000000001',
+    'originals_mailed',
+    'Tracking number added: FEDEX 7789 1234 5521',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"document_group":"original","tracking_number":"FEDEX 7789 1234 5521"}'::jsonb,
+    now() - interval '34 days 23 hours'
+  ),
+  -- ── c…097 (MSCU2000002): approved + originals sent, now in transit ─────────
+  (
+    'f0000001-0000-4000-8000-0000000000b1',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"PO-WALMART-2002","customer_name":"Walmart","container_number":"MSCU2000002","carrier_booking_number":"BK-MSC-2002","port_of_loading":"Houston, US","port_of_destination":"Shanghai, CN","line_count":1}'::jsonb,
+    now() - interval '22 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000b2',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Draft export documents uploaded for customer review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"file_count":2,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000007","file_name":"Commercial Invoice — MSCU2000002.pdf","document_type":"Commercial Invoice","document_group":"draft"},{"attachment_id":"e0000001-0000-4000-8000-000000000008","file_name":"Packing List — MSCU2000002.pdf","document_type":"Packing List","document_group":"draft"}]}'::jsonb,
+    now() - interval '21 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000b3',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Draft documents are approved — please send to the mailing address on file.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"file_count":2}'::jsonb,
+    now() - interval '19 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000b4',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'originals_mailed',
+    'Original documents have been mailed.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"document_group":"original"}'::jsonb,
+    now() - interval '18 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000b5',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'originals_mailed',
+    'Tracking number added: DHL 4471 9920 0087',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"document_group":"original","tracking_number":"DHL 4471 9920 0087"}'::jsonb,
+    now() - interval '17 days 22 hours'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000b6',
+    'c0000001-0000-4000-8000-000000000097',
+    'a0000001-0000-4000-8000-000000000001',
+    'risk_status_updated',
+    'Risk status set to Medium.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"risk_level":"medium","previous_risk_level":"low","risk_message":"Schedule reliability on this lane is trending down; monitoring the berth window at Shanghai."}'::jsonb,
+    now() - interval '7 days'
+  ),
+  -- ── c…098 (MSCU1000001): rejection + revision loop ─────────────────────────
+  (
+    'f0000001-0000-4000-8000-0000000000c1',
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"PO-TARGET-1001","customer_name":"Target Corp","container_number":"MSCU1000001","carrier_booking_number":"BK-MSC-1001","port_of_loading":"Savannah, US","port_of_destination":"Rotterdam, NL","line_count":1}'::jsonb,
+    now() - interval '8 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000c2',
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Draft commercial invoice uploaded for customer review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"file_count":1,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000010","file_name":"Commercial Invoice — MSCU1000001.pdf","document_type":"Commercial Invoice","document_group":"draft"}]}'::jsonb,
+    now() - interval '7 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000c3',
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_rejected',
+    'Commercial Invoice rejected — Incoterm shows FOB but the PO requires CIF, and the consignee address is missing the postal code. Please correct and re-issue.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"attachment_id":"e0000001-0000-4000-8000-000000000010","file_name":"Commercial Invoice — MSCU1000001.pdf","document_type":"Commercial Invoice","document_group":"draft","approval_status":"rejected","rejection_reason":"Incoterm shows FOB but the PO requires CIF, and the consignee address is missing the postal code. Please correct and re-issue."}'::jsonb,
+    now() - interval '5 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000c4',
+    'c0000001-0000-4000-8000-000000000098',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Revised commercial invoice uploaded for customer review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"file_count":1,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000011","file_name":"Commercial Invoice (Rev 2) — MSCU1000001.pdf","document_type":"Commercial Invoice","document_group":"revision"}]}'::jsonb,
+    now() - interval '4 days'
+  ),
+  -- ── c…096 (JBS-EXP-2026-0142): documentation-only export, awaiting review ──
+  (
+    'f0000001-0000-4000-8000-0000000000d1',
+    'c0000001-0000-4000-8000-000000000096',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"JBS-EXP-2026-0142","customer_name":"Costco Wholesale","container_number":"PENDING","carrier_booking_number":"BK-JBS-0142","port_of_loading":"Houston, US","port_of_destination":"Rotterdam, NL","line_count":2}'::jsonb,
+    now() - interval '3 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000d2',
     'c0000001-0000-4000-8000-000000000096',
     'a0000001-0000-4000-8000-000000000001',
     'drafts_attached',
     'Draft commercial invoice and health certificate sent for Costco review.',
     'operator',
     'a0000004-0000-4000-8000-000000000004',
-    '{}'::jsonb,
-    now() - interval '2 hours'
+    '{"file_count":2,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000003","file_name":"Commercial Invoice — JBS-EXP-2026-0142.pdf","document_type":"Commercial Invoice","document_group":"draft"},{"attachment_id":"e0000001-0000-4000-8000-000000000004","file_name":"Health Certificate — HC-US-2026-0142.pdf","document_type":"Health Certificate","document_group":"draft"}]}'::jsonb,
+    now() - interval '2 days'
+  ),
+  -- ── c…095 (Target / Hamburg): approved, customer asked for a tracking number ──
+  (
+    'f0000001-0000-4000-8000-0000000000e1',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"PO-TARGET-3003","customer_name":"Target Corp","container_number":"PENDING","carrier_booking_number":"BK-MSC-3003","port_of_loading":"Newark, US","port_of_destination":"Hamburg, DE","line_count":1}'::jsonb,
+    now() - interval '6 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e2',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'drafts_attached',
+    'Draft export documents uploaded for customer review.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"file_count":2,"documents":[{"attachment_id":"e0000001-0000-4000-8000-000000000012","file_name":"Commercial Invoice — PO-TARGET-3003.pdf","document_type":"Commercial Invoice","document_group":"draft"},{"attachment_id":"e0000001-0000-4000-8000-000000000013","file_name":"Packing List — PO-TARGET-3003.pdf","document_type":"Packing List","document_group":"draft"}]}'::jsonb,
+    now() - interval '5 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e3',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Commercial Invoice approved.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"attachment_id":"e0000001-0000-4000-8000-000000000012","file_name":"Commercial Invoice — PO-TARGET-3003.pdf","document_type":"Commercial Invoice","document_group":"draft","approval_status":"approved"}'::jsonb,
+    now() - interval '3 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e4',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Packing List approved.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"attachment_id":"e0000001-0000-4000-8000-000000000013","file_name":"Packing List — PO-TARGET-3003.pdf","document_type":"Packing List","document_group":"draft","approval_status":"approved"}'::jsonb,
+    now() - interval '2 days 22 hours'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e5',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'documents_approved',
+    'Draft documents are approved — please send to the mailing address on file.',
+    'customer',
+    'a0000005-0000-4000-8000-000000000005',
+    '{"file_count":2}'::jsonb,
+    now() - interval '2 days 21 hours'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e6',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'customer_message',
+    'Could you share the container tracking number once the booking is confirmed? We need it for our inbound scheduling.',
+    'customer',
+    null,
+    '{"author_display_name":"Mia (Target)","message_preview":"Could you share the container tracking number once the booking is confirmed? We need it for our inbound scheduling."}'::jsonb,
+    now() - interval '2 days'
+  ),
+  (
+    'f0000001-0000-4000-8000-0000000000e7',
+    'c0000001-0000-4000-8000-000000000095',
+    'a0000001-0000-4000-8000-000000000001',
+    'operator_message',
+    'Booking is confirmed — I will share the MSC container number as soon as carrier tracking is linked.',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"author_display_name":"Avery Admin","message_preview":"Booking is confirmed — I will share the MSC container number as soon as carrier tracking is linked."}'::jsonb,
+    now() - interval '1 day 20 hours'
+  ),
+  -- ── c…094 (Walmart / Busan): just created ─────────────────────────────────
+  (
+    'f0000001-0000-4000-8000-0000000000f1',
+    'c0000001-0000-4000-8000-000000000094',
+    'a0000001-0000-4000-8000-000000000001',
+    'shipment_created',
+    'Shipment created',
+    'operator',
+    'a0000004-0000-4000-8000-000000000004',
+    '{"order_number":"PO-WALMART-4004","customer_name":"Walmart","container_number":"PENDING","carrier_booking_number":"BK-MSC-4004","port_of_loading":"Long Beach, US","port_of_destination":"Busan, KR","line_count":1}'::jsonb,
+    now() - interval '20 hours'
   );
 
 insert into public.report_messages (
@@ -1538,4 +2109,36 @@ insert into public.alerts (
     null,
     null,
     now() - interval '3 hours'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000016',
+    'a0000001-0000-4000-8000-000000000001',
+    'b0000001-0000-4000-8000-000000000013',
+    'b0000001-0000-4000-8000-000000000012',
+    'c0000001-0000-4000-8000-000000000098',
+    'DOCUMENT_REJECTED',
+    'warning',
+    'MSCU1000001: customer rejected the draft commercial invoice — revision requested.',
+    '{"seed": true, "order_number": "PO-TARGET-1001"}'::jsonb,
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000005-0000-4000-8000-000000000005',
+    null,
+    null,
+    now() - interval '5 days'
+  ),
+  (
+    'c0000001-0000-4000-8000-000000000017',
+    'a0000001-0000-4000-8000-000000000001',
+    null,
+    null,
+    'c0000001-0000-4000-8000-000000000095',
+    'DOCUMENTS_APPROVED',
+    'info',
+    'Export documents approved for PO-TARGET-3003 — ready to send originals.',
+    '{"seed": true, "order_number": "PO-TARGET-3003"}'::jsonb,
+    'a0000004-0000-4000-8000-000000000004',
+    'a0000005-0000-4000-8000-000000000005',
+    null,
+    null,
+    now() - interval '2 days 21 hours'
   );

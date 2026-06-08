@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import type { BulkImportResult } from "@/services/shipment-import.service";
@@ -14,9 +14,6 @@ export function useNewShipmentModalProvider() {
   const [importOpen, setImportOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [creatingShipment, setCreatingShipment] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
-  const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const dismissModal = useCallback(() => {
     setOpen(false);
@@ -36,28 +33,6 @@ export function useNewShipmentModalProvider() {
     },
     [router, dismissModal],
   );
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        close();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
 
   const openNewShipmentModal = useCallback(() => {
     setOpen(true);
@@ -101,9 +76,6 @@ export function useNewShipmentModalProvider() {
     importOpen,
     bulkImportOpen,
     creatingShipment,
-    portalReady,
-    titleId,
-    panelRef,
     contextValue,
     close,
     afterCreated,

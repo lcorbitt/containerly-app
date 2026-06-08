@@ -8,12 +8,6 @@ export const FEEDBACK_WIDGET_FAB_CLASS =
 
 export const FEEDBACK_WIDGET_FAB_TOOLTIP_LABEL = "Send Feedback";
 
-export const FEEDBACK_WIDGET_MODAL_OVERLAY_CLASS =
-  "fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto sm:items-center sm:p-4";
-
-export const FEEDBACK_WIDGET_MODAL_PANEL_CLASS =
-  "relative z-[101] m-0 w-full max-w-lg border-0 border-zinc-200 bg-white shadow-2xl outline-none dark:border-zinc-700 dark:bg-zinc-950 sm:rounded-2xl sm:border sm:shadow-xl";
-
 export const FEEDBACK_CATEGORY_OPTIONS: {
   value: FeedbackCategory;
   label: string;
