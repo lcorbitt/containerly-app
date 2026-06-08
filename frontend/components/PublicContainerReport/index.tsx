@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getOrgImagePublicUrl } from "@/utils/org-image";
 import type { PublicReportPayload } from "@/types/public-report";
 import { BrandedHeader } from "@/components/BrandedHeader";
+import { useNavigationProgress } from "@/components/NavigationProgress";
 import { PortalDocumentsPanel } from "./PortalDocumentsPanel";
 import { PortalCommercialDetailsSection } from "./PortalCommercialDetailsSection";
 import { PortalSuggestedActionsCard } from "./PortalSuggestedActionsCard";
@@ -118,6 +119,8 @@ export function PublicContainerReport({
     uploadDocuments,
   } = usePublicContainerReport({ shipmentId, initial, readOnlyMessaging });
 
+  const { startNavigation } = useNavigationProgress();
+
   const suggestedActionAudience = useMemo(
     () => shipmentActionAudienceFromPortalViewer(payload.viewer),
     [payload.viewer],
@@ -196,7 +199,7 @@ export function PublicContainerReport({
                 <Link
                   href={CUSTOMER_SIDE_NAV_SETTINGS_HREF}
                   className={PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS}
-                  data-nav-label="Settings"
+                  onClick={() => startNavigation({ label: "Settings" })}
                 >
                   {PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL}
                 </Link>

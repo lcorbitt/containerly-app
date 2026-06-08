@@ -795,6 +795,7 @@ export async function loadImporterGrantedShipmentsPageBrowser(args: {
   sortColumn: ImporterGrantedShipmentSortColumn;
   sortDirection: SortDirection;
   search: string;
+  dateRangeFilter?: OperatorShipmentDateRangeFilter;
 }) {
   const { data: auth } = await createClient().auth.getUser();
   if (!auth.user?.id) return { rows: [], totalCount: 0 };
@@ -809,6 +810,10 @@ export async function loadImporterGrantedShipmentsPageBrowser(args: {
         sortColumn: args.sortColumn,
         sortDirection: args.sortDirection,
         search: args.search,
+        etaFrom: args.dateRangeFilter?.etaFrom,
+        etaTo: args.dateRangeFilter?.etaTo,
+        etdFrom: args.dateRangeFilter?.etdFrom,
+        etdTo: args.dateRangeFilter?.etdTo,
       }),
     },
   );

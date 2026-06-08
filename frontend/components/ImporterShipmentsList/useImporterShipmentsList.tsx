@@ -6,6 +6,7 @@ import type { DataTableColumn, DataTableExportConfig } from "@/components/DataTa
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
 import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/ShipmentOverviewDateFilters/constants";
 import { displayOverviewText, formatOverviewDate } from "@/utils/shipment-overview-display";
+import { parseOperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { fetchAllImporterGrantedShipmentRows } from "@/utils/shipment-list-export";
 import {
@@ -32,6 +33,10 @@ export function useImporterShipmentsList() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [etdFrom, setEtdFrom] = useState("");
+  const [etdTo, setEtdTo] = useState("");
+  const [etaFrom, setEtaFrom] = useState("");
+  const [etaTo, setEtaTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +47,19 @@ export function useImporterShipmentsList() {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, pageSize]);
+  }, [debouncedSearch, pageSize, etdFrom, etdTo, etaFrom, etaTo]);
+
+  const dateRangeFilter = useMemo(
+    () => parseOperatorShipmentDateRangeFilter({ etaFrom, etaTo, etdFrom, etdTo }),
+    [etaFrom, etaTo, etdFrom, etdTo],
+  );
+
+  const clearDateFilters = useCallback(() => {
+    setEtdFrom("");
+    setEtdTo("");
+    setEtaFrom("");
+    setEtaTo("");
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,6 +71,7 @@ export function useImporterShipmentsList() {
         sortColumn,
         sortDirection,
         search: debouncedSearch,
+        dateRangeFilter,
       });
       setRows(data);
       setTotalCount(count);
@@ -68,7 +86,7 @@ export function useImporterShipmentsList() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, sortColumn, sortDirection, debouncedSearch]);
+  }, [page, pageSize, sortColumn, sortDirection, debouncedSearch, dateRangeFilter]);
 
   useEffect(() => {
     void load();
@@ -81,8 +99,9 @@ export function useImporterShipmentsList() {
       sortColumn,
       sortDirection,
       search: debouncedSearch,
+      dateRangeFilter,
     });
-  }, [totalCount, sortColumn, sortDirection, debouncedSearch]);
+  }, [totalCount, sortColumn, sortDirection, debouncedSearch, dateRangeFilter]);
 
   const tableExport = useMemo<DataTableExportConfig<ImporterGrantedShipmentRow>>(
     () => ({
@@ -248,6 +267,15 @@ export function useImporterShipmentsList() {
     sortDirection,
     searchInput,
     setSearchInput,
+    etdFrom,
+    setEtdFrom,
+    etdTo,
+    setEtdTo,
+    etaFrom,
+    setEtaFrom,
+    etaTo,
+    setEtaTo,
+    clearDateFilters,
     loading,
     error,
     handleSortChange,

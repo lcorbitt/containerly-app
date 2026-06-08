@@ -5,6 +5,7 @@ import {
   type ImporterGrantedShipmentSortColumn,
   type SortDirection,
 } from "@/services/shipment.server";
+import { parseOperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
     sortColumn?: ImporterGrantedShipmentSortColumn;
     sortDirection?: SortDirection;
     search?: string;
+    etaFrom?: string | null;
+    etaTo?: string | null;
+    etdFrom?: string | null;
+    etdTo?: string | null;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -33,6 +38,12 @@ export async function POST(request: Request) {
   const sortColumn = body.sortColumn ?? "last_sync_at";
   const sortDirection = body.sortDirection === "asc" ? "asc" : "desc";
   const search = typeof body.search === "string" ? body.search : "";
+  const dateRangeFilter = parseOperatorShipmentDateRangeFilter({
+    etaFrom: body.etaFrom,
+    etaTo: body.etaTo,
+    etdFrom: body.etdFrom,
+    etdTo: body.etdTo,
+  });
 
   const result = await fetchImporterGrantedShipmentsPage(supabase, {
     userId: user.id,
@@ -41,6 +52,7 @@ export async function POST(request: Request) {
     sortColumn,
     sortDirection,
     search,
+    dateRangeFilter,
   });
 
   return NextResponse.json(result);

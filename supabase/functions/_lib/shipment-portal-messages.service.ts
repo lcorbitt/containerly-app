@@ -114,6 +114,18 @@ async function postOrgMemberPortalMessage(
     /* best-effort */
   }
 
+  const nowIso = new Date().toISOString();
+  await admin.from("shipment_message_thread_reads").upsert(
+    {
+      organization_id: input.organizationId,
+      user_id: userId,
+      shipment_id: input.shipmentId,
+      last_read_at: nowIso,
+      updated_at: nowIso,
+    },
+    { onConflict: "user_id,shipment_id" },
+  );
+
   return {
     ok: true,
     message: {

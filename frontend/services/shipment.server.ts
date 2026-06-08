@@ -305,9 +305,10 @@ export async function fetchImporterGrantedShipmentsPage(
     sortColumn: ImporterGrantedShipmentSortColumn;
     sortDirection: SortDirection;
     search: string;
+    dateRangeFilter?: OperatorShipmentDateRangeFilter;
   },
 ): Promise<{ rows: ImporterGrantedShipmentRow[]; totalCount: number }> {
-  const { userId, page, pageSize, sortColumn, sortDirection, search } = args;
+  const { userId, page, pageSize, sortColumn, sortDirection, search, dateRangeFilter } = args;
   const offset = Math.max(0, page) * pageSize;
 
   const { data, error } = await supabase.rpc("importer_granted_shipments_overview_page", {
@@ -317,6 +318,10 @@ export async function fetchImporterGrantedShipmentsPage(
     p_sort_asc: sortDirection === "asc",
     p_limit: pageSize,
     p_offset: offset,
+    p_eta_from: dateRangeFilter?.etaFrom ?? undefined,
+    p_eta_to: dateRangeFilter?.etaTo ?? undefined,
+    p_etd_from: dateRangeFilter?.etdFrom ?? undefined,
+    p_etd_to: dateRangeFilter?.etdTo ?? undefined,
   });
 
   if (error) throw new Error(error.message);

@@ -1,15 +1,19 @@
 "use client";
 
-import { DataTable } from "@/components/DataTable";
+import { DataTable, DataTableExportButton } from "@/components/DataTable";
 import { Reveal } from "@/components/Reveal";
 import { TablePagination } from "@/components/TablePagination";
 import { TextInput } from "@/components/TextInput";
+import { ShipmentOverviewDateFilters } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/ShipmentOverviewDateFilters";
 import {
+  SHIPMENT_OVERVIEW_FILTERS_CLASS,
   SHIPMENT_OVERVIEW_PANEL_CLASS,
   SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS,
   SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS,
+  SHIPMENT_OVERVIEW_TOOLBAR_CLASS,
 } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/constants";
 import {
+  IMPORTER_SHIPMENTS_DATE_FILTER_EMPTY_MESSAGE,
   IMPORTER_SHIPMENTS_EMPTY_MESSAGE,
   IMPORTER_SHIPMENTS_SUBTITLE,
   IMPORTER_SHIPMENTS_TITLE,
@@ -28,6 +32,15 @@ export function ImporterShipmentsList() {
     sortDirection,
     searchInput,
     setSearchInput,
+    etdFrom,
+    setEtdFrom,
+    etdTo,
+    setEtdTo,
+    etaFrom,
+    setEtaFrom,
+    etaTo,
+    setEtaTo,
+    clearDateFilters,
     loading,
     error,
     handleSortChange,
@@ -35,6 +48,8 @@ export function ImporterShipmentsList() {
     navigateToShipment,
     tableExport,
   } = useImporterShipmentsList();
+
+  const hasDateFilters = Boolean(etdFrom || etdTo || etaFrom || etaTo);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -45,18 +60,41 @@ export function ImporterShipmentsList() {
 
       <Reveal show>
         <section className={`mt-6 ${SHIPMENT_OVERVIEW_PANEL_CLASS}`}>
-          <label className="sr-only" htmlFor="shipments-search">
-            Search shipments
-          </label>
-          <TextInput
-            id="shipments-search"
-            type="search"
-            placeholder="Search order no., organization, customer…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+          <div className={SHIPMENT_OVERVIEW_TOOLBAR_CLASS}>
+            <label className="sr-only" htmlFor="shipments-search">
+              Search shipments
+            </label>
+            <TextInput
+              id="shipments-search"
+              type="search"
+              placeholder="Search order no., organization, customer…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              disabled={loading}
+              containerClassName={SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS}
+              className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
+            />
+            <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
+              <DataTableExportButton
+                columns={columns}
+                exportConfig={tableExport}
+                disabled={totalCount === 0 || loading}
+              />
+            </div>
+          </div>
+
+          <ShipmentOverviewDateFilters
+            idPrefix="importer-shipments"
+            etdFrom={etdFrom}
+            etdTo={etdTo}
+            etaFrom={etaFrom}
+            etaTo={etaTo}
             disabled={loading}
-            containerClassName={`${SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS} mb-4`}
-            className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
+            onEtdFromChange={setEtdFrom}
+            onEtdToChange={setEtdTo}
+            onEtaFromChange={setEtaFrom}
+            onEtaToChange={setEtaTo}
+            onClear={clearDateFilters}
           />
 
           <DataTable
@@ -67,9 +105,9 @@ export function ImporterShipmentsList() {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSortChange={handleSortChange}
-            export={tableExport}
-            exportDisabled={totalCount === 0}
-            emptyMessage={IMPORTER_SHIPMENTS_EMPTY_MESSAGE}
+            emptyMessage={
+              hasDateFilters ? IMPORTER_SHIPMENTS_DATE_FILTER_EMPTY_MESSAGE : IMPORTER_SHIPMENTS_EMPTY_MESSAGE
+            }
             onRowClick={navigateToShipment}
           />
 

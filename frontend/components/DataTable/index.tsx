@@ -2,16 +2,10 @@
 
 import type { KeyboardEvent } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import {
-  DATA_TABLE_EXPORT_BUTTON_CLASS,
-  DATA_TABLE_EXPORT_BUTTON_LABEL,
-  DATA_TABLE_EXPORTING_BUTTON_LABEL,
-  DATA_TABLE_EXPORT_TOOLBAR_CLASS,
-} from "./constants";
-import { useDataTableExport } from "./useDataTableExport";
 import type { DataTableColumn, DataTableExportConfig, SortDirection } from "./types";
 
 export type { DataTableColumn, DataTableExportConfig, SortDirection };
+export { DataTableExportButton } from "./DataTableExportButton";
 
 type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
@@ -23,9 +17,6 @@ type DataTableProps<T> = {
   sortColumn?: string | null;
   sortDirection?: SortDirection;
   onSortChange?: (columnId: string) => void;
-  /** When set, shows Export and downloads all rows from `fetchRows` as CSV. */
-  export?: DataTableExportConfig<T>;
-  exportDisabled?: boolean;
 };
 
 export function DataTable<T>({
@@ -38,11 +29,8 @@ export function DataTable<T>({
   sortColumn = null,
   sortDirection = "desc",
   onSortChange,
-  export: exportConfig,
-  exportDisabled = false,
 }: DataTableProps<T>) {
   const interactive = Boolean(onRowClick);
-  const { canExport, exporting, handleExport } = useDataTableExport({ columns, exportConfig });
 
   const onRowKeyDown = (row: T) => (e: KeyboardEvent<HTMLTableRowElement>) => {
     if (!onRowClick) return;
@@ -54,19 +42,6 @@ export function DataTable<T>({
 
   return (
     <div>
-      {canExport ? (
-        <div className={DATA_TABLE_EXPORT_TOOLBAR_CLASS}>
-          <button
-            type="button"
-            className={DATA_TABLE_EXPORT_BUTTON_CLASS}
-            disabled={exportDisabled || loading || exporting}
-            onClick={() => void handleExport()}
-          >
-            {exporting ? DATA_TABLE_EXPORTING_BUTTON_LABEL : DATA_TABLE_EXPORT_BUTTON_LABEL}
-          </button>
-        </div>
-      ) : null}
-
       <div className="overflow-x-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
         <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
           <thead>

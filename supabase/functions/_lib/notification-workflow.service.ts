@@ -65,11 +65,13 @@ function siteUrl(): string {
 async function operatorEmailRecipientIds(
   client: SupabaseClient,
   shipmentId: string,
+  excludeUserId?: string | null,
 ): Promise<string[]> {
   const { data: subscribers } = await listShipmentNotificationSubscriberUserIds(client, shipmentId);
   return (subscribers ?? [])
     .map((s) => s.user_id as string | null)
-    .filter((id): id is string => Boolean(id));
+    .filter((id): id is string => Boolean(id))
+    .filter((id) => !excludeUserId || id !== excludeUserId);
 }
 
 export async function notifyOperatorsDocumentRejected(
@@ -194,7 +196,7 @@ export async function notifyOperatorsNewCustomerMessage(
     reportMessageId: string;
   },
 ): Promise<void> {
-  const emailRecipients = await operatorEmailRecipientIds(admin, args.shipmentId);
+  const emailRecipients = await operatorEmailRecipientIds(admin, args.shipmentId, args.customerUserId);
   const url = `${siteUrl()}/shipments/${args.shipmentId}`;
   const customerName = await fetchProfileDisplayName(admin, args.customerUserId);
   const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
@@ -271,7 +273,7 @@ export async function notifyCustomerOperatorReply(
   });
 
   const { data: profile } = await fetchProfileEmailByUserId(admin, args.customerUserId);
-  if (profile?.email) {
+  if (profile?.email && args.customerUserId !== args.operatorUserId) {
     await sendNewMessageEmail({
       to: profile.email as string,
       orgName: args.orgName,

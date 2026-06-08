@@ -668,6 +668,18 @@ export async function postCustomerMessage(
     reportMessageId: inserted.id as string,
   });
 
+  const nowIso = new Date().toISOString();
+  await admin.from("shipment_message_thread_reads").upsert(
+    {
+      organization_id: orgId,
+      user_id: userId,
+      shipment_id: shipmentId,
+      last_read_at: nowIso,
+      updated_at: nowIso,
+    },
+    { onConflict: "user_id,shipment_id" },
+  );
+
   return {
     ok: true,
     message: {

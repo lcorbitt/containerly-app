@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { profileDisplayName } from "@/utils/author-display-name";
 import { stripMessageMarkup } from "@/utils/message-markup";
+import { isShipmentThreadUnreadForViewer } from "@/utils/shipment-thread-unread";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type { OrgShipmentMessageThreadsResult, ShipmentScopeLoadResult } from "@/types/workspace-load";
 import {
@@ -1245,11 +1246,12 @@ export async function loadOrgShipmentMessageThreadsForUser(
           agg.last_author_user_id,
           profileEmailByUserId,
         ),
-        is_unread: (() => {
-          const lastReadAt = lastReadAtByShipmentId.get(shipment_id);
-          if (!lastReadAt) return true;
-          return Date.parse(agg.last_message_at) > Date.parse(lastReadAt);
-        })(),
+        is_unread: isShipmentThreadUnreadForViewer({
+          viewerUserId: userId,
+          lastAuthorUserId: agg.last_author_user_id,
+          lastMessageAt: agg.last_message_at,
+          lastReadAt: lastReadAtByShipmentId.get(shipment_id),
+        }),
       };
     })
     .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))
@@ -1460,11 +1462,12 @@ export async function loadImporterShipmentMessageThreadsForUser(
           agg.last_author_user_id,
           profileEmailByUserId,
         ),
-        is_unread: (() => {
-          const lastReadAt = lastReadAtByShipmentId.get(shipment_id);
-          if (!lastReadAt) return true;
-          return Date.parse(agg.last_message_at) > Date.parse(lastReadAt);
-        })(),
+        is_unread: isShipmentThreadUnreadForViewer({
+          viewerUserId: userId,
+          lastAuthorUserId: agg.last_author_user_id,
+          lastMessageAt: agg.last_message_at,
+          lastReadAt: lastReadAtByShipmentId.get(shipment_id),
+        }),
       };
     })
     .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))

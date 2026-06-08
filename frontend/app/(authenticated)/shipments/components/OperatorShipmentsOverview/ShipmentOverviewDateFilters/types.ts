@@ -4,6 +4,7 @@ export interface ShipmentOverviewDateFiltersProps {
   etaFrom: string;
   etaTo: string;
   disabled?: boolean;
+  idPrefix?: string;
   onEtdFromChange: (value: string) => void;
   onEtdToChange: (value: string) => void;
   onEtaFromChange: (value: string) => void;

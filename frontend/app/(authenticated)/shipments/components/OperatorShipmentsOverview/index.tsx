@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { RefreshCw, X } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
+import { DataTable, DataTableExportButton } from "@/components/DataTable";
 import { Reveal } from "@/components/Reveal";
 import { TablePagination } from "@/components/TablePagination";
 import { TextInput } from "@/components/TextInput";
@@ -106,6 +106,11 @@ export function OperatorShipmentsOverview({
                     className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
                   />
                   <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
+                    <DataTableExportButton
+                      columns={columns}
+                      exportConfig={tableExport}
+                      disabled={totalCount === 0 || loading}
+                    />
                     {(
                       [
                         ["all", "All"],
@@ -179,8 +184,6 @@ export function OperatorShipmentsOverview({
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
-                export={tableExport}
-                exportDisabled={totalCount === 0}
                 emptyMessage={
                   tagFilter
                     ? `No shipments tagged “${tagFilter}”.`

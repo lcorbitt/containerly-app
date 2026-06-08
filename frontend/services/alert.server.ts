@@ -2,25 +2,9 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { syncAlertsForEditedReportMessage } from "@supabase-shared/message-alert-sync.service";
 import type { Alert } from "@/types/database";
+import { filterInboxAlertsForViewer, MESSAGE_ALERT_TYPES } from "@/utils/alert-inbox";
 
-export { syncAlertsForEditedReportMessage };
-
-/** Message alerts where you are both actor and recipient (should never surface in inbox). */
-const SELF_AUTHORED_MESSAGE_ALERT_TYPES = new Set([
-  "MESSAGE_NEW",
-  "MESSAGE_TEAM",
-  "MESSAGE_REPLY",
-]);
-
-/** Hide thread notifications you triggered — inbox is for everyone else's activity. */
-export function filterInboxAlertsForViewer(alerts: Alert[], viewerUserId: string): Alert[] {
-  return alerts.filter((alert) => {
-    if (!alert.actor_user_id || alert.actor_user_id !== viewerUserId) {
-      return true;
-    }
-    return !SELF_AUTHORED_MESSAGE_ALERT_TYPES.has(alert.alert_type);
-  });
-}
+export { syncAlertsForEditedReportMessage, filterInboxAlertsForViewer };
 
 export async function acknowledgeAllOrgAlertsForViewer(
   supabase: SupabaseClient,
@@ -39,7 +23,7 @@ export async function acknowledgeAllOrgAlertsForViewer(
     .filter((row) => {
       const actorUserId = row.actor_user_id as string | null;
       const alertType = row.alert_type as string;
-      if (actorUserId && actorUserId === viewerUserId && SELF_AUTHORED_MESSAGE_ALERT_TYPES.has(alertType)) {
+      if (actorUserId && actorUserId === viewerUserId && MESSAGE_ALERT_TYPES.has(alertType)) {
         return false;
       }
       const recipientUserId = row.recipient_user_id as string | null;

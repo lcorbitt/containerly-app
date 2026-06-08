@@ -61,6 +61,7 @@ export function ShipmentOverviewDateFilters({
   etaFrom,
   etaTo,
   disabled = false,
+  idPrefix = "shipments-overview",
   onEtdFromChange,
   onEtdToChange,
   onEtaFromChange,
@@ -73,8 +74,8 @@ export function ShipmentOverviewDateFilters({
     <div className={SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS}>
       <DateRangeGroup
         label="ETD"
-        fromId="shipments-overview-etd-from"
-        toId="shipments-overview-etd-to"
+        fromId={`${idPrefix}-etd-from`}
+        toId={`${idPrefix}-etd-to`}
         fromValue={etdFrom}
         toValue={etdTo}
         disabled={disabled}
@@ -83,8 +84,8 @@ export function ShipmentOverviewDateFilters({
       />
       <DateRangeGroup
         label="ETA"
-        fromId="shipments-overview-eta-from"
-        toId="shipments-overview-eta-to"
+        fromId={`${idPrefix}-eta-from`}
+        toId={`${idPrefix}-eta-to`}
         fromValue={etaFrom}
         toValue={etaTo}
         disabled={disabled}

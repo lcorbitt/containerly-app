@@ -44,6 +44,7 @@ export async function fetchAllImporterGrantedShipmentRows(args: {
   sortColumn: ImporterGrantedShipmentSortColumn;
   sortDirection: SortDirection;
   search: string;
+  dateRangeFilter?: OperatorShipmentDateRangeFilter;
 }): Promise<ImporterGrantedShipmentRow[]> {
   const first = await loadImporterGrantedShipmentsPageBrowser({
     ...args,
