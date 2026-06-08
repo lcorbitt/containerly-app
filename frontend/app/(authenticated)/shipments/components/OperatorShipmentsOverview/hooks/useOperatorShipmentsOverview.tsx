@@ -33,7 +33,7 @@ import {
 import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
 import { ShipmentOverviewAssigneeCell } from "../ShipmentOverviewAssigneeCell";
 import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "../ShipmentOverviewDateFilters/constants";
-import { displayOverviewText, formatOverviewDate } from "../utils";
+import { displayConsigneeShortName, displayOverviewText, formatOverviewDate } from "../utils";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { fetchAllOperatorShipmentsOverviewRows } from "@/utils/shipment-list-export";
 
@@ -275,7 +275,7 @@ export function useOperatorShipmentsOverview() {
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
             title={r.consignee ?? undefined}
           >
-            {displayOverviewText(r.consignee)}
+            {displayConsigneeShortName(r.consignee)}
           </span>
         ),
       },

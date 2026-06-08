@@ -5,7 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DataTableColumn, DataTableExportConfig } from "@/components/DataTable";
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
 import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/ShipmentOverviewDateFilters/constants";
-import { displayOverviewText, formatOverviewDate } from "@/utils/shipment-overview-display";
+import {
+  displayConsigneeShortName,
+  displayOverviewText,
+  formatOverviewDate,
+} from "@/utils/shipment-overview-display";
 import { parseOperatorShipmentDateRangeFilter } from "@/utils/operator-shipment-date-filters";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { fetchAllImporterGrantedShipmentRows } from "@/utils/shipment-list-export";
@@ -164,7 +168,7 @@ export function useImporterShipmentsList() {
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
             title={r.consignee ?? undefined}
           >
-            {displayOverviewText(r.consignee)}
+            {displayConsigneeShortName(r.consignee)}
           </span>
         ),
       },

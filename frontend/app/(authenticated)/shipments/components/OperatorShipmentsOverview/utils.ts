@@ -1,1 +1,5 @@
-export { displayOverviewText, formatOverviewDate } from "@/utils/shipment-overview-display";
+export {
+  displayOverviewText,
+  displayConsigneeShortName,
+  formatOverviewDate,
+} from "@/utils/shipment-overview-display";
