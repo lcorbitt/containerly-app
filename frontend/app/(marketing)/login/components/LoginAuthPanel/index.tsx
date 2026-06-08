@@ -16,20 +16,6 @@ export function LoginAuthPanel({ initialMode, next }: LoginAuthPanelProps) {
 
   return (
     <div className={LOGIN_AUTH_PANEL_CARD_CLASS}>
-      <div className={LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS}>
-        <span className={LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS}>
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}
-        </span>
-        <button
-          type="button"
-          disabled={form.loading}
-          className={`disabled:opacity-50 ${LOGIN_AUTH_PANEL_MODE_SWITCH_BUTTON_CLASS}`}
-          onClick={() => form.setMode(isSignUp ? "signin" : "signup")}
-        >
-          {isSignUp ? "Sign In" : "Sign Up"}
-        </button>
-      </div>
-
       <LoginForm
         email={form.email}
         setEmail={form.setEmail}
@@ -44,6 +30,20 @@ export function LoginAuthPanel({ initialMode, next }: LoginAuthPanelProps) {
         loadingSubtitle={form.loadingSubtitle}
         submit={form.submit}
       />
+
+      <div className={LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS}>
+        <span className={LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS}>
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}
+        </span>
+        <button
+          type="button"
+          disabled={form.loading}
+          className={`disabled:opacity-50 ${LOGIN_AUTH_PANEL_MODE_SWITCH_BUTTON_CLASS}`}
+          onClick={() => form.setMode(isSignUp ? "signin" : "signup")}
+        >
+          {isSignUp ? "Sign In" : "Sign Up"}
+        </button>
+      </div>
     </div>
   );
 }

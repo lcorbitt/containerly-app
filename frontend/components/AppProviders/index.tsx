@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { Provider as JotaiProvider, createStore } from "jotai";
 import { ConfirmDialogProvider } from "@/contexts/confirm-dialog";
 import { ToastProvider } from "@/contexts/toast";
 import { ThemeSync } from "@/components/ThemeSync";
@@ -8,16 +10,23 @@ import { QueryProvider } from "@/hooks/query-provider";
 import { FeedbackWidgetHost } from "@/components/FeedbackWidget/FeedbackWidgetHost";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
+  // One explicit Jotai store per client (SSR-safe, no cross-request leakage). With a store in
+  // context, hooks never fall back to getDefaultStore(), which avoids the "multiple Jotai
+  // instances" default-store warning under dev HMR / dual bundling.
+  const [jotaiStore] = useState(() => createStore());
+
   return (
-    <QueryProvider>
-      <ThemeSync />
-      <NavigationProgressProvider>
-        <ConfirmDialogProvider>
-          <ToastProvider>
-            <FeedbackWidgetHost>{children}</FeedbackWidgetHost>
-          </ToastProvider>
-        </ConfirmDialogProvider>
-      </NavigationProgressProvider>
-    </QueryProvider>
+    <JotaiProvider store={jotaiStore}>
+      <QueryProvider>
+        <ThemeSync />
+        <NavigationProgressProvider>
+          <ConfirmDialogProvider>
+            <ToastProvider>
+              <FeedbackWidgetHost>{children}</FeedbackWidgetHost>
+            </ToastProvider>
+          </ConfirmDialogProvider>
+        </NavigationProgressProvider>
+      </QueryProvider>
+    </JotaiProvider>
   );
 }

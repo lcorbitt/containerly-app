@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageSquarePlus } from "lucide-react";
+import { MessageCircleMore } from "lucide-react";
+import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { DialogCloseButton } from "@/components/DialogCloseButton";
 import {
@@ -9,6 +10,8 @@ import {
   FEEDBACK_SUBMIT_LABEL,
   FEEDBACK_SUBMITTING_LABEL,
   FEEDBACK_WIDGET_FAB_CLASS,
+  FEEDBACK_WIDGET_FAB_TOOLTIP_LABEL,
+  FEEDBACK_WIDGET_FAB_WRAPPER_CLASS,
   FEEDBACK_WIDGET_MODAL_OVERLAY_CLASS,
   FEEDBACK_WIDGET_MODAL_PANEL_CLASS,
 } from "./constants";
@@ -27,14 +30,22 @@ export function FeedbackWidget() {
   return (
     <>
       {!w.open ? (
-        <button
-          type="button"
-          aria-label="Open feedback"
-          className={FEEDBACK_WIDGET_FAB_CLASS}
-          onClick={() => w.setOpen(true)}
-        >
-          <MessageSquarePlus className="h-5 w-5" aria-hidden />
-        </button>
+        <div className={FEEDBACK_WIDGET_FAB_WRAPPER_CLASS}>
+          <ActionHoverTooltip
+            label={FEEDBACK_WIDGET_FAB_TOOLTIP_LABEL}
+            labelClassName="whitespace-nowrap"
+            placement="left"
+          >
+            <button
+              type="button"
+              aria-label="Open feedback"
+              className={FEEDBACK_WIDGET_FAB_CLASS}
+              onClick={() => w.setOpen(true)}
+            >
+              <MessageCircleMore className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </button>
+          </ActionHoverTooltip>
+        </div>
       ) : null}
 
       {w.open ? (

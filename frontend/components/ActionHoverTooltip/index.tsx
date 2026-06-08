@@ -1,28 +1,47 @@
 "use client";
 
-import { cloneElement, isValidElement, type ReactElement } from "react";
+import { cloneElement, isValidElement } from "react";
 import { createPortal } from "react-dom";
 import { FADE_MS, TOOLTIP_Z } from "./constants";
 import { useHoverTooltip } from "./hooks/useHoverTooltip";
+import type { ActionHoverTooltipProps } from "./types";
 
-type Props = {
-  label: string;
-  /** Optional classes for multi-line/wide tooltip copy. */
-  labelClassName?: string;
-  /** Optional classes on the hover wrapper (e.g. flex-1 for equal-width tab slots). */
-  wrapperClassName?: string;
-  children: ReactElement<{ "aria-describedby"?: string }>;
-};
-
-export function ActionHoverTooltip({ label, labelClassName, wrapperClassName, children }: Props) {
+export function ActionHoverTooltip({
+  label,
+  labelClassName,
+  wrapperClassName,
+  placement = "top",
+  children,
+}: ActionHoverTooltipProps) {
   const { visible, coords, entered, triggerRef, show, hide, onFocus, onBlur, tooltipId } =
-    useHoverTooltip();
+    useHoverTooltip(placement);
+
+  const isLeft = placement === "left";
 
   const child = isValidElement(children)
     ? cloneElement(children, {
         "aria-describedby": visible ? tooltipId : undefined,
       })
     : children;
+
+  const bubble = (
+    <div
+      className={`rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-zinc-700${labelClassName ? ` ${labelClassName}` : ""}`}
+    >
+      {label}
+    </div>
+  );
+
+  const arrow = (
+    <div
+      aria-hidden
+      className={
+        isLeft
+          ? "-ml-px h-0 w-0 shrink-0 border-y-[7px] border-y-transparent border-l-8 border-l-zinc-900 dark:border-l-zinc-700"
+          : "-mt-px h-0 w-0 shrink-0 border-x-[7px] border-x-transparent border-t-8 border-t-zinc-900 dark:border-t-zinc-700"
+      }
+    />
+  );
 
   const portal =
     visible &&
@@ -37,25 +56,22 @@ export function ActionHoverTooltip({ label, labelClassName, wrapperClassName, ch
           left: coords.left,
           top: coords.top,
           zIndex: TOOLTIP_Z,
-          transform: "translate(-50%, -100%)",
+          transform: isLeft ? "translate(-100%, -50%)" : "translate(-50%, -100%)",
         }}
-        className="pointer-events-none flex flex-col items-center"
+        className={`pointer-events-none flex items-center ${isLeft ? "flex-row" : "flex-col"}`}
       >
         <div
           style={{ transitionDuration: `${FADE_MS}ms` }}
-          className={`flex flex-col items-center transition-[opacity,transform] ease-out ${
-            entered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
+          className={`flex items-center transition-[opacity,transform] ease-out ${
+            isLeft ? "flex-row" : "flex-col"
+          } ${
+            entered
+              ? "translate-x-0 translate-y-0 opacity-100"
+              : `opacity-0 ${isLeft ? "translate-x-1" : "translate-y-1"}`
           }`}
         >
-          <div
-            className={`rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-zinc-700${labelClassName ? ` ${labelClassName}` : ""}`}
-          >
-            {label}
-          </div>
-          <div
-            aria-hidden
-            className="-mt-px h-0 w-0 shrink-0 border-x-[7px] border-x-transparent border-t-[8px] border-t-zinc-900 dark:border-t-zinc-700"
-          />
+          {bubble}
+          {arrow}
         </div>
       </div>,
       document.body,

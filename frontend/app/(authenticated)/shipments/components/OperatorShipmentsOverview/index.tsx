@@ -67,7 +67,7 @@ export function OperatorShipmentsOverview({
   const showPanel = Boolean(selectedOrgId);
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full flex-col gap-8 p-4">
       {orgs.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">

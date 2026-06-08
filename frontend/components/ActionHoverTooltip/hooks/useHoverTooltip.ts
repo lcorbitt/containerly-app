@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { GAP_PX, SHOW_DELAY_MS } from "../constants";
+import type { TooltipPlacement } from "../types";
 
-export function useHoverTooltip() {
+export function useHoverTooltip(placement: TooltipPlacement = "top") {
   const tooltipId = useId();
   const triggerRef = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
@@ -36,8 +37,12 @@ export function useHoverTooltip() {
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
+    if (placement === "left") {
+      setCoords({ left: r.left - GAP_PX, top: r.top + r.height / 2 });
+      return;
+    }
     setCoords({ left: r.left + r.width / 2, top: r.top - GAP_PX });
-  }, []);
+  }, [placement]);
 
   useLayoutEffect(() => {
     if (!visible) return;

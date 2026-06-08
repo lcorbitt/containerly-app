@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
+import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
 import { CustomerTopNavAccountMenu } from "./CustomerTopNavAccountMenu";
 import { CustomerNotificationsMenu } from "./CustomerNotificationsMenu";
 import { useCustomerNotifications } from "./useCustomerNotifications";
 import {
+  CUSTOMER_TOP_NAV_BRAND_ROW_CLASS,
+  CUSTOMER_TOP_NAV_BREADCRUMB_BANNER_CLASS,
+  CUSTOMER_TOP_NAV_BREADCRUMB_INLINE_CLASS,
   CUSTOMER_TOP_NAV_LAYOUT_CLASS,
   CUSTOMER_TOP_NAV_LEFT_CLASS,
   CUSTOMER_TOP_NAV_LINK_CLASS,
@@ -31,7 +35,8 @@ export function CustomerTopNav({
   sharedShipmentsHref = CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH,
   shellMode = false,
 }: CustomerTopNavProps = {}) {
-  const { signedIn, sessionReady, userId, brandHref } = useCustomerTopNav();
+  const { signedIn, sessionReady, userId, brandHref, breadcrumb, hasBreadcrumbs } =
+    useCustomerTopNav();
   const notifications = useCustomerNotifications(userId);
 
   const notificationsBell = (
@@ -46,10 +51,26 @@ export function CustomerTopNav({
   );
 
   return (
-    <TopNavShell variant="marketing">
+    <TopNavShell
+      variant="marketing"
+      footer={
+        hasBreadcrumbs ? (
+          <div className={CUSTOMER_TOP_NAV_BREADCRUMB_BANNER_CLASS}>
+            <TopNavBreadcrumb {...breadcrumb} />
+          </div>
+        ) : undefined
+      }
+    >
       <div className={CUSTOMER_TOP_NAV_LAYOUT_CLASS}>
         <div className={CUSTOMER_TOP_NAV_LEFT_CLASS}>
-          <NavBrand href={brandHref} variant="marketing" />
+          <div className={CUSTOMER_TOP_NAV_BRAND_ROW_CLASS}>
+            <NavBrand href={brandHref} variant="marketing" />
+            {hasBreadcrumbs ? (
+              <div className={CUSTOMER_TOP_NAV_BREADCRUMB_INLINE_CLASS}>
+                <TopNavBreadcrumb {...breadcrumb} />
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className={CUSTOMER_TOP_NAV_RIGHT_CLUSTER_CLASS}>
