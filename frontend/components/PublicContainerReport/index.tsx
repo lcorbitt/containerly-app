@@ -39,8 +39,8 @@ import {
   PORTAL_PROFILE_SETUP_BANNER_TEXT_CLASS,
   PORTAL_PROFILE_SETUP_CONFIGURE_LATER_CLASS,
   PORTAL_PROFILE_SETUP_CONFIGURE_LATER_LABEL,
-  PORTAL_PROFILE_SETUP_SETTINGS_NOW_CLASS,
-  PORTAL_PROFILE_SETUP_SETTINGS_NOW_LABEL,
+  PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS,
+  PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL,
   PORTAL_PROFILE_SETUP_SAVING_LABEL,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
@@ -195,9 +195,10 @@ export function PublicContainerReport({
               <div className={PORTAL_PROFILE_SETUP_BANNER_ACTIONS_CLASS}>
                 <Link
                   href={CUSTOMER_SIDE_NAV_SETTINGS_HREF}
-                  className={PORTAL_PROFILE_SETUP_SETTINGS_NOW_CLASS}
+                  className={PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS}
+                  data-nav-label="Settings"
                 >
-                  {PORTAL_PROFILE_SETUP_SETTINGS_NOW_LABEL}
+                  {PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL}
                 </Link>
                 <button
                   type="button"

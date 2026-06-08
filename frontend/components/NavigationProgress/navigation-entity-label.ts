@@ -2,6 +2,7 @@ const PATH_SEGMENT_ENTITY_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   shipments: "Shipments",
   settings: "Settings",
+  "my-settings": "Settings",
   admin: "Users",
   containers: "Containers",
   "container-details": "Container Details",
