@@ -293,6 +293,36 @@ function toImporterOverviewRow(r: RpcImporterOverviewRow): ImporterGrantedShipme
   };
 }
 
+/** RPC return schema can lag migrations; fill ETD/ETA from shipments when missing. */
+async function mergeImporterOverviewScheduleFields(
+  supabase: SupabaseClient,
+  rows: ImporterGrantedShipmentRow[],
+): Promise<void> {
+  const needsSchedule = rows.some(
+    (row) => row.estimated_departure_at == null || row.estimated_arrival_at == null,
+  );
+  if (!needsSchedule) return;
+
+  const shipmentIds = rows.map((row) => row.id);
+  const { data, error } = await supabase
+    .from("shipments")
+    .select("id, estimated_departure_at, estimated_arrival_at")
+    .in("id", shipmentIds);
+  if (error) throw new Error(error.message);
+
+  const byId = new Map((data ?? []).map((row) => [row.id as string, row]));
+  for (const row of rows) {
+    const ship = byId.get(row.id);
+    if (!ship) continue;
+    if (row.estimated_departure_at == null) {
+      row.estimated_departure_at = (ship.estimated_departure_at as string | null) ?? null;
+    }
+    if (row.estimated_arrival_at == null) {
+      row.estimated_arrival_at = (ship.estimated_arrival_at as string | null) ?? null;
+    }
+  }
+}
+
 /**
  * Paged list of shipments granted to the signed-in importer (`shipment_customer_access`).
  */
@@ -333,6 +363,7 @@ export async function fetchImporterGrantedShipmentsPage(
 
   const totalCount = Number(rawRows[0]!.total_count);
   const rows = rawRows.map(toImporterOverviewRow);
+  await mergeImporterOverviewScheduleFields(supabase, rows);
 
   return { rows, totalCount: Number.isFinite(totalCount) ? totalCount : 0 };
 }
