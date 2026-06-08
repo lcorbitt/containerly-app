@@ -43,7 +43,7 @@ export function ShipmentRiskEditor({ variant = "default", ...props }: ShipmentRi
         className={`${SHIPMENT_RISK_EDITOR_PILL_CLASS} ${riskInsightBadgeClass(displayRisk)}`}
         aria-label={`${displayRisk} risk`}
       >
-        {displayRisk.toUpperCase()} risk
+        {displayRisk.toUpperCase()}
       </span>
       <button
         type="button"

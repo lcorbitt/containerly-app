@@ -7,6 +7,7 @@ import { PageLoading } from "@/components/PageLoading";
 import { fetchShipment } from "@/services/shipment.service";
 import { getBrowserAuthSession } from "@/services/auth.service";
 import type { PublicReportPayload } from "@/types/public-report";
+import { CUSTOMER_MY_SHIPMENTS_LABEL, CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH } from "@/components/TopNav/CustomerTopNav/constants";
 import { CustomerPortalShareMenu } from "./components/CustomerPortalShareMenu";
 import { PortalAccessGate } from "./components/PortalAccessGate";
 
@@ -96,10 +97,10 @@ export default function SharedShipmentTrackingPage({
         ) : null}
         <p className="mt-6 text-center">
           <Link
-            href="/shipments"
+            href={CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH}
             className="text-sm font-medium text-zinc-900 underline dark:text-zinc-100"
           >
-            Back to Shared with me
+            Back to {CUSTOMER_MY_SHIPMENTS_LABEL}
           </Link>
         </p>
       </div>

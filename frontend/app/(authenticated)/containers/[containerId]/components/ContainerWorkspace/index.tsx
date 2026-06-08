@@ -200,7 +200,7 @@ export function ContainerWorkspace({
                   <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${riskInsightBadgeClass(requestSummaryData.insights.risk_level)}`}
                   >
-                    {requestSummaryData.insights.risk_level.toUpperCase()} risk
+                    {requestSummaryData.insights.risk_level.toUpperCase()}
                   </span>
                 ) : null}
               </div>

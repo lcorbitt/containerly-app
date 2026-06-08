@@ -34,3 +34,5 @@ export const SCOPE_BADGE_CLASS =
 
 export const REJECT_POPOVER_CLASS =
   "absolute right-0 top-full z-20 mt-2 w-52 rounded-lg border border-red-200/80 bg-white p-3 shadow-lg dark:border-red-900/50 dark:bg-zinc-950";
+
+export const PORTAL_DOCUMENTS_CONFIRM_REJECT_LABEL = "Confirm Reject";

@@ -12,20 +12,21 @@ import {
   CUSTOMER_TOP_NAV_LOGIN_PATH,
   CUSTOMER_TOP_NAV_RIGHT_CLUSTER_CLASS,
   CUSTOMER_TOP_NAV_SECONDARY_LINK_CLASS,
-  CUSTOMER_TOP_NAV_SHARED_SHIPMENTS_PATH,
+  CUSTOMER_MY_SHIPMENTS_LABEL,
+  CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH,
   CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS,
 } from "./constants";
 import { useCustomerTopNav } from "./useCustomerTopNav";
 
 export interface CustomerTopNavProps {
-  /** Destination for the "Shared with me" link. Defaults to the operator shipments path. */
+  /** Destination for the My Shipments link. */
   sharedShipmentsHref?: string;
   /** When true, account menu and nav links live in the sidenav; top nav shows brand + theme only. */
   shellMode?: boolean;
 }
 
 export function CustomerTopNav({
-  sharedShipmentsHref = CUSTOMER_TOP_NAV_SHARED_SHIPMENTS_PATH,
+  sharedShipmentsHref = CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH,
   shellMode = false,
 }: CustomerTopNavProps = {}) {
   const { signedIn, sessionReady, brandHref } = useCustomerTopNav();
@@ -45,7 +46,7 @@ export function CustomerTopNav({
               ) : (
                 <>
                   <Link href={sharedShipmentsHref} className={CUSTOMER_TOP_NAV_LINK_CLASS}>
-                    Shared With Me
+                    {CUSTOMER_MY_SHIPMENTS_LABEL}
                   </Link>
                   <ThemeToggle className={CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS} />
                   <CustomerTopNavAccountMenu />

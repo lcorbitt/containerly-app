@@ -50,7 +50,7 @@ export const HOW_IT_WORKS_ROLE_DEFINITIONS: readonly HowItWorksDefinition[] = [
     v: "The single record that holds commercial details, documents, approvals, messages, and milestones.",
   },
   {
-    k: "Shared with me",
+    k: "My Shipments",
     v: "The customer's multi-shipment home after sign-in — a searchable list of every shipment a partner has invited them to.",
   },
 ];
@@ -69,7 +69,7 @@ export const HOW_IT_WORKS_GLOSSARY: readonly HowItWorksDefinition[] = [
     v: "The external view where customers review documents, track progress, and message in context.",
   },
   {
-    k: "Shared with me",
+    k: "My Shipments",
     v: "The authenticated customer dashboard listing every shipment they have access to.",
   },
   {

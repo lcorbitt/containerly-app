@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CUSTOMER_MY_SHIPMENTS_LABEL, CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH } from "@/components/TopNav/CustomerTopNav/constants";
 
 export const metadata: Metadata = {
   title: "Report unavailable | Containerly",
@@ -13,8 +14,8 @@ export default function LegacyPublicReportPage() {
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         Shared reports now require signing in with the email your logistics partner invited. Then open
         your shipment from{" "}
-        <Link href="/shipments" className="font-medium underline">
-          Shared with me
+        <Link href={CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH} className="font-medium underline">
+          {CUSTOMER_MY_SHIPMENTS_LABEL}
         </Link>{" "}
         or the invite link they sent.
       </p>

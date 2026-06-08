@@ -17,7 +17,7 @@ import {
 } from "./constants";
 
 function riskPillLabel(level: RiskLevel): string {
-  return `${level.toUpperCase()} risk`;
+  return level.toUpperCase();
 }
 
 function RiskPill({ level }: { level: RiskLevel }) {

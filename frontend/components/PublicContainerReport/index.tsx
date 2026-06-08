@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo } from "react";
+import { CUSTOMER_SIDE_NAV_SETTINGS_HREF } from "@/app/(customer)/components/CustomerSideNav/constants";
 import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
 import {
   messageTemplateForAction,
@@ -32,6 +34,14 @@ import { PortalTimelinePanel } from "./PortalTimelinePanel";
 import {
   PORTAL_COMMERCIAL_CARD_CLASS,
   PORTAL_CUSTOMER_NOTE_CLASS,
+  PORTAL_PROFILE_SETUP_BANNER_ACTIONS_CLASS,
+  PORTAL_PROFILE_SETUP_BANNER_CLASS,
+  PORTAL_PROFILE_SETUP_BANNER_TEXT_CLASS,
+  PORTAL_PROFILE_SETUP_CONFIGURE_LATER_CLASS,
+  PORTAL_PROFILE_SETUP_CONFIGURE_LATER_LABEL,
+  PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS,
+  PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL,
+  PORTAL_PROFILE_SETUP_SAVING_LABEL,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
 import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
@@ -172,8 +182,8 @@ export function PublicContainerReport({
           payload.shipment_access &&
           !payload.shipment_access.profile_completed_at &&
           payload.shipment_access.configuration_reminder_due_at ? (
-            <div className="flex flex-col gap-3 rounded-lg border border-sky-200/90 bg-sky-50/90 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-sky-950 dark:text-sky-100">
+            <div className={PORTAL_PROFILE_SETUP_BANNER_CLASS}>
+              <p className={PORTAL_PROFILE_SETUP_BANNER_TEXT_CLASS}>
                 You&apos;re in. You can add your display name and other preferences later — we&apos;ll remind you
                 until{" "}
                 {new Date(payload.shipment_access.configuration_reminder_due_at).toLocaleDateString(undefined, {
@@ -182,14 +192,24 @@ export function PublicContainerReport({
                 })}
                 .
               </p>
-              <button
-                type="button"
-                disabled={setupDismissBusy}
-                onClick={handleSetupDismiss}
-                className="shrink-0 rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white hover:bg-sky-900 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-500"
-              >
-                {setupDismissBusy ? "Saving…" : "Configure later"}
-              </button>
+              <div className={PORTAL_PROFILE_SETUP_BANNER_ACTIONS_CLASS}>
+                <Link
+                  href={CUSTOMER_SIDE_NAV_SETTINGS_HREF}
+                  className={PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS}
+                >
+                  {PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL}
+                </Link>
+                <button
+                  type="button"
+                  disabled={setupDismissBusy}
+                  onClick={handleSetupDismiss}
+                  className={PORTAL_PROFILE_SETUP_CONFIGURE_LATER_CLASS}
+                >
+                  {setupDismissBusy
+                    ? PORTAL_PROFILE_SETUP_SAVING_LABEL
+                    : PORTAL_PROFILE_SETUP_CONFIGURE_LATER_LABEL}
+                </button>
+              </div>
             </div>
           ) : null}
 

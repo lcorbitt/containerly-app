@@ -4,7 +4,7 @@ export const SEARCH_INPUT_CLASS =
 export const IMPORTER_SHIPMENTS_PANEL_CLASS =
   "mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
 
-export const IMPORTER_SHIPMENTS_TITLE = "Shipments shared with me";
+export const IMPORTER_SHIPMENTS_TITLE = "My Shipments";
 
 export const IMPORTER_SHIPMENTS_SUBTITLE =
   "Shipments your logistics partners invited you to follow—one row per commercial shipment (all units visible inside).";

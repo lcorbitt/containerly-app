@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { SideNavLink } from "@/app/(authenticated)/components/SideNav/SideNavLink";
 import { SideNavAccountMenu } from "@/app/(authenticated)/components/SideNav/SideNavAccountMenu";
 import { isSideNavLinkActive } from "@/app/(authenticated)/components/SideNav/utils";
+import { CUSTOMER_MY_SHIPMENTS_LABEL } from "@/components/TopNav/CustomerTopNav/constants";
 import { customerNavItems } from "./constants";
 
 const NAV_ICONS = {
-  "Shared With Me": Package,
+  [CUSTOMER_MY_SHIPMENTS_LABEL]: Package,
   Settings,
 } as const;
 

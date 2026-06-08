@@ -256,7 +256,7 @@ export function HowItWorksPage() {
                     experience.
                   </li>
                   <li>
-                    After sign-in, <strong>Shared with me</strong> lists every shipment they can access — not just the
+                    After sign-in, <strong>My Shipments</strong> lists every shipment they can access — not just the
                     one link they clicked today.
                   </li>
                   <li>

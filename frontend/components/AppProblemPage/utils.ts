@@ -19,7 +19,7 @@ export function getProblemPageCtas(session: ProblemPageSessionHint | null): Prob
 
   if (session.isCustomer) {
     return {
-      primaryCta: { href: "/my-shipments", label: "My shipments" },
+      primaryCta: { href: "/my-shipments", label: "My Shipments" },
     };
   }
 
@@ -35,7 +35,7 @@ export const OPERATOR_ERROR_CTAS: ProblemPageCtas = {
 };
 
 export const CUSTOMER_ERROR_CTAS: ProblemPageCtas = {
-  primaryCta: { href: "/my-shipments", label: "My shipments" },
+  primaryCta: { href: "/my-shipments", label: "My Shipments" },
 };
 
 export const PUBLIC_ERROR_CTAS: ProblemPageCtas = {

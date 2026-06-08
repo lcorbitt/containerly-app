@@ -18,6 +18,7 @@ import {
   REJECT_TRIGGER_CLASS,
   REJECTED_STATUS_BADGE_CLASS,
   SCOPE_BADGE_CLASS,
+  PORTAL_DOCUMENTS_CONFIRM_REJECT_LABEL,
 } from "./constants";
 import type { PortalDocumentsPanelProps } from "./types";
 import {
@@ -193,7 +194,7 @@ function PortalDocumentRow({
                       onClick={() => void handleConfirmReject()}
                       className="mt-2 w-full rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
                     >
-                      {busy ? "Saving…" : "Confirm reject"}
+                      {busy ? "Saving…" : PORTAL_DOCUMENTS_CONFIRM_REJECT_LABEL}
                     </button>
                   </div>
                 ) : null}
