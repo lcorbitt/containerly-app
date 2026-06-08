@@ -1,6 +1,8 @@
 export const SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS =
   "mb-3 flex flex-wrap items-center gap-2 sm:gap-3";
 
+export const SHIPMENT_OVERVIEW_DATE_FILTERS_TRAILING_CLASS = "ml-auto shrink-0";
+
 export const SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_CLASS =
   "inline-flex min-w-0 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-2.5 py-1.5 dark:border-zinc-700 dark:bg-zinc-900/40";
 

@@ -6,7 +6,6 @@ import { TablePagination } from "@/components/TablePagination";
 import { TextInput } from "@/components/TextInput";
 import { ShipmentOverviewDateFilters } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/ShipmentOverviewDateFilters";
 import {
-  SHIPMENT_OVERVIEW_FILTERS_CLASS,
   SHIPMENT_OVERVIEW_PANEL_CLASS,
   SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS,
   SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS,
@@ -74,13 +73,6 @@ export function ImporterShipmentsList() {
               containerClassName={SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS}
               className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
             />
-            <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
-              <DataTableExportButton
-                columns={columns}
-                exportConfig={tableExport}
-                disabled={totalCount === 0 || loading}
-              />
-            </div>
           </div>
 
           <ShipmentOverviewDateFilters
@@ -95,6 +87,13 @@ export function ImporterShipmentsList() {
             onEtaFromChange={setEtaFrom}
             onEtaToChange={setEtaTo}
             onClear={clearDateFilters}
+            trailing={
+              <DataTableExportButton
+                columns={columns}
+                exportConfig={tableExport}
+                disabled={totalCount === 0 || loading}
+              />
+            }
           />
 
           <DataTable

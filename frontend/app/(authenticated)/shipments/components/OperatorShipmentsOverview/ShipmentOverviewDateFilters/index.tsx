@@ -1,6 +1,7 @@
 import {
   SHIPMENT_OVERVIEW_DATE_FILTER_CLEAR_CLASS,
   SHIPMENT_OVERVIEW_DATE_FILTERS_CLASS,
+  SHIPMENT_OVERVIEW_DATE_FILTERS_TRAILING_CLASS,
   SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_CLASS,
   SHIPMENT_OVERVIEW_DATE_RANGE_GROUP_LABEL_CLASS,
   SHIPMENT_OVERVIEW_DATE_RANGE_INPUT_CLASS,
@@ -62,6 +63,7 @@ export function ShipmentOverviewDateFilters({
   etaTo,
   disabled = false,
   idPrefix = "shipments-overview",
+  trailing,
   onEtdFromChange,
   onEtdToChange,
   onEtaFromChange,
@@ -102,6 +104,7 @@ export function ShipmentOverviewDateFilters({
           Clear Dates
         </button>
       ) : null}
+      {trailing ? <div className={SHIPMENT_OVERVIEW_DATE_FILTERS_TRAILING_CLASS}>{trailing}</div> : null}
     </div>
   );
 }

@@ -8,12 +8,11 @@ import { SideNavPanelTrigger } from "@/app/(authenticated)/components/SideNav/Si
 import { isSideNavLinkActive } from "@/app/(authenticated)/components/SideNav/utils";
 import { SubSideNav } from "@/components/SubSideNav";
 import { CUSTOMER_MY_SHIPMENTS_LABEL } from "@/components/TopNav/CustomerTopNav/constants";
-import { customerNavItems } from "./constants";
+import { customerMyShipmentsNavItem, customerSettingsNavItem } from "./constants";
 import { useCustomerSideNav } from "./useCustomerSideNav";
 
 const NAV_ICONS = {
   [CUSTOMER_MY_SHIPMENTS_LABEL]: Package,
-  Settings,
 } as const;
 
 export function CustomerSideNav({
@@ -39,18 +38,12 @@ export function CustomerSideNav({
           className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-4 pt-4"
           aria-label="Main"
         >
-          {customerNavItems.map(({ href, label }) => {
-            const Icon = NAV_ICONS[label as keyof typeof NAV_ICONS];
-            return (
-              <SideNavLink
-                key={href}
-                href={href}
-                label={label}
-                icon={Icon}
-                active={isSideNavLinkActive(pathname, href)}
-              />
-            );
-          })}
+          <SideNavLink
+            href={customerMyShipmentsNavItem.href}
+            label={customerMyShipmentsNavItem.label}
+            icon={NAV_ICONS[CUSTOMER_MY_SHIPMENTS_LABEL]}
+            active={isSideNavLinkActive(pathname, customerMyShipmentsNavItem.href)}
+          />
 
           <SideNavPanelTrigger
             label="Messages"
@@ -60,6 +53,13 @@ export function CustomerSideNav({
             ariaControls="customer-messages-panel"
             triggerId="customer-messages-trigger"
             onClick={toggleMessages}
+          />
+
+          <SideNavLink
+            href={customerSettingsNavItem.href}
+            label={customerSettingsNavItem.label}
+            icon={Settings}
+            active={isSideNavLinkActive(pathname, customerSettingsNavItem.href)}
           />
         </nav>
 

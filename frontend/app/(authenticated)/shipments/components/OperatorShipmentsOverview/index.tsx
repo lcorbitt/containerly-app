@@ -106,11 +106,6 @@ export function OperatorShipmentsOverview({
                     className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
                   />
                   <div className={SHIPMENT_OVERVIEW_FILTERS_CLASS}>
-                    <DataTableExportButton
-                      columns={columns}
-                      exportConfig={tableExport}
-                      disabled={totalCount === 0 || loading}
-                    />
                     {(
                       [
                         ["all", "All"],
@@ -156,6 +151,13 @@ export function OperatorShipmentsOverview({
                   onEtaFromChange={setEtaFrom}
                   onEtaToChange={setEtaTo}
                   onClear={clearDateFilters}
+                  trailing={
+                    <DataTableExportButton
+                      columns={columns}
+                      exportConfig={tableExport}
+                      disabled={totalCount === 0 || loading}
+                    />
+                  }
                 />
 
                 {tagFilter ? (

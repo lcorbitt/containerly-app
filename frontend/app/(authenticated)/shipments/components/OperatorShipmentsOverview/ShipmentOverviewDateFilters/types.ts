@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface ShipmentOverviewDateFiltersProps {
   etdFrom: string;
   etdTo: string;
@@ -5,6 +7,7 @@ export interface ShipmentOverviewDateFiltersProps {
   etaTo: string;
   disabled?: boolean;
   idPrefix?: string;
+  trailing?: ReactNode;
   onEtdFromChange: (value: string) => void;
   onEtdToChange: (value: string) => void;
   onEtaFromChange: (value: string) => void;

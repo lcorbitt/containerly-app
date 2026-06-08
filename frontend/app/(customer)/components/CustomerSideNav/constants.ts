@@ -12,5 +12,3 @@ export const customerSettingsNavItem = {
   href: CUSTOMER_SIDE_NAV_SETTINGS_HREF,
   label: "Settings",
 } as const;
-
-export const customerNavItems = [customerMyShipmentsNavItem, customerSettingsNavItem] as const;
