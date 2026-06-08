@@ -67,17 +67,50 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+const BRAND_ORANGE = "#ff4e00";
+const INK = "#18181b";
+const MUTED = "#71717a";
+const FAINT = "#a1a1aa";
+const PAGE_BG = "#f4f4f5";
+const BORDER = "#e4e4e7";
+const FONT_STACK =
+  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
 function marketingSiteUrl(): string {
   return Deno.env.get("PUBLIC_SITE_URL")?.trim().replace(/\/$/, "") ?? "";
 }
 
-function poweredByContainerlyFooter(): string {
+/** Logo image (when site URL is known) plus the "Containerly" wordmark, for resilience when images are blocked. */
+function brandHeaderHtml(): string {
+  const siteUrl = marketingSiteUrl();
+  const logoImg = siteUrl
+    ? `<img src="${escapeHtml(siteUrl)}/containerly-logo.png" alt="Containerly" width="28" height="28" style="display:block;border:0;outline:none;width:28px;height:28px" />`
+    : "";
+  const logoCell = logoImg
+    ? `<td width="28" style="padding:0 10px 0 0;vertical-align:middle">${logoImg}</td>`
+    : "";
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+${logoCell}
+<td style="vertical-align:middle;font-family:${FONT_STACK};font-size:18px;font-weight:700;letter-spacing:-0.01em;color:${INK}">Containerly</td>
+</tr></table>`;
+}
+
+/** Bulletproof, table-based CTA button so it renders consistently across email clients. */
+function ctaButtonHtml(url: string, label: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 4px"><tr>
+<td align="center" bgcolor="${BRAND_ORANGE}" style="border-radius:8px">
+<a href="${escapeHtml(url)}" style="display:inline-block;padding:12px 24px;font-family:${FONT_STACK};font-size:15px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:8px">${escapeHtml(label)}</a>
+</td></tr></table>`;
+}
+
+function footerHtml(): string {
   const siteUrl = marketingSiteUrl();
   const containerlyLink = siteUrl
-    ? `<a href="${escapeHtml(siteUrl)}" style="color:#a1a1aa;text-decoration:underline">Containerly</a>`
+    ? `<a href="${escapeHtml(siteUrl)}" style="color:${MUTED};text-decoration:underline">Containerly</a>`
     : "Containerly";
-
-  return `<p style="margin-top:32px;font-size:11px;color:#a1a1aa">Powered by ${containerlyLink}</p>`;
+  return `<tr><td style="padding:20px 32px 28px;border-top:1px solid ${BORDER}">
+<p style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:${FAINT}">Powered by ${containerlyLink} — the customer portal for freight forwarders.</p>
+</td></tr>`;
 }
 
 export function buildBrandedEmailHtml(args: {
@@ -87,15 +120,35 @@ export function buildBrandedEmailHtml(args: {
   actionUrl?: string;
   actionLabel?: string;
 }): string {
+  const preheader = `${args.orgName} via Containerly`;
   const actionBlock = args.actionUrl
-    ? `<p style="margin-top:24px"><a href="${escapeHtml(args.actionUrl)}" style="background:#18181b;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none">${escapeHtml(args.actionLabel ?? "Open in Containerly")}</a></p>`
+    ? ctaButtonHtml(args.actionUrl, args.actionLabel ?? "Open in Containerly")
     : "";
-  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;color:#18181b;line-height:1.5">
-<p style="color:#71717a;font-size:12px">${escapeHtml(args.orgName)} via Containerly</p>
-<h2 style="font-size:18px;margin:0 0 12px">${escapeHtml(args.title)}</h2>
-<p>${args.body}</p>
+  return `<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<title>${escapeHtml(args.title)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:${PAGE_BG};-webkit-text-size-adjust:100%">
+<span style="display:none!important;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;mso-hide:all">${escapeHtml(preheader)}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${PAGE_BG}">
+<tr><td align="center" style="padding:32px 16px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid ${BORDER};border-radius:12px;overflow:hidden">
+<tr><td style="height:4px;background-color:${BRAND_ORANGE};line-height:4px;font-size:4px">&nbsp;</td></tr>
+<tr><td style="padding:28px 32px 0">
+${brandHeaderHtml()}
+</td></tr>
+<tr><td style="padding:24px 32px 28px">
+<p style="margin:0 0 6px;font-family:${FONT_STACK};font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND_ORANGE}">${escapeHtml(args.orgName)} via Containerly</p>
+<h1 style="margin:0 0 14px;font-family:${FONT_STACK};font-size:21px;font-weight:700;line-height:1.3;letter-spacing:-0.01em;color:${INK}">${escapeHtml(args.title)}</h1>
+<div style="font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:#3f3f46">${args.body}</div>
 ${actionBlock}
-${poweredByContainerlyFooter()}
+</td></tr>
+${footerHtml()}
+</table>
+</td></tr>
+</table>
 </body></html>`;
 }
 

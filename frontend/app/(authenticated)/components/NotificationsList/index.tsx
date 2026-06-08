@@ -7,7 +7,7 @@ import { useAcknowledgeAlert } from "@/hooks/mutations/useAcknowledgeAlert";
 import { useResolveCustomerAccessRequest } from "@/hooks/mutations/useResolveCustomerAccessRequest";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
-import { alertTypeIconConfig } from "./utils";
+import { alertTypeIconConfig } from "@/utils/alert-display";
 
 function alertHref(alert: Alert): string | null {
   if (alert.shipment_id) return `/shipments/${alert.shipment_id}`;

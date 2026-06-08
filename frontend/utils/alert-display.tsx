@@ -22,6 +22,7 @@ import {
 
 export type IconConfig = { Icon: LucideIcon; className: string };
 
+/** Shared icon + color mapping for in-app alert rows (operator and customer inboxes). */
 export function alertTypeIconConfig(alertType: string): IconConfig {
   switch (alertType) {
     case "SHIPMENT_DELAYED":

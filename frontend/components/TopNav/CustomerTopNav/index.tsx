@@ -5,6 +5,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavShell } from "../TopNavShell";
 import { CustomerTopNavAccountMenu } from "./CustomerTopNavAccountMenu";
+import { CustomerNotificationsMenu } from "./CustomerNotificationsMenu";
+import { useCustomerNotifications } from "./useCustomerNotifications";
 import {
   CUSTOMER_TOP_NAV_LAYOUT_CLASS,
   CUSTOMER_TOP_NAV_LEFT_CLASS,
@@ -30,6 +32,18 @@ export function CustomerTopNav({
   shellMode = false,
 }: CustomerTopNavProps = {}) {
   const { signedIn, sessionReady, brandHref } = useCustomerTopNav();
+  const notifications = useCustomerNotifications();
+
+  const notificationsBell = (
+    <CustomerNotificationsMenu
+      open={notifications.open}
+      alerts={notifications.alerts}
+      unackedCount={notifications.unackedCount}
+      menuRef={notifications.menuRef}
+      onToggle={notifications.toggle}
+      onClose={notifications.close}
+    />
+  );
 
   return (
     <TopNavShell variant="marketing">
@@ -42,12 +56,16 @@ export function CustomerTopNav({
           {sessionReady ? (
             signedIn ? (
               shellMode ? (
-                <ThemeToggle className={CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS} />
+                <>
+                  {notificationsBell}
+                  <ThemeToggle className={CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS} />
+                </>
               ) : (
                 <>
                   <Link href={sharedShipmentsHref} className={CUSTOMER_TOP_NAV_LINK_CLASS}>
                     {CUSTOMER_MY_SHIPMENTS_LABEL}
                   </Link>
+                  {notificationsBell}
                   <ThemeToggle className={CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS} />
                   <CustomerTopNavAccountMenu />
                 </>

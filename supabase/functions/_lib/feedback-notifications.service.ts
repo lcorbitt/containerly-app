@@ -1,4 +1,4 @@
-import { sendTransactionalEmail } from "@supabase-shared/email.service.ts";
+import { buildBrandedEmailHtml, sendTransactionalEmail } from "@supabase-shared/email.service.ts";
 import type { FeedbackCategory } from "@shared/dto/feedback.dto.ts";
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
@@ -105,16 +105,22 @@ async function sendEmailFeedbackNotification(args: {
     `ID: ${args.id}`,
   ].filter(Boolean);
 
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const body = `<p style="margin:0 0 14px"><strong>From:</strong> ${escapeHtml(args.submitter)}</p>
+<p style="margin:0 0 16px;white-space:pre-wrap">${escapeHtml(args.excerpt)}</p>
+<p style="margin:0;font-size:13px;color:#71717a">${contextLines.map(escapeHtml).join("<br>")}</p>`;
+
   const result = await sendTransactionalEmail({
     to,
     subject: `${subjectPrefix} ${args.label} from ${args.submitter}`,
-    html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;line-height:1.5">
-<h2 style="font-size:16px;margin:0 0 12px">${args.label}</h2>
-<p><strong>From:</strong> ${args.submitter}</p>
-<p style="white-space:pre-wrap">${args.excerpt.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-<p style="color:#71717a;font-size:13px">${contextLines.join("<br>")}</p>
-<p style="margin-top:20px"><a href="${args.adminUrl}" style="background:#18181b;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none">Review Feedback</a></p>
-</body></html>`,
+    html: buildBrandedEmailHtml({
+      orgName: "Containerly",
+      title: args.label,
+      body,
+      actionUrl: args.adminUrl,
+      actionLabel: "Review Feedback",
+    }),
     text: `${args.label} from ${args.submitter}\n\n${args.excerpt}\n\n${contextLines.join("\n")}\n\nReview: ${args.adminUrl}`,
   });
 
