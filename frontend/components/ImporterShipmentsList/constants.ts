@@ -7,7 +7,7 @@ export const IMPORTER_SHIPMENTS_PANEL_CLASS =
 export const IMPORTER_SHIPMENTS_TITLE = "My Shipments";
 
 export const IMPORTER_SHIPMENTS_SUBTITLE =
-  "Shipments your logistics partners invited you to follow—one row per commercial shipment (all units visible inside).";
+  "Shipments your logistics partners shared with you.";
 
 export const IMPORTER_SHIPMENTS_EMPTY_MESSAGE =
   "Nothing shared with you yet. When a partner sends an invite link, open it and sign in to accept access.";

@@ -18,13 +18,13 @@ export const PORTAL_PROFILE_SETUP_BANNER_TEXT_CLASS = "text-sm text-sky-950 dark
 export const PORTAL_PROFILE_SETUP_BANNER_ACTIONS_CLASS =
   "flex shrink-0 flex-wrap items-center gap-2";
 
-export const PORTAL_PROFILE_SETUP_CONFIGURE_NOW_LABEL = "Configure Now";
+export const PORTAL_PROFILE_SETUP_SETTINGS_NOW_LABEL = "Settings Now";
 
 export const PORTAL_PROFILE_SETUP_CONFIGURE_LATER_LABEL = "Configure Later";
 
 export const PORTAL_PROFILE_SETUP_SAVING_LABEL = "Saving…";
 
-export const PORTAL_PROFILE_SETUP_CONFIGURE_NOW_CLASS =
+export const PORTAL_PROFILE_SETUP_SETTINGS_NOW_CLASS =
   "inline-flex shrink-0 items-center justify-center rounded-md bg-sky-800 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-sky-900 dark:bg-sky-600 dark:hover:bg-sky-500";
 
 export const PORTAL_PROFILE_SETUP_CONFIGURE_LATER_CLASS =
