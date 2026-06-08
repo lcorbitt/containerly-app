@@ -14,7 +14,7 @@ export const SHIPMENT_SHARE_MENU_PANEL_BODY_CLASS =
   "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4";
 
 export const SHIPMENT_SHARE_MENU_ATTENTION_BADGE_CLASS =
-  "flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-orange px-1.5 text-[10px] font-semibold text-white";
+  "flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-orange px-1.5 text-[10px] font-semibold text-white dark:bg-black";
 
 export const SHIPMENT_SHARE_MENU_TRIGGER_CLASS =
   "inline-flex items-center justify-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus-visible:outline focus-visible:ring-2 focus-visible:ring-zinc-900/40 dark:bg-primary-orange dark:hover:bg-primary-orange/90 dark:focus-visible:ring-primary-orange/40";
