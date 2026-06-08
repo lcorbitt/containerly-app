@@ -1,3 +1,4 @@
+import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import { formatShortTimestamp } from "@/utils/datetime";
 import { stripMessageMarkup } from "@/utils/message-markup";
 import {
@@ -19,11 +20,26 @@ export function threadNeedsReply(lastAuthorKind: string): boolean {
   return lastAuthorKind === "customer";
 }
 
+export function customerThreadNeedsReply(lastAuthorKind: string): boolean {
+  return lastAuthorKind !== "customer";
+}
+
 export function threadAuthorTitle(thread: {
   last_author_name: string;
 }): string {
   const name = thread.last_author_name?.trim();
   return name || "Unknown";
+}
+
+export function customerThreadAuthorTitle(thread: {
+  last_author_kind: string;
+  last_author_name: string;
+}): string {
+  if (thread.last_author_kind === "customer") {
+    return "You";
+  }
+  const name = thread.last_author_name?.trim();
+  return name || "Logistics Team";
 }
 
 export function threadAuthorEmail(thread: {
@@ -45,8 +61,18 @@ export function threadOrderSubtitle(orderNumber: string | null, shipmentId: stri
   return `${MESSAGES_LIST_ORDER_FALLBACK} ${shipmentId.slice(0, 8)}`;
 }
 
+export function customerThreadOrderSubtitle(thread: ShipmentMessageThreadSummary): string {
+  const org = thread.organization_name?.trim();
+  const order = threadOrderSubtitle(thread.order_number, thread.shipment_id);
+  return org ? `${org} · ${order}` : order;
+}
+
 export function threadHref(shipmentId: string): string {
   return `/shipments/${shipmentId}?tab=messages`;
+}
+
+export function customerThreadHref(shipmentId: string): string {
+  return `/shipments/hub/${shipmentId}?tab=messages`;
 }
 
 export function threadRowLinkClass(isUnread: boolean, needsReply: boolean): string {

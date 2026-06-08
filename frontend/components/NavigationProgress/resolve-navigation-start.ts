@@ -1,4 +1,7 @@
-import { buildNavigationLoadingText } from "./navigation-entity-label";
+import {
+  buildNavigationLoadingText,
+  navigationEntityLabelFromAnchor,
+} from "./navigation-entity-label";
 
 export type NavigationStartInput =
   | string
@@ -22,4 +25,11 @@ export function resolveNavigationLoadingText(input?: NavigationStartInput): stri
   if (label) return buildNavigationLoadingText(label);
 
   return null;
+}
+
+export function navigationStartInputFromAnchor(anchor: HTMLAnchorElement): NavigationStartInput {
+  const message = anchor.getAttribute("data-nav-message")?.trim();
+  if (message) return { message };
+
+  return navigationEntityLabelFromAnchor(anchor);
 }

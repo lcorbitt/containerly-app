@@ -210,6 +210,7 @@ export type ImporterGrantedShipmentRow = {
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
 };

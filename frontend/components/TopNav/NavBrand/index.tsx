@@ -8,7 +8,12 @@ import type { NavBrandProps } from "./types";
 
 export const NavBrand = memo(function NavBrand({ href, variant }: NavBrandProps) {
   return (
-    <Link href={href} className={NAV_BRAND_CLASS[variant]} aria-label="Containerly home">
+    <Link
+      href={href}
+      className={NAV_BRAND_CLASS[variant]}
+      aria-label="Containerly home"
+      data-nav-message="Loading..."
+    >
       <div className="flex shrink-0 items-center gap-2">
         <NavBrandLogo />
         {variant === "marketing" ? (

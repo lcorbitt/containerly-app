@@ -2,9 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DataTableColumn } from "@/components/DataTable";
+import type { DataTableColumn, DataTableExportConfig } from "@/components/DataTable";
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
+import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "@/app/(authenticated)/shipments/components/OperatorShipmentsOverview/ShipmentOverviewDateFilters/constants";
 import { displayOverviewText, formatOverviewDate } from "@/utils/shipment-overview-display";
+import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
+import { fetchAllImporterGrantedShipmentRows } from "@/utils/shipment-list-export";
 import {
   loadImporterGrantedShipmentsPageBrowser,
   normalizeImporterGrantedShipmentSortColumn,
@@ -71,6 +74,24 @@ export function useImporterShipmentsList() {
     void load();
   }, [load]);
 
+  const fetchExportRows = useCallback(async () => {
+    if (totalCount === 0) return [];
+
+    return fetchAllImporterGrantedShipmentRows({
+      sortColumn,
+      sortDirection,
+      search: debouncedSearch,
+    });
+  }, [totalCount, sortColumn, sortDirection, debouncedSearch]);
+
+  const tableExport = useMemo<DataTableExportConfig<ImporterGrantedShipmentRow>>(
+    () => ({
+      fileName: `my-shipments-${new Date().toISOString().slice(0, 10)}`,
+      fetchRows: fetchExportRows,
+    }),
+    [fetchExportRows],
+  );
+
   const handleSortChange = useCallback(
     (columnId: string) => {
       const col = normalizeImporterGrantedShipmentSortColumn(columnId);
@@ -90,6 +111,7 @@ export function useImporterShipmentsList() {
         id: "organization_name",
         header: "Organization",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.organization_name),
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -103,6 +125,7 @@ export function useImporterShipmentsList() {
         id: "customer_name",
         header: "Customer",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.customer_name),
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
@@ -116,6 +139,7 @@ export function useImporterShipmentsList() {
         id: "consignee",
         header: "Consignee",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.consignee),
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
@@ -129,6 +153,10 @@ export function useImporterShipmentsList() {
         id: "order_number",
         header: "Order no.",
         sortable: true,
+        exportHeader: "Order No.",
+        exportValue: (r) => r.order_number,
+        className: "min-w-[6.5rem] w-[7rem] whitespace-nowrap",
+        headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <span className="font-medium text-zinc-900 dark:text-zinc-50">{r.order_number}</span>
         ),
@@ -137,6 +165,7 @@ export function useImporterShipmentsList() {
         id: "port_of_loading",
         header: "Origin",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.port_of_loading),
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -150,6 +179,7 @@ export function useImporterShipmentsList() {
         id: "port_of_destination",
         header: "Destination",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.port_of_destination),
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -163,6 +193,7 @@ export function useImporterShipmentsList() {
         id: "workflow_status",
         header: "Documents",
         sortable: true,
+        exportValue: (r) => shipmentWorkflowDisplayLabel(r.workflow_status),
         className: "min-w-[7.75rem] max-w-[9.5rem]",
         headerClassName: "whitespace-nowrap",
         cell: (r) =>
@@ -173,11 +204,26 @@ export function useImporterShipmentsList() {
           ),
       },
       {
-        id: "estimated_arrival_at",
-        header: "Est. arrival",
+        id: "estimated_departure_at",
+        header: "ETD",
         sortable: true,
+        exportValue: (r) => formatOverviewDate(r.estimated_departure_at),
+        headerClassName: "whitespace-nowrap",
         cell: (r) => (
-          <span className="whitespace-nowrap text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
+            {formatOverviewDate(r.estimated_departure_at)}
+          </span>
+        ),
+      },
+      {
+        id: "estimated_arrival_at",
+        header: "ETA",
+        sortable: true,
+        exportHeader: "ETA",
+        exportValue: (r) => formatOverviewDate(r.estimated_arrival_at),
+        headerClassName: "whitespace-nowrap",
+        cell: (r) => (
+          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
             {formatOverviewDate(r.estimated_arrival_at)}
           </span>
         ),
@@ -207,5 +253,6 @@ export function useImporterShipmentsList() {
     handleSortChange,
     columns,
     navigateToShipment,
+    tableExport,
   };
 }

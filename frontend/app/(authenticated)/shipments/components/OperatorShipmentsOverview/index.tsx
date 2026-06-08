@@ -61,6 +61,7 @@ export function OperatorShipmentsOverview({
     handleSortChange,
     columns,
     navigateToShipment,
+    tableExport,
   } = useOperatorShipmentsOverview();
 
   const showPanel = Boolean(selectedOrgId);
@@ -178,6 +179,8 @@ export function OperatorShipmentsOverview({
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
+                export={tableExport}
+                exportDisabled={totalCount === 0}
                 emptyMessage={
                   tagFilter
                     ? `No shipments tagged “${tagFilter}”.`

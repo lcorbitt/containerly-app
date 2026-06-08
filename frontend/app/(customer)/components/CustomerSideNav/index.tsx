@@ -1,12 +1,15 @@
 "use client";
 
-import { Package, Settings } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { MessageSquare, Package, Settings } from "lucide-react";
+import { MessagesList } from "@/app/(authenticated)/components/MessagesList";
 import { SideNavLink } from "@/app/(authenticated)/components/SideNav/SideNavLink";
 import { SideNavAccountMenu } from "@/app/(authenticated)/components/SideNav/SideNavAccountMenu";
+import { SideNavPanelTrigger } from "@/app/(authenticated)/components/SideNav/SideNavPanelTrigger";
 import { isSideNavLinkActive } from "@/app/(authenticated)/components/SideNav/utils";
+import { SubSideNav } from "@/components/SubSideNav";
 import { CUSTOMER_MY_SHIPMENTS_LABEL } from "@/components/TopNav/CustomerTopNav/constants";
 import { customerNavItems } from "./constants";
+import { useCustomerSideNav } from "./useCustomerSideNav";
 
 const NAV_ICONS = {
   [CUSTOMER_MY_SHIPMENTS_LABEL]: Package,
@@ -20,7 +23,14 @@ export function CustomerSideNav({
   email: string;
   fullName?: string | null;
 }) {
-  const pathname = usePathname();
+  const {
+    pathname,
+    messagesOpen,
+    messageThreads,
+    unreadCount,
+    toggleMessages,
+    closeSecondaryPanel,
+  } = useCustomerSideNav();
 
   return (
     <aside className="relative z-[100] box-border flex h-full min-h-0 shrink-0 overflow-hidden border-r border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -41,12 +51,38 @@ export function CustomerSideNav({
               />
             );
           })}
+
+          <SideNavPanelTrigger
+            label="Messages"
+            icon={MessageSquare}
+            active={messagesOpen}
+            badgeCount={unreadCount}
+            ariaControls="customer-messages-panel"
+            triggerId="customer-messages-trigger"
+            onClick={toggleMessages}
+          />
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
           <SideNavAccountMenu email={email} fullName={fullName} isCustomer />
         </div>
       </div>
+
+      <SubSideNav
+        title="Messages"
+        open={messagesOpen}
+        onOpenChange={(open) => {
+          if (!open) closeSecondaryPanel();
+        }}
+      >
+        <div id="customer-messages-panel" role="region" aria-labelledby="customer-messages-trigger">
+          <MessagesList
+            threads={messageThreads}
+            viewer="customer"
+            onItemNavigate={closeSecondaryPanel}
+          />
+        </div>
+      </SubSideNav>
     </aside>
   );
 }

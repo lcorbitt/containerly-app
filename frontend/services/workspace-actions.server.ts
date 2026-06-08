@@ -1258,3 +1258,218 @@ export async function loadOrgShipmentMessageThreadsForUser(
   return { ok: true, threads };
 }
 
+export async function markImporterShipmentThreadReadForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  shipmentId: string,
+): Promise<void> {
+  const { data: shipment, error: shipmentError } = await supabase
+    .from("shipments")
+    .select("id, organization_id")
+    .eq("id", shipmentId)
+    .maybeSingle();
+  if (shipmentError) throw new Error(shipmentError.message);
+  if (!shipment) throw new Error("Shipment not found.");
+
+  const { data: access, error: accessError } = await supabase
+    .from("shipment_customer_access")
+    .select("id")
+    .eq("shipment_id", shipmentId)
+    .eq("customer_user_id", userId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (accessError) throw new Error(accessError.message);
+  if (!access) throw new Error("No access to this shipment.");
+
+  const organizationId = shipment.organization_id as string;
+  const nowIso = new Date().toISOString();
+
+  const { error } = await supabase.from("shipment_message_thread_reads").upsert(
+    {
+      organization_id: organizationId,
+      user_id: userId,
+      shipment_id: shipmentId,
+      last_read_at: nowIso,
+      updated_at: nowIso,
+    },
+    { onConflict: "user_id,shipment_id" },
+  );
+  if (error) throw new Error(error.message);
+}
+
+export async function loadImporterShipmentMessageThreadsForUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<OrgShipmentMessageThreadsResult> {
+  const { data: grants, error: grantErr } = await supabase
+    .from("shipment_customer_access")
+    .select("shipment_id")
+    .eq("customer_user_id", userId)
+    .is("revoked_at", null);
+
+  if (grantErr) return { ok: false, error: grantErr.message };
+
+  const allowedShipmentIds = new Set(
+    (grants ?? []).map((row) => row.shipment_id as string).filter(Boolean),
+  );
+  if (allowedShipmentIds.size === 0) {
+    return { ok: true, threads: [] };
+  }
+
+  const { data: msgRows, error } = await supabase
+    .from("report_messages")
+    .select(
+      "shipment_id, container_id, body, author_kind, author_user_id, author_display_name, created_at, organization_id",
+    )
+    .eq("is_internal", false)
+    .order("created_at", { ascending: false })
+    .limit(ORG_SHIPMENT_MESSAGE_FETCH_LIMIT);
+
+  if (error) return { ok: false, error: error.message };
+
+  const containerIds = [
+    ...new Set(
+      (msgRows ?? [])
+        .map((row) => row.container_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const shipmentByContainerId = new Map<string, string>();
+  if (containerIds.length > 0) {
+    const { data: containers, error: contErr } = await supabase
+      .from("containers")
+      .select("id, shipment_id")
+      .in("id", containerIds);
+    if (contErr) return { ok: false, error: contErr.message };
+    for (const c of containers ?? []) {
+      const sid = c.shipment_id as string | null;
+      if (sid) shipmentByContainerId.set(c.id as string, sid);
+    }
+  }
+
+  const byShipment = new Map<
+    string,
+    {
+      last_message_at: string;
+      last_message_preview: string;
+      last_author_kind: string;
+      last_author_user_id: string | null;
+      last_author_display_name: string | null;
+      message_count: number;
+    }
+  >();
+
+  for (const row of msgRows ?? []) {
+    const shipmentId =
+      (row.shipment_id as string | null) ??
+      (row.container_id ? shipmentByContainerId.get(row.container_id as string) : undefined) ??
+      null;
+    if (!shipmentId || !allowedShipmentIds.has(shipmentId)) continue;
+
+    const existing = byShipment.get(shipmentId);
+    if (existing) {
+      existing.message_count += 1;
+      continue;
+    }
+    byShipment.set(shipmentId, {
+      last_message_at: row.created_at as string,
+      last_message_preview: typeof row.body === "string" ? stripMessageMarkup(row.body).trim() : "",
+      last_author_kind: typeof row.author_kind === "string" ? row.author_kind : "",
+      last_author_user_id: (row.author_user_id as string | null | undefined) ?? null,
+      last_author_display_name: (row.author_display_name as string | null | undefined) ?? null,
+      message_count: 1,
+    });
+  }
+
+  const shipmentIds = [...byShipment.keys()];
+  if (shipmentIds.length === 0) {
+    return { ok: true, threads: [] };
+  }
+
+  const { data: readRows, error: readErr } = await supabase
+    .from("shipment_message_thread_reads")
+    .select("shipment_id, last_read_at")
+    .eq("user_id", userId)
+    .in("shipment_id", shipmentIds);
+  if (readErr) return { ok: false, error: readErr.message };
+
+  const lastReadAtByShipmentId = new Map(
+    (readRows ?? []).map((row) => [row.shipment_id as string, row.last_read_at as string]),
+  );
+
+  const { data: shipments, error: shErr } = await supabase
+    .from("shipments")
+    .select("id, order_number, organization_id, organizations(name)")
+    .in("id", shipmentIds);
+
+  if (shErr) return { ok: false, error: shErr.message };
+
+  const orderById = new Map<string, string | null>();
+  const orgNameById = new Map<string, string | null>();
+  const orgIdByShipmentId = new Map<string, string>();
+  for (const s of shipments ?? []) {
+    const id = s.id as string;
+    orderById.set(id, (s.order_number as string | null) ?? null);
+    orgIdByShipmentId.set(id, s.organization_id as string);
+    const orgJoin = s.organizations as { name?: string | null } | null;
+    orgNameById.set(id, orgJoin?.name?.trim() ?? null);
+  }
+
+  const authorIds = [
+    ...new Set(
+      [...byShipment.values()]
+        .map((agg) => agg.last_author_user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const profileNameByUserId: Record<string, string> = {};
+  const profileEmailByUserId: Record<string, string> = {};
+  if (authorIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .in("id", authorIds);
+    for (const p of profs ?? []) {
+      const id = p.id as string;
+      profileNameByUserId[id] = profileDisplayName({
+        full_name: p.full_name as string | null,
+        email: p.email as string | null,
+      });
+      const email = (p.email as string | null)?.trim() ?? "";
+      if (email) profileEmailByUserId[id] = email;
+    }
+  }
+
+  const threads = [...byShipment.entries()]
+    .map(([shipment_id, agg]) => {
+      const { last_author_display_name, ...rest } = agg;
+      return {
+        shipment_id,
+        order_number: orderById.get(shipment_id) ?? null,
+        organization_id: orgIdByShipmentId.get(shipment_id) ?? null,
+        organization_name: orgNameById.get(shipment_id) ?? null,
+        ...rest,
+        last_author_name: resolveThreadAuthorName(
+          agg.last_author_kind,
+          agg.last_author_user_id,
+          last_author_display_name,
+          profileNameByUserId,
+        ),
+        last_author_email: resolveThreadAuthorEmail(
+          agg.last_author_kind,
+          agg.last_author_user_id,
+          profileEmailByUserId,
+        ),
+        is_unread: (() => {
+          const lastReadAt = lastReadAtByShipmentId.get(shipment_id);
+          if (!lastReadAt) return true;
+          return Date.parse(agg.last_message_at) > Date.parse(lastReadAt);
+        })(),
+      };
+    })
+    .sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at))
+    .slice(0, ORG_SHIPMENT_THREAD_INDEX_LIMIT);
+
+  return { ok: true, threads };
+}
+

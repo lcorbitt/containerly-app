@@ -253,6 +253,7 @@ export type ImporterGrantedShipmentRow = {
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
 };
@@ -269,6 +270,7 @@ type RpcImporterOverviewRow = {
   port_of_loading: string | null;
   port_of_destination: string | null;
   workflow_status: string | null;
+  estimated_departure_at: string | null;
   estimated_arrival_at: string | null;
   created_at: string;
 };
@@ -285,6 +287,7 @@ function toImporterOverviewRow(r: RpcImporterOverviewRow): ImporterGrantedShipme
     port_of_loading: r.port_of_loading,
     port_of_destination: r.port_of_destination,
     workflow_status: r.workflow_status,
+    estimated_departure_at: r.estimated_departure_at,
     estimated_arrival_at: r.estimated_arrival_at,
     created_at: r.created_at,
   };

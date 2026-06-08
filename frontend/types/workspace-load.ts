@@ -63,6 +63,9 @@ export interface ShipmentMessageThreadSummary {
   message_count: number;
   /** True when the viewer has not read through the latest message in this thread. */
   is_unread: boolean;
+  /** Populated for customer message indexes (logistics partner). */
+  organization_id?: string | null;
+  organization_name?: string | null;
 }
 
 export type OrgShipmentMessageThreadsResult =

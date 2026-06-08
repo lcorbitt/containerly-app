@@ -21,8 +21,7 @@ import {
   NAVIGATION_PROGRESS_SHOW_DELAY_MS,
   NAVIGATION_PROGRESS_TRACK_CLASS,
 } from "./constants";
-import { navigationEntityLabelFromAnchor } from "./navigation-entity-label";
-import { resolveNavigationLoadingText } from "./resolve-navigation-start";
+import { resolveNavigationLoadingText, navigationStartInputFromAnchor } from "./resolve-navigation-start";
 import type { NavigationStartInput } from "./resolve-navigation-start";
 import type { NavigationProgressContextValue, NavigationProgressPhase } from "./types";
 import { shouldStartNavigationFromAnchor } from "./utils";
@@ -160,7 +159,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
       if (!(anchor instanceof HTMLAnchorElement)) return;
       if (!shouldStartNavigationFromAnchor(anchor)) return;
 
-      startNavigation(navigationEntityLabelFromAnchor(anchor));
+      startNavigation(navigationStartInputFromAnchor(anchor));
     };
 
     document.addEventListener("click", handleClick, true);

@@ -76,6 +76,13 @@ export function usePublicContainerReport({
   const [documentGroup, setDocumentGroup] = useState<"draft" | "revision" | "original">("draft");
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
 
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "timeline" || tab === "documents" || tab === "messages") {
+      setDashboardTab(tab);
+    }
+  }, []);
+
   const organizationId = payload.organization?.id ?? null;
 
   const { organization, summary, insights, timeline, alerts } = payload;

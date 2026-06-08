@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import {
@@ -22,7 +22,7 @@ import { useToast } from "@/contexts/toast";
 import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import { fetchProfileDisplayNameMap } from "@/services/profile.service";
 import { canManageOrganizationSettings } from "@/utils/org-role";
-import type { DataTableColumn } from "@/components/DataTable";
+import type { DataTableColumn, DataTableExportConfig } from "@/components/DataTable";
 import { ShipmentWorkflowStatusPill } from "@/components/StatusPills";
 import {
   SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
@@ -34,6 +34,8 @@ import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
 import { ShipmentOverviewAssigneeCell } from "../ShipmentOverviewAssigneeCell";
 import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "../ShipmentOverviewDateFilters/constants";
 import { displayOverviewText, formatOverviewDate } from "../utils";
+import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
+import { fetchAllOperatorShipmentsOverviewRows } from "@/utils/shipment-list-export";
 
 export function useOperatorShipmentsOverview() {
   const router = useRouter();
@@ -61,6 +63,7 @@ export function useOperatorShipmentsOverview() {
   const [etaFrom, setEtaFrom] = useState("");
   const [etaTo, setEtaTo] = useState("");
   const [deletingShipmentId, setDeletingShipmentId] = useState<string | null>(null);
+  const exportPeopleLabelsRef = useRef<Record<string, string>>({});
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
   const canDeleteShipments = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
@@ -107,6 +110,7 @@ export function useOperatorShipmentsOverview() {
       ];
       const map = await fetchProfileDisplayNameMap(assigneeIds);
       setPeopleLabels(map);
+      exportPeopleLabelsRef.current = map;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load shipments");
       setRows([]);
@@ -170,6 +174,46 @@ export function useOperatorShipmentsOverview() {
     setEtaTo("");
   }, []);
 
+  const fetchExportRows = useCallback(async () => {
+    if (!selectedOrgId || totalCount === 0) return [];
+
+    const data = await fetchAllOperatorShipmentsOverviewRows({
+      organizationId: selectedOrgId,
+      scope: listFilter,
+      search: debouncedSearch,
+      tagFilter,
+      dateRangeFilter,
+      sortColumn,
+      sortDirection,
+    });
+
+    const assigneeIds = [
+      ...new Set(data.map((r) => r.assignee_user_id).filter((id): id is string => Boolean(id))),
+    ];
+    exportPeopleLabelsRef.current = await fetchProfileDisplayNameMap(assigneeIds);
+    return data;
+  }, [
+    selectedOrgId,
+    totalCount,
+    listFilter,
+    debouncedSearch,
+    tagFilter,
+    dateRangeFilter,
+    sortColumn,
+    sortDirection,
+  ]);
+
+  const tableExport = useMemo<DataTableExportConfig<ShipmentOverviewRow> | undefined>(
+    () =>
+      selectedOrgId
+        ? {
+            fileName: `shipments-${new Date().toISOString().slice(0, 10)}`,
+            fetchRows: fetchExportRows,
+          }
+        : undefined,
+    [fetchExportRows, selectedOrgId],
+  );
+
   const handleDeleteShipment = useCallback(
     async (row: ShipmentOverviewRow) => {
       if (!selectedOrgId || !canDeleteShipments) return;
@@ -211,6 +255,7 @@ export function useOperatorShipmentsOverview() {
         id: "customer_name",
         header: "Customer",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.customer_name),
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
@@ -224,6 +269,7 @@ export function useOperatorShipmentsOverview() {
         id: "consignee",
         header: "Consignee",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.consignee),
         cell: (r) => (
           <span
             className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
@@ -237,6 +283,8 @@ export function useOperatorShipmentsOverview() {
         id: "order_number",
         header: "Order no.",
         sortable: true,
+        exportHeader: "Order No.",
+        exportValue: (r) => r.order_number,
         className: "min-w-[6.5rem] w-[7rem] whitespace-nowrap",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
@@ -247,6 +295,7 @@ export function useOperatorShipmentsOverview() {
         id: "port_of_loading",
         header: "Origin",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.port_of_loading),
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -260,6 +309,7 @@ export function useOperatorShipmentsOverview() {
         id: "port_of_destination",
         header: "Destination",
         sortable: true,
+        exportValue: (r) => displayOverviewText(r.port_of_destination),
         cell: (r) => (
           <span
             className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
@@ -273,6 +323,10 @@ export function useOperatorShipmentsOverview() {
         id: "assignee",
         header: "Assignee",
         sortable: true,
+        exportValue: (r) =>
+          displayOverviewText(
+            r.assignee_user_id ? exportPeopleLabelsRef.current[r.assignee_user_id] : null,
+          ),
         className: "w-16",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
@@ -286,6 +340,7 @@ export function useOperatorShipmentsOverview() {
         id: "tags",
         header: "Tags",
         sortable: true,
+        exportValue: (r) => (r.tags?.length ? r.tags.join("; ") : null),
         className: "max-w-[10rem] w-[10rem]",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
@@ -300,6 +355,7 @@ export function useOperatorShipmentsOverview() {
         id: "workflow_status",
         header: "Documents",
         sortable: true,
+        exportValue: (r) => shipmentWorkflowDisplayLabel(r.workflow_status),
         className: "min-w-[7.75rem] max-w-[9.5rem]",
         headerClassName: "whitespace-nowrap",
         cell: (r) =>
@@ -313,6 +369,7 @@ export function useOperatorShipmentsOverview() {
         id: "estimated_departure_at",
         header: "ETD",
         sortable: true,
+        exportValue: (r) => formatOverviewDate(r.estimated_departure_at),
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
@@ -324,6 +381,7 @@ export function useOperatorShipmentsOverview() {
         id: "estimated_arrival_at",
         header: "ETA",
         sortable: true,
+        exportValue: (r) => formatOverviewDate(r.estimated_arrival_at),
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
           <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
@@ -405,5 +463,6 @@ export function useOperatorShipmentsOverview() {
     handleSortChange,
     columns,
     navigateToShipment,
+    tableExport,
   };
 }

@@ -205,6 +205,17 @@ export async function markShipmentThreadRead(input: {
   );
 }
 
+export async function fetchImporterShipmentMessageThreads(): Promise<OrgShipmentMessageThreadsResult> {
+  return apiJson<OrgShipmentMessageThreadsResult>("/api/me/importer-shipment-message-threads");
+}
+
+export async function markImporterShipmentThreadRead(input: { shipmentId: string }): Promise<void> {
+  await apiJson<{ ok: true }>(
+    `/api/me/importer-shipment-message-threads/${encodeURIComponent(input.shipmentId)}/read`,
+    { method: "PATCH" },
+  );
+}
+
 export async function deleteShipmentScopeMessage(input: {
   messageId: string;
   messages: ReportMessage[];

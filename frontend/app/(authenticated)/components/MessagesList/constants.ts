@@ -2,6 +2,9 @@ export const MESSAGES_LIST_EMPTY_TITLE = "No shipment messages yet";
 export const MESSAGES_LIST_EMPTY_HINT =
   "Threads appear here when customers or operators post on an order.";
 
+export const CUSTOMER_MESSAGES_LIST_EMPTY_HINT =
+  "When your logistics partner messages you on a shipment, it appears here.";
+
 export const MESSAGES_LIST_CLASS = "flex flex-col gap-1.5 px-2 py-1.5";
 
 export const MESSAGES_LIST_ROW_LINK_CLASS =

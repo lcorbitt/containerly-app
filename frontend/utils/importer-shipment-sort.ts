@@ -14,6 +14,7 @@ export const IMPORTER_GRANTED_SHIPMENT_SORT_COLUMNS = [
   "port_of_loading",
   "port_of_destination",
   "workflow_status",
+  "estimated_departure_at",
   "estimated_arrival_at",
 ] as const;
 
@@ -36,6 +37,8 @@ const ASCENDING_BY_DEFAULT: ReadonlySet<ImporterGrantedShipmentSortColumn> = new
   "port_of_loading",
   "port_of_destination",
   "workflow_status",
+  "estimated_departure_at",
+  "estimated_arrival_at",
 ]);
 
 export function normalizeImporterGrantedShipmentSortColumn(
