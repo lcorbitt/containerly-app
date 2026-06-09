@@ -4,6 +4,11 @@ import { apiJson } from "@/utils/api-client";
 import type { TrackingRequest } from "@/types/database";
 import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snapshot";
 import type {
+  TrackingDashboardInsightsBundle,
+  TrackingDashboardReportsBundle,
+} from "@/types/tracking-dashboard-analytics";
+import type { WorkspaceSummary } from "@/types/workspace-summary";
+import type {
   CreateTrackingRequestBody,
   CreateTrackingRequestResponse,
   SyncContainerBody,
@@ -17,6 +22,8 @@ import {
 } from "@/utils/operator-tracking-requests";
 
 export type { TrackingDashboardSnapshot };
+export type { TrackingDashboardInsightsBundle, TrackingDashboardReportsBundle };
+export type { WorkspaceSummary };
 export {
   normalizeOperatorSortColumn,
   OPERATOR_REQUEST_SORT_COLUMNS,
@@ -29,7 +36,7 @@ export {
 // Dashboard snapshot
 // ---------------------------------------------------------------------------
 
-/** Dashboard snapshot via Next API (no browser PostgREST). */
+/** Dashboard triage snapshot via Next API (no browser PostgREST). */
 export async function fetchTrackingDashboardSnapshot(
   organizationId: string,
 ): Promise<TrackingDashboardSnapshot> {
@@ -37,6 +44,28 @@ export async function fetchTrackingDashboardSnapshot(
     `/api/organizations/${encodeURIComponent(organizationId)}/tracking-dashboard`,
   );
   return snapshot;
+}
+
+/** Side-nav badge: personal triage count only. */
+export async function fetchWorkspaceSummary(organizationId: string): Promise<WorkspaceSummary> {
+  const { summary } = await apiJson<{ summary: WorkspaceSummary }>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/workspace-summary`,
+  );
+  return summary;
+}
+
+export type TrackingDashboardAnalyticsScope = "insights" | "reports";
+
+/** Lazy-loaded org insights grid or reports analytics bundle. */
+export async function fetchTrackingDashboardAnalytics(
+  organizationId: string,
+  scope: TrackingDashboardAnalyticsScope,
+): Promise<TrackingDashboardInsightsBundle | TrackingDashboardReportsBundle> {
+  const q = new URLSearchParams({ scope });
+  const { bundle } = await apiJson<{
+    bundle: TrackingDashboardInsightsBundle | TrackingDashboardReportsBundle;
+  }>(`/api/organizations/${encodeURIComponent(organizationId)}/tracking-dashboard/analytics?${q}`);
+  return bundle;
 }
 
 // ---------------------------------------------------------------------------

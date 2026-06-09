@@ -3,6 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isRequestInMyScope } from "@/utils/dashboard-scope";
 import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
 import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snapshot";
+import type {
+  TrackingDashboardInsightsBundle,
+  TrackingDashboardReportsBundle,
+} from "@/types/tracking-dashboard-analytics";
+import type { WorkspaceSummary } from "@/types/workspace-summary";
 import {
   buildDaySeries,
   buildTriageBuckets,
@@ -14,9 +19,14 @@ import {
   triageCountsFromBuckets,
   type OrgDashboardMetrics,
   type ShipmentCommercialSummary,
+  type TriageBucket,
 } from "@/utils/dashboard-metrics";
+import { buildDashboardInsightsMetrics } from "@/utils/dashboard-insights";
+import type { DashboardInsightsMetrics } from "@/utils/dashboard-insights";
 import { buildPerformanceInsights } from "@/utils/shipment-metrics";
 import type { PerformanceInsights } from "@shared/dto/performance.dto";
+import { canManageOrganizationSettings } from "@/utils/org-role";
+import { isSuperadminRole } from "@/utils/profile-role";
 import type {
   OperatorRequestScope,
   OperatorRequestSortColumn,
@@ -24,7 +34,284 @@ import type {
 } from "@/utils/operator-tracking-requests";
 
 export type { TrackingDashboardSnapshot };
+export type { TrackingDashboardInsightsBundle, TrackingDashboardReportsBundle };
+export type { WorkspaceSummary };
 export type { OperatorRequestScope, OperatorRequestSortColumn, SortDirection };
+
+const TRIAGE_TRACKING_REQUEST_SELECT =
+  "id, organization_id, created_by, container_id, container_number, status, last_sync_at, error_message, created_at";
+const TRIAGE_ALERT_SELECT =
+  "id, organization_id, tracking_request_id, container_id, shipment_id, alert_type, severity, message, acknowledged_at, created_at";
+const TRIAGE_MESSAGE_SELECT =
+  "id, container_id, shipment_id, author_kind, created_at, is_internal, body";
+const ORG_TRIAGE_REQUEST_SELECT =
+  "id, container_id, container_number, status, error_message, created_at, last_sync_at";
+const ORG_TRIAGE_ALERT_SELECT =
+  "id, container_id, alert_type, severity, message, created_at";
+
+export interface OrgDashboardAccess {
+  isSuperAdmin: boolean;
+  membershipRole: string | null;
+  canIncludeOrgMetrics: boolean;
+  canIncludeOrgInsights: boolean;
+}
+
+export async function resolveOrgDashboardAccess(
+  supabase: SupabaseClient,
+  orgId: string,
+  userId: string,
+): Promise<OrgDashboardAccess> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  const isSuperAdmin = isSuperadminRole(profile?.role);
+
+  let membershipRole: string | null = null;
+  if (!isSuperAdmin) {
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", orgId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    membershipRole = (membership?.role as string | null) ?? null;
+  }
+
+  return {
+    isSuperAdmin,
+    membershipRole,
+    canIncludeOrgMetrics: canManageOrganizationSettings(isSuperAdmin, membershipRole),
+    canIncludeOrgInsights: isSuperAdmin || membershipRole != null,
+  };
+}
+
+interface PersonalTriageBase {
+  currentUserId: string | null;
+  requests: TrackingRequest[];
+  alerts: Alert[];
+  triageContainersById: Record<string, Pick<Container, "id" | "status" | "location" | "shipment_id">>;
+  triageAttachmentCounts: Record<string, number>;
+  triageMessages: ReportMessage[];
+  participatingShipmentIds: string[];
+  shipmentOwnerByShipmentId: Record<string, string | null>;
+  shipmentAssigneeByShipmentId: Record<string, string | null>;
+  personalBuckets: TriageBucket[];
+}
+
+async function loadPersonalTriageBase(
+  supabase: SupabaseClient,
+  organizationId: string,
+  uid: string | null,
+): Promise<PersonalTriageBase> {
+  const [{ data: tr }, { data: al }] = await Promise.all([
+    supabase
+      .from("tracking_requests")
+      .select(TRIAGE_TRACKING_REQUEST_SELECT)
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("alerts")
+      .select(TRIAGE_ALERT_SELECT)
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+  const list = (tr as TrackingRequest[]) ?? [];
+  const alerts = (al as Alert[]) ?? [];
+
+  if (list.length === 0) {
+    return {
+      currentUserId: uid,
+      requests: list,
+      alerts,
+      triageContainersById: {},
+      triageAttachmentCounts: {},
+      triageMessages: [],
+      participatingShipmentIds: [],
+      shipmentOwnerByShipmentId: {},
+      shipmentAssigneeByShipmentId: {},
+      personalBuckets: buildTriageBuckets({
+        userId: uid,
+        requests: list,
+        alerts,
+        containersById: {},
+        shipmentOwnerByShipmentId: {},
+        shipmentAssigneeByShipmentId: {},
+        attachmentCountByRequestId: {},
+        messages: [],
+        participatingShipmentIds: new Set(),
+      }),
+    };
+  }
+
+  const participatingShipments: string[] = [];
+  if (uid) {
+    const { data: partRows } = await supabase
+      .from("shipment_participants")
+      .select("shipment_id")
+      .eq("user_id", uid);
+    for (const row of partRows ?? []) {
+      participatingShipments.push(row.shipment_id as string);
+    }
+  }
+  const participatingShipmentIds = [...new Set(participatingShipments)];
+
+  const containerIds = [
+    ...new Set(list.map((r) => r.container_id).filter((id): id is string => Boolean(id))),
+  ];
+
+  const map: Record<string, Pick<Container, "id" | "status" | "location" | "shipment_id">> = {};
+  if (containerIds.length > 0) {
+    const { data: contRows } = await supabase
+      .from("containers")
+      .select("id, status, location, shipment_id")
+      .in("id", containerIds);
+    for (const row of (contRows ?? []) as Pick<
+      Container,
+      "id" | "status" | "location" | "shipment_id"
+    >[]) {
+      map[row.id] = row;
+    }
+  }
+
+  const shipmentIds = [...new Set(Object.values(map).map((c) => c.shipment_id).filter(Boolean))];
+  const owners: Record<string, string | null> = {};
+  const assignees: Record<string, string | null> = {};
+  if (shipmentIds.length > 0) {
+    const { data: shipRows } = await supabase
+      .from("shipments")
+      .select("id, created_by, assignee_user_id")
+      .in("id", shipmentIds);
+    for (const row of shipRows ?? []) {
+      owners[row.id as string] = (row.created_by as string | null) ?? null;
+      assignees[row.id as string] = (row.assignee_user_id as string | null) ?? null;
+    }
+  }
+
+  const participatingSet = new Set(participatingShipments);
+  const myScopeIds = list
+    .filter((r) => isRequestInMyScope(r, uid, participatingSet, map, owners, assignees))
+    .map((r) => r.id);
+
+  let triageAttachmentCounts: Record<string, number> = {};
+  let triageMessages: ReportMessage[] = [];
+
+  if (myScopeIds.length > 0) {
+    const containerIdByRequest = new Map<string, string>();
+    for (const r of list) {
+      if (r.container_id) containerIdByRequest.set(r.id, r.container_id);
+    }
+    const myScopeContainerIds = [
+      ...new Set(
+        myScopeIds.map((rid) => containerIdByRequest.get(rid)).filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    const { data: attRows } = await supabase
+      .from("workspace_attachments")
+      .select("container_id")
+      .in("container_id", myScopeContainerIds);
+    const requestByContainer = new Map<string, string>();
+    for (const r of list) {
+      if (r.container_id) requestByContainer.set(r.container_id, r.id);
+    }
+    const counts: Record<string, number> = {};
+    for (const row of attRows ?? []) {
+      const cid = row.container_id as string;
+      const rid = requestByContainer.get(cid);
+      if (!rid) continue;
+      counts[rid] = (counts[rid] ?? 0) + 1;
+    }
+    triageAttachmentCounts = counts;
+
+    const shipmentIdsForScope = [
+      ...new Set(
+        myScopeContainerIds
+          .map((cid) => map[cid]?.shipment_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
+      supabase
+        .from("report_messages")
+        .select(TRIAGE_MESSAGE_SELECT)
+        .in("container_id", myScopeContainerIds)
+        .order("created_at", { ascending: true })
+        .limit(2000),
+      shipmentIdsForScope.length > 0
+        ? supabase
+            .from("report_messages")
+            .select(TRIAGE_MESSAGE_SELECT)
+            .in("shipment_id", shipmentIdsForScope)
+            .is("container_id", null)
+            .order("created_at", { ascending: true })
+            .limit(500)
+        : Promise.resolve({ data: [] as ReportMessage[] }),
+    ]);
+
+    triageMessages = [...(msgRows ?? []), ...(msgShipmentRows ?? [])].sort(
+      (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
+    ) as ReportMessage[];
+  }
+
+  const personalBuckets = buildTriageBuckets({
+    userId: uid,
+    requests: list,
+    alerts,
+    containersById: map,
+    shipmentOwnerByShipmentId: owners,
+    shipmentAssigneeByShipmentId: assignees,
+    attachmentCountByRequestId: triageAttachmentCounts,
+    messages: triageMessages,
+    participatingShipmentIds: participatingSet,
+  });
+
+  return {
+    currentUserId: uid,
+    requests: list,
+    alerts,
+    triageContainersById: map,
+    triageAttachmentCounts,
+    triageMessages,
+    participatingShipmentIds,
+    shipmentOwnerByShipmentId: owners,
+    shipmentAssigneeByShipmentId: assignees,
+    personalBuckets,
+  };
+}
+
+export async function buildWorkspaceSummary(
+  supabase: SupabaseClient,
+  organizationId: string,
+  uid: string | null,
+): Promise<WorkspaceSummary> {
+  const base = await loadPersonalTriageBase(supabase, organizationId, uid);
+  const personalTriageCount = base.personalBuckets.reduce((total, bucket) => total + bucket.rows.length, 0);
+  return { personalTriageCount };
+}
+
+export async function buildTrackingDashboardInsightsBundle(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<TrackingDashboardInsightsBundle> {
+  const orgInsights = await buildOrgDashboardInsights(supabase, organizationId);
+  return { orgInsights };
+}
+
+export async function buildTrackingDashboardReportsBundle(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<TrackingDashboardReportsBundle> {
+  const orgBundle = await buildOrgDashboardMetrics(supabase, organizationId);
+  return {
+    orgMetrics: orgBundle.metrics,
+    performanceInsights: orgBundle.performanceInsights,
+  };
+}
 
 async function buildOrgPerformanceInsights(
   supabase: SupabaseClient,
@@ -131,15 +418,15 @@ async function buildOrgDashboardMetrics(
     { data: orgRequests },
     { data: orgAlerts },
   ] = await Promise.all([
-    supabase.from("shipments").select("*", { count: "exact", head: true }).eq("organization_id", organizationId),
+    supabase.from("shipments").select("id", { count: "exact", head: true }).eq("organization_id", organizationId),
     supabase
       .from("tracking_requests")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId)
       .in("status", ["pending", "syncing", "active"]),
     supabase
       .from("tracking_requests")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId)
       .eq("status", "completed"),
     supabase.from("shipments").select("workflow_status").eq("organization_id", organizationId),
@@ -155,13 +442,13 @@ async function buildOrgDashboardMetrics(
       .gte("created_at", sinceIso),
     supabase
       .from("tracking_requests")
-      .select("*")
+      .select(ORG_TRIAGE_REQUEST_SELECT)
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
       .from("alerts")
-      .select("*")
+      .select(ORG_TRIAGE_ALERT_SELECT)
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(500),
@@ -251,14 +538,14 @@ async function buildOrgDashboardMetrics(
     const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
       supabase
         .from("report_messages")
-        .select("*")
+        .select(TRIAGE_MESSAGE_SELECT)
         .in("container_id", orgContainerIds)
         .order("created_at", { ascending: true })
         .limit(2000),
       orgShipmentIds.length > 0
         ? supabase
             .from("report_messages")
-            .select("*")
+            .select(TRIAGE_MESSAGE_SELECT)
             .in("shipment_id", orgShipmentIds)
             .is("container_id", null)
             .order("created_at", { ascending: true })
@@ -306,176 +593,63 @@ async function buildOrgDashboardMetrics(
   };
 }
 
+async function buildOrgDashboardInsights(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<DashboardInsightsMetrics> {
+  const sinceIso = new Date(buildDaySeries(Date.now(), 14)[0]).toISOString();
+
+  const [{ data: shipmentRows }, { data: alertRows }, { data: messageRows }] = await Promise.all([
+    supabase
+      .from("shipments")
+      .select("risk_level, workflow_status, root_cause, assignee_user_id, created_by")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("alerts")
+      .select("alert_type, severity, acknowledged_at, created_at")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(500),
+    supabase
+      .from("report_messages")
+      .select("author_kind, created_at, is_internal")
+      .eq("organization_id", organizationId)
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: true })
+      .limit(5000),
+  ]);
+
+  return buildDashboardInsightsMetrics({
+    shipments: (shipmentRows ?? []).map((row) => ({
+      risk_level: (row.risk_level as string | null) ?? null,
+      workflow_status: (row.workflow_status as string | null) ?? null,
+      root_cause: (row.root_cause as string | null) ?? null,
+      assignee_user_id: (row.assignee_user_id as string | null) ?? null,
+      created_by: (row.created_by as string | null) ?? null,
+    })),
+    alerts: (alertRows ?? []) as Alert[],
+    messages: (messageRows ?? []) as ReportMessage[],
+  });
+}
+
 export async function buildTrackingDashboardSnapshot(
   supabase: SupabaseClient,
   organizationId: string,
   uid: string | null,
-  options?: { includeOrgMetrics?: boolean },
 ): Promise<TrackingDashboardSnapshot> {
-  const [{ data: tr }, { data: al }] = await Promise.all([
-    supabase
-      .from("tracking_requests")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("alerts")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-  ]);
-  const list = (tr as TrackingRequest[]) ?? [];
-  const alerts = (al as Alert[]) ?? [];
-
-  const includeOrgMetrics = options?.includeOrgMetrics ?? false;
-  const orgBundlePromise = includeOrgMetrics
-    ? buildOrgDashboardMetrics(supabase, organizationId)
-    : Promise.resolve(undefined);
-
-  if (list.length === 0) {
-    const orgBundle = await orgBundlePromise;
-    return {
-      currentUserId: uid,
-      requests: list,
-      alerts,
-      triageContainersById: {},
-      triageAttachmentCounts: {},
-      triageMessages: [],
-      participatingShipmentIds: [],
-      shipmentOwnerByShipmentId: {},
-      shipmentAssigneeByShipmentId: {},
-      orgMetrics: orgBundle?.metrics,
-      performanceInsights: orgBundle?.performanceInsights,
-      spotlightShipment: null,
-      triageActionContextByContainerId: {},
-    };
-  }
-
-  const participatingShipments: string[] = [];
-  if (uid) {
-    const { data: partRows } = await supabase
-      .from("shipment_participants")
-      .select("shipment_id")
-      .eq("user_id", uid);
-    for (const row of partRows ?? []) {
-      participatingShipments.push(row.shipment_id as string);
-    }
-  }
-  const participatingShipmentIds = [...new Set(participatingShipments)];
-
-  const containerIds = [
-    ...new Set(list.map((r) => r.container_id).filter((id): id is string => Boolean(id))),
-  ];
-
-  const map: Record<string, Pick<Container, "id" | "status" | "location" | "shipment_id">> = {};
-  if (containerIds.length > 0) {
-    const { data: contRows } = await supabase
-      .from("containers")
-      .select("id, status, location, shipment_id")
-      .in("id", containerIds);
-    for (const row of (contRows ?? []) as Pick<
-      Container,
-      "id" | "status" | "location" | "shipment_id"
-    >[]) {
-      map[row.id] = row;
-    }
-  }
-
-  const shipmentIds = [...new Set(Object.values(map).map((c) => c.shipment_id).filter(Boolean))];
-  const owners: Record<string, string | null> = {};
-  const assignees: Record<string, string | null> = {};
-  if (shipmentIds.length > 0) {
-    const { data: shipRows } = await supabase
-      .from("shipments")
-      .select("id, created_by, assignee_user_id")
-      .in("id", shipmentIds);
-    for (const row of shipRows ?? []) {
-      owners[row.id as string] = (row.created_by as string | null) ?? null;
-      assignees[row.id as string] = (row.assignee_user_id as string | null) ?? null;
-    }
-  }
-
-  const participatingSet = new Set(participatingShipments);
-  const myScopeIds = list
-    .filter((r) => isRequestInMyScope(r, uid, participatingSet, map, owners, assignees))
-    .map((r) => r.id);
-
-  let triageAttachmentCounts: Record<string, number> = {};
-  let triageMessages: ReportMessage[] = [];
-
-  if (myScopeIds.length > 0) {
-    const containerIdByRequest = new Map<string, string>();
-    for (const r of list) {
-      if (r.container_id) containerIdByRequest.set(r.id, r.container_id);
-    }
-    const myScopeContainerIds = [
-      ...new Set(
-        myScopeIds.map((rid) => containerIdByRequest.get(rid)).filter((id): id is string => Boolean(id)),
-      ),
-    ];
-
-    const { data: attRows } = await supabase
-      .from("workspace_attachments")
-      .select("container_id")
-      .in("container_id", myScopeContainerIds);
-    const requestByContainer = new Map<string, string>();
-    for (const r of list) {
-      if (r.container_id) requestByContainer.set(r.container_id, r.id);
-    }
-    const counts: Record<string, number> = {};
-    for (const row of attRows ?? []) {
-      const cid = row.container_id as string;
-      const rid = requestByContainer.get(cid);
-      if (!rid) continue;
-      counts[rid] = (counts[rid] ?? 0) + 1;
-    }
-    triageAttachmentCounts = counts;
-
-    const shipmentIdsForScope = [
-      ...new Set(
-        myScopeContainerIds
-          .map((cid) => map[cid]?.shipment_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ];
-
-    const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
-      supabase
-        .from("report_messages")
-        .select("*")
-        .in("container_id", myScopeContainerIds)
-        .order("created_at", { ascending: true })
-        .limit(2000),
-      shipmentIdsForScope.length > 0
-        ? supabase
-            .from("report_messages")
-            .select("*")
-            .in("shipment_id", shipmentIdsForScope)
-            .is("container_id", null)
-            .order("created_at", { ascending: true })
-            .limit(500)
-        : Promise.resolve({ data: [] as ReportMessage[] }),
-    ]);
-
-    const merged = [...(msgRows ?? []), ...(msgShipmentRows ?? [])].sort(
-      (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
-    );
-    triageMessages = merged as ReportMessage[];
-  }
-
-  const personalBuckets = buildTriageBuckets({
-    userId: uid,
+  const base = await loadPersonalTriageBase(supabase, organizationId, uid);
+  const {
+    currentUserId,
     requests: list,
     alerts,
-    containersById: map,
+    triageContainersById: map,
+    triageAttachmentCounts,
+    triageMessages,
+    participatingShipmentIds,
     shipmentOwnerByShipmentId: owners,
     shipmentAssigneeByShipmentId: assignees,
-    attachmentCountByRequestId: triageAttachmentCounts,
-    messages: triageMessages,
-    participatingShipmentIds: participatingSet,
-  });
+    personalBuckets,
+  } = base;
 
   const triageShipmentIds = collectTriageShipmentIds(personalBuckets, map);
   const shipmentCommercialById: Record<string, ShipmentCommercialSummary> = {};
@@ -502,10 +676,8 @@ export async function buildTrackingDashboardSnapshot(
     requests: list,
   });
 
-  const orgBundle = await orgBundlePromise;
-
   return {
-    currentUserId: uid,
+    currentUserId,
     requests: list,
     alerts,
     triageContainersById: map,
@@ -514,8 +686,6 @@ export async function buildTrackingDashboardSnapshot(
     participatingShipmentIds,
     shipmentOwnerByShipmentId: owners,
     shipmentAssigneeByShipmentId: assignees,
-    orgMetrics: orgBundle?.metrics,
-    performanceInsights: orgBundle?.performanceInsights,
     spotlightShipment: pickSpotlightFromTriage(personalBuckets, shipmentCommercialById, map),
     triageActionContextByContainerId,
   };

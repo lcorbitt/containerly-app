@@ -6,6 +6,7 @@ import { PendingTenantOnboardingPrompt } from "@/components/PendingTenantOnboard
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DASHBOARD_PAGE_INTRO_CLASS, DASHBOARD_PANEL_CLASS, DASHBOARD_PANEL_BODY_CLASS, DASHBOARD_SIDE_STACK_CLASS } from "../../constants";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
+import { DashboardInsightsGrid } from "../DashboardInsightsGrid";
 import { DashboardKpiStrip } from "../DashboardKpiStrip";
 import { DashboardPerformanceInsights } from "../DashboardPerformanceInsights";
 import { DashboardSpotlightShipment } from "../DashboardSpotlightShipment";
@@ -49,11 +50,13 @@ export function TrackingDashboard({
     selectedOrgName,
     isAdminView,
     loading,
+    analyticsLoading,
     isError,
     snapshot,
     personalMetrics,
     triageBuckets,
-  } = useTrackingDashboard();
+    orgInsights,
+  } = useTrackingDashboard(mode);
 
   const pageIntro =
     mode === "reports"
@@ -117,7 +120,7 @@ export function TrackingDashboard({
             isAdminView={isAdminView}
             orgMetrics={snapshot?.orgMetrics}
             personalMetrics={personalMetrics}
-            loading={loading}
+            loading={loading || (mode === "reports" && isAdminView && analyticsLoading)}
           />
 
           {mode === "triage" ? (
@@ -162,10 +165,17 @@ export function TrackingDashboard({
             </div>
           ) : null}
 
+          {mode === "triage" ? (
+            <DashboardInsightsGrid
+              orgInsights={orgInsights}
+              loading={loading || analyticsLoading}
+            />
+          ) : null}
+
           {mode === "reports" && isAdminView ? (
             <DashboardPerformanceInsights
               insights={snapshot?.performanceInsights}
-              loading={loading}
+              loading={loading || analyticsLoading}
             />
           ) : null}
 
@@ -175,6 +185,7 @@ export function TrackingDashboard({
                 isAdminView={isAdminView}
                 personalMetrics={personalMetrics}
                 orgMetrics={snapshot?.orgMetrics}
+                loading={loading || (mode === "reports" && isAdminView && analyticsLoading)}
               />
             </section>
           ) : null}

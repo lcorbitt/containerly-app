@@ -4,6 +4,7 @@ export interface DashboardChartsProps {
   isAdminView: boolean;
   personalMetrics: PersonalMetrics | null;
   orgMetrics: OrgDashboardMetrics | null | undefined;
+  loading?: boolean;
 }
 
 export interface ChartBarItem {

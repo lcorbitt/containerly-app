@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  fetchTrackingDashboardAnalytics,
   fetchTrackingDashboardSnapshot,
+  fetchWorkspaceSummary,
   loadOperatorTrackingRequestsPageBrowser,
+  type TrackingDashboardAnalyticsScope,
 } from "@/services/tracking.service";
+import type {
+  TrackingDashboardInsightsBundle,
+  TrackingDashboardReportsBundle,
+} from "@/types/tracking-dashboard-analytics";
 import type {
   OperatorRequestScope,
   OperatorRequestSortColumn,
@@ -10,7 +17,12 @@ import type {
 } from "@/utils/operator-tracking-requests";
 
 export const trackingDashboardQueryKeyRoot = ["tracking-dashboard"] as const;
+export const trackingDashboardInsightsQueryKeyRoot = ["tracking-dashboard-insights"] as const;
+export const trackingDashboardReportsQueryKeyRoot = ["tracking-dashboard-reports"] as const;
+export const workspaceSummaryQueryKeyRoot = ["workspace-summary"] as const;
 export const operatorContainersQueryKeyRoot = ["operator-containers"] as const;
+
+const WORKSPACE_SUMMARY_STALE_MS = 5 * 60_000;
 
 export function useTrackingDashboardQuery(organizationId: string | null) {
   return useQuery({
@@ -20,6 +32,52 @@ export function useTrackingDashboardQuery(organizationId: string | null) {
       return fetchTrackingDashboardSnapshot(organizationId);
     },
     enabled: Boolean(organizationId),
+  });
+}
+
+export function useTrackingDashboardInsightsQuery(
+  organizationId: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: [...trackingDashboardInsightsQueryKeyRoot, organizationId],
+    queryFn: async () => {
+      if (!organizationId) throw new Error("organizationId required");
+      return fetchTrackingDashboardAnalytics(
+        organizationId,
+        "insights",
+      ) as Promise<TrackingDashboardInsightsBundle>;
+    },
+    enabled: Boolean(organizationId) && enabled,
+  });
+}
+
+export function useTrackingDashboardReportsQuery(
+  organizationId: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: [...trackingDashboardReportsQueryKeyRoot, organizationId],
+    queryFn: async () => {
+      if (!organizationId) throw new Error("organizationId required");
+      return fetchTrackingDashboardAnalytics(
+        organizationId,
+        "reports",
+      ) as Promise<TrackingDashboardReportsBundle>;
+    },
+    enabled: Boolean(organizationId) && enabled,
+  });
+}
+
+export function useWorkspaceSummaryQuery(organizationId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: [...workspaceSummaryQueryKeyRoot, organizationId],
+    queryFn: () => {
+      if (!organizationId) throw new Error("organizationId required");
+      return fetchWorkspaceSummary(organizationId);
+    },
+    enabled: Boolean(organizationId) && enabled,
+    staleTime: WORKSPACE_SUMMARY_STALE_MS,
   });
 }
 
@@ -58,3 +116,5 @@ export function useOperatorContainersQuery(input: {
     enabled: Boolean(input.organizationId),
   });
 }
+
+export type { TrackingDashboardAnalyticsScope };

@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { trackingDashboardQueryKeyRoot, useTrackingDashboardQuery } from "@/hooks/queries/useTracking";
+import {
+  trackingDashboardInsightsQueryKeyRoot,
+  trackingDashboardQueryKeyRoot,
+  trackingDashboardReportsQueryKeyRoot,
+  useTrackingDashboardInsightsQuery,
+  useTrackingDashboardQuery,
+  useTrackingDashboardReportsQuery,
+  workspaceSummaryQueryKeyRoot,
+} from "@/hooks/queries/useTracking";
 import { canManageOrganizationSettings } from "@/utils/org-role";
 import { isRequestInMyScope } from "@/utils/dashboard-scope";
 import { computePersonalMetrics } from "@/utils/dashboard-metrics";
@@ -11,14 +19,30 @@ import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import { buildTriageBucketsFromProps } from "../DashboardTriage";
 import type { UseTrackingDashboardResult } from "./types";
 
-export function useTrackingDashboard(): UseTrackingDashboardResult {
+export function useTrackingDashboard(mode: "triage" | "reports" = "triage"): UseTrackingDashboardResult {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const qc = useQueryClient();
   const dashboardQuery = useTrackingDashboardQuery(selectedOrgId);
 
+  const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
+  const isAdminView = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
+  const canLoadOrgInsights = isSuperAdmin || selectedMembershipRole != null;
+
+  const insightsQuery = useTrackingDashboardInsightsQuery(
+    selectedOrgId,
+    mode === "triage" && canLoadOrgInsights,
+  );
+  const reportsQuery = useTrackingDashboardReportsQuery(
+    selectedOrgId,
+    mode === "reports" && isAdminView,
+  );
+
   useEffect(() => {
     const onCreated = () => {
       void qc.invalidateQueries({ queryKey: trackingDashboardQueryKeyRoot });
+      void qc.invalidateQueries({ queryKey: workspaceSummaryQueryKeyRoot });
+      void qc.invalidateQueries({ queryKey: trackingDashboardInsightsQueryKeyRoot });
+      void qc.invalidateQueries({ queryKey: trackingDashboardReportsQueryKeyRoot });
     };
     window.addEventListener(TRACKING_CREATED_EVENT, onCreated);
     return () => window.removeEventListener(TRACKING_CREATED_EVENT, onCreated);
@@ -26,10 +50,26 @@ export function useTrackingDashboard(): UseTrackingDashboardResult {
 
   const selectedOrgName =
     orgs.find((r) => r.organizations?.id === selectedOrgId)?.organizations?.name ?? null;
-  const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
-  const isAdminView = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
 
-  const snap = dashboardQuery.data;
+  const snap = useMemo(() => {
+    const base = dashboardQuery.data;
+    if (!base) return undefined;
+
+    if (mode === "triage" && insightsQuery.data) {
+      return { ...base, orgInsights: insightsQuery.data.orgInsights };
+    }
+
+    if (mode === "reports" && reportsQuery.data) {
+      return {
+        ...base,
+        orgMetrics: reportsQuery.data.orgMetrics,
+        performanceInsights: reportsQuery.data.performanceInsights,
+      };
+    }
+
+    return base;
+  }, [dashboardQuery.data, insightsQuery.data, reportsQuery.data, mode]);
+
   const userId = snap?.currentUserId ?? null;
 
   const participatingShipments = useMemo(
@@ -90,12 +130,19 @@ export function useTrackingDashboard(): UseTrackingDashboardResult {
     });
   }, [mine, mineIds, snap, userId, participatingShipments, now, triageBuckets]);
 
+  const analyticsLoading =
+    mode === "triage"
+      ? canLoadOrgInsights && insightsQuery.isLoading
+      : isAdminView && reportsQuery.isLoading;
+
   return {
     selectedOrgName,
     isAdminView,
     loading: dashboardQuery.isLoading && Boolean(selectedOrgId),
-    isError: dashboardQuery.isError,
+    analyticsLoading,
+    isError: dashboardQuery.isError || insightsQuery.isError || reportsQuery.isError,
     snapshot: snap,
+    orgInsights: snap?.orgInsights,
     personalMetrics,
     triageBuckets,
   };

@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Loader2 } from "lucide-react";
 import {
   CHART_AXIS_TICK,
   CHART_BAR_COLORS,
@@ -27,7 +28,25 @@ import {
 import type { DashboardChartsProps } from "./types";
 import { buildDashboardChartsData } from "./utils";
 
-export function DashboardCharts({ isAdminView, personalMetrics, orgMetrics }: DashboardChartsProps) {
+export function DashboardCharts({
+  isAdminView,
+  personalMetrics,
+  orgMetrics,
+  loading = false,
+}: DashboardChartsProps) {
+  if (loading) {
+    return (
+      <div className={DASHBOARD_CHART_PANEL_CLASS}>
+        <div className={DASHBOARD_CHART_PANEL_BODY_CLASS}>
+          <div className="flex min-h-32 items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            <span>Loading charts…</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const data = buildDashboardChartsData(isAdminView, personalMetrics, orgMetrics);
 
   if (!data) {

@@ -1,4 +1,5 @@
 import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
+import type { DashboardInsightsMetrics } from "@/utils/dashboard-insights";
 import type {
   OrgDashboardMetrics,
   SpotlightShipment,
@@ -8,6 +9,7 @@ import type {
 import type { PerformanceInsights } from "@shared/dto/performance.dto";
 
 export type {
+  DashboardInsightsMetrics,
   OrgDashboardMetrics,
   SpotlightShipment,
   TriageActionContext,
@@ -30,6 +32,8 @@ export type TrackingDashboardSnapshot = {
   orgMetrics?: OrgDashboardMetrics;
   /** Org-level performance insights (admin view). */
   performanceInsights?: PerformanceInsights;
+  /** Org-wide insight cards (all org members). */
+  orgInsights?: DashboardInsightsMetrics;
   /** Highest-priority personal triage item with commercial route fields. */
   spotlightShipment?: SpotlightShipment | null;
   /** Commercial + sync context for each container in the personal triage queue. */
