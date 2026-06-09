@@ -1,4 +1,5 @@
 import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AuthenticatedTopNav } from "@/components/TopNav";
 import { MockJourneyModalHost } from "@/contexts/mock-journey-modal";
 import { SessionAvatarInit } from "@/components/SessionAvatarInit";
@@ -51,6 +52,7 @@ export function AuthenticatedAppShell({
                 </div>
               </div>
             </div>
+          <FeedbackWidget />
         </MockJourneyModalHost>
       </NewShipmentModalProvider>
     </OrganizationWorkspaceProvider>

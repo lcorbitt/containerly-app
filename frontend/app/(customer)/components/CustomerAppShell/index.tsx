@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionAvatarInit } from "@/components/SessionAvatarInit";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { CustomerTopNav } from "@/components/TopNav";
 import { AuthenticatedMainPane } from "@/app/(authenticated)/components/AuthenticatedMainPane";
 import {
@@ -32,6 +33,7 @@ export function CustomerAppShell({
           </div>
         </div>
       </div>
+      <FeedbackWidget />
     </>
   );
 }
