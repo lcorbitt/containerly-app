@@ -1,7 +1,7 @@
 "use client";
 
-import { useOrgAlertsRealtimeInvalidation } from "@/hooks/queries/useOrgAlertsRealtime";
-import { useOrgReportMessagesRealtimeInvalidation } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { useOrgAlertsRealtimeInvalidation } from "@/hooks/queries/useAlerts";
+import { useOrgReportMessagesRealtimeInvalidation } from "@/hooks/queries/useShipmentMessageThreads";
 
 /**
  * Org-scoped Supabase Realtime (WebSocket postgres_changes) for workspace chrome:

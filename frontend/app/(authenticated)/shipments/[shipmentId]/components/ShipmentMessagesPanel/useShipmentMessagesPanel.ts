@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
+import { useMarkShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,7 +20,7 @@ import {
   useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
-import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   createWorkspaceAttachmentSignedUrl,
   deleteShipmentScopeMessage,
@@ -42,7 +42,7 @@ export function useShipmentMessagesPanel({
   const { confirm } = useConfirm();
   const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
+  const markThreadReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
   const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
   const shipmentRowQuery = useShipmentWorkspaceRowQuery({
     shipmentId,

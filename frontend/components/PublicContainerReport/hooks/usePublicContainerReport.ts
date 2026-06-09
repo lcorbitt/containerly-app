@@ -19,7 +19,7 @@ import {
   uploadShipmentScopeStandaloneFiles,
 } from "@/services/workspace.service";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
-import { orgReportMessagesRealtimeDedupeKey } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { orgReportMessagesRealtimeDedupeKey } from "@/hooks/queries/useShipmentMessageThreads";
 import { createClient } from "@/lib/supabase/client";
 import {
   completeImporterPortalSetup,

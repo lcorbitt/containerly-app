@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
-import { useMarkImporterShipmentThreadRead } from "@/hooks/mutations/useMarkImporterShipmentThreadRead";
+import {
+  useMarkImporterShipmentThreadReadMutation,
+  useMarkShipmentThreadReadMutation,
+} from "@/hooks/mutations/useShipmentMessageThreads";
 import { useOrganizationWorkspaceOptional } from "@/contexts/organization-workspace";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
@@ -146,8 +148,8 @@ export function MessagesList({
 }: MessagesListProps) {
   const workspace = useOrganizationWorkspaceOptional();
   const selectedOrgId = workspace?.selectedOrgId ?? null;
-  const operatorMarkReadMut = useMarkShipmentThreadRead(selectedOrgId);
-  const customerMarkReadMut = useMarkImporterShipmentThreadRead();
+  const operatorMarkReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
+  const customerMarkReadMut = useMarkImporterShipmentThreadReadMutation();
   const behavior = resolveListBehavior(viewer);
 
   function handleThreadNavigate(thread: ShipmentMessageThreadSummary) {

@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
-import { useAcknowledgeAllOrgAlerts } from "@/hooks/mutations/useAcknowledgeAllOrgAlerts";
-import { useMarkShipmentThreadRead } from "@/hooks/mutations/useMarkShipmentThreadRead";
-import { useOrgAlerts } from "@/hooks/queries/useAlert";
+import { useAcknowledgeAllOrgAlertsMutation } from "@/hooks/mutations/useAlerts";
+import { useMarkShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
+import { useOrgAlerts } from "@/hooks/queries/useAlerts";
 import { isMessageShipmentAlert } from "@/utils/alert-inbox";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { fetchShipment } from "@/services/shipment.service";
@@ -28,8 +28,8 @@ export function useAuthenticatedTopNav() {
   const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const alerts = useOrgAlerts(selectedOrgId);
-  const acknowledgeAllMut = useAcknowledgeAllOrgAlerts(selectedOrgId);
-  const markThreadReadMut = useMarkShipmentThreadRead(selectedOrgId);
+  const acknowledgeAllMut = useAcknowledgeAllOrgAlertsMutation(selectedOrgId);
+  const markThreadReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
   const ackedOnOpenRef = useRef(false);
 
   const unackedCount = useMemo(
@@ -130,13 +130,10 @@ export function useAuthenticatedTopNav() {
       ),
     ];
 
-    acknowledgeAllMut.mutate(undefined, {
-      onSuccess: () => {
-        for (const shipmentId of messageShipmentIds) {
-          markThreadReadMut.mutate({ shipmentId });
-        }
-      },
-    });
+    for (const shipmentId of messageShipmentIds) {
+      markThreadReadMut.mutate({ shipmentId });
+    }
+    acknowledgeAllMut.mutate();
   }, [notificationsMenuOpen, unackedCount, selectedOrgId, alerts]);
 
   useEffect(() => {

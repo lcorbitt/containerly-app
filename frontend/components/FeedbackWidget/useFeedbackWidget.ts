@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { feedbackWidgetCategoryAtom, feedbackWidgetOpenAtom } from "@/atoms/feedback-widget";
 import { useToast } from "@/contexts/toast";
 import { OrganizationWorkspaceContext } from "@/contexts/organization-workspace";
-import { useSubmitFeedbackMutation } from "@/hooks/mutations/useSubmitFeedback";
+import { useSubmitFeedbackMutation } from "@/hooks/mutations/useFeedback";
 import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
 import {
   FEEDBACK_MIN_MESSAGE_LENGTH,

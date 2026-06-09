@@ -13,10 +13,10 @@ export const SITE_NAV_LOGO_PATH = "/containerly-logo-nav.png";
 export const SITE_DESCRIPTION =
   "Containerly turns every shipment into a live, customer-facing portal with status, documents, and approvals. One link replaces twenty email threads.";
 
-export const SITE_TITLE = "Containerly · Send one link instead";
+export const SITE_TITLE = "Containerly";
 
 export const SITE_LANDING_TITLE =
-  "Containerly · Stop emailing shipment updates, send one link";
+  "Containerly · Stop emailing shipment updates — share one portal";
 
 /** Public site origin for links (no trailing slash). */
 export const SITE_URL =

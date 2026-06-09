@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useShipmentMessageThreads";
 import { fetchShipmentWorkspaceRowForBrowser } from "@/services/shipment.service";
 import { loadShipmentScopeThread } from "@/services/workspace.service";
 

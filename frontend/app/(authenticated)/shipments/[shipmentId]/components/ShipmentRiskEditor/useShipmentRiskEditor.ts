@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useToast } from "@/contexts/toast";
-import { useUpdateShipmentRiskMutation } from "@/hooks/mutations/useShipmentRisk";
+import { useUpdateShipmentRiskMutation } from "@/hooks/mutations/useShipments";
 import { shipmentRiskSelectValue } from "./utils";
 import type { ShipmentRiskEditorProps, ShipmentRiskSelectValue } from "./types";
 

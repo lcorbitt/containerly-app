@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useOrgReportMessagesRealtime";
+import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   ATTACHMENT_DISPLAY_NAME_MAX_LEN,
   MAX_ATTACHMENT_FILE_BYTES,

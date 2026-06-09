@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useImporterMessageThreads } from "@/hooks/queries/useImporterMessageThreads";
+import { useImporterMessageThreads } from "@/hooks/queries/useShipmentMessageThreads";
 
 export type CustomerSideNavSecondaryPanel = "messages";
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMyAlerts } from "@/hooks/queries/useMyAlerts";
-import { useAcknowledgeAllMyAlerts } from "@/hooks/mutations/useAcknowledgeAllMyAlerts";
-import { useMarkImporterShipmentThreadRead } from "@/hooks/mutations/useMarkImporterShipmentThreadRead";
+import { useMyAlerts } from "@/hooks/queries/useAlerts";
+import { useAcknowledgeAllMyAlertsMutation } from "@/hooks/mutations/useAlerts";
+import { useMarkImporterShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
 import { isMessageShipmentAlert } from "@/utils/alert-inbox";
 
 /** Drives the customer top-nav notification bell. `userId` comes from the shared session in
@@ -14,8 +14,8 @@ export function useCustomerNotifications(userId: string | null) {
   const ackedOnOpenRef = useRef(false);
 
   const alerts = useMyAlerts(userId);
-  const acknowledgeAllMut = useAcknowledgeAllMyAlerts(userId);
-  const markThreadReadMut = useMarkImporterShipmentThreadRead();
+  const acknowledgeAllMut = useAcknowledgeAllMyAlertsMutation(userId);
+  const markThreadReadMut = useMarkImporterShipmentThreadReadMutation();
 
   const unackedCount = useMemo(
     () => alerts.filter((a) => !a.acknowledged_at).length,
@@ -38,13 +38,10 @@ export function useCustomerNotifications(userId: string | null) {
       ),
     ];
 
-    acknowledgeAllMut.mutate(undefined, {
-      onSuccess: () => {
-        for (const shipmentId of messageShipmentIds) {
-          markThreadReadMut.mutate({ shipmentId });
-        }
-      },
-    });
+    for (const shipmentId of messageShipmentIds) {
+      markThreadReadMut.mutate({ shipmentId });
+    }
+    acknowledgeAllMut.mutate();
   }, [open, unackedCount, userId, alerts]);
 
   useEffect(() => {

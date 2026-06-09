@@ -9,6 +9,8 @@ import {
   ACCENT_BTN_CLASS,
   GHOST_BTN_CLASS,
   HERO_EYEBROW,
+  HERO_HEADLINE,
+  HERO_HEADLINE_ACCENT,
   HERO_SUBHEAD,
   PROBLEM_HEADLINE,
   automationExamples,
@@ -35,8 +37,8 @@ export function LandingPage() {
               {HERO_EYEBROW}
             </p>
             <h1 className="mt-5 text-balance text-4xl font-semibold tracking-tight text-zinc-900 dark:text-white md:text-5xl md:leading-[1.1] lg:text-5xl">
-              Stop managing shipment communication manually.{" "}
-              <span className="text-primary-orange">Send one link instead.</span>
+              {HERO_HEADLINE}{" "}
+              <span className="text-primary-orange">{HERO_HEADLINE_ACCENT}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400 md:text-lg lg:mx-0">
               {HERO_SUBHEAD}

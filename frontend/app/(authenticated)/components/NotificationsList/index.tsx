@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { formatTimestamp } from "@/utils/datetime";
 import type { Alert } from "@/types/database";
-import { useAcknowledgeAlert } from "@/hooks/mutations/useAcknowledgeAlert";
-import { useResolveCustomerAccessRequest } from "@/hooks/mutations/useResolveCustomerAccessRequest";
+import {
+  useAcknowledgeAlertMutation,
+  useResolveCustomerAccessRequestMutation,
+} from "@/hooks/mutations/useAlerts";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useToast } from "@/contexts/toast";
 import { alertTypeIconConfig } from "@/utils/alert-display";
@@ -122,8 +124,8 @@ export function NotificationsList({
 }) {
   const { toast } = useToast();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const acknowledgeMut = useAcknowledgeAlert(selectedOrgId);
-  const resolveMut = useResolveCustomerAccessRequest(selectedOrgId);
+  const acknowledgeMut = useAcknowledgeAlertMutation(selectedOrgId);
+  const resolveMut = useResolveCustomerAccessRequestMutation(selectedOrgId);
 
   async function handleResolve(alert: Alert, action: "approve" | "deny") {
     const requestId = accessRequestIdFromAlert(alert);

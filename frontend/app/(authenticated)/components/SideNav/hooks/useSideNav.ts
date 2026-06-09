@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useOrgMessageThreads } from "@/hooks/queries/useOrgMessageThreads";
+import { useOrgMessageThreads } from "@/hooks/queries/useShipmentMessageThreads";
 
 export type SideNavSecondaryPanel = "messages";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAdminFeedbackQuery } from "@/hooks/queries/useAdminFeedback";
-import { useUpdateAdminFeedbackStatusMutation } from "@/hooks/mutations/useUpdateAdminFeedbackStatus";
+import { useAdminFeedbackQuery } from "@/hooks/queries/useFeedback";
+import { useUpdateAdminFeedbackStatusMutation } from "@/hooks/mutations/useFeedback";
 import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto";
 import type { AdminFeedbackListRow } from "@/services/feedback.service";
 import { PAGE_SIZE_OPTIONS } from "./constants";

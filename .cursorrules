@@ -204,15 +204,51 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ### 3. TanStack Query layer
 
-**Location:** `frontend/hooks/`  
-**Subfolders:** `frontend/hooks/queries/`, `frontend/hooks/mutations/`
+**Product:** **TanStack Query** (server/async state).  
+**Package:** **`@tanstack/react-query` only** — **never** install or import the legacy **`react-query`** package. Allowed imports: `useQuery`, `useMutation`, `useQueryClient`, `QueryClient`, `QueryClientProvider`, and types from `@tanstack/react-query`.
+
+**Location:** `frontend/hooks/queries/`, `frontend/hooks/mutations/`
+
+| Kind | Location |
+|------|----------|
+| `useQuery` hooks, query keys, optimistic cache helpers | `frontend/hooks/queries/use<Domain>.ts` |
+| `useMutation` hooks | `frontend/hooks/mutations/use<Domain>.ts` |
 
 **Rules**
 
-- All **server state** logic (fetch, cache, invalidate) lives here.
-- Hooks are **reusable app-wide**; **do not** colocate Query hooks inside component folders.
+- All **server state** logic (fetch, cache, invalidate) lives in **domain-scoped** `use<Domain>.ts` files under `queries/` or `mutations/`.
+- Hooks are **reusable app-wide**; **do not** colocate TanStack Query hooks inside component folders.
 - Query/mutation hooks **must not** contain UI logic.
 - **Colocated component hooks** consume these hooks; they **do not** implement their own fetch logic.
+- TanStack Query hooks call **`frontend/services/`** only (no raw `fetch` / Supabase in hooks).
+
+**Naming (mandatory)**
+
+- **One domain file per folder:** `useAlerts.ts`, `useOrganizations.ts`, `useShipments.ts` (plural domain / table scope).
+- **Multiple exports per file** when a domain has several queries or mutations — **do not** split by HTTP action (e.g. no `useAcknowledgeAlert.ts`).
+- **Query exports:** `use<Thing>Query`; optional convenience `use<Thing>` (data shorthand).
+- **Mutation exports:** `use<Action><Domain>Mutation` (e.g. `useCreateOrganizationMutation` in `mutations/useOrganization.ts`).
+- **Query key roots:** exported from the **queries** domain file; **mutations import them** — never duplicate keys in mutation files.
+
+**Cache / optimistic updates (mandatory)**
+
+- Helpers that call `setQueryData`, `setQueriesData`, `cancelQueries`, or snapshot/restore cache live in the **queries** domain file for that data.
+- Mutations wire `onMutate` / `onError` / `onSettled` using those helpers.
+- **No** separate `*-cache.ts`, `*-query-cache.ts`, or other non-`use*.ts` helper modules under `hooks/queries/` or `hooks/mutations/`.
+
+**Realtime invalidation**
+
+- Domain-specific realtime invalidation hooks live in the same **`queries/use<Domain>.ts`** file.
+- Cross-domain composers (e.g. `useOrgWorkspaceRealtime.ts`) stay thin: call domain invalidation hooks only.
+
+**Allowed at `frontend/hooks/` root:** infrastructure only (e.g. `query-provider.tsx`, `usePostgresRealtimeInvalidation.ts`) — not domain query/mutation hooks.
+
+**Anti-patterns**
+
+- `alert-query-cache.ts`-style auxiliary modules under `hooks/`.
+- Action-named hook files (`useAcknowledgeAllOrgAlerts.ts`, `useMarkShipmentThreadRead.ts`, …).
+- Splitting one domain across multiple files (`useAlert.ts` + `useMyAlerts.ts`).
+- Importing `react-query` or creating non-`use*.ts` modules under `queries/` or `mutations/`.
 
 ---
 
@@ -402,6 +438,10 @@ When refactoring, **identify and move**:
 | Heavy component logic | Colocated `use<ComponentName>.ts` |
 | Thin Context for UI flags / shared client state | `frontend/atoms/<domain>.ts` or colocated `atoms.ts` (Jotai) |
 | Context + Provider boilerplate for one value | Single Jotai `atom()` + `useAtom` |
+| Action-named TanStack hooks (`useAcknowledgeAlert.ts`) | `mutations/use<Domain>.ts` (multiple `use*Mutation` exports) |
+| Split domain query files (`useAlert.ts` + `useMyAlerts.ts`) | `queries/use<Domain>.ts` |
+| `*-cache.ts` / optimistic helpers beside hooks | Cache helpers in `queries/use<Domain>.ts`; mutations import them |
+| Legacy `react-query` package | `@tanstack/react-query` only |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 

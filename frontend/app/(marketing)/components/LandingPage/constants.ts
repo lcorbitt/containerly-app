@@ -21,6 +21,10 @@ export const GHOST_BTN_CLASS =
 
 export const HERO_EYEBROW = "For freight brokers, 3PLs, and export teams";
 
+export const HERO_HEADLINE = "Stop managing shipment communication manually.";
+
+export const HERO_HEADLINE_ACCENT = "Share one portal link per shipment.";
+
 export const HERO_SUBHEAD =
   "Containerly replaces the email threads, document chasing, and status questions around every shipment with a single shared workspace.";
 
