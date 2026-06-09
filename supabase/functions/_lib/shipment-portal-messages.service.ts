@@ -11,11 +11,7 @@ import { fetchShipmentParticipantForUser } from "@models/shipment_participants.t
 import { fetchContainerIdAndShipmentId } from "@models/containers.ts";
 import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
 import { postCustomerMessage } from "@supabase-shared/customer-access.service.ts";
-import {
-  notifyCustomersOperatorReply,
-  notifyOperatorsNewCustomerMessage,
-  notifyOperatorsTeamMessage,
-} from "@supabase-shared/notification-workflow.service.ts";
+import { notifyOperatorsNewCustomerMessage } from "@supabase-shared/notification-workflow.service.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import { recordMessageActivityEvent } from "@supabase-shared/message-activity.service.ts";
 
@@ -94,25 +90,6 @@ async function postOrgMemberPortalMessage(
   const preview = input.body;
   const { data: orgRow } = await fetchOrganizationForPortal(admin, input.organizationId);
   const orgName = (orgRow?.name as string | undefined) ?? "Containerly";
-
-  try {
-    await notifyOperatorsTeamMessage(admin, {
-      organizationId: input.organizationId,
-      shipmentId: input.shipmentId,
-      actorUserId: userId,
-      preview,
-      reportMessageId: inserted.id as string,
-    });
-    await notifyCustomersOperatorReply(admin, {
-      organizationId: input.organizationId,
-      shipmentId: input.shipmentId,
-      operatorUserId: userId,
-      preview,
-      reportMessageId: inserted.id as string,
-    });
-  } catch {
-    /* best-effort */
-  }
 
   const nowIso = new Date().toISOString();
   await admin.from("shipment_message_thread_reads").upsert(

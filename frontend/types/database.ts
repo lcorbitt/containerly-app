@@ -152,6 +152,7 @@ export type Alert = {
   container_id: string | null;
   shipment_id: string | null;
   report_message_id: string | null;
+  inbox_kind?: "notification" | "operational_alert";
   alert_type: string;
   severity: string;
   message: string;

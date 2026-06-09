@@ -1,19 +1,15 @@
 /**
- * Notification helpers: in-app alerts + email for workflow events.
+ * Notification helpers: in-app notifications + email for workflow events.
+ * Message unread state is tracked via shipment message threads — not `public.alerts`.
  */
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
-  fetchProfileDisplayName,
   fetchShipmentOrderPhrase,
-  formatActorOnShipmentMessage,
-  messageAlertLinkage,
   notifyOperatorsBolImported,
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsCustomerDocumentUploaded,
   notifyOperatorsDraftsPublished,
-  notifyOperatorsOperatorRepliedToCustomer,
   notifyOperatorsOriginalsMailed,
-  notifyOperatorsTeamMessage,
   notifyOperatorsTrackingLinked,
   notifyOperatorsTrackingSyncFailed,
   notifyOrgAdminsMemberJoined,
@@ -52,10 +48,7 @@ export {
   notifyUserUnassignedAsAssignee,
   notifyAssigneeCustomerAccessRequested,
   notifyCustomerInviteReceived,
-  notifyOperatorsTeamMessage,
-  notifyOperatorsOperatorRepliedToCustomer,
   notifyOperatorsOriginalsMailed,
-  notifyCustomersOperatorReply,
 } from "@supabase-shared/in-app-alerts.ts";
 
 function siteUrl(): string {
@@ -160,6 +153,7 @@ export async function notifyCustomerDocumentsMailed(
     shipment_id: args.shipmentId,
     alert_type: "DOCUMENTS_MAILED",
     severity: "info",
+    inbox_kind: "notification",
     message: args.trackingNumber
       ? `Original documents mailed — tracking: ${args.trackingNumber}`
       : "Original documents have been mailed",
@@ -198,24 +192,6 @@ export async function notifyOperatorsNewCustomerMessage(
 ): Promise<void> {
   const emailRecipients = await operatorEmailRecipientIds(admin, args.shipmentId, args.customerUserId);
   const url = `${siteUrl()}/shipments/${args.shipmentId}`;
-  const customerName = await fetchProfileDisplayName(admin, args.customerUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
-
-  await notifyShipmentStakeholdersInApp(admin, {
-    organizationId: args.organizationId,
-    shipmentId: args.shipmentId,
-    containerId: args.containerId,
-    alertType: "MESSAGE_NEW",
-    severity: "warning",
-    message: formatActorOnShipmentMessage(
-      customerName,
-      orderPhrase,
-      args.preview.slice(0, 160),
-    ),
-    excludeUserId: args.customerUserId,
-    actorUserId: args.customerUserId,
-    ...messageAlertLinkage(args.reportMessageId),
-  });
 
   for (const userId of emailRecipients) {
     const { data: profile } = await fetchProfileEmailByUserId(admin, userId);
@@ -244,33 +220,6 @@ export async function notifyCustomerOperatorReply(
   },
 ): Promise<void> {
   const url = `${siteUrl()}/shipments/hub/${args.shipmentId}`;
-  const operatorName = await fetchProfileDisplayName(admin, args.operatorUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(admin, args.shipmentId);
-
-  if (args.customerUserId !== args.operatorUserId) {
-    await insertAlert(admin, {
-      organization_id: args.organizationId,
-      shipment_id: args.shipmentId,
-      alert_type: "MESSAGE_REPLY",
-      severity: "info",
-      message: formatActorOnShipmentMessage(
-        operatorName,
-        orderPhrase,
-        args.preview.slice(0, 160),
-      ),
-      recipient_user_id: args.customerUserId,
-      actor_user_id: args.operatorUserId,
-      ...messageAlertLinkage(args.reportMessageId),
-    });
-  }
-
-  await notifyOperatorsOperatorRepliedToCustomer(admin, {
-    organizationId: args.organizationId,
-    shipmentId: args.shipmentId,
-    actorUserId: args.operatorUserId,
-    preview: args.preview,
-    reportMessageId: args.reportMessageId,
-  });
 
   const { data: profile } = await fetchProfileEmailByUserId(admin, args.customerUserId);
   if (profile?.email && args.customerUserId !== args.operatorUserId) {

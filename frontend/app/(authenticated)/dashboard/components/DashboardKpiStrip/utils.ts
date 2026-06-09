@@ -49,11 +49,11 @@ export function buildPersonalKpiItems(metrics: PersonalMetrics): KpiDataItem[] {
       tone: "neutral",
     },
     {
-      iconKey: "alert",
-      label: "Open alerts",
-      value: metrics.unackedAlerts,
-      sub: "Unacknowledged on your lines",
-      tone: metrics.unackedAlerts > 0 ? "warn" : "neutral",
+      iconKey: "check",
+      label: "Unread notifications",
+      value: metrics.unreadNotifications,
+      sub: "In-app bell items on your shipments",
+      tone: metrics.unreadNotifications > 0 ? "warn" : "neutral",
     },
     {
       iconKey: "radio",

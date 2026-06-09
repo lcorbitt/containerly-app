@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useOrgMessageThreads } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   trackingDashboardQueryKeyRoot,
+  useTrackingDashboardSnapshotCache,
   useWorkspaceSummaryQuery,
   workspaceSummaryQueryKeyRoot,
 } from "@/hooks/queries/useTracking";
 import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import { buildTriageBucketsFromProps } from "@/app/(authenticated)/dashboard/components/DashboardTriage";
-import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snapshot";
 import { toolsNavGroup } from "../constants";
 import { isSideNavLinkActive } from "../utils";
 
@@ -39,20 +39,11 @@ export function useSideNav(isSuperAdmin: boolean) {
     toolsNavGroup.items.some((item) => isSideNavLinkActive(pathname, item.href)),
   );
   const messageThreads = useOrgMessageThreads(selectedOrgId);
+  const { data: cachedTriageSnapshot } = useTrackingDashboardSnapshotCache(selectedOrgId);
 
-  const triageSnapshotKey =
-    selectedOrgId != null
-      ? ([...trackingDashboardQueryKeyRoot, selectedOrgId] as const)
-      : ([...trackingDashboardQueryKeyRoot, "disabled", null] as const);
-
-  /** Subscribe to triage snapshot cache without fetching (dashboard / alerts pages load it). */
-  const { data: cachedTriageSnapshot } = useQuery<TrackingDashboardSnapshot>({
-    queryKey: triageSnapshotKey,
-    enabled: false,
-  });
-
-  const useSummaryEndpoint = Boolean(selectedOrgId) && !pathnameUsesTriageSnapshot(pathname);
-  const workspaceSummaryQuery = useWorkspaceSummaryQuery(selectedOrgId, useSummaryEndpoint);
+  const shouldFetchWorkspaceSummary =
+    Boolean(selectedOrgId) && !pathnameUsesTriageSnapshot(pathname);
+  const workspaceSummaryQuery = useWorkspaceSummaryQuery(selectedOrgId, shouldFetchWorkspaceSummary);
 
   useEffect(() => {
     const onCreated = () => {

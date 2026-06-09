@@ -1,5 +1,6 @@
 import type { Alert, ReportMessage } from "@/types/database";
 import { buildDaySeries } from "@/utils/dashboard-metrics";
+import { isInAppNotification, isOperationalAlert } from "@/utils/in-app-event-taxonomy";
 import { normalizeShipmentWorkflowStatus, shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { SHIPMENT_WORKFLOW_STATUSES } from "@shared/dto/logistics.dto";
 import {
@@ -25,6 +26,12 @@ export interface DashboardInsightsMetrics {
     bySeverity: Record<"critical" | "warning" | "info", number>;
     topTypes: { alert_type: string; label: string; count: number }[];
   };
+  notificationSummary: {
+    open: number;
+    acknowledged: number;
+    bySeverity: Record<"critical" | "warning" | "info", number>;
+    topTypes: { alert_type: string; label: string; count: number }[];
+  };
   rootCauseCounts: Record<string, number>;
   timeToResolveSeries: {
     label: string;
@@ -43,7 +50,10 @@ export type DashboardInsightsShipmentRow = {
   created_by: string | null;
 };
 
-type AlertRow = Pick<Alert, "alert_type" | "severity" | "acknowledged_at" | "created_at">;
+type AlertRow = Pick<
+  Alert,
+  "alert_type" | "severity" | "acknowledged_at" | "created_at" | "inbox_kind"
+>;
 type MessageRow = Pick<ReportMessage, "author_kind" | "created_at" | "is_internal">;
 
 const RISK_KEYS = ["low", "medium", "high", "unset"] as const;
@@ -214,6 +224,18 @@ export function countShipmentAssignments(
 }
 
 export function buildAlertSummary(alerts: readonly AlertRow[]): DashboardInsightsMetrics["alertSummary"] {
+  return buildInboxEventSummary(alerts.filter((alert) => isOperationalAlert(alert)));
+}
+
+export function buildNotificationSummary(
+  alerts: readonly AlertRow[],
+): DashboardInsightsMetrics["notificationSummary"] {
+  return buildInboxEventSummary(alerts.filter((alert) => isInAppNotification(alert)));
+}
+
+function buildInboxEventSummary(
+  alerts: readonly AlertRow[],
+): DashboardInsightsMetrics["alertSummary"] {
   let open = 0;
   let acknowledged = 0;
   const bySeverity: Record<(typeof SEVERITY_KEYS)[number], number> = {
@@ -280,6 +302,7 @@ export function buildTimeToResolveSeries(
   }
 
   for (const alert of alerts) {
+    if (!isOperationalAlert(alert)) continue;
     if (!alert.acknowledged_at) continue;
     const ackMs = Date.parse(alert.acknowledged_at);
     if (Number.isNaN(ackMs)) continue;
@@ -345,6 +368,7 @@ export function buildDashboardInsightsMetrics(input: {
     workflowCounts: countShipmentWorkflowStatuses(input.shipments),
     assignmentCounts: countShipmentAssignments(input.shipments),
     alertSummary: buildAlertSummary(input.alerts),
+    notificationSummary: buildNotificationSummary(input.alerts),
     rootCauseCounts: countShipmentRootCauses(input.shipments),
     timeToResolveSeries: buildTimeToResolveSeries(input.alerts, input.messages, dayStarts),
   };

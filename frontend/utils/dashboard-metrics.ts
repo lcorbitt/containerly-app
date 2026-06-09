@@ -1,5 +1,6 @@
 import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
 import { isRequestInMyScope } from "@/utils/dashboard-scope";
+import { isInAppNotification } from "@/utils/in-app-event-taxonomy";
 
 export const STALE_SYNC_MS = 48 * 60 * 60 * 1000;
 export const TRIAGE_BUCKET_KEYS = ["exceptions", "eta", "docs", "customer"] as const;
@@ -34,7 +35,7 @@ export type PersonalMetrics = {
   failed: number;
   staleSync: number;
   ownedShipmentCount: number;
-  unackedAlerts: number;
+  unreadNotifications: number;
   needsAttention: number;
   statusCounts: Record<string, number>;
   statusOrder: readonly ("pending" | "syncing" | "active" | "completed" | "failed")[];
@@ -629,11 +630,34 @@ export function computePersonalMetrics(input: ComputePersonalMetricsInput): Pers
   const mineContainerIds = new Set(
     mine.map((r) => r.container_id).filter((id): id is string => Boolean(id)),
   );
-  let unackedAlerts = 0;
+  const scopedShipmentIds = new Set<string>();
+  for (const r of mine) {
+    const sid = r.container_id ? containersById[r.container_id]?.shipment_id : undefined;
+    if (sid) scopedShipmentIds.add(sid);
+  }
+  for (const sid of participatingShipments) {
+    scopedShipmentIds.add(sid);
+  }
+
+  let unreadNotifications = 0;
   for (const a of alerts) {
-    if (a.acknowledged_at) continue;
-    if (!a.container_id || !mineContainerIds.has(a.container_id)) continue;
-    unackedAlerts += 1;
+    if (a.acknowledged_at || !isInAppNotification(a)) continue;
+    if (a.recipient_user_id && a.recipient_user_id !== userId) continue;
+    if (a.recipient_user_id === userId) {
+      unreadNotifications += 1;
+      continue;
+    }
+    if (a.container_id && mineContainerIds.has(a.container_id)) {
+      unreadNotifications += 1;
+      continue;
+    }
+    if (a.shipment_id && scopedShipmentIds.has(a.shipment_id)) {
+      unreadNotifications += 1;
+      continue;
+    }
+    if (!a.container_id && !a.shipment_id) {
+      unreadNotifications += 1;
+    }
   }
 
   const dayStarts = buildDaySeries(now, 14);
@@ -659,7 +683,7 @@ export function computePersonalMetrics(input: ComputePersonalMetricsInput): Pers
     failed,
     staleSync,
     ownedShipmentCount: ownedShipmentIds.size,
-    unackedAlerts,
+    unreadNotifications,
     needsAttention,
     statusCounts,
     statusOrder,

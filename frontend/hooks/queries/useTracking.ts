@@ -35,6 +35,20 @@ export function useTrackingDashboardQuery(organizationId: string | null) {
   });
 }
 
+/** Read triage snapshot from TanStack Query cache without triggering a fetch. */
+export function useTrackingDashboardSnapshotCache(organizationId: string | null) {
+  return useQuery({
+    queryKey: organizationId
+      ? [...trackingDashboardQueryKeyRoot, organizationId]
+      : [...trackingDashboardQueryKeyRoot, "disabled", null],
+    queryFn: () => {
+      if (!organizationId) throw new Error("organizationId required");
+      return fetchTrackingDashboardSnapshot(organizationId);
+    },
+    enabled: false,
+  });
+}
+
 export function useTrackingDashboardInsightsQuery(
   organizationId: string | null,
   enabled = true,
@@ -66,6 +80,20 @@ export function useTrackingDashboardReportsQuery(
       ) as Promise<TrackingDashboardReportsBundle>;
     },
     enabled: Boolean(organizationId) && enabled,
+  });
+}
+
+/** Read triage snapshot from TanStack cache without triggering a fetch. */
+export function useCachedTrackingDashboardSnapshot(organizationId: string | null) {
+  return useQuery({
+    queryKey: organizationId
+      ? [...trackingDashboardQueryKeyRoot, organizationId]
+      : [...trackingDashboardQueryKeyRoot, "disabled", null],
+    queryFn: () => {
+      if (!organizationId) throw new Error("organizationId required");
+      return fetchTrackingDashboardSnapshot(organizationId);
+    },
+    enabled: false,
   });
 }
 

@@ -17,9 +17,19 @@ export async function listAlertsForContainers(
     .limit(limit);
 }
 
-/** `alerts` — insert on sync when status warrants. */
+/** `alerts` — insert with inbox_kind derived from alert_type when omitted. */
 export async function insertAlert(client: SupabaseClient, row: Record<string, unknown>) {
-  return client.from("alerts").insert(row);
+  const alertType = typeof row.alert_type === "string" ? row.alert_type : "";
+  const inboxKind =
+    row.inbox_kind ??
+    (alertType === "STATUS_EXCEPTION" ||
+    alertType === "SHIPMENT_DELAYED" ||
+    alertType === "TRACKING_SYNC_FAILED" ||
+    alertType === "DOCUMENT_REJECTED" ||
+    alertType === "SLA_RESPONSE_DUE"
+      ? "operational_alert"
+      : "notification");
+  return client.from("alerts").insert({ ...row, inbox_kind: inboxKind });
 }
 
 /**

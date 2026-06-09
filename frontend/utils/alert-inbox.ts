@@ -1,25 +1,25 @@
 import type { Alert } from "@/types/database";
+import { isInAppNotification } from "@/utils/in-app-event-taxonomy";
 
+/** @deprecated Message events no longer create alert rows — use shipment thread unread state. */
 export const MESSAGE_ALERT_TYPES = new Set(["MESSAGE_NEW", "MESSAGE_TEAM", "MESSAGE_REPLY"]);
 
-export function isMessageShipmentAlert(alert: Alert): boolean {
-  return MESSAGE_ALERT_TYPES.has(alert.alert_type) && Boolean(alert.shipment_id);
+/** TopNav bell: in-app notifications only (not operational alerts or legacy message rows). */
+export function filterBellNotifications(alerts: Alert[]): Alert[] {
+  return alerts.filter((alert) => isInAppNotification(alert));
 }
 
-/** Top-nav bell excludes shipment message alerts — those surface in the Messages sidenav panel. */
+/** @deprecated Use `filterBellNotifications`. */
 export function filterBellNotificationAlerts(alerts: Alert[]): Alert[] {
-  return alerts.filter((alert) => !isMessageShipmentAlert(alert));
+  return filterBellNotifications(alerts);
 }
 
-/** Message alerts where you are both actor and recipient (should never surface in inbox). */
-const SELF_AUTHORED_MESSAGE_ALERT_TYPES = MESSAGE_ALERT_TYPES;
-
-/** Hide thread notifications you triggered — inbox is for everyone else's activity. */
+/** Hide self-authored legacy message alert rows from inbox (pre-migration cleanup). */
 export function filterInboxAlertsForViewer(alerts: Alert[], viewerUserId: string): Alert[] {
   return alerts.filter((alert) => {
     if (!alert.actor_user_id || alert.actor_user_id !== viewerUserId) {
       return true;
     }
-    return !SELF_AUTHORED_MESSAGE_ALERT_TYPES.has(alert.alert_type);
+    return !MESSAGE_ALERT_TYPES.has(alert.alert_type);
   });
 }

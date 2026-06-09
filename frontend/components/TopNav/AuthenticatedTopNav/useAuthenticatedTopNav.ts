@@ -6,8 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
 import { useAcknowledgeAlertMutation } from "@/hooks/mutations/useAlerts";
-import { useOrgAlerts } from "@/hooks/queries/useAlerts";
-import { filterBellNotificationAlerts } from "@/utils/alert-inbox";
+import { useOrgNotifications } from "@/hooks/queries/useAlerts";
+import { filterBellNotifications } from "@/utils/alert-inbox";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { fetchShipment } from "@/services/shipment.service";
 import {
@@ -26,8 +26,8 @@ export function useAuthenticatedTopNav() {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
-  const allAlerts = useOrgAlerts(selectedOrgId);
-  const alerts = useMemo(() => filterBellNotificationAlerts(allAlerts), [allAlerts]);
+  const allAlerts = useOrgNotifications(selectedOrgId);
+  const alerts = useMemo(() => filterBellNotifications(allAlerts), [allAlerts]);
   const acknowledgeMut = useAcknowledgeAlertMutation(selectedOrgId);
   const ackedOnOpenRef = useRef(false);
 

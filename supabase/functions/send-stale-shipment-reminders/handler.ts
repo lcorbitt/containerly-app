@@ -86,6 +86,7 @@ export async function handle(req: Request): Promise<Response> {
           organization_id: orgId,
           shipment_id: shipmentId,
           alert_type: "SLA_RESPONSE_DUE",
+          inbox_kind: "operational_alert",
           severity: "warning",
           message: "Customer waiting beyond SLA — reply when you can",
           recipient_user_id: recipient,

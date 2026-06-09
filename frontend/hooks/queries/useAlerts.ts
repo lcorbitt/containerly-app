@@ -144,3 +144,15 @@ export function useMyAlerts(userId: string | null) {
   const q = useMyAlertsQuery(userId);
   return q.data ?? [];
 }
+
+/** TopNav bell — org-scoped in-app notifications. */
+export const useOrgNotificationsQuery = useOrgAlertsQuery;
+export function useOrgNotifications(organizationId: string | null) {
+  return useOrgAlerts(organizationId);
+}
+
+/** Customer TopNav bell — personal in-app notifications. */
+export const useMyNotificationsQuery = useMyAlertsQuery;
+export function useMyNotifications(userId: string | null) {
+  return useMyAlerts(userId);
+}

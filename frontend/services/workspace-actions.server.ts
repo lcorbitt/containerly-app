@@ -16,8 +16,6 @@ import { persistShipmentWorkflowStatus } from "@/services/document-workflow.serv
 import {
   runCustomerDocumentUploadNotification,
   runOperatorDraftsPublishedNotification,
-  runCustomerShipmentMessageNotifications,
-  runOperatorShipmentMessageNotifications,
 } from "@/services/notification.server";
 import {
   buildMessageActivityMetadata,
@@ -29,7 +27,6 @@ import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   deleteAlertsForReportMessageIds,
-  syncAlertsForEditedReportMessage,
 } from "@/services/alert.server";
 import {
   deleteActivityEventsForReportMessageIds,
@@ -200,16 +197,12 @@ export async function updateReportMessageByIdForUser(
 
   try {
     const admin = createAdminClient();
-    await syncAlertsForEditedReportMessage(admin, {
-      reportMessageId: messageId,
-      bodyPreview: stripMessageMarkup(trimmed).trim(),
-    });
     await syncActivityEventsForEditedReportMessage(admin, {
       reportMessageId: messageId,
       body: trimmed,
     });
   } catch {
-    /* best-effort — alert/activity row updates also trigger realtime */
+    /* best-effort — activity row updates also trigger realtime */
   }
 
   return updated as ReportMessage;
@@ -871,29 +864,6 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     } catch {
       /* best-effort — customer activity rows use service role on Edge */
     }
-  }
-
-  try {
-    if (authorKind === "customer") {
-      await runCustomerShipmentMessageNotifications({
-        organizationId: input.organizationId,
-        shipmentId: input.shipmentId,
-        customerUserId: userId,
-        body: trimmedBody || input.body,
-        reportMessageId: messageId,
-      });
-    } else {
-      await runOperatorShipmentMessageNotifications({
-        organizationId: input.organizationId,
-        shipmentId: input.shipmentId,
-        actorUserId: userId,
-        body: trimmedBody || input.body,
-        internalOnly: input.internalOnly,
-        reportMessageId: messageId,
-      });
-    }
-  } catch {
-    /* best-effort */
   }
 
   try {

@@ -1,10 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { syncAlertsForEditedReportMessage } from "@supabase-shared/message-alert-sync.service";
 import type { Alert } from "@/types/database";
-import { filterInboxAlertsForViewer, MESSAGE_ALERT_TYPES } from "@/utils/alert-inbox";
+import { filterInboxAlertsForViewer } from "@/utils/alert-inbox";
+import { isInAppNotification } from "@/utils/in-app-event-taxonomy";
 
-export { syncAlertsForEditedReportMessage, filterInboxAlertsForViewer };
+export { filterInboxAlertsForViewer };
+
+function isNotificationBellRow(row: Pick<Alert, "alert_type" | "inbox_kind">): boolean {
+  return isInAppNotification(row);
+}
 
 export async function acknowledgeAllOrgAlertsForViewer(
   supabase: SupabaseClient,
@@ -13,7 +17,7 @@ export async function acknowledgeAllOrgAlertsForViewer(
 ): Promise<number> {
   const { data: rows, error: fetchError } = await supabase
     .from("alerts")
-    .select("id, alert_type, actor_user_id, recipient_user_id")
+    .select("id, recipient_user_id, alert_type")
     .eq("organization_id", organizationId)
     .is("acknowledged_at", null);
 
@@ -21,11 +25,7 @@ export async function acknowledgeAllOrgAlertsForViewer(
 
   const ids = (rows ?? [])
     .filter((row) => {
-      const actorUserId = row.actor_user_id as string | null;
-      const alertType = row.alert_type as string;
-      if (actorUserId && actorUserId === viewerUserId && MESSAGE_ALERT_TYPES.has(alertType)) {
-        return false;
-      }
+      if (!isNotificationBellRow(row as Pick<Alert, "alert_type" | "inbox_kind">)) return false;
       const recipientUserId = row.recipient_user_id as string | null;
       return recipientUserId === null || recipientUserId === viewerUserId;
     })
@@ -57,12 +57,13 @@ export async function fetchOrgAlertsPage(
     .select("*")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw new Error(error.message);
-  return filterInboxAlertsForViewer((data as Alert[]) ?? [], viewerUserId);
+  const rows = ((data as Alert[]) ?? []).filter((alert) => isInAppNotification(alert));
+  return filterInboxAlertsForViewer(rows, viewerUserId).slice(0, limit);
 }
 
-/** Customer inbox: alerts personally addressed to the viewer across all accessible shipments. */
+/** Customer bell: in-app notifications personally addressed to the viewer. */
 export async function fetchMyAlertsPage(
   supabase: SupabaseClient,
   viewerUserId: string,
@@ -73,25 +74,29 @@ export async function fetchMyAlertsPage(
     .select("*")
     .eq("recipient_user_id", viewerUserId)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw new Error(error.message);
-  return (data as Alert[]) ?? [];
+  return ((data as Alert[]) ?? [])
+    .filter((alert) => isInAppNotification(alert))
+    .slice(0, limit);
 }
 
-/** Acknowledge every unread alert personally addressed to the viewer. */
+/** Acknowledge every unread notification personally addressed to the viewer. */
 export async function acknowledgeAllMyAlerts(
   supabase: SupabaseClient,
   viewerUserId: string,
 ): Promise<number> {
   const { data: rows, error: fetchError } = await supabase
     .from("alerts")
-    .select("id")
+    .select("id, alert_type")
     .eq("recipient_user_id", viewerUserId)
     .is("acknowledged_at", null);
 
   if (fetchError) throw new Error(fetchError.message);
 
-  const ids = (rows ?? []).map((row) => row.id as string);
+  const ids = (rows ?? [])
+    .filter((row) => isNotificationBellRow(row as Pick<Alert, "alert_type" | "inbox_kind">))
+    .map((row) => row.id as string);
   if (ids.length === 0) return 0;
 
   const nowIso = new Date().toISOString();
@@ -107,7 +112,7 @@ export async function acknowledgeAllMyAlerts(
   return ids.length;
 }
 
-/** Remove inbox rows tied to deleted thread messages (incl. legacy details.message_id). */
+/** Remove legacy inbox rows tied to deleted thread messages. */
 export async function deleteAlertsForReportMessageIds(
   client: SupabaseClient,
   messageIds: string[],

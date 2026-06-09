@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMyAlerts } from "@/hooks/queries/useAlerts";
+import { useMyNotifications } from "@/hooks/queries/useAlerts";
 import { useAcknowledgeAlertMutation } from "@/hooks/mutations/useAlerts";
-import { filterBellNotificationAlerts } from "@/utils/alert-inbox";
+import { filterBellNotifications } from "@/utils/alert-inbox";
 
 /** Drives the customer top-nav notification bell. `userId` comes from the shared session in
  *  `useCustomerTopNav` so we don't spin up a second auth client / subscription in the shell. */
@@ -12,8 +12,8 @@ export function useCustomerNotifications(userId: string | null) {
   const menuRef = useRef<HTMLDivElement>(null);
   const ackedOnOpenRef = useRef(false);
 
-  const allAlerts = useMyAlerts(userId);
-  const alerts = useMemo(() => filterBellNotificationAlerts(allAlerts), [allAlerts]);
+  const allAlerts = useMyNotifications(userId);
+  const alerts = useMemo(() => filterBellNotifications(allAlerts), [allAlerts]);
   const acknowledgeMut = useAcknowledgeAlertMutation(null);
 
   const unackedCount = useMemo(

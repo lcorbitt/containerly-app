@@ -1,8 +1,13 @@
 /**
- * Cross-runtime in-app alert helpers (Next server + Supabase Edge).
+ * Cross-runtime in-app event helpers (Next server + Supabase Edge).
+ * Notifications → TopNav bell; operational alerts → /alerts triage enrichment.
  * Email delivery stays in `supabase/functions/_lib/notification-workflow.service.ts`.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  inboxKindForAlertType,
+  type InboxKind,
+} from "@shared/in-app-event-taxonomy.ts";
 
 export interface ShipmentAlertContext {
   organizationId: string;
@@ -10,8 +15,26 @@ export interface ShipmentAlertContext {
   containerId?: string | null;
 }
 
-async function insertAlert(client: SupabaseClient, row: Record<string, unknown>) {
-  return client.from("alerts").insert(row);
+async function insertInAppNotification(client: SupabaseClient, row: Record<string, unknown>) {
+  return client.from("alerts").insert({
+    ...row,
+    inbox_kind: "notification" satisfies InboxKind,
+  });
+}
+
+async function insertOperationalAlert(client: SupabaseClient, row: Record<string, unknown>) {
+  return client.from("alerts").insert({
+    ...row,
+    inbox_kind: "operational_alert" satisfies InboxKind,
+  });
+}
+
+async function insertInAppEvent(client: SupabaseClient, row: Record<string, unknown>) {
+  const alertType = typeof row.alert_type === "string" ? row.alert_type : "";
+  if (inboxKindForAlertType(alertType) === "operational_alert") {
+    return insertOperationalAlert(client, row);
+  }
+  return insertInAppNotification(client, row);
 }
 
 function isSelfNotification(recipientUserId: string, actorUserId: string | null | undefined): boolean {
@@ -99,17 +122,6 @@ export function formatActorOnShipmentMessage(
   return `${actorName} on ${orderPhrase}: ${detail}`;
 }
 
-/** Link MESSAGE_* alerts to a report_messages row (DB cascade + legacy details lookup on delete). */
-export function messageAlertLinkage(reportMessageId: string): {
-  report_message_id: string;
-  details: { message_id: string };
-} {
-  return {
-    report_message_id: reportMessageId,
-    details: { message_id: reportMessageId },
-  };
-}
-
 async function insertAlertsForRecipients(
   client: SupabaseClient,
   recipientIds: string[],
@@ -119,7 +131,7 @@ async function insertAlertsForRecipients(
     typeof row.actor_user_id === "string" ? row.actor_user_id : null;
   for (const userId of recipientIds) {
     if (isSelfNotification(userId, actorId)) continue;
-    await insertAlert(client, { ...row, recipient_user_id: userId });
+    await insertInAppEvent(client, { ...row, recipient_user_id: userId });
   }
 }
 
@@ -164,7 +176,7 @@ export async function notifyUserAssignedAsAssignee(
   if (args.assigneeUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
   const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -190,7 +202,7 @@ export async function notifyUserUnassignedAsAssignee(
   const message = args.newAssigneeUserId
     ? `${actorName} reassigned ${orderPhrase} to someone else.`
     : `${actorName} removed you as assignee of ${orderPhrase}.`;
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -212,7 +224,7 @@ export async function notifyUserAssignedAsParticipant(
   if (args.participantUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
   const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -234,7 +246,7 @@ export async function notifyUserRemovedAsParticipant(
   if (args.participantUserId === args.actorUserId) return;
   const actorName = await fetchProfileDisplayName(client, args.actorUserId);
   const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -304,7 +316,7 @@ export async function notifyAssigneeCustomerAccessRequested(
 ): Promise<void> {
   const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
   const masked = args.requesterEmail.replace(/(^.).*(@.*$)/, "$1***$2");
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -332,7 +344,7 @@ export async function notifyCustomerInviteReceived(
   if (isSelfNotification(args.recipientUserId, args.invitedByUserId)) return;
   const actorName = await fetchProfileDisplayName(client, args.invitedByUserId);
   const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await insertAlert(client, {
+  await insertInAppNotification(client, {
     organization_id: args.organizationId,
     shipment_id: args.shipmentId,
     container_id: args.containerId ?? null,
@@ -404,92 +416,6 @@ export async function notifyOperatorsOriginalsMailed(
     message: `${actorName} marked original documents as mailed${trackingPart}.`,
     excludeUserId: args.actorUserId,
     actorUserId: args.actorUserId,
-  });
-}
-
-export async function notifyOperatorsTeamMessage(
-  client: SupabaseClient,
-  args: ShipmentAlertContext & {
-    actorUserId: string;
-    preview: string;
-    reportMessageId: string;
-  },
-): Promise<void> {
-  const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await notifyShipmentStakeholdersInApp(client, {
-    ...args,
-    alertType: "MESSAGE_TEAM",
-    severity: "info",
-    message: formatActorOnShipmentMessage(
-      actorName,
-      orderPhrase,
-      args.preview.slice(0, 160),
-    ),
-    excludeUserId: args.actorUserId,
-    actorUserId: args.actorUserId,
-    ...messageAlertLinkage(args.reportMessageId),
-  });
-}
-
-export async function notifyCustomersOperatorReply(
-  client: SupabaseClient,
-  args: ShipmentAlertContext & {
-    operatorUserId: string;
-    preview: string;
-    reportMessageId: string;
-  },
-): Promise<void> {
-  const { data: rows } = await client
-    .from("shipment_customer_access")
-    .select("customer_user_id")
-    .eq("shipment_id", args.shipmentId)
-    .is("revoked_at", null);
-  const customerIds = (rows ?? [])
-    .map((r) => r.customer_user_id as string | null)
-    .filter((id): id is string => Boolean(id));
-
-  const operatorName = await fetchProfileDisplayName(client, args.operatorUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-
-  for (const customerUserId of customerIds) {
-    if (isSelfNotification(customerUserId, args.operatorUserId)) continue;
-    await insertAlert(client, {
-      organization_id: args.organizationId,
-      shipment_id: args.shipmentId,
-      container_id: args.containerId ?? null,
-      alert_type: "MESSAGE_REPLY",
-      severity: "info",
-      message: formatActorOnShipmentMessage(
-        operatorName,
-        orderPhrase,
-        args.preview.slice(0, 160),
-      ),
-      recipient_user_id: customerUserId,
-      actor_user_id: args.operatorUserId,
-      ...messageAlertLinkage(args.reportMessageId),
-    });
-  }
-}
-
-export async function notifyOperatorsOperatorRepliedToCustomer(
-  client: SupabaseClient,
-  args: ShipmentAlertContext & {
-    actorUserId: string;
-    preview: string;
-    reportMessageId: string;
-  },
-): Promise<void> {
-  const actorName = await fetchProfileDisplayName(client, args.actorUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(client, args.shipmentId);
-  await notifyShipmentStakeholdersInApp(client, {
-    ...args,
-    alertType: "MESSAGE_REPLY",
-    severity: "info",
-    message: `${actorName} replied to the customer on ${orderPhrase}: ${args.preview.slice(0, 120)}`,
-    excludeUserId: args.actorUserId,
-    actorUserId: args.actorUserId,
-    ...messageAlertLinkage(args.reportMessageId),
   });
 }
 

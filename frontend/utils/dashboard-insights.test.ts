@@ -45,31 +45,34 @@ describe("countShipmentAssignments", () => {
 });
 
 describe("buildAlertSummary", () => {
-  it("summarizes open alerts by severity and top types", () => {
+  it("summarizes operational alerts only", () => {
     const summary = buildAlertSummary([
       {
         alert_type: "SHIPMENT_DELAYED",
+        inbox_kind: "operational_alert",
         severity: "critical",
         acknowledged_at: null,
         created_at: "2026-06-08T10:00:00.000Z",
       },
       {
         alert_type: "SHIPMENT_DELAYED",
+        inbox_kind: "operational_alert",
         severity: "warning",
         acknowledged_at: "2026-06-08T12:00:00.000Z",
         created_at: "2026-06-08T09:00:00.000Z",
       },
       {
         alert_type: "DOCUMENT_UPLOADED",
+        inbox_kind: "notification",
         severity: "info",
         acknowledged_at: null,
         created_at: "2026-06-08T11:00:00.000Z",
       },
     ]);
 
-    expect(summary.open).toBe(2);
+    expect(summary.open).toBe(1);
     expect(summary.acknowledged).toBe(1);
-    expect(summary.bySeverity).toEqual({ critical: 1, warning: 0, info: 1 });
+    expect(summary.bySeverity).toEqual({ critical: 1, warning: 0, info: 0 });
     expect(summary.topTypes[0]).toMatchObject({ alert_type: "SHIPMENT_DELAYED", count: 2 });
   });
 });
@@ -94,7 +97,15 @@ describe("buildTimeToResolveSeries", () => {
     const ackIso = new Date(targetDay + 6 * 3_600_000).toISOString();
     const createdIso = new Date(targetDay + 2 * 3_600_000).toISOString();
     const series = buildTimeToResolveSeries(
-      [{ alert_type: "INFO", severity: "info", created_at: createdIso, acknowledged_at: ackIso }],
+      [
+        {
+          alert_type: "SHIPMENT_DELAYED",
+          inbox_kind: "operational_alert",
+          severity: "warning",
+          created_at: createdIso,
+          acknowledged_at: ackIso,
+        },
+      ],
       [],
       dayStarts,
     );
@@ -133,6 +144,7 @@ describe("buildDashboardInsightsMetrics", () => {
     });
     expect(metrics.assignmentCounts).toEqual({ assigned: 0, unassigned: 0, ownedUnassigned: 0 });
     expect(metrics.alertSummary.open).toBe(0);
+    expect(metrics.notificationSummary.open).toBe(0);
     expect(metrics.timeToResolveSeries).toHaveLength(14);
   });
 });

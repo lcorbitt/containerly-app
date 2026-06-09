@@ -1,22 +1,15 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { stripMessageMarkup } from "@/utils/message-markup";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   fetchProfileDisplayName,
-  fetchShipmentOrderPhrase,
-  formatActorOnShipmentMessage,
-  messageAlertLinkage,
-  notifyCustomersOperatorReply,
   notifyOrgAdminsMemberJoined,
   notifyOperatorsBolImported,
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsCustomerDocumentUploaded,
   notifyOperatorsDraftsPublished,
   notifyOperatorsOriginalsMailed,
-  notifyOperatorsTeamMessage,
   notifyOperatorsTrackingLinked,
-  notifyShipmentStakeholdersInApp,
   notifyUserAssignedAsAssignee,
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
@@ -106,67 +99,6 @@ export async function runParticipantRemovedNotification(input: {
     shipmentId: input.shipmentId,
     participantUserId: input.participantUserId,
     actorUserId: input.actorUserId,
-  });
-}
-
-export async function runOperatorShipmentMessageNotifications(input: {
-  organizationId: string;
-  shipmentId: string;
-  actorUserId: string;
-  body: string;
-  internalOnly: boolean;
-  reportMessageId: string;
-}): Promise<void> {
-  if (input.internalOnly) return;
-  const preview = stripMessageMarkup(input.body).trim();
-  if (!preview) return;
-
-  const admin = adminClient();
-  await notifyOperatorsTeamMessage(admin, {
-    organizationId: input.organizationId,
-    shipmentId: input.shipmentId,
-    actorUserId: input.actorUserId,
-    preview,
-    reportMessageId: input.reportMessageId,
-  });
-
-  await notifyCustomersOperatorReply(admin, {
-    organizationId: input.organizationId,
-    shipmentId: input.shipmentId,
-    operatorUserId: input.actorUserId,
-    preview,
-    reportMessageId: input.reportMessageId,
-  });
-}
-
-export async function runCustomerShipmentMessageNotifications(input: {
-  organizationId: string;
-  shipmentId: string;
-  customerUserId: string;
-  body: string;
-  reportMessageId: string;
-}): Promise<void> {
-  const preview = stripMessageMarkup(input.body).trim();
-  if (!preview) return;
-
-  const admin = adminClient();
-  const customerName = await fetchProfileDisplayName(admin, input.customerUserId);
-  const orderPhrase = await fetchShipmentOrderPhrase(admin, input.shipmentId);
-
-  await notifyShipmentStakeholdersInApp(admin, {
-    organizationId: input.organizationId,
-    shipmentId: input.shipmentId,
-    containerId: null,
-    alertType: "MESSAGE_NEW",
-    severity: "warning",
-    message: formatActorOnShipmentMessage(
-      customerName,
-      orderPhrase,
-      preview.slice(0, 160),
-    ),
-    excludeUserId: input.customerUserId,
-    actorUserId: input.customerUserId,
-    ...messageAlertLinkage(input.reportMessageId),
   });
 }
 
