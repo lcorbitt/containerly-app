@@ -1,7 +1,5 @@
 "use client";
 
-import { MessageCircleMore } from "lucide-react";
-import { ActionHoverTooltip } from "@/components/ActionHoverTooltip";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { Modal } from "@/components/Modal";
 import {
@@ -9,9 +7,6 @@ import {
   FEEDBACK_MODAL_TITLE,
   FEEDBACK_SUBMIT_LABEL,
   FEEDBACK_SUBMITTING_LABEL,
-  FEEDBACK_WIDGET_FAB_CLASS,
-  FEEDBACK_WIDGET_FAB_TOOLTIP_LABEL,
-  FEEDBACK_WIDGET_FAB_WRAPPER_CLASS,
 } from "./constants";
 import { useFeedbackWidget } from "./useFeedbackWidget";
 import { formatAccountKindLabel } from "./utils";
@@ -27,25 +22,6 @@ export function FeedbackWidget() {
 
   return (
     <>
-      {!w.open ? (
-        <div className={FEEDBACK_WIDGET_FAB_WRAPPER_CLASS}>
-          <ActionHoverTooltip
-            label={FEEDBACK_WIDGET_FAB_TOOLTIP_LABEL}
-            labelClassName="whitespace-nowrap"
-            placement="left"
-          >
-            <button
-              type="button"
-              aria-label="Open feedback"
-              className={FEEDBACK_WIDGET_FAB_CLASS}
-              onClick={() => w.setOpen(true)}
-            >
-              <MessageCircleMore className="h-5 w-5" strokeWidth={2} aria-hidden />
-            </button>
-          </ActionHoverTooltip>
-        </div>
-      ) : null}
-
       <Modal
         open={w.open}
         onClose={w.close}

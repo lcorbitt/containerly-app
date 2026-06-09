@@ -20,6 +20,7 @@ export function useAcknowledgeAlertMutation(organizationId: string | null) {
       if (organizationId) {
         void qc.invalidateQueries({ queryKey: [...orgAlertsQueryKeyRoot, organizationId] });
       }
+      void qc.invalidateQueries({ queryKey: myAlertsQueryKeyRoot });
     },
   });
 }

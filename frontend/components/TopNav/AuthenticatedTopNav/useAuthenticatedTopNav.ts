@@ -5,10 +5,9 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { useNewShipmentModal } from "@/components/NewShipmentModal";
-import { useAcknowledgeAllOrgAlertsMutation } from "@/hooks/mutations/useAlerts";
-import { useMarkShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
+import { useAcknowledgeAlertMutation } from "@/hooks/mutations/useAlerts";
 import { useOrgAlerts } from "@/hooks/queries/useAlerts";
-import { isMessageShipmentAlert } from "@/utils/alert-inbox";
+import { filterBellNotificationAlerts } from "@/utils/alert-inbox";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
 import { fetchShipment } from "@/services/shipment.service";
 import {
@@ -27,9 +26,9 @@ export function useAuthenticatedTopNav() {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const [notificationsMenuOpen, setNotificationsMenuOpen] = useState(false);
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
-  const alerts = useOrgAlerts(selectedOrgId);
-  const acknowledgeAllMut = useAcknowledgeAllOrgAlertsMutation(selectedOrgId);
-  const markThreadReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
+  const allAlerts = useOrgAlerts(selectedOrgId);
+  const alerts = useMemo(() => filterBellNotificationAlerts(allAlerts), [allAlerts]);
+  const acknowledgeMut = useAcknowledgeAlertMutation(selectedOrgId);
   const ackedOnOpenRef = useRef(false);
 
   const unackedCount = useMemo(
@@ -122,19 +121,10 @@ export function useAuthenticatedTopNav() {
     if (ackedOnOpenRef.current || unackedCount === 0 || !selectedOrgId) return;
     ackedOnOpenRef.current = true;
 
-    const messageShipmentIds = [
-      ...new Set(
-        alerts
-          .filter((a) => !a.acknowledged_at && isMessageShipmentAlert(a) && a.shipment_id)
-          .map((a) => a.shipment_id as string),
-      ),
-    ];
-
-    for (const shipmentId of messageShipmentIds) {
-      markThreadReadMut.mutate({ shipmentId });
+    for (const alert of alerts.filter((a) => !a.acknowledged_at)) {
+      acknowledgeMut.mutate(alert.id);
     }
-    acknowledgeAllMut.mutate();
-  }, [notificationsMenuOpen, unackedCount, selectedOrgId, alerts]);
+  }, [notificationsMenuOpen, unackedCount, selectedOrgId, alerts, acknowledgeMut]);
 
   useEffect(() => {
     if (!notificationsMenuOpen) return;

@@ -6,6 +6,11 @@ export function isMessageShipmentAlert(alert: Alert): boolean {
   return MESSAGE_ALERT_TYPES.has(alert.alert_type) && Boolean(alert.shipment_id);
 }
 
+/** Top-nav bell excludes shipment message alerts — those surface in the Messages sidenav panel. */
+export function filterBellNotificationAlerts(alerts: Alert[]): Alert[] {
+  return alerts.filter((alert) => !isMessageShipmentAlert(alert));
+}
+
 /** Message alerts where you are both actor and recipient (should never surface in inbox). */
 const SELF_AUTHORED_MESSAGE_ALERT_TYPES = MESSAGE_ALERT_TYPES;
 

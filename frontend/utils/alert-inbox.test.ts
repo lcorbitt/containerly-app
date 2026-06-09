@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterInboxAlertsForViewer } from "./alert-inbox";
+import { filterBellNotificationAlerts, filterInboxAlertsForViewer } from "./alert-inbox";
 import type { Alert } from "@/types/database";
 
 function messageAlert(overrides: Partial<Alert> = {}): Alert {
@@ -21,6 +21,13 @@ function messageAlert(overrides: Partial<Alert> = {}): Alert {
     ...overrides,
   };
 }
+
+describe("filterBellNotificationAlerts", () => {
+  it("excludes shipment message alerts from the top-nav bell", () => {
+    const nonMessage = messageAlert({ alert_type: "DOCUMENT_UPLOADED" });
+    expect(filterBellNotificationAlerts([messageAlert(), nonMessage])).toEqual([nonMessage]);
+  });
+});
 
 describe("filterInboxAlertsForViewer", () => {
   it("hides message alerts triggered by the viewer", () => {

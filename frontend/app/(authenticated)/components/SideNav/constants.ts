@@ -1,7 +1,6 @@
 import {
   Anchor,
   BarChart2,
-  Bell,
   Box,
   Building2,
   FileText,
@@ -12,6 +11,7 @@ import {
   Package,
   Settings,
   Ship,
+  TriangleAlert,
   Users,
   Wrench,
   Zap,
@@ -33,7 +33,7 @@ export const dashboardNavItem = {
 export const alertsNavItem = {
   href: "/alerts",
   label: "Alerts",
-  icon: Bell,
+  icon: TriangleAlert,
 } as const;
 
 export const shipmentsNavItem = {
@@ -79,7 +79,6 @@ export const settingsNavItem = {
 } as const;
 
 export const helpNavItem = {
-  href: "/how-it-works",
   label: "Help & Support",
   icon: HelpCircle,
 } as const;
@@ -94,12 +93,10 @@ export const toolsNavGroup = {
   ],
 } as const;
 
-export const OPERATIONS_SECTION_LABEL = "Operations";
-
 export const freightNavItems = [
   dashboardNavItem,
-  alertsNavItem,
   shipmentsNavItem,
+  alertsNavItem,
   containersNavItem,
   documentsNavItem,
   customersNavItem,

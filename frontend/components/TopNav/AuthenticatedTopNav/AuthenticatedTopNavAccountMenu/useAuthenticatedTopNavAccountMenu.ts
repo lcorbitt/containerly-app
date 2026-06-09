@@ -8,23 +8,15 @@ import { useOrganizationWorkspaceOptional } from "@/contexts/organization-worksp
 import { useSessionAvatar } from "@/atoms/session-avatar";
 import { signOutBrowser } from "@/services/auth.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
-import { profileInitials } from "@/utils/display-initials";
 import { accountRoleLabel } from "@/utils/account-role";
-import type { SideNavAccountMenuPanelPosition, SideNavAccountMenuProps } from "./types";
+import { profileInitials } from "@/utils/display-initials";
+import type { AuthenticatedTopNavAccountMenuProps } from "./types";
 
-const PANEL_GAP_PX = 8;
-const PANEL_MIN_WIDTH_PX = 224;
-
-function measurePanelPosition(trigger: HTMLElement): SideNavAccountMenuPanelPosition {
-  const rect = trigger.getBoundingClientRect();
-  return {
-    bottom: window.innerHeight - rect.top + PANEL_GAP_PX,
-    left: rect.left,
-    width: Math.max(rect.width, PANEL_MIN_WIDTH_PX),
-  };
-}
-
-export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAccountMenuProps) {
+export function useAuthenticatedTopNavAccountMenu({
+  email,
+  fullName,
+  isCustomer,
+}: AuthenticatedTopNavAccountMenuProps) {
   const router = useRouter();
   const { startNavigation } = useNavigationProgress();
   const workspace = useOrganizationWorkspaceOptional();
@@ -33,24 +25,14 @@ export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAc
   const isSuperAdmin = workspace?.isSuperAdmin ?? false;
   const { profileImagePath } = useSessionAvatar();
   const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [panelPosition, setPanelPosition] = useState<SideNavAccountMenuPanelPosition | null>(null);
+  const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
-  const menuPanelRef = useRef<HTMLDivElement>(null);
-
-  const syncPanelPosition = useCallback(() => {
-    const trigger = accountMenuRef.current;
-    if (!trigger) return;
-    setPanelPosition(measurePanelPosition(trigger));
-  }, []);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedOrg = useMemo(
     () => orgs.find((r) => r.organizations?.id === selectedOrgId) ?? null,
     [orgs, selectedOrgId],
   );
-
-  const orgName = selectedOrg?.organizations?.name?.trim() ?? null;
 
   const roleLabel = useMemo(
     () =>
@@ -69,39 +51,30 @@ export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAc
   );
 
   useEffect(() => {
-    if (!accountMenuOpen) {
-      setPanelPosition(null);
-      return;
-    }
-
-    syncPanelPosition();
+    if (!open) return;
 
     function onPointerDown(e: MouseEvent) {
-      const target = e.target as Node;
-      if (accountMenuRef.current?.contains(target)) return;
-      if (menuPanelRef.current?.contains(target)) return;
-      setAccountMenuOpen(false);
+      if (containerRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
     }
 
-    function onLayoutChange() {
-      syncPanelPosition();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
     }
 
     document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("resize", onLayoutChange);
-    window.addEventListener("scroll", onLayoutChange, true);
+    document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("resize", onLayoutChange);
-      window.removeEventListener("scroll", onLayoutChange, true);
+      document.removeEventListener("keydown", onKey);
     };
-  }, [accountMenuOpen, syncPanelPosition]);
+  }, [open]);
 
   const logout = useCallback(async () => {
     if (signingOut) return;
 
     setSigningOut(true);
-    setAccountMenuOpen(false);
+    setOpen(false);
     startNavigation({ message: "Signing out..." });
 
     try {
@@ -113,27 +86,16 @@ export function useSideNavAccountMenu({ email, fullName, isCustomer }: SideNavAc
     }
   }, [router, signingOut, startNavigation]);
 
-  const toggleAccountMenu = useCallback(() => {
-    setAccountMenuOpen((value) => {
-      const next = !value;
-      if (next) {
-        queueMicrotask(() => syncPanelPosition());
-      }
-      return next;
-    });
-  }, [syncPanelPosition]);
+  const toggle = useCallback(() => setOpen((value) => !value), []);
 
   return {
-    accountMenuOpen,
-    panelPosition,
-    accountMenuRef,
-    menuPanelRef,
+    open,
+    toggle,
+    containerRef,
     avatarUrl,
     initials,
     accountPrimaryLabel,
-    orgName,
     roleLabel,
-    toggleAccountMenu,
     logout,
     signingOut,
   };

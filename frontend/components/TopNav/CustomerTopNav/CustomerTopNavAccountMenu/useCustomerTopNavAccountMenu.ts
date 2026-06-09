@@ -55,7 +55,8 @@ export function useCustomerTopNavAccountMenu() {
 
   const avatarUrl = getProfileImagePublicUrlBrowser(profileImagePath);
   const initials = profileInitials({ full_name: fullName, email });
-  const { primary: primaryLabel, secondary: secondaryLabel } = profileMenuLabels(fullName, email);
+  const { primary: primaryLabel } = profileMenuLabels(fullName, email);
+  const roleLabel = "Customer";
 
   const toggle = useCallback(() => setOpen((value) => !value), []);
 
@@ -78,7 +79,7 @@ export function useCustomerTopNavAccountMenu() {
     avatarUrl,
     initials,
     primaryLabel,
-    secondaryLabel,
+    roleLabel,
     logout,
     signingOut,
   };

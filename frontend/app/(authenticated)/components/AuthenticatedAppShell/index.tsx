@@ -37,14 +37,13 @@ export function AuthenticatedAppShell({
         <MockJourneyModalHost>
           <OrgWorkspaceRealtimeBridge />
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
-              <AuthenticatedTopNav />
+              <AuthenticatedTopNav
+                email={email}
+                fullName={fullName}
+                isCustomer={isCustomer}
+              />
               <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>
-                <SideNav
-                  isSuperAdmin={isSuperAdmin}
-                  isCustomer={isCustomer}
-                  email={email}
-                  fullName={fullName}
-                />
+                <SideNav isSuperAdmin={isSuperAdmin} />
                 <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS} data-authenticated-main-scroll>
                   <div className={AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS}>
                     <AuthenticatedMainPane>{children}</AuthenticatedMainPane>

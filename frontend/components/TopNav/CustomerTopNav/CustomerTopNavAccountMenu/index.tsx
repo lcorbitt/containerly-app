@@ -20,7 +20,7 @@ export function CustomerTopNavAccountMenu() {
     avatarUrl,
     initials,
     primaryLabel,
-    secondaryLabel,
+    roleLabel,
     logout,
     signingOut,
   } = useCustomerTopNavAccountMenu();
@@ -51,9 +51,9 @@ export function CustomerTopNavAccountMenu() {
             <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {primaryLabel}
             </p>
-            {secondaryLabel ? (
+            {roleLabel ? (
               <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
-                {secondaryLabel}
+                {roleLabel}
               </p>
             ) : null}
           </div>

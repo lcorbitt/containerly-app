@@ -3,7 +3,6 @@
 import { MessageSquare, Package, Settings } from "lucide-react";
 import { MessagesList } from "@/app/(authenticated)/components/MessagesList";
 import { SideNavLink } from "@/app/(authenticated)/components/SideNav/SideNavLink";
-import { SideNavAccountMenu } from "@/app/(authenticated)/components/SideNav/SideNavAccountMenu";
 import { SideNavPanelTrigger } from "@/app/(authenticated)/components/SideNav/SideNavPanelTrigger";
 import { isSideNavLinkActive } from "@/app/(authenticated)/components/SideNav/utils";
 import { SubSideNav } from "@/components/SubSideNav";
@@ -15,13 +14,7 @@ const NAV_ICONS = {
   [CUSTOMER_MY_SHIPMENTS_LABEL]: Package,
 } as const;
 
-export function CustomerSideNav({
-  email,
-  fullName,
-}: {
-  email: string;
-  fullName?: string | null;
-}) {
+export function CustomerSideNav() {
   const {
     pathname,
     messagesOpen,
@@ -63,9 +56,6 @@ export function CustomerSideNav({
           />
         </nav>
 
-        <div className="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
-          <SideNavAccountMenu email={email} fullName={fullName} isCustomer />
-        </div>
       </div>
 
       <SubSideNav

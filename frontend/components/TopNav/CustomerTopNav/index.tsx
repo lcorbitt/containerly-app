@@ -80,6 +80,7 @@ export function CustomerTopNav({
                 <>
                   {notificationsBell}
                   <ThemeToggle className={CUSTOMER_TOP_NAV_THEME_TOGGLE_CLASS} />
+                  <CustomerTopNavAccountMenu />
                 </>
               ) : (
                 <>

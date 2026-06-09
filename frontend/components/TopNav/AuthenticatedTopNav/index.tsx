@@ -5,7 +5,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavBrand } from "../NavBrand";
 import { TopNavBreadcrumb } from "../TopNavBreadcrumb";
 import { TopNavShell } from "../TopNavShell";
+import { AuthenticatedTopNavAccountMenu } from "./AuthenticatedTopNavAccountMenu";
 import { NotificationsMenu } from "./NotificationsMenu";
+import type { AuthenticatedTopNavAccountMenuProps } from "./AuthenticatedTopNavAccountMenu/types";
 import {
   AUTHENTICATED_TOP_NAV_ACTION_CLASS,
   AUTHENTICATED_TOP_NAV_ACTION_LABEL_CLASS,
@@ -22,7 +24,11 @@ import {
 } from "./constants";
 import { useAuthenticatedTopNav } from "./useAuthenticatedTopNav";
 
-export function AuthenticatedTopNav() {
+export function AuthenticatedTopNav({
+  email,
+  fullName,
+  isCustomer,
+}: AuthenticatedTopNavAccountMenuProps) {
   const {
     notificationsMenuOpen,
     notificationsMenuRef,
@@ -122,6 +128,12 @@ export function AuthenticatedTopNav() {
               onClose={closeNotificationsMenu}
             />
           ) : null}
+
+          <AuthenticatedTopNavAccountMenu
+            email={email}
+            fullName={fullName}
+            isCustomer={isCustomer}
+          />
         </div>
       </div>
     </TopNavShell>

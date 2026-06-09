@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMyAlerts } from "@/hooks/queries/useAlerts";
-import { useAcknowledgeAllMyAlertsMutation } from "@/hooks/mutations/useAlerts";
-import { useMarkImporterShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
-import { isMessageShipmentAlert } from "@/utils/alert-inbox";
+import { useAcknowledgeAlertMutation } from "@/hooks/mutations/useAlerts";
+import { filterBellNotificationAlerts } from "@/utils/alert-inbox";
 
 /** Drives the customer top-nav notification bell. `userId` comes from the shared session in
  *  `useCustomerTopNav` so we don't spin up a second auth client / subscription in the shell. */
@@ -13,9 +12,9 @@ export function useCustomerNotifications(userId: string | null) {
   const menuRef = useRef<HTMLDivElement>(null);
   const ackedOnOpenRef = useRef(false);
 
-  const alerts = useMyAlerts(userId);
-  const acknowledgeAllMut = useAcknowledgeAllMyAlertsMutation(userId);
-  const markThreadReadMut = useMarkImporterShipmentThreadReadMutation();
+  const allAlerts = useMyAlerts(userId);
+  const alerts = useMemo(() => filterBellNotificationAlerts(allAlerts), [allAlerts]);
+  const acknowledgeMut = useAcknowledgeAlertMutation(null);
 
   const unackedCount = useMemo(
     () => alerts.filter((a) => !a.acknowledged_at).length,
@@ -30,19 +29,10 @@ export function useCustomerNotifications(userId: string | null) {
     if (ackedOnOpenRef.current || unackedCount === 0 || !userId) return;
     ackedOnOpenRef.current = true;
 
-    const messageShipmentIds = [
-      ...new Set(
-        alerts
-          .filter((a) => !a.acknowledged_at && isMessageShipmentAlert(a) && a.shipment_id)
-          .map((a) => a.shipment_id as string),
-      ),
-    ];
-
-    for (const shipmentId of messageShipmentIds) {
-      markThreadReadMut.mutate({ shipmentId });
+    for (const alert of alerts.filter((a) => !a.acknowledged_at)) {
+      acknowledgeMut.mutate(alert.id);
     }
-    acknowledgeAllMut.mutate();
-  }, [open, unackedCount, userId, alerts]);
+  }, [open, unackedCount, userId, alerts, acknowledgeMut]);
 
   useEffect(() => {
     if (!open) return;

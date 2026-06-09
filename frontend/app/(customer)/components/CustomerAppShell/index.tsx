@@ -25,7 +25,7 @@ export function CustomerAppShell({
       <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
         <CustomerTopNav shellMode />
         <div className={AUTHENTICATED_APP_SHELL_BODY_CLASS}>
-          <CustomerSideNav email={email} fullName={fullName} />
+          <CustomerSideNav />
           <div className={AUTHENTICATED_APP_SHELL_MAIN_CLASS} data-authenticated-main-scroll>
             <div className={AUTHENTICATED_APP_SHELL_MAIN_INNER_CLASS}>
               <AuthenticatedMainPane>{children}</AuthenticatedMainPane>
