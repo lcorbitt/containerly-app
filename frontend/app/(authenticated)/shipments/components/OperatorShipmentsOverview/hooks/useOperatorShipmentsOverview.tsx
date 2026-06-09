@@ -35,7 +35,8 @@ import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
 import { ShipmentOverviewAssigneeCell } from "../ShipmentOverviewAssigneeCell";
 import { displayConsigneeShortName, displayOverviewText, formatOverviewDate } from "../utils";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
-import { fetchAllOperatorShipmentsOverviewRows } from "@/utils/shipment-list-export";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { TABLE_SEARCH_DEBOUNCE_MS } from "@/utils/table-search-debounce";
 
 export function useOperatorShipmentsOverview() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export function useOperatorShipmentsOverview() {
 
   const [rows, setRows] = useState<ShipmentOverviewRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listFilter, setListFilter] = useState<OperatorShipmentScope>("all");
   const [peopleLabels, setPeopleLabels] = useState<Record<string, string>>({});
@@ -56,7 +57,7 @@ export function useOperatorShipmentsOverview() {
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, TABLE_SEARCH_DEBOUNCE_MS);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [etdFrom, setEtdFrom] = useState("");
   const [etdTo, setEtdTo] = useState("");
@@ -69,12 +70,8 @@ export function useOperatorShipmentsOverview() {
   const canDeleteShipments = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      setDebouncedSearch(searchInput);
-      setPage(0);
-    }, 300);
-    return () => window.clearTimeout(t);
-  }, [searchInput]);
+    setPage(0);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     setPage(0);
@@ -87,7 +84,7 @@ export function useOperatorShipmentsOverview() {
 
   const load = useCallback(async () => {
     if (!selectedOrgId) return;
-    setLoading(true);
+    setFetching(true);
     setError(null);
     try {
       const { rows: data, totalCount: count } = await loadOperatorShipmentsOverviewPageBrowser({
@@ -116,7 +113,7 @@ export function useOperatorShipmentsOverview() {
       setRows([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      setFetching(false);
     }
   }, [selectedOrgId, listFilter, debouncedSearch, tagFilter, dateRangeFilter, sortColumn, sortDirection, page, pageSize]);
 
@@ -436,7 +433,8 @@ export function useOperatorShipmentsOverview() {
     isSuperAdmin,
     rows,
     totalCount,
-    loading,
+    fetching,
+    loading: fetching && rows.length === 0,
     error,
     listFilter,
     setListFilter,

@@ -41,6 +41,7 @@ export function ImporterShipmentsList() {
     setEtaTo,
     clearDateFilters,
     loading,
+    fetching,
     error,
     handleSortChange,
     columns,
@@ -69,7 +70,6 @@ export function ImporterShipmentsList() {
               placeholder="Search order no., organization, customer…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              disabled={loading}
               containerClassName={SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS}
               className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
             />
@@ -81,7 +81,7 @@ export function ImporterShipmentsList() {
             etdTo={etdTo}
             etaFrom={etaFrom}
             etaTo={etaTo}
-            disabled={loading}
+            disabled={fetching}
             onEtdFromChange={setEtdFrom}
             onEtdToChange={setEtdTo}
             onEtaFromChange={setEtaFrom}
@@ -91,7 +91,7 @@ export function ImporterShipmentsList() {
               <DataTableExportButton
                 columns={columns}
                 exportConfig={tableExport}
-                disabled={totalCount === 0 || loading}
+                disabled={totalCount === 0 || fetching}
               />
             }
           />
@@ -116,7 +116,7 @@ export function ImporterShipmentsList() {
             totalCount={totalCount}
             onPageChange={setPage}
             onPageSizeChange={setPageSize}
-            disabled={loading}
+            disabled={fetching}
           />
         </section>
       </Reveal>

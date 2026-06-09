@@ -35,6 +35,7 @@ export function OperatorShipmentsOverview({
     rows,
     totalCount,
     loading,
+    fetching,
     error,
     listFilter,
     setListFilter,
@@ -101,7 +102,6 @@ export function OperatorShipmentsOverview({
                     placeholder="Search order no., customer, tag…"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    disabled={loading}
                     containerClassName={SHIPMENT_OVERVIEW_SEARCH_CONTAINER_CLASS}
                     className={SHIPMENT_OVERVIEW_SEARCH_INPUT_CLASS}
                   />
@@ -127,12 +127,12 @@ export function OperatorShipmentsOverview({
                       type="button"
                       aria-label="Refresh shipments"
                       title="Refresh"
-                      disabled={loading}
+                      disabled={fetching}
                       onClick={() => void load()}
                       className={SHIPMENT_OVERVIEW_REFRESH_BUTTON_CLASS}
                     >
                       <RefreshCw
-                        className={`h-4 w-4${loading ? " animate-spin" : ""}`}
+                        className={`h-4 w-4${fetching ? " animate-spin" : ""}`}
                         strokeWidth={2}
                         aria-hidden
                       />
@@ -145,7 +145,7 @@ export function OperatorShipmentsOverview({
                   etdTo={etdTo}
                   etaFrom={etaFrom}
                   etaTo={etaTo}
-                  disabled={loading}
+                  disabled={fetching}
                   onEtdFromChange={setEtdFrom}
                   onEtdToChange={setEtdTo}
                   onEtaFromChange={setEtaFrom}
@@ -155,7 +155,7 @@ export function OperatorShipmentsOverview({
                     <DataTableExportButton
                       columns={columns}
                       exportConfig={tableExport}
-                      disabled={totalCount === 0 || loading}
+                      disabled={totalCount === 0 || fetching}
                     />
                   }
                 />
@@ -204,7 +204,7 @@ export function OperatorShipmentsOverview({
                   totalCount={totalCount}
                   onPageChange={setPage}
                   onPageSizeChange={setPageSize}
-                  disabled={loading}
+                  disabled={fetching}
                 />
               </>
             ) : (

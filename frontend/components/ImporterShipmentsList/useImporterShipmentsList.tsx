@@ -20,10 +20,8 @@ import {
   type ImporterGrantedShipmentSortColumn,
   type SortDirection,
 } from "@/services/shipment.service";
-import {
-  DEFAULT_IMPORTER_GRANTED_SHIPMENT_SORT_COLUMN,
-  defaultSortDirectionForImporterGrantedShipmentColumn,
-} from "@/utils/importer-shipment-sort";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { TABLE_SEARCH_DEBOUNCE_MS } from "@/utils/table-search-debounce";
 
 export function useImporterShipmentsList() {
   const router = useRouter();
@@ -36,18 +34,13 @@ export function useImporterShipmentsList() {
   );
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, TABLE_SEARCH_DEBOUNCE_MS);
   const [etdFrom, setEtdFrom] = useState("");
   const [etdTo, setEtdTo] = useState("");
   const [etaFrom, setEtaFrom] = useState("");
   const [etaTo, setEtaTo] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
-    return () => window.clearTimeout(t);
-  }, [searchInput]);
 
   useEffect(() => {
     setPage(0);
@@ -66,7 +59,7 @@ export function useImporterShipmentsList() {
   }, []);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    setFetching(true);
     setError(null);
     try {
       const { rows: data, totalCount: count } = await loadImporterGrantedShipmentsPageBrowser({
@@ -88,7 +81,7 @@ export function useImporterShipmentsList() {
       setRows([]);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      setFetching(false);
     }
   }, [page, pageSize, sortColumn, sortDirection, debouncedSearch, dateRangeFilter]);
 
@@ -280,7 +273,8 @@ export function useImporterShipmentsList() {
     etaTo,
     setEtaTo,
     clearDateFilters,
-    loading,
+    fetching,
+    loading: fetching && rows.length === 0,
     error,
     handleSortChange,
     columns,
