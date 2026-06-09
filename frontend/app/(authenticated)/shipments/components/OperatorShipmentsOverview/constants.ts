@@ -1,6 +1,9 @@
 export const SHIPMENT_OVERVIEW_PANEL_CLASS =
   "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950";
 
+export const SHIPMENT_OVERVIEW_CELL_TEXT_CLASS =
+  "text-sm font-medium text-zinc-800 dark:text-zinc-200";
+
 export const SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS = "w-12 !px-2 text-center align-middle";
 
 export const SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS = "w-12 !px-2 align-middle";

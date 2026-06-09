@@ -23,12 +23,18 @@ function CustomerAlertRowBody({ alert }: { alert: Alert }) {
         <p
           className={`min-w-0 flex-1 line-clamp-4 text-xs leading-snug wrap-break-word ${
             unacked
-              ? "font-medium text-zinc-900 dark:text-zinc-100"
-              : "text-zinc-800 dark:text-zinc-200"
+              ? "font-semibold text-zinc-900 dark:text-zinc-50"
+              : "font-normal text-zinc-600 dark:text-zinc-400"
           }`}
         >
           {alert.message}
         </p>
+        {unacked ? (
+          <span
+            className="mt-0.5 h-2 w-2 shrink-0 self-start rounded-full bg-blue-500 dark:bg-blue-400"
+            aria-label="Unread"
+          />
+        ) : null}
       </div>
       <p className="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
         <span>{formatTimestamp(alert.created_at)}</span>
@@ -56,6 +62,10 @@ export function CustomerNotificationsList({
     <ul className="py-0.5">
       {alerts.map((alert) => {
         const href = customerAlertHref(alert);
+        const unacked = !alert.acknowledged_at;
+        const cardBg = unacked
+          ? "bg-blue-50/70 hover:bg-blue-100/70 dark:bg-blue-950/25 dark:hover:bg-blue-950/40"
+          : "hover:bg-zinc-100/90 dark:hover:bg-zinc-900/80";
 
         return (
           <li
@@ -66,12 +76,12 @@ export function CustomerNotificationsList({
               <Link
                 href={href}
                 onClick={() => onItemNavigate?.()}
-                className="block px-3 py-2.5 text-left transition hover:bg-zinc-100/90 dark:hover:bg-zinc-900/80"
+                className={`block px-3 py-2.5 text-left transition ${cardBg}`}
               >
                 <CustomerAlertRowBody alert={alert} />
               </Link>
             ) : (
-              <div className="px-3 py-2.5">
+              <div className={`px-3 py-2.5 ${cardBg}`}>
                 <CustomerAlertRowBody alert={alert} />
               </div>
             )}

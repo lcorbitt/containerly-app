@@ -28,11 +28,11 @@ import {
   SHIPMENT_OVERVIEW_ACTIONS_CELL_CLASS,
   SHIPMENT_OVERVIEW_ACTIONS_CELL_INNER_CLASS,
   SHIPMENT_OVERVIEW_ACTIONS_HEADER_CLASS,
+  SHIPMENT_OVERVIEW_CELL_TEXT_CLASS,
   SHIPMENT_OVERVIEW_DELETE_BUTTON_CLASS,
 } from "../constants";
 import { ShipmentOverviewTagsCell } from "../ShipmentOverviewTagsCell";
 import { ShipmentOverviewAssigneeCell } from "../ShipmentOverviewAssigneeCell";
-import { SHIPMENT_OVERVIEW_DATE_CELL_CLASS } from "../ShipmentOverviewDateFilters/constants";
 import { displayConsigneeShortName, displayOverviewText, formatOverviewDate } from "../utils";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { fetchAllOperatorShipmentsOverviewRows } from "@/utils/shipment-list-export";
@@ -258,7 +258,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => displayOverviewText(r.customer_name),
         cell: (r) => (
           <span
-            className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
+            className={`max-w-[10rem] truncate ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}
             title={r.customer_name ?? undefined}
           >
             {displayOverviewText(r.customer_name)}
@@ -272,7 +272,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => displayOverviewText(r.consignee),
         cell: (r) => (
           <span
-            className="max-w-[10rem] truncate text-sm text-zinc-800 dark:text-zinc-200"
+            className={`max-w-[10rem] truncate ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}
             title={r.consignee ?? undefined}
           >
             {displayConsigneeShortName(r.consignee)}
@@ -288,7 +288,7 @@ export function useOperatorShipmentsOverview() {
         className: "min-w-[6.5rem] w-[7rem] whitespace-nowrap",
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">{r.order_number}</span>
+          <span className={SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}>{r.order_number}</span>
         ),
       },
       {
@@ -298,7 +298,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => displayOverviewText(r.port_of_loading),
         cell: (r) => (
           <span
-            className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
+            className={`max-w-[9rem] truncate ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}
             title={r.port_of_loading ?? undefined}
           >
             {displayOverviewText(r.port_of_loading)}
@@ -312,7 +312,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => displayOverviewText(r.port_of_destination),
         cell: (r) => (
           <span
-            className="max-w-[9rem] truncate text-sm font-medium text-zinc-800 dark:text-zinc-200"
+            className={`max-w-[9rem] truncate ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}
             title={r.port_of_destination ?? undefined}
           >
             {displayOverviewText(r.port_of_destination)}
@@ -372,7 +372,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => formatOverviewDate(r.estimated_departure_at),
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
-          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
+          <span className={`whitespace-nowrap tabular-nums ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}>
             {formatOverviewDate(r.estimated_departure_at)}
           </span>
         ),
@@ -384,7 +384,7 @@ export function useOperatorShipmentsOverview() {
         exportValue: (r) => formatOverviewDate(r.estimated_arrival_at),
         headerClassName: "whitespace-nowrap",
         cell: (r) => (
-          <span className={SHIPMENT_OVERVIEW_DATE_CELL_CLASS}>
+          <span className={`whitespace-nowrap tabular-nums ${SHIPMENT_OVERVIEW_CELL_TEXT_CLASS}`}>
             {formatOverviewDate(r.estimated_arrival_at)}
           </span>
         ),
