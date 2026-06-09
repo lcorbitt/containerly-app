@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import navLogoImage from "@/components/TopNav/NavBrand/assets/containerly-logo-nav.png";
+import { withoutPricingLinks } from "@/lib/pricing-page";
 import { SITE_NAME } from "@/lib/site-metadata";
 import {
   MARKETING_FOOTER_BOTTOM_CLASS,
@@ -45,7 +46,7 @@ export function MarketingFooter() {
             <div key={group.title}>
               <h2 className={MARKETING_FOOTER_COLUMN_TITLE_CLASS}>{group.title}</h2>
               <ul className={MARKETING_FOOTER_LINK_LIST_CLASS}>
-                {group.links.map((link) => (
+                {withoutPricingLinks(group.links).map((link) => (
                   <li key={`${group.title}-${link.label}`}>
                     <Link href={link.href} className={MARKETING_FOOTER_LINK_CLASS}>
                       {link.label}

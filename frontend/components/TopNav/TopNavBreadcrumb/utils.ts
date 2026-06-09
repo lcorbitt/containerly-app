@@ -1,15 +1,38 @@
 import {
   adminNavItems,
-  freightNavItems,
+  alertsNavItem,
+  automationsNavItem,
+  containersNavItem,
+  customersNavItem,
+  dashboardNavItem,
+  documentsNavItem,
   importerNavItems,
+  reportsNavItem,
+  settingsNavItem,
+  shipmentsNavItem,
+  toolsNavGroup,
 } from "@/app/(authenticated)/components/SideNav/constants";
 import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
 import type { BreadcrumbSegment, SubTabRoute } from "./types";
 
+const freightNavItemsForBreadcrumb = [
+  dashboardNavItem,
+  alertsNavItem,
+  shipmentsNavItem,
+  containersNavItem,
+  documentsNavItem,
+  customersNavItem,
+  automationsNavItem,
+  reportsNavItem,
+  settingsNavItem,
+  ...toolsNavGroup.items.map((item) => ({ href: item.href, label: item.label })),
+];
+
 const navItemsByHrefLength = (isFreight: boolean) =>
-  [...adminNavItems, ...(isFreight ? freightNavItems : importerNavItems)].sort(
-    (a, b) => b.href.length - a.href.length,
-  );
+  [
+    ...adminNavItems,
+    ...(isFreight ? freightNavItemsForBreadcrumb : importerNavItems),
+  ].sort((a, b) => b.href.length - a.href.length);
 
 export function activeNavSegmentFromPathname(
   pathname: string,
@@ -22,7 +45,7 @@ export function activeNavSegmentFromPathname(
   }
 
   if (pathname.startsWith("/containers/")) {
-    return { label: "Shipments", href: "/shipments" };
+    return { label: containersNavItem.label, href: containersNavItem.href };
   }
 
   return null;

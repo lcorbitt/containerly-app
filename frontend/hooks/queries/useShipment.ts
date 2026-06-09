@@ -1,9 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useShipmentMessageThreads";
-import { fetchShipmentWorkspaceRowForBrowser } from "@/services/shipment.service";
+import {
+  fetchShipmentWorkspaceRowForBrowser,
+  loadDocumentQueuePageBrowser,
+  type DocumentQueueFilter,
+  type OperatorShipmentScope,
+} from "@/services/shipment.service";
 import { loadShipmentScopeThread } from "@/services/workspace.service";
 
 export const shipmentWorkspaceRowQueryKeyRoot = ["shipment-workspace-row"] as const;
+export const documentQueueQueryKeyRoot = ["document-queue"] as const;
 
 export function shipmentScopeThreadQueryKey(organizationId: string, shipmentId: string) {
   return [shipmentScopeThreadOrgQueryKeyPrefix, organizationId, shipmentId] as const;
@@ -37,5 +43,38 @@ export function useShipmentScopeThreadQuery(organizationId: string | null, shipm
         shipmentId,
       }),
     enabled: Boolean(organizationId),
+  });
+}
+
+export function useDocumentQueueQuery(input: {
+  organizationId: string | null;
+  scope: OperatorShipmentScope;
+  workflowFilter: DocumentQueueFilter;
+  search: string;
+  page: number;
+  pageSize: number;
+}) {
+  return useQuery({
+    queryKey: [
+      ...documentQueueQueryKeyRoot,
+      input.organizationId,
+      input.scope,
+      input.workflowFilter,
+      input.search,
+      input.page,
+      input.pageSize,
+    ],
+    queryFn: async () => {
+      if (!input.organizationId) throw new Error("organizationId required");
+      return loadDocumentQueuePageBrowser({
+        organizationId: input.organizationId,
+        scope: input.scope,
+        workflowFilter: input.workflowFilter,
+        search: input.search,
+        page: input.page,
+        pageSize: input.pageSize,
+      });
+    },
+    enabled: Boolean(input.organizationId),
   });
 }

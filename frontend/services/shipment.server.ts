@@ -237,6 +237,144 @@ export async function fetchOperatorShipmentsOverviewPage(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Document workflow queue (cross-shipment)                             */
+/* ------------------------------------------------------------------ */
+
+export type DocumentQueueFilter =
+  | "all"
+  | "pending_drafts"
+  | "awaiting_review"
+  | "approved"
+  | "rejected"
+  | "originals_sent";
+
+export type DocumentQueueRow = {
+  id: string;
+  order_number: string;
+  customer_name: string | null;
+  workflow_status: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  updated_at: string;
+};
+
+function sanitizeDocumentQueueSearch(term: string): string {
+  return term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+async function shipmentIdsForDocumentQueueScope(
+  supabase: SupabaseClient,
+  organizationId: string,
+  userId: string | null,
+  scope: OperatorShipmentScope,
+): Promise<string[] | null> {
+  if (scope === "all") return null;
+  if (!userId && scope !== "unassigned") return [];
+
+  if (scope === "mine") {
+    const { data, error } = await supabase
+      .from("shipments")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .or(`created_by.eq.${userId},assignee_user_id.eq.${userId}`);
+    if (error) throw new Error(error.message);
+    return [...new Set((data ?? []).map((r) => r.id as string))];
+  }
+
+  if (scope === "unassigned") {
+    const { data, error } = await supabase
+      .from("shipments")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .is("assignee_user_id", null);
+    if (error) throw new Error(error.message);
+    return [...new Set((data ?? []).map((r) => r.id as string))];
+  }
+
+  const { data: spRows, error: spErr } = await supabase
+    .from("shipment_participants")
+    .select("shipment_id")
+    .eq("user_id", userId!);
+  if (spErr) throw new Error(spErr.message);
+  const ids = [...new Set((spRows ?? []).map((r) => r.shipment_id as string))];
+  if (ids.length === 0) return [];
+  const { data: shipRows, error: shipErr } = await supabase
+    .from("shipments")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .in("id", ids);
+  if (shipErr) throw new Error(shipErr.message);
+  return [...new Set((shipRows ?? []).map((r) => r.id as string))];
+}
+
+export async function fetchDocumentQueuePage(
+  supabase: SupabaseClient,
+  args: {
+    organizationId: string;
+    userId: string | null;
+    scope: OperatorShipmentScope;
+    workflowFilter: DocumentQueueFilter;
+    search: string;
+    page: number;
+    pageSize: number;
+  },
+): Promise<{ rows: DocumentQueueRow[]; totalCount: number }> {
+  const scopeIds = await shipmentIdsForDocumentQueueScope(
+    supabase,
+    args.organizationId,
+    args.userId,
+    args.scope,
+  );
+  if (scopeIds && scopeIds.length === 0) {
+    return { rows: [], totalCount: 0 };
+  }
+
+  let q = supabase
+    .from("shipments")
+    .select(
+      "id, order_number, customer_name, workflow_status, port_of_loading, port_of_destination, updated_at",
+      { count: "exact" },
+    )
+    .eq("organization_id", args.organizationId);
+
+  if (scopeIds) {
+    q = q.in("id", scopeIds);
+  }
+
+  if (args.workflowFilter !== "all") {
+    q = q.eq("workflow_status", args.workflowFilter);
+  } else {
+    q = q.not("workflow_status", "is", null);
+  }
+
+  const term = args.search.trim();
+  if (term) {
+    const s = sanitizeDocumentQueueSearch(term);
+    q = q.or(
+      `order_number.ilike.%${s}%,customer_name.ilike.%${s}%,port_of_loading.ilike.%${s}%,port_of_destination.ilike.%${s}%`,
+    );
+  }
+
+  q = q.order("updated_at", { ascending: false });
+  const from = args.page * args.pageSize;
+  const to = from + args.pageSize - 1;
+  const { data, error, count } = await q.range(from, to);
+  if (error) throw new Error(error.message);
+
+  const rows: DocumentQueueRow[] = (data ?? []).map((row) => ({
+    id: row.id as string,
+    order_number: row.order_number as string,
+    customer_name: (row.customer_name as string | null) ?? null,
+    workflow_status: (row.workflow_status as string | null) ?? null,
+    port_of_loading: (row.port_of_loading as string | null) ?? null,
+    port_of_destination: (row.port_of_destination as string | null) ?? null,
+    updated_at: row.updated_at as string,
+  }));
+
+  return { rows, totalCount: count ?? rows.length };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Importer Granted Shipments                                         */
 /* ------------------------------------------------------------------ */
 

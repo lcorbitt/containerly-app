@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { RefreshCw, X } from "lucide-react";
+import { PendingTenantOnboardingPrompt } from "@/components/PendingTenantOnboardingPrompt";
 import { DataTable, DataTableExportButton } from "@/components/DataTable";
 import { Reveal } from "@/components/Reveal";
 import { TablePagination } from "@/components/TablePagination";
@@ -74,6 +75,7 @@ export function OperatorShipmentsOverview({
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             You are not a member of any organization yet.
           </p>
+          {!isSuperAdmin ? <PendingTenantOnboardingPrompt /> : null}
           {isSuperAdmin ? (
             <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
               As platform superadmin you still pick an org for context, or create one under{" "}

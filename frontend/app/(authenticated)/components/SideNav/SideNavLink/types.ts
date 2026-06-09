@@ -5,4 +5,5 @@ export interface SideNavLinkProps {
   label: string;
   icon: LucideIcon;
   active: boolean;
+  badgeCount?: number;
 }

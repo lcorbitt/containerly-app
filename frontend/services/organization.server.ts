@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionProfile } from "@/services/auth-server.service";
 import { isSuperadminRole } from "@/utils/profile-role";
+import { authCallbackUrl, SET_PASSWORD_PATH } from "@/utils/auth-redirect";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
 import type { OrgPerformanceSettings } from "@shared/dto/performance.dto";
 import { parseOrgPerformanceSettings } from "@/utils/org-performance-settings";
@@ -313,10 +314,7 @@ export async function patchOrganizationMemberRoleForUser(input: {
 }
 
 export function inviteRedirectTo(): string | undefined {
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.SITE_URL?.trim();
-  if (!base) return undefined;
-  const clean = base.replace(/\/$/, "");
-  return `${clean}/login`;
+  return authCallbackUrl(SET_PASSWORD_PATH);
 }
 
 export async function resolveUserIdByEmail(
@@ -429,4 +427,161 @@ export async function inviteOrAddOrganizationMember(input: {
   }
 
   return { ok: true, membership: inserted as Record<string, unknown>, invited: resolved.invited };
+}
+
+// ---------------------------------------------------------------------------
+// Customer portal directory (org-scoped)
+// ---------------------------------------------------------------------------
+
+export type PendingAccessRequestRow = {
+  id: string;
+  shipment_id: string;
+  requester_email: string;
+  order_number: string | null;
+  requested_at: string;
+};
+
+export async function fetchPendingAccessRequestsForOrganization(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<PendingAccessRequestRow[]> {
+  const { data, error } = await supabase
+    .from("shipment_customer_access_requests")
+    .select("id, shipment_id, requester_email, requested_at, shipments(order_number)")
+    .eq("organization_id", organizationId)
+    .eq("status", "pending")
+    .order("requested_at", { ascending: false })
+    .limit(100);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => {
+    const ship = row.shipments;
+    const shipment = Array.isArray(ship) ? ship[0] : ship;
+    return {
+      id: row.id as string,
+      shipment_id: row.shipment_id as string,
+      requester_email: row.requester_email as string,
+      order_number: (shipment?.order_number as string | null) ?? null,
+      requested_at: row.requested_at as string,
+    };
+  });
+}
+
+export type CustomerDirectoryRow = {
+  email: string;
+  display_name: string | null;
+  active_shipment_count: number;
+  pending_invite_count: number;
+  pending_request_count: number;
+  last_activity_at: string | null;
+};
+
+export async function fetchCustomerDirectoryForOrganization(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<CustomerDirectoryRow[]> {
+  const [accessRes, invitesRes, requestsRes] = await Promise.all([
+    supabase
+      .from("shipment_customer_access")
+      .select("shipment_id, updated_at, profiles(email, full_name)")
+      .eq("organization_id", organizationId)
+      .is("revoked_at", null),
+    supabase
+      .from("customer_invites")
+      .select("invited_email, shipment_id, created_at")
+      .eq("organization_id", organizationId)
+      .eq("status", "pending"),
+    supabase
+      .from("shipment_customer_access_requests")
+      .select("requester_email, requested_at")
+      .eq("organization_id", organizationId)
+      .eq("status", "pending"),
+  ]);
+
+  if (accessRes.error) throw new Error(accessRes.error.message);
+  if (invitesRes.error) throw new Error(invitesRes.error.message);
+  if (requestsRes.error) throw new Error(requestsRes.error.message);
+
+  type Acc = {
+    email: string;
+    display_name: string | null;
+    shipmentIds: Set<string>;
+    pending_invite_count: number;
+    pending_request_count: number;
+    last_activity_at: string | null;
+  };
+
+  const byEmail = new Map<string, Acc>();
+
+  const touch = (
+    emailRaw: string,
+    patch: Partial<Acc> & { activityAt?: string | null; shipmentId?: string | null },
+  ) => {
+    const email = emailRaw.trim().toLowerCase();
+    if (!email) return;
+    const existing = byEmail.get(email) ?? {
+      email,
+      display_name: null,
+      shipmentIds: new Set<string>(),
+      pending_invite_count: 0,
+      pending_request_count: 0,
+      last_activity_at: null,
+    };
+    if (patch.display_name?.trim()) {
+      existing.display_name = patch.display_name.trim();
+    }
+    if (patch.pending_invite_count) {
+      existing.pending_invite_count += patch.pending_invite_count;
+    }
+    if (patch.pending_request_count) {
+      existing.pending_request_count += patch.pending_request_count;
+    }
+    if (patch.activityAt) {
+      const prev = existing.last_activity_at ? Date.parse(existing.last_activity_at) : 0;
+      const next = Date.parse(patch.activityAt);
+      if (next > prev) existing.last_activity_at = patch.activityAt;
+    }
+    if (patch.shipmentId) {
+      existing.shipmentIds.add(patch.shipmentId);
+    }
+    byEmail.set(email, existing);
+  };
+
+  for (const row of accessRes.data ?? []) {
+    const profile = row.profiles;
+    const p = Array.isArray(profile) ? profile[0] : profile;
+    const email = (p?.email as string | null) ?? "";
+    touch(email, {
+      display_name: (p?.full_name as string | null) ?? null,
+      activityAt: (row.updated_at as string | null) ?? null,
+      shipmentId: row.shipment_id as string,
+    });
+  }
+
+  for (const row of invitesRes.data ?? []) {
+    touch(row.invited_email as string, {
+      pending_invite_count: 1,
+      activityAt: (row.created_at as string | null) ?? null,
+      shipmentId: row.shipment_id as string,
+    });
+  }
+
+  for (const row of requestsRes.data ?? []) {
+    touch(row.requester_email as string, {
+      pending_request_count: 1,
+      activityAt: (row.requested_at as string | null) ?? null,
+    });
+  }
+
+  return [...byEmail.values()]
+    .map((row) => ({
+      email: row.email,
+      display_name: row.display_name,
+      active_shipment_count: row.shipmentIds.size,
+      pending_invite_count: row.pending_invite_count,
+      pending_request_count: row.pending_request_count,
+      last_activity_at: row.last_activity_at,
+    }))
+    .sort((a, b) => a.email.localeCompare(b.email));
 }

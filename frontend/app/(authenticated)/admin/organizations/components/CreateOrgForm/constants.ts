@@ -1,5 +1,10 @@
 export const CREATE_ORG_FORM_TITLE = "Create organization";
 
+export const CREATE_ORG_INITIAL_ADMIN_EMAIL_LABEL = "Initial Admin Email";
+
+export const CREATE_ORG_INITIAL_ADMIN_EMAIL_HELP =
+  "Optional. Assign an existing user as org admin instead of yourself.";
+
 export const CREATE_ORG_SUBMIT_LABEL = "Create Organization";
 
 export const CREATE_ORG_SUBMIT_LOADING_LABEL = "Creating organization…";

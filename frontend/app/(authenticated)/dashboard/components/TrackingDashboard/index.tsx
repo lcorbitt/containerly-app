@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { PendingTenantOnboardingPrompt } from "@/components/PendingTenantOnboardingPrompt";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
 import { DASHBOARD_PAGE_INTRO_CLASS, DASHBOARD_PANEL_CLASS, DASHBOARD_PANEL_BODY_CLASS, DASHBOARD_SIDE_STACK_CLASS } from "../../constants";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
@@ -35,7 +36,14 @@ const DashboardCharts = dynamic(
 const EMBEDDED_SHELL_CLASS =
   "mx-auto flex w-full max-w-[72rem] flex-col gap-10 px-6 pb-8 lg:px-8";
 
-export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) {
+export function TrackingDashboard({
+  embedded = false,
+  mode = "triage",
+}: {
+  embedded?: boolean;
+  /** triage = action items + workload; reports = trends + performance insights */
+  mode?: "triage" | "reports";
+}) {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
   const {
     selectedOrgName,
@@ -47,9 +55,14 @@ export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) 
     triageBuckets,
   } = useTrackingDashboard();
 
-  const pageIntro = isAdminView
-    ? "Organization overview — metrics, triage, and trends in one place."
-    : "Your workload — what needs attention and how your lines are syncing.";
+  const pageIntro =
+    mode === "reports"
+      ? isAdminView
+        ? "Organization trends — workflow funnel, response times, and carrier performance."
+        : "Your activity trends — carrier sync status and line volume over time."
+      : isAdminView
+        ? "Organization overview — what needs attention across your team today."
+        : "Your workload — what needs attention and how your lines are syncing.";
 
   const spotlightContext =
     snapshot?.spotlightShipment && snapshot.triageActionContextByContainerId
@@ -83,6 +96,7 @@ export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) 
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               You are not a member of any organization yet.
             </p>
+            {!isSuperAdmin ? <PendingTenantOnboardingPrompt /> : null}
             {isSuperAdmin ? (
               <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
                 As platform superadmin you still pick an org for context, or create one under{" "}
@@ -106,60 +120,64 @@ export function TrackingDashboard({ embedded = false }: { embedded?: boolean }) 
             loading={loading}
           />
 
-          <div className={TRACKING_DASHBOARD_GRID_CLASS}>
-            <div className={`${TRACKING_DASHBOARD_SPAN_MAIN} flex`}>
-              <DashboardAlertsPanel
-                loading={loading}
-                userId={snapshot?.currentUserId ?? null}
-                buckets={triageBuckets}
-                actionContextByContainerId={snapshot?.triageActionContextByContainerId}
-                isAdminView={isAdminView}
-              />
-            </div>
+          {mode === "triage" ? (
+            <div className={TRACKING_DASHBOARD_GRID_CLASS}>
+              <div className={`${TRACKING_DASHBOARD_SPAN_MAIN} flex`}>
+                <DashboardAlertsPanel
+                  loading={loading}
+                  userId={snapshot?.currentUserId ?? null}
+                  buckets={triageBuckets}
+                  actionContextByContainerId={snapshot?.triageActionContextByContainerId}
+                  isAdminView={isAdminView}
+                />
+              </div>
 
-            <div className={`${TRACKING_DASHBOARD_SPAN_SIDE} flex`}>
-              <div className={DASHBOARD_SIDE_STACK_CLASS}>
-                {isAdminView ? (
-                  <>
-                    <DashboardSpotlightShipment
-                      spotlight={snapshot?.spotlightShipment}
-                      context={spotlightContext}
-                    />
-                    <DashboardTriageBreakdown
-                      loading={loading}
-                      isAdminView
-                      orgTriageCounts={snapshot?.orgMetrics?.triageCounts}
-                      buckets={triageBuckets}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
-                    <DashboardTriageBreakdown
-                      loading={loading}
-                      isAdminView={false}
-                      buckets={triageBuckets}
-                    />
-                  </>
-                )}
+              <div className={`${TRACKING_DASHBOARD_SPAN_SIDE} flex`}>
+                <div className={DASHBOARD_SIDE_STACK_CLASS}>
+                  {isAdminView ? (
+                    <>
+                      <DashboardSpotlightShipment
+                        spotlight={snapshot?.spotlightShipment}
+                        context={spotlightContext}
+                      />
+                      <DashboardTriageBreakdown
+                        loading={loading}
+                        isAdminView
+                        orgTriageCounts={snapshot?.orgMetrics?.triageCounts}
+                        buckets={triageBuckets}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <DashboardSyncHealth metrics={personalMetrics} loading={loading} />
+                      <DashboardTriageBreakdown
+                        loading={loading}
+                        isAdminView={false}
+                        buckets={triageBuckets}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
-          {isAdminView ? (
+          {mode === "reports" && isAdminView ? (
             <DashboardPerformanceInsights
               insights={snapshot?.performanceInsights}
               loading={loading}
             />
           ) : null}
 
-          <section aria-label="Trends">
-            <DashboardCharts
-              isAdminView={isAdminView}
-              personalMetrics={personalMetrics}
-              orgMetrics={snapshot?.orgMetrics}
-            />
-          </section>
+          {mode === "reports" ? (
+            <section aria-label="Trends">
+              <DashboardCharts
+                isAdminView={isAdminView}
+                personalMetrics={personalMetrics}
+                orgMetrics={snapshot?.orgMetrics}
+              />
+            </section>
+          ) : null}
         </>
       ) : null}
     </div>

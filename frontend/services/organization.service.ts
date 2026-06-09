@@ -155,6 +155,7 @@ export async function inviteOrganizationMember(input: {
 export async function createOrganization(input: {
   name: string;
   slug: string | null;
+  initialAdminEmail?: string | null;
 }): Promise<{ id: string }> {
   const data = await apiJson<{ id?: string }>("/api/organizations", {
     method: "POST",
@@ -162,6 +163,7 @@ export async function createOrganization(input: {
     body: JSON.stringify({
       name: input.name.trim(),
       slug: input.slug?.trim() || null,
+      initial_admin_email: input.initialAdminEmail?.trim().toLowerCase() || null,
     }),
   });
   if (!data.id) throw new Error("Missing organization id");
@@ -175,4 +177,39 @@ export async function createOrganization(input: {
 export async function fetchAdminOrgMemberDirectoryRows(): Promise<AdminOrgMemberRow[]> {
   const { rows } = await apiJson<{ rows: AdminOrgMemberRow[] }>("/api/admin/org-member-directory");
   return rows;
+}
+
+export type PendingAccessRequestRow = {
+  id: string;
+  shipment_id: string;
+  requester_email: string;
+  order_number: string | null;
+  requested_at: string;
+};
+
+export type CustomerDirectoryRow = {
+  email: string;
+  display_name: string | null;
+  active_shipment_count: number;
+  pending_invite_count: number;
+  pending_request_count: number;
+  last_activity_at: string | null;
+};
+
+export async function fetchPendingAccessRequestsBrowser(
+  organizationId: string,
+): Promise<PendingAccessRequestRow[]> {
+  const { rows } = await apiJson<{ rows: PendingAccessRequestRow[] }>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/pending-access-requests`,
+  );
+  return rows ?? [];
+}
+
+export async function fetchCustomerDirectoryBrowser(
+  organizationId: string,
+): Promise<CustomerDirectoryRow[]> {
+  const { rows } = await apiJson<{ rows: CustomerDirectoryRow[] }>(
+    `/api/organizations/${encodeURIComponent(organizationId)}/customer-directory`,
+  );
+  return rows ?? [];
 }

@@ -2,6 +2,8 @@
 
 import {
   CREATE_ORG_FORM_TITLE,
+  CREATE_ORG_INITIAL_ADMIN_EMAIL_HELP,
+  CREATE_ORG_INITIAL_ADMIN_EMAIL_LABEL,
   CREATE_ORG_INPUT_CLASS,
   CREATE_ORG_SUBMIT_BUTTON_CLASS,
   CREATE_ORG_SUBMIT_LABEL,
@@ -36,6 +38,24 @@ export function CreateOrgForm({ onCreated }: { onCreated: (orgId: string) => Pro
         disabled={f.loading}
         autoComplete="off"
       />
+      <div>
+        <label htmlFor="create-org-initial-admin-email" className="text-sm text-zinc-500">
+          {CREATE_ORG_INITIAL_ADMIN_EMAIL_LABEL}
+        </label>
+        <input
+          id="create-org-initial-admin-email"
+          className={`${CREATE_ORG_INPUT_CLASS} mt-1`}
+          placeholder="operator@company.com"
+          type="email"
+          value={f.initialAdminEmail}
+          onChange={(e) => f.setInitialAdminEmail(e.target.value)}
+          disabled={f.loading}
+          autoComplete="email"
+        />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          {CREATE_ORG_INITIAL_ADMIN_EMAIL_HELP}
+        </p>
+      </div>
       {f.error ? (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {f.error}

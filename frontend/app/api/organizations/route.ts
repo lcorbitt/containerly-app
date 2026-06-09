@@ -3,7 +3,7 @@ import { getSessionProfile } from "@/services/auth-server.service";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createOrganizationWithInitialAdmin } from "@/services/organization.server";
+import { createOrganizationWithInitialAdmin, resolveUserIdByEmail } from "@/services/organization.server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -20,7 +20,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: { name?: string; slug?: string | null; initial_admin_user_id?: string };
+  let body: {
+    name?: string;
+    slug?: string | null;
+    initial_admin_user_id?: string;
+    initial_admin_email?: string;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -35,7 +40,7 @@ export async function POST(request: Request) {
   const slugInput =
     typeof body.slug === "string" && body.slug.trim() !== "" ? body.slug.trim() : null;
 
-  const adminUserId =
+  let adminUserId =
     typeof body.initial_admin_user_id === "string" && body.initial_admin_user_id.trim() !== ""
       ? body.initial_admin_user_id.trim()
       : user.id;
@@ -48,6 +53,22 @@ export async function POST(request: Request) {
       { error: "Server misconfigured: service role unavailable" },
       { status: 500 },
     );
+  }
+
+  const initialAdminEmail =
+    typeof body.initial_admin_email === "string" ? body.initial_admin_email.trim().toLowerCase() : "";
+  if (initialAdminEmail) {
+    if (!initialAdminEmail.includes("@")) {
+      return NextResponse.json({ error: "Valid initial admin email is required" }, { status: 400 });
+    }
+    const resolved = await resolveUserIdByEmail(admin, initialAdminEmail);
+    if (resolved.error || !resolved.userId) {
+      return NextResponse.json(
+        { error: resolved.error ?? "Could not resolve initial admin user" },
+        { status: 400 },
+      );
+    }
+    adminUserId = resolved.userId;
   }
 
   const result = await createOrganizationWithInitialAdmin({

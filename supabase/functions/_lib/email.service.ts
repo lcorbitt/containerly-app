@@ -253,6 +253,26 @@ export async function sendDocumentsMailedEmail(args: {
   });
 }
 
+export async function sendPasswordChangedEmail(args: {
+  to: string;
+  loginUrl: string;
+}): Promise<SendEmailResult> {
+  const orgName = "Containerly";
+  return sendTransactionalEmail({
+    to: args.to,
+    subject: "Your Containerly Password Was Updated",
+    html: buildBrandedEmailHtml({
+      orgName,
+      title: "Your password was updated",
+      body:
+        "Your Containerly account password was changed successfully. If you did not make this change, contact your administrator or reply to this email immediately.",
+      actionUrl: args.loginUrl,
+      actionLabel: "Sign In",
+    }),
+    text: `Your Containerly password was updated. Sign in: ${args.loginUrl}`,
+  });
+}
+
 export async function sendNewMessageEmail(args: {
   to: string;
   orgName: string;

@@ -11,6 +11,8 @@ import {
   LOGIN_FORM_FIELDS_CLASS,
   LOGIN_FORM_FOOTER_CLASS,
   LOGIN_FORM_FOOTER_LINK_CLASS,
+  LOGIN_FORM_FORGOT_PASSWORD_LABEL,
+  LOGIN_FORM_FORGOT_PASSWORD_LINK_CLASS,
   LOGIN_FORM_INPUT_CLASS,
   LOGIN_FORM_LOADING_CARD_CLASS,
   LOGIN_FORM_LOADING_OVERLAY_CLASS,
@@ -106,6 +108,14 @@ export function LoginForm({
               )}
             </button>
           </div>
+
+          {!isSignUp ? (
+            <p className="-mt-1 text-right">
+              <Link href="/forgot-password" className={LOGIN_FORM_FORGOT_PASSWORD_LINK_CLASS}>
+                {LOGIN_FORM_FORGOT_PASSWORD_LABEL}
+              </Link>
+            </p>
+          ) : null}
 
           {message ? (
             <p className={LOGIN_FORM_MESSAGE_CLASS} role="alert">

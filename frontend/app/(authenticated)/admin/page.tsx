@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, MessageSquarePlus } from "lucide-react";
+import { Building2, Mail, MessageSquarePlus } from "lucide-react";
 import { AdminOrgMembersTable } from "@/app/(authenticated)/admin/components/AdminOrgMembersTable";
 import { AdminProfilesTable } from "@/app/(authenticated)/admin/components/AdminProfilesTable";
 import { createClient } from "@/lib/supabase/server";
@@ -47,6 +47,13 @@ export default async function AdminPage() {
           >
             <MessageSquarePlus className="h-4 w-4 opacity-80" aria-hidden />
             Feedback
+          </Link>
+          <Link
+            href="/admin/invites"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <Mail className="h-4 w-4 opacity-80" aria-hidden />
+            Invites
           </Link>
           <Link
             href="/admin/organizations"

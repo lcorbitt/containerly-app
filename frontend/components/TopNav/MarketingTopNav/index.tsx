@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { withoutPricingLinks } from "@/lib/pricing-page";
 import { NavBrand } from "../NavBrand";
 import { TopNavShell } from "../TopNavShell";
 import {
@@ -25,6 +26,7 @@ import { useMarketingTopNav } from "./useMarketingTopNav";
 
 export function MarketingTopNav() {
   const { hideMarketingLinks, mobileOpen, toggleMobile, closeMobile } = useMarketingTopNav();
+  const navLinks = withoutPricingLinks(MARKETING_TOP_NAV_LINKS);
 
   return (
     <>
@@ -36,7 +38,7 @@ export function MarketingTopNav() {
 
           {!hideMarketingLinks ? (
             <nav className={MARKETING_TOP_NAV_DESKTOP_NAV_CLASS} aria-label="Marketing">
-              {MARKETING_TOP_NAV_LINKS.map(({ href, label }) => (
+              {navLinks.map(({ href, label }) => (
                 <Link key={href} href={href} className={MARKETING_TOP_NAV_LINK_CLASS}>
                   {label}
                 </Link>
@@ -75,7 +77,7 @@ export function MarketingTopNav() {
         <div className={MARKETING_TOP_NAV_MOBILE_OVERLAY_CLASS}>
           <div className="flex flex-1 flex-col gap-1 px-4 py-6">
             {!hideMarketingLinks
-              ? MARKETING_TOP_NAV_LINKS.map(({ href, label }) => (
+              ? navLinks.map(({ href, label }) => (
                   <Link
                     key={href}
                     href={href}

@@ -1,5 +1,8 @@
-import type { Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
+import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import { createClient } from "@/lib/supabase/client";
+import { authCallbackUrl, SET_PASSWORD_PATH } from "@/utils/auth-redirect";
 
 export async function getBrowserAuthUserId(): Promise<string | null> {
   const supabase = createClient();
@@ -65,4 +68,66 @@ export async function verifyEmailOtp(
 export async function signOutBrowser(): Promise<void> {
   const supabase = createClient();
   await supabase.auth.signOut();
+}
+
+export async function resetPasswordForEmail(email: string): Promise<{ error: Error | null }> {
+  const supabase = createClient();
+  const redirectTo = authCallbackUrl(`${SET_PASSWORD_PATH}?flow=recovery`);
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: redirectTo ?? undefined,
+  });
+  return { error: error ? new Error(error.message) : null };
+}
+
+export async function updatePassword(newPassword: string): Promise<{ error: Error | null }> {
+  const supabase = createClient();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  return { error: error ? new Error(error.message) : null };
+}
+
+/** Verifies the current password by re-signing in (works with Secure password change enabled). */
+export async function reauthenticateWithPassword(
+  currentPassword: string,
+): Promise<{ error: Error | null }> {
+  const supabase = createClient();
+  const { data } = await supabase.auth.getUser();
+  const email = data.user?.email?.trim();
+  if (!email) return { error: new Error("Not signed in") };
+  const { error } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+  return { error: error ? new Error(error.message) : null };
+}
+
+export async function notifyPasswordChanged(): Promise<{ error: Error | null }> {
+  const result = await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.auth.notifyPasswordChanged, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if ("error" in result) {
+    return { error: new Error(result.error) };
+  }
+  if (!result.res.ok) {
+    let message = "Could not send password notification";
+    try {
+      const parsed = JSON.parse(result.text) as { error?: string };
+      if (parsed.error) message = parsed.error;
+    } catch {
+      /* ignore */
+    }
+    return { error: new Error(message) };
+  }
+  return { error: null };
+}
+
+/** One-shot listener for PASSWORD_RECOVERY (forgot-password reset flow). */
+export function listenForPasswordRecovery(
+  callback: (isRecovery: boolean) => void,
+): () => void {
+  const supabase = createClient();
+  const { data } = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
+    if (event === "PASSWORD_RECOVERY") {
+      callback(true);
+    }
+  });
+  return () => data.subscription.unsubscribe();
 }

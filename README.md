@@ -19,6 +19,7 @@ Logistics customer portal for operators and importers: **documentation-first shi
 | Tracking (optional, premium) | `create-tracking-request`, `sync-container`, `search-containers`, `lookup-bol-containers`, … |
 | Shipments | `create-shipment`, `update-shipment`, `get-shipment`, `review-shipment-document`, `claim-shipment-access`, … |
 | Customers | `create-customer-invite`, `accept-customer-invite`, `complete-customer-shipment-setup` |
+| Auth | `notify-password-changed` |
 | Reports | `get-public-report`, `post-report-message`, `post-customer-shipment-message` |
 
 ## Quick start
@@ -59,11 +60,31 @@ Logistics customer portal for operators and importers: **documentation-first shi
 
 1. Run `supabase start` in `supabase/` (or from the repo root with the CLI pointed at this project).
 2. Run `supabase status` and copy **Project URL**, **Publishable** key, and **Secret** key into `frontend/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Older CLI versions label the keys “anon” and “service_role”; either shape works if it matches your stack.
-3. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (or your dev origin) so teammate **invite** links redirect to `/login` after acceptance. Local redirect allow-list lives in `supabase/config.toml` under `[auth]`; add more URLs there if you change host or port.
+3. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (or your dev origin) so teammate **invite** links redirect through `/auth/callback` to `/set-password`. Local redirect allow-list lives in `supabase/config.toml` under `[auth]`; add more URLs there if you change host or port.
 4. Open **Mailpit** at [http://127.0.0.1:54324](http://127.0.0.1:54324) to read every Auth email (invites, password reset, magic links, and sign-up confirmation if you enable it). No SMTP provider is required locally.
 5. After editing `config.toml`, run `supabase stop && supabase start` so Auth picks up changes.
 
-**Hosted projects:** configure **SMTP** (or a provider) under Supabase Dashboard → **Authentication** → **SMTP Settings**, and add redirect URLs under **URL Configuration**. Invites still require `SUPABASE_SERVICE_ROLE_KEY` on the Next server.
+**Hosted projects (beta operator onboarding):** configure **SMTP** (or a provider) under Supabase Dashboard → **Authentication** → **SMTP Settings**, and add redirect URLs under **URL Configuration**:
+
+- `{SITE_URL}/auth/callback`
+- `{SITE_URL}/set-password`
+- `{SITE_URL}/forgot-password`
+- `{SITE_URL}/login`
+
+Also enable **Secure password change** under **Authentication** → **Providers** → **Email** so signed-in users must re-enter their current password in **Settings** before updating.
+
+Deploy the `notify-password-changed` Edge function and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `PUBLIC_SITE_URL` so password-update confirmations send via Containerly (Resend). Supabase Auth still sends invite and reset links; Resend sends the post-change security notification.
+
+Invites still require `SUPABASE_SERVICE_ROLE_KEY` on the Next server (`POST /api/organization-members` → `inviteUserByEmail`, `POST /api/admin/tenant-invites` for new tenant onboarding).
+
+### Operator onboarding (superadmin)
+
+Platform **Super Admin → Invites** (`/admin/invites`) supports two flows:
+
+1. **Invite to Organization** — add someone to an existing tenant (same API as Settings → Organization).
+2. **Invite New Tenant** — email invite for a new operator company; after set-password they name and create their org at `/onboarding/create-organization`.
+
+Apply migration `20260609120000_platform_tenant_invites.sql` before using tenant invites.
 
 ## Security notes
 

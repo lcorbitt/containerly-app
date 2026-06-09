@@ -850,6 +850,44 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
   );
 }
 
+export type DocumentQueueFilter =
+  | "all"
+  | "pending_drafts"
+  | "awaiting_review"
+  | "approved"
+  | "rejected"
+  | "originals_sent";
+
+export type DocumentQueueRow = {
+  id: string;
+  order_number: string;
+  customer_name: string | null;
+  workflow_status: string | null;
+  port_of_loading: string | null;
+  port_of_destination: string | null;
+  updated_at: string;
+};
+
+export async function loadDocumentQueuePageBrowser(args: {
+  organizationId: string;
+  scope: OperatorShipmentScope;
+  workflowFilter: DocumentQueueFilter;
+  search: string;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: DocumentQueueRow[]; totalCount: number }> {
+  const params = new URLSearchParams({
+    page: String(args.page),
+    pageSize: String(args.pageSize),
+    scope: args.scope,
+    workflowFilter: args.workflowFilter,
+    search: args.search,
+  });
+  return apiJson<{ rows: DocumentQueueRow[]; totalCount: number }>(
+    `/api/organizations/${encodeURIComponent(args.organizationId)}/document-queue?${params}`,
+  );
+}
+
 export async function loadOperatorTrackingRequestsPageBrowser(args: {
   organizationId: string;
   scope: OperatorRequestScope;

@@ -44,4 +44,7 @@ export const EDGE_FUNCTION_SLUGS = {
   feedback: {
     submit: "submit-feedback",
   },
+  auth: {
+    notifyPasswordChanged: "notify-password-changed",
+  },
 } as const;

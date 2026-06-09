@@ -7,14 +7,22 @@ import { WorkspaceQuickSearch } from "@/components/WorkspaceQuickSearch";
 import { useSideNav } from "./hooks/useSideNav";
 import {
   adminNavItems,
+  alertsNavItem,
+  automationsNavItem,
+  containersNavItem,
+  customersNavItem,
   dashboardNavItem,
-  REPORTS_NAV_DISABLED_TOOLTIP,
+  documentsNavItem,
+  helpNavItem,
+  OPERATIONS_SECTION_LABEL,
   reportsNavItem,
   settingsNavItem,
   shipmentsNavItem,
+  SIDE_NAV_SECTION_LABEL_CLASS,
+  toolsNavGroup,
 } from "./constants";
 import { SideNavAccountMenu } from "./SideNavAccountMenu";
-import { SideNavDisabledLink } from "./SideNavDisabledLink";
+import { SideNavExpandableGroup } from "./SideNavExpandableGroup";
 import { SideNavLink } from "./SideNavLink";
 import { SideNavPanelTrigger } from "./SideNavPanelTrigger";
 import { isSideNavLinkActive } from "./utils";
@@ -37,7 +45,10 @@ export function SideNav({
     messagesOpen,
     messageThreads,
     unreadCount,
+    alertsCount,
+    toolsExpanded,
     toggleMessages,
+    toggleTools,
     closeSecondaryPanel,
   } = useSideNav(isSuperAdmin);
 
@@ -53,12 +64,21 @@ export function SideNav({
         >
           <div className="flex flex-col gap-2">
             {isFreight ? (
-              <SideNavLink
-                href={dashboardNavItem.href}
-                label={dashboardNavItem.label}
-                icon={dashboardNavItem.icon}
-                active={isSideNavLinkActive(pathname, dashboardNavItem.href)}
-              />
+              <>
+                <SideNavLink
+                  href={dashboardNavItem.href}
+                  label={dashboardNavItem.label}
+                  icon={dashboardNavItem.icon}
+                  active={isSideNavLinkActive(pathname, dashboardNavItem.href)}
+                />
+                <SideNavLink
+                  href={alertsNavItem.href}
+                  label={alertsNavItem.label}
+                  icon={alertsNavItem.icon}
+                  active={isSideNavLinkActive(pathname, alertsNavItem.href)}
+                  badgeCount={alertsCount}
+                />
+              </>
             ) : null}
 
             <SideNavLink
@@ -67,6 +87,29 @@ export function SideNav({
               icon={shipmentsNavItem.icon}
               active={isSideNavLinkActive(pathname, shipmentsNavItem.href)}
             />
+
+            {isFreight ? (
+              <>
+                <SideNavLink
+                  href={containersNavItem.href}
+                  label={containersNavItem.label}
+                  icon={containersNavItem.icon}
+                  active={isSideNavLinkActive(pathname, containersNavItem.href)}
+                />
+                <SideNavLink
+                  href={documentsNavItem.href}
+                  label={documentsNavItem.label}
+                  icon={documentsNavItem.icon}
+                  active={isSideNavLinkActive(pathname, documentsNavItem.href)}
+                />
+                <SideNavLink
+                  href={customersNavItem.href}
+                  label={customersNavItem.label}
+                  icon={customersNavItem.icon}
+                  active={isSideNavLinkActive(pathname, customersNavItem.href)}
+                />
+              </>
+            ) : null}
 
             {selectedOrgId ? (
               <SideNavPanelTrigger
@@ -80,11 +123,36 @@ export function SideNav({
               />
             ) : null}
 
-            <SideNavDisabledLink
-              label={reportsNavItem.label}
-              icon={reportsNavItem.icon}
-              tooltip={REPORTS_NAV_DISABLED_TOOLTIP}
-            />
+            {isFreight ? (
+              <div className="shrink-0 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+                <p className={SIDE_NAV_SECTION_LABEL_CLASS}>{OPERATIONS_SECTION_LABEL}</p>
+                <div className="mt-1 flex flex-col gap-2">
+                  <SideNavLink
+                    href={automationsNavItem.href}
+                    label={automationsNavItem.label}
+                    icon={automationsNavItem.icon}
+                    active={isSideNavLinkActive(pathname, automationsNavItem.href)}
+                  />
+                  <SideNavExpandableGroup
+                    label={toolsNavGroup.label}
+                    icon={toolsNavGroup.icon}
+                    items={toolsNavGroup.items}
+                    expanded={toolsExpanded}
+                    onToggle={toggleTools}
+                    pathname={pathname}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {isFreight ? (
+              <SideNavLink
+                href={reportsNavItem.href}
+                label={reportsNavItem.label}
+                icon={reportsNavItem.icon}
+                active={isSideNavLinkActive(pathname, reportsNavItem.href)}
+              />
+            ) : null}
 
             <SideNavLink
               href={settingsNavItem.href}
@@ -118,6 +186,14 @@ export function SideNav({
         </nav>
 
         <div className="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="mb-2">
+            <SideNavLink
+              href={helpNavItem.href}
+              label={helpNavItem.label}
+              icon={helpNavItem.icon}
+              active={isSideNavLinkActive(pathname, helpNavItem.href)}
+            />
+          </div>
           <SideNavAccountMenu email={email} fullName={fullName} isCustomer={isCustomer} />
         </div>
       </div>

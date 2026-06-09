@@ -4,6 +4,7 @@ import { Building2, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrganizationSettingsPanel } from "../OrganizationSettingsPanel";
 import { ProfileImageSettings } from "../ProfileImageSettings";
+import { PasswordSettingsPanel } from "../PasswordSettingsPanel";
 import { SettingsDisplayName } from "../SettingsDisplayName";
 import { canManageOrganizationSettings } from "@/utils/org-role";
 import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
@@ -56,6 +57,7 @@ export function SettingsPageTabs({
             <p className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{email || "—"}</p>
           </div>
           <SettingsDisplayName initialFullName={fullName} />
+          <PasswordSettingsPanel />
         </div>
       </div>
     </section>

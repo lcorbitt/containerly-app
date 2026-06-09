@@ -21,8 +21,14 @@ site_url = "http://localhost:3000"
 additional_redirect_urls = [
   "http://localhost:3000",
   "http://localhost:3000/login",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/set-password",
+  "http://localhost:3000/forgot-password",
   "http://127.0.0.1:3000",
   "http://127.0.0.1:3000/login",
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3000/set-password",
+  "http://127.0.0.1:3000/forgot-password",
 ]
 
 [auth.email]
@@ -105,4 +111,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-stale-shipment-reminders]
+verify_jwt = false
+
+[functions.notify-password-changed]
 verify_jwt = false

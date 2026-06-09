@@ -15,7 +15,11 @@ import {
 
 export function useCreateOrganizationMutation() {
   return useMutation({
-    mutationFn: (input: { name: string; slug: string | null }) => createOrganization(input),
+    mutationFn: (input: {
+      name: string;
+      slug: string | null;
+      initialAdminEmail?: string | null;
+    }) => createOrganization(input),
   });
 }
 

@@ -45,3 +45,8 @@ export const LOGIN_FORM_FOOTER_CLASS = "mt-4 text-center text-xs text-zinc-500 d
 
 export const LOGIN_FORM_FOOTER_LINK_CLASS =
   "underline-offset-2 transition-colors hover:text-primary-orange hover:underline dark:text-zinc-300";
+
+export const LOGIN_FORM_FORGOT_PASSWORD_LINK_CLASS =
+  "text-xs text-zinc-500 underline-offset-2 transition-colors hover:text-primary-orange hover:underline dark:text-zinc-400";
+
+export const LOGIN_FORM_FORGOT_PASSWORD_LABEL = "Forgot Password?";

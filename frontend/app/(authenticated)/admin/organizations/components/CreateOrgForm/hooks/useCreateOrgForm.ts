@@ -8,6 +8,7 @@ export function useCreateOrgForm(onCreated: (orgId: string) => Promise<void> | v
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [initialAdminEmail, setInitialAdminEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const mutation = useCreateOrganizationMutation();
@@ -28,10 +29,12 @@ export function useCreateOrgForm(onCreated: (orgId: string) => Promise<void> | v
       const result = await mutation.mutateAsync({
         name: trimmedName,
         slug: slug.trim() || null,
+        initialAdminEmail: initialAdminEmail.trim() || null,
       });
 
       setName("");
       setSlug("");
+      setInitialAdminEmail("");
 
       setRefreshing(true);
       try {
@@ -54,6 +57,8 @@ export function useCreateOrgForm(onCreated: (orgId: string) => Promise<void> | v
     setName,
     slug,
     setSlug,
+    initialAdminEmail,
+    setInitialAdminEmail,
     error,
     loading: mutation.isPending || refreshing,
     submit,
