@@ -18,8 +18,3 @@ export function useSessionAvatar() {
   const setProfileImagePath = useSetAtom(profileImagePathAtom);
   return { profileImagePath, setProfileImagePath };
 }
-
-/** @deprecated Global atom is always available; use `useSessionAvatar` instead. */
-export function useOptionalSessionAvatar() {
-  return useSessionAvatar();
-}
