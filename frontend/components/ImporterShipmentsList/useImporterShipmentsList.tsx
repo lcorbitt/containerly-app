@@ -22,6 +22,10 @@ import {
 } from "@/services/shipment.service";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { TABLE_SEARCH_DEBOUNCE_MS } from "@/utils/table-search-debounce";
+import {
+  DEFAULT_IMPORTER_GRANTED_SHIPMENT_SORT_COLUMN,
+  defaultSortDirectionForImporterGrantedShipmentColumn,
+} from "@/utils/importer-shipment-sort";
 
 export function useImporterShipmentsList() {
   const router = useRouter();

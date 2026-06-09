@@ -37,6 +37,7 @@ import { displayConsigneeShortName, displayOverviewText, formatOverviewDate } fr
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { TABLE_SEARCH_DEBOUNCE_MS } from "@/utils/table-search-debounce";
+import { fetchAllOperatorShipmentsOverviewRows } from "@/utils/shipment-list-export";
 
 export function useOperatorShipmentsOverview() {
   const router = useRouter();
