@@ -59,6 +59,9 @@ export function navigationEntityLabelFromHref(href: string | null | undefined): 
     }
 
     const first = segments[0];
+    if (first === "shipments" && segments.length === 2) {
+      return "Shipment";
+    }
     if (PATH_SEGMENT_ENTITY_LABELS[first]) {
       return PATH_SEGMENT_ENTITY_LABELS[first];
     }
