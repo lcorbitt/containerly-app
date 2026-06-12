@@ -27,6 +27,48 @@ Wiki-style detail, diagrams, and examples: `docs/architecture-frontend-backend.m
 - Edge services are grouped by **domain directory** under `_services/{domain}/`; primary orchestrator: `{domain}.service.ts` (no `-operations` suffix).
 - Related helpers colocate in subfolders (e.g. `_services/shipment/activity/edit.utils.ts`).
 
+### Deno import extensions (mandatory — Supabase bundler)
+
+**Every local import under `supabase/functions/` must include an explicit `.ts` extension.** The Supabase Edge bundler (`supabase start`, `supabase functions serve`) resolves Deno modules strictly; extensionless paths fail at bundle time:
+
+```text
+Module not found ".../supabase/functions/_services/utils". Maybe add a '.ts' extension
+```
+
+This applies to **all** project-local specifiers — not only relative paths:
+
+| Scope | Required pattern |
+|-------|------------------|
+| Slug entry / handler | `from "./handler.ts"` |
+| `@services/*` | `from "@services/utils.ts"`, `from "@services/shipment/shipment.service.ts"` |
+| `@models/*` | `from "@models/shipments.ts"` |
+| `@shared/*` | `from "@shared/dto/logistics.dto.ts"`, `from "@shared/org-role.ts"` |
+| Relative (`./`, `../`) | Always end with `.ts` |
+
+**Do not** add `.ts` to npm/jsr packages: `@supabase/supabase-js`, `@std/assert`, etc.
+
+```typescript
+// ❌ BAD — bundler fails
+import { corsHeaders } from "@services/utils";
+import { handle } from "./handler";
+import { createShipment } from "@services/shipment/shipment.service";
+import type { CreateShipmentBody } from "@shared/dto/logistics.dto";
+
+// ✅ GOOD
+import { corsHeaders } from "@services/utils.ts";
+import { handle } from "./handler.ts";
+import { createShipment } from "@services/shipment/shipment.service.ts";
+import type { CreateShipmentBody } from "@shared/dto/logistics.dto.ts";
+```
+
+**Agent behavior (mandatory):**
+
+- **Never** add or leave extensionless `@services/`, `@models/`, `@shared/`, or relative imports in `supabase/functions/`.
+- When creating or editing **any** file under `supabase/functions/` (slug folders, `_services/`, `_models/`, `_wire/`, tests), use `.ts` on every local import in that file — including `import type`.
+- When touching a file that still has extensionless imports, **fix all local imports in that file** before finishing (do not add one `.ts` import beside broken neighbors).
+
+`deno.json` import maps (`@services/`, `@models/`, `@shared/`) are **not** a substitute for file extensions.
+
 ### API naming parity (Edge slug ↔ stack)
 
 **Source of truth:** Edge folder/slug in `supabase/functions/<slug>/` and `EDGE_FUNCTION_SLUGS` in `frontend/lib/supabase/edge-function-slugs.ts`.
@@ -213,6 +255,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Odd-number Tailwind spacing (`p-3`, `my-5`, `gap-7`, `mt-1`, `px-3.5`, etc.) — use **even scale keys only** (see **§8 Tailwind spacing system**)
 - Heavy React Context for client/UI state — use **Jotai atoms** + **`frontend/hosts/`** (see **§9 Client UI state**)
 - API names that drift from Edge slugs (`createCommercialShipment` for `create-shipment`, `useCreateCommercialShipmentMutation`, `*Browser` / `*Query` on 1:1 adapters)
+- Extensionless Deno imports in `supabase/functions/` (`@services/utils`, `./handler`) — always use `.ts` (see **Deno import extensions** under Supabase Edge)
 
 ---
 
@@ -589,6 +632,7 @@ When refactoring, **identify and move**:
 | `createCommercialShipment` / `useCreateCommercialShipmentMutation` (etc.) | Slug-aligned `createShipment` / `useCreateShipmentMutation` per **API naming parity** |
 | `*Browser` / `*Query` on 1:1 Edge adapters | Slug-derived camelCase (`updateOrgSettings`, `deleteOrganizationMember`, …) |
 | New browser write with unclear layer placement | Match **Canonical browser mutation flow — `create-shipment`** (Dependency flow) |
+| Extensionless `@services/` / `@models/` / `@shared/` / relative imports in `supabase/functions/` | Add explicit `.ts` suffix on every local import (see **Deno import extensions** under Supabase Edge) |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 
