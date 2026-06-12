@@ -8,7 +8,7 @@ Logistics customer portal for operators and importers: **documentation-first shi
 - `supabase/migrations/` — schema, indexes, RLS, commercial shipment model, document workflow, alerts
 - `supabase/functions/` — Edge Functions (flat deploy slugs; **verb-first** HTTP-style names). See `frontend/lib/supabase/edge-function-slugs.ts`.
 - `supabase/functions/_wire/dto/` — HTTP contracts (`@shared/dto/...` in frontend and Edge)
-- `supabase/functions/_lib/` — Edge domain services (`@supabase-shared/...`)
+- `supabase/functions/_services/` — Edge domain services (`@services/...`)
 - `supabase/functions/_models/` — table-scoped DB access (`@models/...`)
 - `docs/architecture-frontend-backend.md` — layer rules, data flow, and feature checklist
 
@@ -122,4 +122,4 @@ Seed includes commercial fields, `shipment_lines`, pending document approvals, a
 
 ## External API
 
-`supabase/functions/_lib/providers/jsoncargo/` implements the container tracking adapter. Point env vars at your provider (or the repo mock server) and adjust mapping in that module to match its JSON shape.
+`supabase/functions/_services/tracking/providers/jsoncargo/` implements the container tracking adapter. Point env vars at your provider (or the repo mock server) and adjust mapping in that module to match its JSON shape.

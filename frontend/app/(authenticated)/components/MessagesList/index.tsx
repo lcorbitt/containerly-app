@@ -5,7 +5,7 @@ import {
   useMarkImporterShipmentThreadReadMutation,
   useMarkShipmentThreadReadMutation,
 } from "@/hooks/mutations/useShipmentMessageThreads";
-import { useOrganizationWorkspaceOptional } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   CUSTOMER_MESSAGES_LIST_EMPTY_HINT,

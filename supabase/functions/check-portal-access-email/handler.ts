@@ -1,7 +1,7 @@
-// Delegates to @supabase-shared / @models; forwards signed_in token fields to the client.
-import { createServiceClient } from "@supabase-shared/db.ts";
-import { checkPortalAccessEmail } from "@supabase-shared/customer-access.service.ts";
-import { edgeErrorMessage, jsonResponse } from "@supabase-shared/utils.ts";
+// Delegates to @services / @models; forwards signed_in token fields to the client.
+import { createServiceClient } from "@services/db.ts";
+import { checkPortalAccessEmail } from "@services/customer/customer-access.service.ts";
+import { edgeErrorMessage, jsonResponse } from "@services/utils.ts";
 import type { CheckPortalAccessEmailBody } from "@shared/dto/customer-access.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

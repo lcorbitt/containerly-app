@@ -4,7 +4,7 @@ import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile, type SessionProfile } from "@/services/auth-server.service";
-import { fetchOrgMembershipRows } from "@supabase-shared/organization-operations.service";
+import { fetchOrgMembershipRows } from "@services/organization/organization.service";
 import { isSuperadminRole } from "@/utils/profile-role";
 import { isCustomerAccount } from "@/utils/account-kind";
 import type { OrgMembershipRow } from "@/types/organization-workspace";

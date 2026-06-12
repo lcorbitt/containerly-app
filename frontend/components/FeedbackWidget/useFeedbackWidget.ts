@@ -1,11 +1,11 @@
 "use client";
 
 import { useAtom, useAtomValue } from "jotai";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { feedbackWidgetCategoryAtom, feedbackWidgetOpenAtom } from "@/atoms/feedback-widget";
-import { useToast } from "@/contexts/toast";
-import { OrganizationWorkspaceContext } from "@/contexts/organization-workspace";
+import { useToast } from "@/atoms/toast";
+import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
 import { useSubmitFeedbackMutation } from "@/hooks/mutations/useFeedback";
 import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
 import {
@@ -19,7 +19,7 @@ export function useFeedbackWidget() {
   const pathname = usePathname();
   const { toast } = useToast();
   const submitMutation = useSubmitFeedbackMutation();
-  const orgCtx = useContext(OrganizationWorkspaceContext);
+  const orgCtx = useOrganizationWorkspaceOptional();
   const selectedOrgId = orgCtx?.selectedOrgId ?? null;
 
   const [signedIn, setSignedIn] = useState(false);

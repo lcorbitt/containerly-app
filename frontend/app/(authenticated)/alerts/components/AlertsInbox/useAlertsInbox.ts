@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { usePendingAccessRequestsQuery } from "@/hooks/queries/useOrganization";
 import { buildAlertListItems } from "@/app/(authenticated)/dashboard/components/DashboardAlertsPanel/utils";
 import { useTrackingDashboard } from "@/app/(authenticated)/dashboard/components/TrackingDashboard/useTrackingDashboard";

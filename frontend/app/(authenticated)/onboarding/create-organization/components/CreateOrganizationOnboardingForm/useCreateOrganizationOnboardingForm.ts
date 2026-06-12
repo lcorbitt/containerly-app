@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/contexts/toast";
-import { useCreateOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
+import { useToast } from "@/atoms/toast";
+import { useCompleteOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
 import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
 
 export function useCreateOrganizationOnboardingForm() {
@@ -13,7 +13,7 @@ export function useCreateOrganizationOnboardingForm() {
   const { toast } = useToast();
   const { refreshOrgs } = useOrganizationWorkspace();
   const statusQuery = useOnboardingStatusQuery();
-  const mutation = useCreateOnboardingOrganizationMutation();
+  const mutation = useCompleteOnboardingOrganizationMutation();
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");

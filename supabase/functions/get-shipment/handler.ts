@@ -1,8 +1,8 @@
-// Delegates to getShipmentForOperator (@supabase-shared); customer access via shipment_customer_access.
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
-import { getShipmentForOperator } from "@supabase-shared/shipment-portal-handlers.ts";
+// Delegates to getShipmentForOperator (@services); customer access via shipment_customer_access.
+import { requireAuthUserId } from "@services/auth.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { getShipmentForOperator } from "@services/shipment/portal/handlers.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

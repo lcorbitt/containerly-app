@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import { updateShipmentTags } from "@/services/shipment.service";
 import {
   mergeShipmentTags,

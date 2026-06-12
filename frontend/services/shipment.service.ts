@@ -963,7 +963,7 @@ export async function fetchOrganizationShipmentsForTrackingPick(
   return rows ?? [];
 }
 
-export async function createCommercialShipment(
+export async function createShipment(
   body: CreateShipmentBody,
 ): Promise<{ ok: true; data: CreateShipmentResponse } | { ok: false; status: number; error: string }> {
   try {
@@ -1017,7 +1017,7 @@ export async function updateShipmentRisk(
   }
 }
 
-export async function updateCommercialShipment(
+export async function updateShipment(
   body: UpdateShipmentBody,
 ): Promise<{ ok: true; data: UpdateShipmentResponse } | { ok: false; status: number; error: string }> {
   try {
@@ -1043,7 +1043,7 @@ export async function updateCommercialShipment(
   }
 }
 
-export async function deleteCommercialShipment(
+export async function deleteShipment(
   body: DeleteShipmentBody,
 ): Promise<{ ok: true; data: DeleteShipmentResponse } | { ok: false; status: number; error: string }> {
   try {

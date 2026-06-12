@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import {
   trackingDashboardInsightsQueryKeyRoot,
   trackingDashboardQueryKeyRoot,

@@ -1,14 +1,14 @@
-import { OrganizationWorkspaceProvider } from "@/contexts/organization-workspace";
+import { OrganizationWorkspaceHost } from "@/hosts/organization-workspace";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { AuthenticatedTopNav } from "@/components/TopNav";
-import { MockJourneyModalHost } from "@/contexts/mock-journey-modal";
+import { MockJourneyModalHost } from "@/hosts/mock-journey-modal";
 import { SessionAvatarInit } from "@/components/SessionAvatarInit";
-import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
+import { NewShipmentModalHost } from "@/hosts/new-shipment-modal";
 import { AuthenticatedMainPane } from "../AuthenticatedMainPane";
 import { OrgWorkspaceRealtimeBridge } from "../OrgWorkspaceRealtimeBridge";
 import { OnboardingGate } from "../OnboardingGate";
 import { SideNav } from "../SideNav";
-import { WelcomeModalHost } from "@/contexts/welcome-modal";
+import { WelcomeModalHost } from "@/hosts/welcome-modal";
 import {
   AUTHENTICATED_APP_SHELL_BODY_CLASS,
   AUTHENTICATED_APP_SHELL_MAIN_CLASS,
@@ -29,13 +29,13 @@ export function AuthenticatedAppShell({
   children,
 }: AuthenticatedAppShellProps) {
   return (
-    <OrganizationWorkspaceProvider
+    <OrganizationWorkspaceHost
       initialOrgs={initialOrgs}
       isSuperAdmin={isSuperAdmin}
       userId={userId}
     >
       <SessionAvatarInit initialProfileImagePath={initialProfileImagePath} />
-      <NewShipmentModalProvider>
+      <NewShipmentModalHost>
         <MockJourneyModalHost>
           <WelcomeModalHost userId={userId} fullName={fullName} email={email}>
           <OnboardingGate>
@@ -59,7 +59,7 @@ export function AuthenticatedAppShell({
           </OnboardingGate>
           </WelcomeModalHost>
         </MockJourneyModalHost>
-      </NewShipmentModalProvider>
-    </OrganizationWorkspaceProvider>
+      </NewShipmentModalHost>
+    </OrganizationWorkspaceHost>
   );
 }

@@ -6,7 +6,7 @@ import {
   fetchWorkspaceQuickSearchBrowser,
   type WorkspaceQuickSearchRow,
 } from "@/services/workspace.service";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { DEBOUNCE_MS, MIN_CHARS } from "../constants";
 
 function useDropdownPosition(

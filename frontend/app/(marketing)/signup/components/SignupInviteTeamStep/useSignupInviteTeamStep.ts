@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { useInviteOrganizationMemberMutation } from "@/hooks/mutations/useOrganization";
 import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
 import { readStoredSignupOrganizationId } from "../SignupWizard/utils";

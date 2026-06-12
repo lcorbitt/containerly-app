@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
-import { lookupBolContainers } from "@supabase-shared/tracking-bol-lookup.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { lookupBolContainers } from "@services/tracking/bol-lookup.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

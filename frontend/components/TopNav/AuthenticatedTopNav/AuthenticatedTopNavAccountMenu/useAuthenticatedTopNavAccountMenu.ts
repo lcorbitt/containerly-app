@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigationProgress } from "@/components/NavigationProgress";
 import { profileMenuLabels } from "@/components/TopNav/AuthenticatedTopNav/utils";
-import { useOrganizationWorkspaceOptional } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
 import { useSessionAvatar } from "@/atoms/session-avatar";
 import { signOutBrowser } from "@/services/auth.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";

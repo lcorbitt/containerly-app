@@ -6,6 +6,7 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -21,13 +22,15 @@
     "paths": {
       "@/*": ["./*"],
       "@shared/*": ["../supabase/functions/_wire/*"],
-      "@supabase-shared/*": ["../supabase/functions/_lib/*"],
+      "@services/*": ["../supabase/functions/_services/*"],
       "@models/*": ["../supabase/functions/_models/*"],
-      "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"]
+      "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"],
+      "npm:@supabase/supabase-js@2": ["./node_modules/@supabase/supabase-js"]
     }
   },
   "include": [
     "next-env.d.ts",
+    "../supabase/functions/deno.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",

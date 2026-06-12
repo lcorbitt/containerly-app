@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createOrganization,
-  deleteOrganizationMemberByIdBrowser,
+  deleteOrganizationMember,
   inviteOrganizationMember,
-  patchOrganizationMemberRole,
-  updateOrganizationNameAndSlugBrowser,
+  patchOrganizationMember,
+  updateOrgSettings,
 } from "@/services/organization.service";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
@@ -38,11 +38,11 @@ export function useInviteOrganizationMemberMutation() {
   });
 }
 
-export function usePatchOrganizationMemberRoleMutation() {
+export function usePatchOrganizationMemberMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { membershipId: string; role: OrganizationMemberRole }) =>
-      patchOrganizationMemberRole(input.membershipId, input.role),
+      patchOrganizationMember(input.membershipId, input.role),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminOrgMembersQueryKey });
       void qc.invalidateQueries({ queryKey: orgMembersRootKey });
@@ -51,11 +51,11 @@ export function usePatchOrganizationMemberRoleMutation() {
   });
 }
 
-export function useUpdateOrganizationDetailsMutation() {
+export function useUpdateOrgSettingsMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { organizationId: string; name: string; slug: string }) =>
-      updateOrganizationNameAndSlugBrowser(input.organizationId, input.name, input.slug),
+      updateOrgSettings(input.organizationId, input.name, input.slug),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: orgMetricsRootKey });
     },
@@ -65,7 +65,7 @@ export function useUpdateOrganizationDetailsMutation() {
 export function useDeleteOrganizationMemberMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (membershipId: string) => deleteOrganizationMemberByIdBrowser(membershipId),
+    mutationFn: (membershipId: string) => deleteOrganizationMember(membershipId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: orgMembersRootKey });
       void qc.invalidateQueries({ queryKey: orgMetricsRootKey });

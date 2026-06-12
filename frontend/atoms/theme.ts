@@ -3,8 +3,8 @@
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useCallback } from "react";
-import { THEME_STORAGE_KEY, type ThemeMode } from "@/contexts/theme/constants";
-import { oppositeTheme } from "@/contexts/theme/utils";
+import { THEME_STORAGE_KEY, type ThemeMode } from "@/utils/theme/constants";
+import { oppositeTheme } from "@/utils/theme/utils";
 
 export const themeAtom = atomWithStorage<ThemeMode>(THEME_STORAGE_KEY, "light");
 

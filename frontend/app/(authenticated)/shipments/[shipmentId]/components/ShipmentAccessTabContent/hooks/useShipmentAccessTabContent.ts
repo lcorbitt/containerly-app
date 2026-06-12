@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createImporterInvite,
   deleteShipmentParticipantRow,
@@ -12,8 +12,8 @@ import {
   updateShipmentAssignee,
 } from "@/services/shipment.service";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
-import { OrganizationWorkspaceContext } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,
@@ -33,11 +33,11 @@ export function useShipmentAccessTabContent({
   shipmentId: string;
   initialAssigneeUserId: string | null;
   onMetaChanged: () => void;
-  /** When set (e.g. customer portal), skips OrganizationWorkspaceProvider. */
+  /** When set (e.g. customer portal), skips OrganizationWorkspaceHost. */
   organizationId?: string | null;
 }) {
   const { toast } = useToast();
-  const workspaceOrgId = useContext(OrganizationWorkspaceContext)?.selectedOrgId ?? null;
+  const workspaceOrgId = useOrganizationWorkspaceOptional()?.selectedOrgId ?? null;
   const selectedOrgId = organizationIdProp ?? workspaceOrgId;
   const [assigneeUserId, setAssigneeUserId] = useState<string | null>(initialAssigneeUserId);
   const [assigneeSaving, setAssigneeSaving] = useState(false);

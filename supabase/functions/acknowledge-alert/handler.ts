@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { acknowledgeOneAlert } from "@supabase-shared/alert-operations.service.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { acknowledgeOneAlert } from "@services/alert/alert.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { AcknowledgeAlertBody } from "@shared/dto/alert.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

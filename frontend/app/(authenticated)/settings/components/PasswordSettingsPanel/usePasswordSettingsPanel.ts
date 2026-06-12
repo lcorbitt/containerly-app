@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import {
   notifyPasswordChanged,
   reauthenticateWithPassword,

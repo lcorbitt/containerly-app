@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { updateProfileFullName } from "@/services/profile.service";
 
 export const DISPLAY_NAME_MAX_LEN = 200;

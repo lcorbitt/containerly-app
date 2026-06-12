@@ -1,6 +1,6 @@
-import { createServiceClient } from "@supabase-shared/db.ts";
-import { jsonResponse } from "@supabase-shared/utils.ts";
-import { syncStaleRequests } from "@supabase-shared/tracking-sync.ts";
+import { createServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
+import { syncStaleRequests } from "@services/tracking/sync.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST" && req.method !== "GET") {

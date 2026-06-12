@@ -1,5 +1,5 @@
-import { createServiceClient } from "@supabase-shared/db.ts";
-import { jsonResponse } from "@supabase-shared/utils.ts";
+import { createServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
 
 type OrgSettings = {
   sla_response_hours: number;

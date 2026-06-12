@@ -2,7 +2,7 @@
 
 import { OperatorShipmentsOverview } from "./components/OperatorShipmentsOverview";
 import { ImporterShipmentsList } from "@/components/ImporterShipmentsList";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 
 function useFreightOperator() {
   const { orgs, isSuperAdmin } = useOrganizationWorkspace();

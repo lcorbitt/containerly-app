@@ -58,7 +58,10 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
     statusQuery.data?.organizationId ??
     null;
 
-  const hasOrgMembership = statusQuery.data?.hasOrgMembership ?? false;
+  const hasOrgMembership =
+    hasSession && statusQuery.isSuccess
+      ? (statusQuery.data?.hasOrgMembership ?? false)
+      : false;
 
   useEffect(() => {
     if (
@@ -78,7 +81,7 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
       return;
     }
 
-    if (hasOrgMembership && step === 1) {
+    if (hasSession && hasOrgMembership && step === 1) {
       router.replace("/signup?step=3");
     }
   }, [

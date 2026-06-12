@@ -7,7 +7,7 @@ import {
   welcomeModalDismissedUserIdsAtom,
   welcomeModalOpenAtom,
 } from "@/atoms/welcome-modal";
-import { useNewShipmentModal } from "@/components/NewShipmentModal";
+import { useNewShipmentModalControls } from "@/hosts/new-shipment-modal";
 import { welcomeDisplayName } from "./utils";
 
 interface UseWelcomeModalInput {
@@ -23,7 +23,7 @@ export function useWelcomeModal({ fullName, email, userId }: UseWelcomeModalInpu
   const [open, setOpen] = useAtom(welcomeModalOpenAtom);
   const dismissedIds = useAtomValue(welcomeModalDismissedUserIdsAtom);
   const [, setDismissedIds] = useAtom(welcomeModalDismissedUserIdsAtom);
-  const { openNewShipmentModal } = useNewShipmentModal();
+  const { openNewShipmentModal } = useNewShipmentModalControls();
 
   const displayName = welcomeDisplayName(fullName, email);
   const dismissed = dismissedIds.includes(userId);

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { TextInput } from "@/components/TextInput";
 import { useCustomerDirectoryQuery } from "@/hooks/queries/useOrganization";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useMemo, useState } from "react";
 import {
   CUSTOMERS_DIRECTORY_HEADER_CLASS,

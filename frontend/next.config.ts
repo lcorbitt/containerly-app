@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
     root: repoRoot,
     resolveAlias: {
       "@shared": sharedRoot,
-      "@supabase-shared": path.join(repoRoot, "supabase", "functions", "_lib"),
+      "@services": path.join(repoRoot, "supabase", "functions", "_services"),
       "@": frontendRoot,
     },
   },
@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@shared": sharedRoot,
-      "@supabase-shared": path.join(repoRoot, "supabase", "functions", "_lib"),
+      "@services": path.join(repoRoot, "supabase", "functions", "_services"),
     };
     return config;
   },

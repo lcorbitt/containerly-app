@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useToast } from "@/contexts/toast";
-import { useCreateOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
+import { useToast } from "@/atoms/toast";
+import { useCompleteOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
 import { fetchOrganizationImagePath } from "@/services/organization.service";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
 import type { PendingTenantInviteSummary } from "@/types/platform-tenant-invite";
@@ -22,7 +22,7 @@ export function useSignupOrganizationStep({
   onComplete,
 }: UseSignupOrganizationStepInput) {
   const { toast } = useToast();
-  const mutation = useCreateOnboardingOrganizationMutation();
+  const mutation = useCompleteOnboardingOrganizationMutation();
 
   const [name, setName] = useState("");
   const [teamSize, setTeamSize] = useState("");

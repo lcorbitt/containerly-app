@@ -1,5 +1,5 @@
 import type { CreateShipmentBody } from "@shared/dto/logistics.dto";
-import { createCommercialShipment } from "@/services/shipment.service";
+import { createShipment } from "@/services/shipment.service";
 import {
   draftToCreateShipmentBody,
   type ShipmentImportDraft,
@@ -22,7 +22,7 @@ export type BulkImportResult = {
   failed: BulkImportFailedRow[];
 };
 
-export async function bulkCreateCommercialShipments(
+export async function bulkCreateShipments(
   organizationId: string,
   drafts: Array<{ rowNumber: number; draft: ShipmentImportDraft }>,
   onProgress?: (completed: number, total: number) => void,
@@ -34,7 +34,7 @@ export async function bulkCreateCommercialShipments(
   for (let i = 0; i < drafts.length; i++) {
     const { rowNumber, draft } = drafts[i]!;
     const body: CreateShipmentBody = draftToCreateShipmentBody(organizationId, draft);
-    const r = await createCommercialShipment(body);
+    const r = await createShipment(body);
     if (!r.ok) {
       failed.push({
         rowNumber,

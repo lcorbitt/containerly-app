@@ -3,7 +3,7 @@
 import { useAtom, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { themeAtom, themeReadyAtom } from "@/atoms/theme";
-import { applyThemeClass } from "@/contexts/theme/utils";
+import { applyThemeClass } from "@/utils/theme/utils";
 
 /** Keeps `document.documentElement` in sync with the persisted theme atom. */
 export function ThemeSync() {

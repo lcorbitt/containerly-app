@@ -4,9 +4,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ATTACHMENT_DISPLAY_NAME_MAX_LEN, MAX_SHIPMENT_DOCUMENTS_UPLOAD_BATCH } from "@/utils/workspace-files";
 import { DOCUMENT_TYPE_NONE_VALUE } from "../ShipmentDocumentUploadZone/constants";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import type { WorkspaceAttachment } from "@/types/database";
 import {
   shipmentScopeThreadQueryKey,

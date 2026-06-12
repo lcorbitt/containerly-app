@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { previewImporterPortalShipment, updateShipmentCustomerAccessSettings } from "@/services/shipment.service";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import type { ShipmentCustomerAccess } from "@/types/database";
 import type { PublicReportPayload } from "@/types/public-report";
 

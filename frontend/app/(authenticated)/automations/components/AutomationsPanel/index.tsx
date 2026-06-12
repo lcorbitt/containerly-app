@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { OrganizationPerformanceSettings } from "@/app/(authenticated)/settings/components/OrganizationPerformanceSettings";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { canManageOrganizationSettings } from "@/utils/org-role";
 import {
   AUTOMATION_RULE_TEMPLATES,

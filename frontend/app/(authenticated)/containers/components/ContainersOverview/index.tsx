@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { TablePagination } from "@/components/TablePagination";
 import { TextInput } from "@/components/TextInput";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useOrganizationMetricsQuery } from "@/hooks/queries/useOrganization";
 import { useOperatorContainersQuery } from "@/hooks/queries/useTracking";
 import type { OperatorRequestScope } from "@/utils/operator-tracking-requests";

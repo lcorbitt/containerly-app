@@ -19,7 +19,7 @@ export async function getSessionAccessToken(): Promise<string | null> {
 /**
  * Authenticated fetch to `${SUPABASE_URL}/functions/v1/${path}`.
  * Prefer `path` values from `edge-function-slugs.ts` (`EDGE_FUNCTION_SLUGS`).
- * Shared transport from **`frontend/services/`** to **Supabase Edge** (handlers delegate to **`supabase/functions/_models/`** and **`supabase/functions/_lib/`**).
+ * Shared transport from **`frontend/services/`** to **Supabase Edge** (handlers delegate to **`supabase/functions/_models/`** and **`supabase/functions/_services/`**).
  */
 export async function edgeFunctionFetch(
   path: string,

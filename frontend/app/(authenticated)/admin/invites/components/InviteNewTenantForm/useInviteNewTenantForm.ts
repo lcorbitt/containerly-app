@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/contexts/toast";
-import { useCreateAdminTenantInviteMutation } from "@/hooks/mutations/useOnboarding";
+import { useToast } from "@/atoms/toast";
+import { useCreateTenantInviteMutation } from "@/hooks/mutations/useOnboarding";
 import {
   ADMIN_INVITES_INPUT_CLASS,
   INVITE_NEW_TENANT_EMAIL_LABEL,
@@ -13,7 +13,7 @@ import {
 
 export function useInviteNewTenantForm() {
   const { toast } = useToast();
-  const mutation = useCreateAdminTenantInviteMutation();
+  const mutation = useCreateTenantInviteMutation();
   const [email, setEmail] = useState("");
   const [suggestedOrgName, setSuggestedOrgName] = useState("");
 

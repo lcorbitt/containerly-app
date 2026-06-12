@@ -1,12 +1,12 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { fetchImporterGrantedShipmentsPage } from "@supabase-shared/shipment-list-operations.service.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { fetchImporterGrantedShipmentsPage } from "@services/shipment/list.service.ts";
 import { parseOperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters.ts";
 import {
   normalizeImporterGrantedShipmentSortColumn,
   type SortDirection,
 } from "@shared/importer-shipment-sort.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

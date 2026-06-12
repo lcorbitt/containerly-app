@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useDocumentQueueQuery } from "@/hooks/queries/useShipment";
 import type { DocumentQueueFilter } from "@/services/shipment.service";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";

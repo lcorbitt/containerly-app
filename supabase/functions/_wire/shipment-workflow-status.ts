@@ -1,4 +1,4 @@
-import type { ShipmentWorkflowStatus } from "@shared/dto/logistics.dto";
+import type { ShipmentWorkflowStatus } from "@shared/dto/logistics.dto.ts";
 
 const LEGACY_STATUS_MAP: Record<string, ShipmentWorkflowStatus> = {
   draft: "pending_drafts",

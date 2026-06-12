@@ -1,6 +1,6 @@
-import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
-import { jsonResponse } from "@supabase-shared/utils.ts";
-import { getContainerDetails } from "@supabase-shared/tracking-operations.service.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
+import { getContainerDetails } from "@services/tracking/tracking.service.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

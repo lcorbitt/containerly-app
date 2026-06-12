@@ -1,11 +1,11 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { inviteOrAddOrganizationMember } from "@supabase-shared/organization-operations.service.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { inviteOrAddOrganizationMember } from "@services/organization/organization.service.ts";
 import {
   fetchProfileDisplayName,
   notifyOrgAdminsMemberJoined,
-} from "@supabase-shared/in-app-alerts.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+} from "@services/notification/in-app-alerts.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

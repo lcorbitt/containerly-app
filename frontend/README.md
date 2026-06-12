@@ -6,6 +6,7 @@ Next.js App Router UI for the Containerly logistics portal. The browser never ta
 
 - Next.js (App Router), React, TypeScript, Tailwind
 - TanStack Query — server state in `hooks/queries/` and `hooks/mutations/`
+- Jotai — shared client/UI state in `atoms/`; shell overlays in `hosts/`
 - Supabase client — auth session, realtime alerts, storage uploads only
 
 ## Run locally
@@ -25,8 +26,10 @@ With local Supabase (`supabase start` from repo root), use credentials from `sup
 ```
 Component → colocated hook → TanStack Query → frontend/services/*.service.ts
   → fetch /functions/v1/<slug>  (Edge)
-  → fetch /api/...              (privileged Next routes)
+  → fetch /api/auth/session     (cookie bridge only)
 ```
+
+Service and mutation export names match Edge slugs (`create-shipment` → `createShipment` → `useCreateShipmentMutation`).
 
 - **Route UI** lives under `app/(authenticated)/...` (operator workspace), `app/(portal)/...` (customer/operator shipment portal), and `app/(marketing)/...` (landing, login, sign-up)
 - **Shared components** — `components/` only when reused across routes
@@ -44,7 +47,7 @@ Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture
 | Set password | `/set-password` — invite/recovery; incomplete org setup → `/signup?step=2` |
 | Welcome modal | `/dashboard?welcome=1` — first-run shortcuts after sign-up |
 
-Onboarding APIs (Next `/api`, not Edge): `GET /api/onboarding/status`, `POST /api/onboarding/create-organization`. Operators without org membership are gated to `/signup?step=2` via `OnboardingGate` in the authenticated shell.
+Onboarding APIs (Edge via `services/onboarding.service.ts`): `get-onboarding-status`, `complete-onboarding-organization` (`completeOnboardingOrganization` / `useCompleteOnboardingOrganizationMutation`). Operators without org membership are gated to `/signup?step=2` via `OnboardingGate` in the authenticated shell.
 
 ## Product surfaces
 

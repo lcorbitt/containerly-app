@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { updateShipmentRootCause } from "@/services/shipment.service";
 import type { ShipmentRootCause } from "@shared/dto/performance.dto";
 import { ShipmentRootCauseEditor } from "@/components/ShipmentRootCauseEditor";

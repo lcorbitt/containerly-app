@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "."),
       "@shared": path.resolve(__dirname, "../supabase/functions/_wire"),
-      "@supabase-shared": path.resolve(__dirname, "../supabase/functions/_lib"),
+      "@services": path.resolve(__dirname, "../supabase/functions/_services"),
     },
   },
   test: {

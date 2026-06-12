@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useToast } from "@/contexts/toast";
-import { updateCommercialShipment } from "@/services/shipment.service";
 import {
   SHIPMENT_MAIL_TRACKING_CUSTOMER_STANDBY_CLASS,
   SHIPMENT_MAIL_TRACKING_CUSTOMER_STANDBY_POST_APPROVAL,
@@ -22,7 +19,7 @@ import {
   SHIPMENT_MAIL_TRACKING_SAVE_BUTTON_CLASS,
   SHIPMENT_MAIL_TRACKING_TITLE,
 } from "./constants";
-import { isValidMailTrackingNumber } from "./utils";
+import { useShipmentMailTrackingPanel } from "./useShipmentMailTrackingPanel";
 
 function ShipmentMailTrackingCustomerDisplay({
   trackingNumber,
@@ -84,26 +81,31 @@ export function ShipmentMailTrackingPanel({
   shipmentId: string;
   organizationId: string;
   initialTrackingNumber?: string | null;
-  /** Documents approved (or originals sent): input and save are enabled. */
   enabled?: boolean;
   readOnly?: boolean;
   variant?: "panel" | "inline";
   onSaved?: () => void;
 }) {
-  const { toast } = useToast();
-  const [trackingNumber, setTrackingNumber] = useState(initialTrackingNumber ?? "");
-  const [saving, setSaving] = useState(false);
+  const {
+    trackingNumber,
+    setTrackingNumber,
+    savedNumber,
+    documentsApproved,
+    canEdit,
+    canSave,
+    saving,
+    save,
+    readOnly: isReadOnly,
+  } = useShipmentMailTrackingPanel({
+    shipmentId,
+    organizationId,
+    initialTrackingNumber,
+    enabled,
+    readOnly,
+    onSaved,
+  });
 
-  useEffect(() => {
-    setTrackingNumber(initialTrackingNumber ?? "");
-  }, [initialTrackingNumber]);
-
-  const savedNumber = initialTrackingNumber?.trim() ?? "";
-  const documentsApproved = enabled;
-  const canEdit = documentsApproved && !readOnly;
-  const canSave = isValidMailTrackingNumber(trackingNumber);
-
-  if (readOnly) {
+  if (isReadOnly) {
     return (
       <ShipmentMailTrackingCustomerDisplay
         trackingNumber={savedNumber}
@@ -113,31 +115,11 @@ export function ShipmentMailTrackingPanel({
     );
   }
 
-  async function save() {
-    if (!organizationId || !canEdit || !canSave) return;
-    setSaving(true);
-    try {
-      const r = await updateCommercialShipment({
-        organization_id: organizationId,
-        shipment_id: shipmentId,
-        physical_mail_tracking_number: trackingNumber.trim() || null,
-      });
-      if (!r.ok) {
-        toast(r.error, "error");
-        return;
-      }
-      toast("Tracking number added — customer notified.", "success");
-      onSaved?.();
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (variant === "inline") {
     return (
       <div className={SHIPMENT_MAIL_TRACKING_INLINE_STACK_CLASS}>
         {!documentsApproved ? (
-          <p className={`${SHIPMENT_MAIL_TRACKING_DISABLED_HINT_CLASS} mb-1.5`}>
+          <p className={`${SHIPMENT_MAIL_TRACKING_DISABLED_HINT_CLASS} mb-2`}>
             {SHIPMENT_MAIL_TRACKING_DISABLED_HINT_LABEL}
           </p>
         ) : null}
@@ -176,7 +158,7 @@ export function ShipmentMailTrackingPanel({
   return (
     <div className={SHIPMENT_MAIL_TRACKING_PANEL_CLASS}>
       {!documentsApproved ? (
-        <p className={`${SHIPMENT_MAIL_TRACKING_DISABLED_HINT_CLASS} mb-3`}>
+        <p className={`${SHIPMENT_MAIL_TRACKING_DISABLED_HINT_CLASS} mb-4`}>
           {SHIPMENT_MAIL_TRACKING_DISABLED_HINT_LABEL}
         </p>
       ) : null}

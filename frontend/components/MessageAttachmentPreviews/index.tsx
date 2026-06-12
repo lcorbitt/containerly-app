@@ -3,7 +3,7 @@
 import { Download, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspaceAttachmentPreview } from "@/hooks/useWorkspaceAttachmentPreview";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { isImageThumbnailCandidate } from "@/utils/workspace-files";
 import { downloadWorkspaceAttachment } from "@/services/workspace.service";
 import type { WorkspaceAttachment } from "@/types/database";

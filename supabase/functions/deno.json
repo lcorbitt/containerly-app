@@ -2,7 +2,7 @@
   "imports": {
     "@shared/": "./_wire/",
     "@shared/in-app-event-taxonomy": "./_wire/in-app-event-taxonomy.ts",
-    "@supabase-shared/": "./_lib/",
+    "@services/": "./_services/",
     "@models/": "./_models/",
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
     "@std/assert": "jsr:@std/assert@1"

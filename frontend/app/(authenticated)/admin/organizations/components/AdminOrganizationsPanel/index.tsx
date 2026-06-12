@@ -1,7 +1,7 @@
 "use client";
 
 import { CreateOrgForm } from "@/app/(authenticated)/admin/organizations/components/CreateOrgForm";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 
 export function AdminOrganizationsPanel() {
   const { orgs, selectedOrgId, setSelectedOrgId, refreshOrgs } = useOrganizationWorkspace();

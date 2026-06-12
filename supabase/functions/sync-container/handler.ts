@@ -1,6 +1,6 @@
-import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
-import { jsonResponse } from "@supabase-shared/utils.ts";
-import { syncContainer } from "@supabase-shared/tracking-operations.service.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
+import { syncContainer } from "@services/tracking/tracking.service.ts";
 import type { SyncContainerBody } from "@shared/dto/tracking.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

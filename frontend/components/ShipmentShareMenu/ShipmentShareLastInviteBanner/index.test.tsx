@@ -2,11 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { ConfirmDialogProvider } from "@/contexts/confirm-dialog";
+import { TestConfirmToastHosts } from "@/test-utils/app-hosts";
 import { ShipmentShareLastInviteBanner } from "./index";
 
 function renderWithConfirm(ui: ReactNode) {
-  return render(<ConfirmDialogProvider>{ui}</ConfirmDialogProvider>);
+  return render(<TestConfirmToastHosts>{ui}</TestConfirmToastHosts>);
 }
 
 describe("ShipmentShareLastInviteBanner", () => {

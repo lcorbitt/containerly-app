@@ -1,4 +1,1 @@
-export { NavigationProgressProvider } from "./NavigationProgressProvider";
-export { useNavigationProgress } from "./useNavigationProgress";
-export { useNavigationContentGate } from "./useNavigationContentGate";
-export { NavigationDestinationGate } from "./NavigationDestinationGate";
+export { NavigationProgressHost } from "@/hosts/navigation-progress";

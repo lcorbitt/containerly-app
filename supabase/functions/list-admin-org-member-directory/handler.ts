@@ -1,7 +1,7 @@
-import { requireAuthUserId, requireSuperadmin } from "@supabase-shared/auth.ts";
-import { fetchAdminOrgMemberDirectoryRows } from "@supabase-shared/organization-operations.service.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
+import { fetchAdminOrgMemberDirectoryRows } from "@services/organization/organization.service.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

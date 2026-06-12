@@ -9,33 +9,23 @@ import {
   NEW_SHIPMENT_MODAL_IMPORT_BUTTON_CLASS,
   NEW_SHIPMENT_MODAL_NO_ORG_MESSAGE_CLASS,
 } from "./constants";
-import { NewShipmentModalContext } from "./useNewShipmentModal";
-import { useNewShipmentModalProvider } from "./useNewShipmentModalProvider";
+import type { NewShipmentBulkImportModalProps, NewShipmentModalProps } from "./types";
 
-export { useNewShipmentModal } from "./useNewShipmentModal";
-export type { NewShipmentModalContextValue } from "./types";
-
-export function NewShipmentModalProvider({ children }: { children: React.ReactNode }) {
-  const {
-    selectedOrgId,
-    open,
-    importOpen,
-    bulkImportOpen,
-    creatingShipment,
-    contextValue,
-    close,
-    afterCreated,
-    setImportOpen,
-    setCreatingShipment,
-    switchToBulkImport,
-    closeBulkImport,
-    onBulkComplete,
-  } = useNewShipmentModalProvider();
-
-  const newShipmentModal = (
+export function NewShipmentModal({
+  open,
+  onClose,
+  selectedOrgId,
+  creatingShipment,
+  importOpen,
+  onImportOpenChange,
+  onCreated,
+  onSwitchToBulkImport,
+  onCreatingChange,
+}: NewShipmentModalProps) {
+  return (
     <Modal
       open={open}
-      onClose={close}
+      onClose={onClose}
       title="New Shipment"
       size="4xl"
       busy={creatingShipment}
@@ -43,7 +33,7 @@ export function NewShipmentModalProvider({ children }: { children: React.ReactNo
         <button
           type="button"
           disabled={creatingShipment}
-          onClick={() => setImportOpen(true)}
+          onClick={() => onImportOpenChange(true)}
           className={NEW_SHIPMENT_MODAL_IMPORT_BUTTON_CLASS}
         >
           <FileDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
@@ -74,41 +64,44 @@ export function NewShipmentModalProvider({ children }: { children: React.ReactNo
       ) : (
         <NewShipmentForm
           organizationId={selectedOrgId}
-          onCreated={afterCreated}
+          onCreated={onCreated}
           showChrome={false}
           importOpen={importOpen}
-          onImportOpenChange={setImportOpen}
-          onSwitchToBulkImport={switchToBulkImport}
-          onCreatingChange={setCreatingShipment}
+          onImportOpenChange={onImportOpenChange}
+          onSwitchToBulkImport={onSwitchToBulkImport}
+          onCreatingChange={onCreatingChange}
         />
       )}
     </Modal>
   );
+}
 
-  const bulkImportModal = selectedOrgId ? (
-    <ShipmentDataImportModal
-      open={bulkImportOpen}
-      onClose={closeBulkImport}
-      organizationId={selectedOrgId}
-      variant="bulk"
-      onBulkComplete={onBulkComplete}
-    />
-  ) : (
-    <Modal open={bulkImportOpen} onClose={closeBulkImport} size="sm" hideCloseButton ariaLabel="Bulk import">
+export function NewShipmentBulkImportModal({
+  open,
+  onClose,
+  selectedOrgId,
+  onBulkComplete,
+}: NewShipmentBulkImportModalProps) {
+  if (selectedOrgId) {
+    return (
+      <ShipmentDataImportModal
+        open={open}
+        onClose={onClose}
+        organizationId={selectedOrgId}
+        variant="bulk"
+        onBulkComplete={onBulkComplete}
+      />
+    );
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} size="sm" hideCloseButton ariaLabel="Bulk import">
       <p className={NEW_SHIPMENT_MODAL_NO_ORG_MESSAGE_CLASS}>
         Select an organization in the header to bulk import shipments.
       </p>
-      <button type="button" onClick={closeBulkImport} className={NEW_SHIPMENT_MODAL_BULK_NO_ORG_OK_BUTTON_CLASS}>
+      <button type="button" onClick={onClose} className={NEW_SHIPMENT_MODAL_BULK_NO_ORG_OK_BUTTON_CLASS}>
         OK
       </button>
     </Modal>
-  );
-
-  return (
-    <NewShipmentModalContext.Provider value={contextValue}>
-      {children}
-      {newShipmentModal}
-      {bulkImportModal}
-    </NewShipmentModalContext.Provider>
   );
 }

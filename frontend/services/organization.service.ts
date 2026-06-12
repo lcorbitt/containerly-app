@@ -99,7 +99,7 @@ export async function fetchOrganizationMemberRowsBrowser(organizationId: string)
   return members;
 }
 
-export async function updateOrganizationNameAndSlugBrowser(
+export async function updateOrgSettings(
   organizationId: string,
   name: string,
   slug: string,
@@ -113,7 +113,7 @@ export async function updateOrganizationNameAndSlugBrowser(
   );
 }
 
-export async function deleteOrganizationMemberByIdBrowser(membershipId: string): Promise<void> {
+export async function deleteOrganizationMember(membershipId: string): Promise<void> {
   await parseEdgeJson<{ ok: true }>(
     await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.deleteMember, {
       method: "DELETE",
@@ -127,7 +127,7 @@ export async function deleteOrganizationMemberByIdBrowser(membershipId: string):
 // Organization members (Edge)
 // ---------------------------------------------------------------------------
 
-export async function patchOrganizationMemberRole(
+export async function patchOrganizationMember(
   membershipId: string,
   role: OrganizationMemberRole,
 ): Promise<OrganizationMemberRecord> {

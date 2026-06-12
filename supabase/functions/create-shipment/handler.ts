@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { createCommercialShipment } from "@supabase-shared/shipment-operations.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { createShipment } from "@services/shipment/shipment.service.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { CreateShipmentBody } from "@shared/dto/logistics.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {
@@ -16,7 +16,7 @@ export async function handle(req: Request): Promise<Response> {
     const auth = await requireAuthUserId(userClient);
     if (!auth.ok) return auth.response;
 
-    const result = await createCommercialShipment(userClient, auth.userId, body);
+    const result = await createShipment(userClient, auth.userId, body);
     if (!result.ok) {
       return jsonResponse({ error: result.error }, { status: result.status });
     }

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBrowserAuthUserId } from "@/services/auth.service";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { canManageOrganizationSettings } from "@/utils/org-role";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import type { OrganizationMemberRole } from "@/types/database";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
 import {
@@ -12,9 +12,9 @@ import {
   useOrganizationMembersQuery,
 } from "@/hooks/queries/useOrganization";
 import {
-  usePatchOrganizationMemberRoleMutation,
+  usePatchOrganizationMemberMutation,
   useInviteOrganizationMemberMutation,
-  useUpdateOrganizationDetailsMutation,
+  useUpdateOrgSettingsMutation,
   useDeleteOrganizationMemberMutation,
 } from "@/hooks/mutations/useOrganization";
 
@@ -42,9 +42,9 @@ export function useOrganizationSettingsPanel(embedded = false) {
 
   const metricsQuery = useOrganizationMetricsQuery(selectedOrgId);
   const membersQuery = useOrganizationMembersQuery(selectedOrgId);
-  const patchRoleMutation = usePatchOrganizationMemberRoleMutation();
+  const patchRoleMutation = usePatchOrganizationMemberMutation();
   const inviteMutation = useInviteOrganizationMemberMutation();
-  const updateOrgMutation = useUpdateOrganizationDetailsMutation();
+  const updateOrgMutation = useUpdateOrgSettingsMutation();
   const deleteMemberMutation = useDeleteOrganizationMemberMutation();
 
   useEffect(() => {

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Provider as JotaiProvider, createStore } from "jotai";
-import { ConfirmDialogProvider } from "@/contexts/confirm-dialog";
-import { ToastProvider } from "@/contexts/toast";
 import { ThemeSync } from "@/components/ThemeSync";
-import { NavigationProgressProvider } from "@/components/NavigationProgress";
+import { NavigationProgressHost } from "@/hosts/navigation-progress";
+import { ConfirmDialogHost } from "@/hosts/confirm-dialog";
+import { ToastHost } from "@/hosts/toast";
 import { QueryProvider } from "@/hooks/query-provider";
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   // One explicit Jotai store per client (SSR-safe, no cross-request leakage). With a store in
   // context, hooks never fall back to getDefaultStore(), which avoids the "multiple Jotai
@@ -17,13 +18,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <JotaiProvider store={jotaiStore}>
       <QueryProvider>
         <ThemeSync />
-        <NavigationProgressProvider>
-          <ConfirmDialogProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </ConfirmDialogProvider>
-        </NavigationProgressProvider>
+        <NavigationProgressHost>
+          <ConfirmDialogHost>
+            <ToastHost>{children}</ToastHost>
+          </ConfirmDialogHost>
+        </NavigationProgressHost>
       </QueryProvider>
     </JotaiProvider>
   );

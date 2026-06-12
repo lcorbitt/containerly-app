@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@supabase-shared/auth.ts";
-import { completeSignupOrganization } from "@supabase-shared/tenant-invite-operations.service.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUser } from "@services/auth.ts";
+import { completeOnboardingOrganization } from "@services/organization/tenant-invite.service.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {
@@ -42,7 +42,7 @@ export async function handle(req: Request): Promise<Response> {
         : null;
 
     const admin = createServiceClient();
-    const result = await completeSignupOrganization({
+    const result = await completeOnboardingOrganization({
       admin,
       userId: auth.userId,
       emailLower: auth.emailLower,

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 
 const EXEMPT_PATH_PREFIXES = ["/onboarding", "/admin", "/settings"];
 

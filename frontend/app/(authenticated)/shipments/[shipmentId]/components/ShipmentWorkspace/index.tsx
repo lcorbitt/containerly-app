@@ -22,19 +22,17 @@ import { ShipmentCommercialDetailsSection } from "../ShipmentHeaderInfo/Shipment
 import { EditShipmentDetailsModal } from "../ShipmentHeaderInfo/EditShipmentDetailsModal";
 import {
   pickTrackingRowsExported,
-  deleteCommercialShipment,
   type ShipmentWorkspaceRow,
   type ShipmentOverviewTrackingRow,
 } from "@/services/shipment.service";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { canManageOrganizationSettings } from "@/utils/org-role";
 import { TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import {
   shipmentWorkspaceRowQueryKeyRoot,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
+import { useShipmentWorkspaceDelete } from "./useShipmentWorkspace";
 
 type WorkspaceMode = "shipment" | "container";
 
@@ -69,13 +67,9 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const qc = useQueryClient();
-  const { confirm } = useConfirm();
-  const { toast } = useToast();
   const { selectedOrgId, orgs, isSuperAdmin } = useOrganizationWorkspace();
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("shipment");
   const [editOpen, setEditOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [redirectAfterDelete, setRedirectAfterDelete] = useState(false);
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
   const canDeleteShipment = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
@@ -95,6 +89,13 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
     if (!d?.ok) return null;
     return d.row;
   }, [rowQuery.data]);
+
+  const { handleDeleteShipment, deleting, redirectAfterDelete } = useShipmentWorkspaceDelete({
+    shipmentId,
+    selectedOrgId,
+    canDeleteShipment,
+    row,
+  });
 
   const error =
     !selectedOrgId
@@ -184,41 +185,6 @@ export function ShipmentWorkspace({ shipmentId }: { shipmentId: string }) {
     },
     [replaceSearchParams],
   );
-
-  const handleDeleteShipment = useCallback(async () => {
-    if (!selectedOrgId || !canDeleteShipment) return;
-    const label = row?.order_number?.trim() || row?.customer_name?.trim() || "this shipment";
-    const ok = await confirm({
-      title: "Delete Shipment?",
-      description: `Permanently delete ${label}? This removes documents, messages, and tracking linked to the shipment.`,
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
-      variant: "danger",
-    });
-    if (!ok) return;
-
-    setDeleting(true);
-    try {
-      const result = await deleteCommercialShipment({
-        organization_id: selectedOrgId,
-        shipment_id: shipmentId,
-      });
-      if (!result.ok) {
-        toast(result.error, "error");
-        return;
-      }
-      setRedirectAfterDelete(true);
-      void qc.removeQueries({
-        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
-      });
-      toast("Shipment deleted", "success");
-      await router.replace("/shipments");
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not delete shipment", "error");
-    } finally {
-      setDeleting(false);
-    }
-  }, [canDeleteShipment, confirm, qc, row, router, selectedOrgId, shipmentId, toast]);
 
   if (!selectedOrgId) {
     return (

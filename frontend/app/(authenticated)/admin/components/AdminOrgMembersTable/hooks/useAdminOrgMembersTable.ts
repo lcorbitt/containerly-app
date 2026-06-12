@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAdminOrgMembersQuery } from "@/hooks/queries/useOrganization";
-import { usePatchOrganizationMemberRoleMutation } from "@/hooks/mutations/useOrganization";
+import { usePatchOrganizationMemberMutation } from "@/hooks/mutations/useOrganization";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
   buildOrgOptionsFromRows,
@@ -13,7 +13,7 @@ import { PAGE_SIZE_OPTIONS } from "../constants";
 
 export function useAdminOrgMembersTable() {
   const { data: rows = [], isLoading: loading, error: queryError, refetch } = useAdminOrgMembersQuery();
-  const patchMutation = usePatchOrganizationMemberRoleMutation();
+  const patchMutation = usePatchOrganizationMemberMutation();
 
   const [search, setSearchRaw] = useState("");
   const [orgFilter, setOrgFilterRaw] = useState<string>("all");

@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { ConfirmDialogProvider } from "@/contexts/confirm-dialog";
+import { TestConfirmToastHosts } from "@/test-utils/app-hosts";
 import type { ShipmentShareAccessRow } from "../types";
 import { ShipmentSharePeopleList } from "./index";
 import { createMockShareState } from "../test-utils";
@@ -12,7 +12,7 @@ vi.mock("../ShipmentShareImporterSettingsDialog", () => ({
 }));
 
 function renderWithConfirm(ui: ReactNode) {
-  return render(<ConfirmDialogProvider>{ui}</ConfirmDialogProvider>);
+  return render(<TestConfirmToastHosts>{ui}</TestConfirmToastHosts>);
 }
 
 function confirmDialog() {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/contexts/toast";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useToast } from "@/atoms/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useInviteOrganizationMemberMutation } from "@/hooks/mutations/useOrganization";
 import type { OrganizationMemberRole } from "@/types/database";
 import {

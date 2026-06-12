@@ -21,9 +21,9 @@ import {
   type ContainerWorkspaceSnapshot,
   uploadContainerWorkspaceDocuments,
 } from "@/services/workspace.service";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import {
   buildShipmentTimelineEvents,
   formatTimelineWhen,

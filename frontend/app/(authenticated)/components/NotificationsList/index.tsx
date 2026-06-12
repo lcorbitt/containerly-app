@@ -7,8 +7,8 @@ import {
   useAcknowledgeAlertMutation,
   useResolveCustomerAccessRequestMutation,
 } from "@/hooks/mutations/useAlerts";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import { alertTypeIconConfig } from "@/utils/alert-display";
 
 function alertHref(alert: Alert): string | null {

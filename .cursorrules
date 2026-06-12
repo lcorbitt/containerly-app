@@ -6,9 +6,9 @@
 - **Pure functions** live in colocated **`utils.ts`** (single file beside the component) or in `frontend/utils/` when shared across routes.
 - **Colocated component hooks** (`use<ComponentName>.ts` beside `index.tsx`) only when needed for component-specific orchestration.
 - **Server state** is centralized with **TanStack Query** under `frontend/hooks/` (`queries/`, `mutations/`).
-- **Supabase backend ↔ frontend services (NestJS-shaped):** **`supabase/functions/<slug>/`** is the **default HTTP API** (slug = folder name = `/functions/v1/<slug>`). **`index.ts`** = entry only; **`handler.ts`** = **Controller** (thin HTTP adapter → **`@supabase-shared/*`** + **`@models/*`**). **`@supabase-shared/`** (`supabase/functions/_lib/`) = **Service** (orchestration). **`@models/`** (`supabase/functions/_models/`) = **Repository** (one file per Postgres table; table-scoped `.from()`). **`@shared/`** (`supabase/functions/_wire/`) = DTOs + cross-runtime pure helpers. **`frontend/services/*.service.ts`** = browser HTTP client (calls Edge via **`EDGE_FUNCTION_SLUGS`**). **Default runtime:** **Component → hook → TanStack Query → `frontend/services/` → Edge `handler` → `@supabase-shared` → `@models` → DB.**
-- **Model layer:** All **`.from("<table>")`** access for a given table belongs in **`supabase/functions/_models/<table>.ts`**. Edge **`handler.ts`** composes **`@models/*`** + **`@supabase-shared/*`**; add a colocated module under **`functions/<slug>/`** only when that slug has **substantial slug-only** logic (otherwise keep use-cases in **`supabase/functions/_lib/`**). **Do not** put non-deployable table code under **`functions/<table>/`** (Supabase would deploy it as a function).
-- **SSR-only loaders:** **`frontend/server/loaders/*.ts`** (`import "server-only"`) — thin RSC/layout data loaders calling **`@supabase-shared/*`** + **`@models/*`** directly (no HTTP). **Not** a second backend layer.
+- **Supabase backend ↔ frontend services (NestJS-shaped):** **`supabase/functions/<slug>/`** is the **default HTTP API** (slug = folder name = `/functions/v1/<slug>`). **`index.ts`** = entry only; **`handler.ts`** = **Controller** (thin HTTP adapter → **`@services/*`** + **`@models/*`**). **`@services/`** (`supabase/functions/_services/`) = **Service** (orchestration). **`@models/`** (`supabase/functions/_models/`) = **Repository** (one file per Postgres table; table-scoped `.from()`). **`@shared/`** (`supabase/functions/_wire/`) = DTOs + cross-runtime pure helpers. **`frontend/services/*.service.ts`** = browser HTTP client (calls Edge via **`EDGE_FUNCTION_SLUGS`**). **Default runtime:** **Component → colocated hook → TanStack Query → `frontend/services/` → Edge `handler` → `@services` → `@models` → DB.** **Prime reference:** full file-by-file trace under **Canonical browser mutation flow — `create-shipment`** in Dependency flow.
+- **Model layer:** All **`.from("<table>")`** access for a given table belongs in **`supabase/functions/_models/<table>.ts`**. Edge **`handler.ts`** composes **`@models/*`** + **`@services/*`**; add a colocated module under **`functions/<slug>/`** only when that slug has **substantial slug-only** logic (otherwise keep use-cases in **`supabase/functions/_services/`**). **Do not** put non-deployable table code under **`functions/<table>/`** (Supabase would deploy it as a function).
+- **SSR-only loaders:** **`frontend/server/loaders/*.ts`** (`import "server-only"`) — thin RSC/layout data loaders calling **`@services/*`** + **`@models/*`** directly (no HTTP). **Not** a second backend layer.
 - **Next HTTP (minimal):** **`app/api/auth/session/route.ts`** only — syncs browser JWT into Next-readable cookies for RSC/middleware. **No** domain `/api` routes.
 - **Do not** add PostgREST (`.from` / `.rpc`) in `frontend/services/` for domain data — that skips Supabase services. **Exceptions:** Auth session, Realtime, Storage `File` uploads until replaced by a dedicated API.
 - **All browser-side I/O** is centralized in `frontend/services/` — components and colocated hooks do not call `fetch` or create Supabase clients directly.
@@ -24,7 +24,35 @@ Wiki-style detail, diagrams, and examples: `docs/architecture-frontend-backend.m
 - **`supabase/functions/`** is the **Supabase-hosted HTTP API** for all domain calls from the browser. Each **subfolder is one deployed Edge Function**.
 - **Folder name = function slug = URL path.** Clients invoke `.../functions/v1/<slug>`; the **directory name under `supabase/functions/` is that `<slug>`** (Supabase CLI convention). Renaming a folder is a **breaking change** unless you update **`EDGE_FUNCTION_SLUGS`**, cron, webhooks, and any other callers. Prefer **verb-first** slugs (e.g. `create-customer-invite`, `get-shipment`, `sync-container`) over domain-prefixed names (`customers-create-invite`).
 - **`index.ts`** — **entry only:** `Deno.serve`, CORS preflight (`OPTIONS`), then **hand off** to the colocated **`handle(req)`** in **`handler.ts`**. No parsing, auth, or domain logic here.
-- **`handler.ts`** — **colocated HTTP wrapper** for that slug: method checks, parse input, build user/service client, map to **`Response`**. It should stay **small**: call **`@supabase-shared/*.ts`** for orchestration and workflows, and **`@models/<table>.ts`** for table-scoped DB access — **do not** bloat the handler with use-case logic. **Reference:** `supabase/functions/search-containers/` (`index.ts` → `handler.ts` → `searchContainers` in `@supabase-shared/tracking-operations.service.ts`).
+- Edge services are grouped by **domain directory** under `_services/{domain}/`; primary orchestrator: `{domain}.service.ts` (no `-operations` suffix).
+- Related helpers colocate in subfolders (e.g. `_services/shipment/activity/edit.utils.ts`).
+
+### API naming parity (Edge slug ↔ stack)
+
+**Source of truth:** Edge folder/slug in `supabase/functions/<slug>/` and `EDGE_FUNCTION_SLUGS` in `frontend/lib/supabase/edge-function-slugs.ts`.
+
+**Convert slug kebab-case → camelCase** for all **1:1 API-facing** exports (thin handler adapters):
+
+| Layer | Pattern | `create-shipment` example |
+|-------|---------|---------------------------|
+| Edge folder / URL | `verb-noun` kebab-case | `create-shipment/` |
+| `EDGE_FUNCTION_SLUGS` | slug string | `"create-shipment"` |
+| `frontend/services/*.service.ts` | `verbNoun` | `createShipment` |
+| `frontend/hooks/mutations/use<Domain>.ts` | `useVerbNounMutation` | `useCreateShipmentMutation` |
+| `supabase/functions/_services/` (handler-called) | `verbNoun` | `createShipment` |
+| `handler.ts` | imports and calls matching `verbNoun` | `createShipment(...)` |
+
+**Good examples:** `create-organization` → `createOrganization` → `useCreateOrganizationMutation`; **`create-shipment` → `createShipment` → `useCreateShipmentMutation`** (see **Canonical browser mutation flow** under Dependency flow for the full stack trace).
+
+**Forbidden on 1:1 adapters:** extra qualifiers not present in the slug (`Commercial`, `Platform`, `Admin`, `Browser`, `Query`, …).
+
+**Bulk / client orchestration** (no dedicated slug): prefix `bulk` + target verbNoun — e.g. `bulkCreateShipments`, `useBulkCreateShipmentsMutation` (loops `create-shipment`).
+
+**DTOs** (`CreateShipmentBody`, …) describe payload shape — not renamed to match slugs.
+
+**Internal helpers** not bound to a single slug may use descriptive names; **do not** call them from thin `handler.ts` adapters when slug-aligned naming is intended.
+
+**Legacy `*Browser` / `*Query` suffixes:** migrate to slug-aligned names when touching a module; **do not add new ones**.
 
 ---
 
@@ -183,7 +211,8 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Nested `hooks/` folders when `useComponentName.ts` beside `index.tsx` is enough
 - Inline Tailwind class constants or config arrays in `index.tsx` instead of `constants.ts`
 - Odd-number Tailwind spacing (`p-3`, `my-5`, `gap-7`, `mt-1`, `px-3.5`, etc.) — use **even scale keys only** (see **§8 Tailwind spacing system**)
-- Heavy React Context for simple client/UI state — prefer **Jotai atoms** (see **§9 Client UI state**)
+- Heavy React Context for client/UI state — use **Jotai atoms** + **`frontend/hosts/`** (see **§9 Client UI state**)
+- API names that drift from Edge slugs (`createCommercialShipment` for `create-shipment`, `useCreateCommercialShipmentMutation`, `*Browser` / `*Query` on 1:1 adapters)
 
 ---
 
@@ -262,13 +291,14 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Query/mutation hooks **must not** contain UI logic.
 - **Colocated component hooks** consume these hooks; they **do not** implement their own fetch logic.
 - TanStack Query hooks call **`frontend/services/`** only (no raw `fetch` / Supabase in hooks).
+- **1:1 Edge HTTP exports** in `frontend/services/*.service.ts` use slug-derived camelCase (`create-shipment` → `createShipment`). See **API naming parity** under Supabase Edge.
 
 **Naming (mandatory)**
 
 - **One domain file per folder:** `useAlerts.ts`, `useOrganizations.ts`, `useShipments.ts` (plural domain / table scope).
 - **Multiple exports per file** when a domain has several queries or mutations — **do not** split by HTTP action (e.g. no `useAcknowledgeAlert.ts`).
 - **Query exports:** `use<Thing>Query`; optional convenience `use<Thing>` (data shorthand).
-- **Mutation exports:** `use<Action><Domain>Mutation` (e.g. `useCreateOrganizationMutation` in `mutations/useOrganization.ts`).
+- **Mutation exports:** `use<Action><Domain>Mutation` (e.g. `useCreateOrganizationMutation` in `mutations/useOrganization.ts`). **Action + domain must match the Edge slug** — derive from `EDGE_FUNCTION_SLUGS`, not alternate labels (`Commercial`, `Platform`, `Admin`). See **API naming parity** under Supabase Edge.
 - **Query key roots:** exported from the **queries** domain file; **mutations import them** — never duplicate keys in mutation files.
 
 **Cache / optimistic updates (mandatory)**
@@ -290,6 +320,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Action-named hook files (`useAcknowledgeAllOrgAlerts.ts`, `useMarkShipmentThreadRead.ts`, …).
 - Splitting one domain across multiple files (`useAlert.ts` + `useMyAlerts.ts`).
 - Importing `react-query` or creating non-`use*.ts` modules under `queries/` or `mutations/`.
+- Mutation or service names that diverge from Edge slugs (`createCommercialShipment`, `useCreateCommercialShipmentMutation`, `createAdminTenantInvite` for `create-tenant-invite`).
 
 ---
 
@@ -299,7 +330,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 **Responsibilities**
 
-- **Talk to Supabase Edge** over HTTP: authenticated **`fetch`** to **`/functions/v1/<function>`** (use **`edgeFunctionFetch`** from `frontend/lib/supabase/edge-functions.ts` where helpful). Edge bundles **`supabase/functions/<slug>/`** with **`_models/**`**, **`_lib/**`**, and **`_wire/**`** (see `deno.json`).
+- **Talk to Supabase Edge** over HTTP: authenticated **`fetch`** to **`/functions/v1/<function>`** (use **`edgeFunctionFetch`** from `frontend/lib/supabase/edge-functions.ts` where helpful). Edge bundles **`supabase/functions/<slug>/`** with **`_models/**`**, **`_services/**`**, and **`_wire/**`** (see `deno.json`).
 - **Auth only:** **`fetch("/api/auth/session")`** to sync browser JWT into Next-readable cookies (see `auth.service.ts`).
 - Import **`@shared/dto/*`** for Edge JSON contracts shared with Supabase domain services.
 - **Avoid** Supabase **browser** client for table/RPC data — implement or extend a **Supabase domain service** on Edge instead.
@@ -307,6 +338,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 **Rules**
 
 - TanStack Query hooks call **`frontend/services/`** only (no raw `fetch` / Supabase in hooks or components).
+- **1:1 Edge HTTP exports** use slug-derived camelCase (`create-shipment` → `createShipment`). See **API naming parity** under Supabase Edge.
 - No UI logic, no app-level caching ownership (Query owns cache).
 
 ---
@@ -332,7 +364,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 **Responsibilities**
 
 - Thin RSC/layout data loaders using Next `createClient()` from `@/lib/supabase/server`.
-- Delegate to **`@supabase-shared/*`** + **`@models/*`** — same code path as Edge, without HTTP.
+- Delegate to **`@services/*`** + **`@models/*`** — same code path as Edge, without HTTP.
 
 **Rules**
 
@@ -359,7 +391,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ### 8. Database / Supabase
 
-**Responsibilities:** Postgres persistence. **Supabase models** (`supabase/functions/_models/<table>.ts`), **Edge handlers** (`supabase/functions/<slug>/handler.ts`), and **`@supabase-shared/`** (`_lib/`) own orchestration and privileged access. **No** direct PostgREST from `frontend/services/*.service.ts`.
+**Responsibilities:** Postgres persistence. **Supabase models** (`supabase/functions/_models/<table>.ts`), **Edge handlers** (`supabase/functions/<slug>/handler.ts`), and **`@services/`** (`_services/`) own orchestration and privileged access. **No** direct PostgREST from `frontend/services/*.service.ts`.
 
 **MUST NOT:** duplicate Edge HTTP contracts in `frontend/types/` — use `shared/dto` for Edge wire format; use `frontend/types/database.ts` (and related) for table-aligned app types.
 
@@ -395,55 +427,58 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ---
 
-### 9. Client UI state (prefer Jotai over heavy Context)
+### 9. Client UI state (Jotai + Hosts — no domain React Context)
 
-**Default:** use **lean, straightforward [Jotai](https://jotai.org/) atoms** for shared **client/UI state**. Do **not** reach for React Context when a simple atom (or a few atoms) is enough.
+**Default:** all shared **client/UI state** uses **[Jotai](https://jotai.org/) atoms**. Do **not** add domain `createContext` / React Context in the frontend.
 
 **State ownership**
 
 | Kind of state | Tool |
 |---------------|------|
 | Server/async data (fetch, cache, invalidate) | **TanStack Query** (`frontend/hooks/queries/`, `mutations/`) |
-| Simple client/UI state (toggles, filters, selection, panel open, form-adjacent UI flags) | **Jotai atoms** |
+| Shared client/UI state (toggles, org selection, toast, confirm, modals, nav progress) | **Jotai atoms** (`frontend/atoms/<domain>.ts`) |
 | Component-local state | `useState` in colocated `use<Component>.ts` |
-| Imperative app services (toast, confirm, modal host with callbacks) | **Context** only when an imperative API is the right fit |
+| Shell mount (portals, SSR hydrate, `{children}` + overlay UI) | **`frontend/hosts/` `*Host`** components |
+
+**Only allowed Provider:** Jotai `<Provider store={…}>` in [`AppProviders`](frontend/components/AppProviders/index.tsx) (library requirement). **No** `frontend/contexts/` directory.
+
+**Layout**
+
+- **Atoms + consumer hooks** — `frontend/atoms/<domain>.ts` (e.g. `useToast`, `useOrganizationWorkspace`, `use<Feature>ModalControls`)
+- **Hosts** — `frontend/hosts/<domain>.tsx` (`ToastHost`, `OrganizationWorkspaceHost`, `WelcomeModalHost`, …): render `{children}` + portal/modal UI; hydrate atoms from SSR props when needed
+- **Orchestration** (modal-specific) — `frontend/components/<Feature>Modal/use<Feature>Modal.ts`; used **only** by the Host
+- **Presentational UI** — `frontend/components/<Feature>Modal/index.tsx`
+
+**Global shell modals**
+
+- Atoms: `frontend/atoms/<feature>-modal.ts` — open booleans + `use<Feature>ModalControls()`
+- Host: `frontend/hosts/<feature>-modal.tsx` — `<Feature>ModalHost`
+- Reference: `WelcomeModalHost` + `welcomeModalOpenAtom` + `useWelcomeModalControls`
+- **Mutation reference:** `NewShipmentModalHost` + `newShipmentModalOpenAtom` → `NewShipmentForm` / `useNewShipmentForm` → `useCreateShipmentMutation` → `createShipment` (see **Canonical browser mutation flow**)
+
+**SSR-injected workspace data**
+
+Organization list / user id from RSC props → `OrganizationWorkspaceHost` hydrates `frontend/atoms/organization-workspace.ts` via `useHydrateAtoms` + post-mount `localStorage` read (hydration-safe). Consumers use `useOrganizationWorkspace()` or `useOrganizationWorkspaceOptional()`.
 
 **Where atoms live**
 
-- **Shared across routes:** `frontend/atoms/<domain>.ts` (e.g. `frontend/atoms/theme.ts`) — one file per small domain; export plain `atom()` / `atomWithStorage()` values and optional derived atoms.
-- **Route- or feature-scoped:** colocated `atoms.ts` beside the feature (same idea as `constants.ts` / `utils.ts`).
-- **Do not** create a Provider wrapper per atom. Use the app-level **`Provider`** from `jotai` once (e.g. in `AppProviders`) if needed; most atoms need no extra setup.
-
-**Prefer Jotai when**
-
-- The “state” is a **single value or a small, obvious shape** (boolean, string, id, enum, `{ open: boolean }`).
-- Multiple distant components need the **same read/write** without prop drilling.
-- You would otherwise add **Context + Provider + custom hook + `useMemo` value object** for little benefit.
-
-**Keep Context (or refactor slowly) when**
-
-- The API is **imperative** (`toast()`, `confirm()`, `openModal()`) and owns **side effects / portals**.
-- Data is **injected once from a layout/server boundary** and truly is tree-scoped config (e.g. organization workspace payload from RSC).
-- A **third-party** library expects a provider.
+- **Shared across routes:** `frontend/atoms/<domain>.ts`
+- **Route- or feature-scoped:** colocated `atoms.ts` beside the feature
+- **Do not** create a Host/Provider wrapper per atom beyond app shell Hosts listed above
 
 **Anti-patterns**
 
-- New `createContext` + Provider + `useX()` hook for one boolean, string, or selected id.
-- Context whose only job is avoiding props between 2–3 siblings (use colocated state, lift one level, or a Jotai atom).
-- Giant context value objects that mix **server data**, **UI flags**, and **actions** — split: Query for server data, atoms for UI flags, thin hooks for actions.
-- Duplicating TanStack Query cache in Context or Jotai.
+- `createContext` for app domain state (toast, confirm, org workspace, modals, nav progress)
+- `frontend/contexts/` or `*Provider` naming for non-Context shell wrappers — use **`frontend/hosts/` `*Host`**
+- Context whose only job is avoiding props between distant components
+- Giant atom blobs mixing server data with UI flags — use TanStack Query for server data
 
 **Jotai style in this repo**
 
-- Atoms are **small and named by meaning** (`shipmentFiltersAtom`, `sidebarCollapsedAtom`), not “AppState”.
-- **Derived state** → `atom((get) => …)` instead of syncing duplicate state in Context effects.
-- **Persistence** (e.g. theme, sidebar) → `atomWithStorage` in one place; avoid custom Context + `localStorage` effects when Jotai covers it.
-- Components/hooks use `useAtom`, `useAtomValue`, or `useSetAtom` — keep reads/writes obvious; no hidden global singletons outside `frontend/atoms/`.
-
-**When refactoring**
-
-- Replace **thin Context wrappers** with atoms first; leave toast/confirm/workspace-style providers until there is a clear win.
-- Do not migrate working imperative Context APIs to Jotai solely for consistency.
+- Atoms are **small and named by meaning** (`selectedOrgIdAtom`, `toastsAtom`)
+- **Derived state** → `atom((get) => …)`
+- **Persistence** → `atomWithStorage` or explicit post-mount `localStorage` in Host when hydration-safe behavior is required
+- Imperative APIs (`toast()`, `confirm()`) → write atoms + hooks in `frontend/atoms/`
 
 ---
 
@@ -452,17 +487,77 @@ Nested sub-components follow the same pattern inside the parent folder:
 **UI → HTTP → Controller → Service → Model → DB**
 
 ```
-Browser: Component → hook → TanStack Query → frontend/services/*.service.ts → Edge handler.ts → @supabase-shared → @models → DB
-SSR:     RSC/layout → frontend/server/loaders/*.ts → @supabase-shared → @models → DB
+Browser: Component → colocated hook → TanStack Query → frontend/services/*.service.ts → Edge handler.ts → @services → @models → DB
+SSR:     RSC/layout → frontend/server/loaders/*.ts → @services → @models → DB
 Auth:    frontend/services/auth.service.ts → /api/auth/session (cookie bridge only)
 ```
 
-- **Single backend code:** `@supabase-shared` (Service) + `@models` (Repository). Edge `handler.ts` = HTTP Controller for browser; SSR loaders = direct call (no HTTP).
+- **Single backend code:** `@services` (Service) + `@models` (Repository). Edge `handler.ts` = HTTP Controller for browser; SSR loaders = direct call (no HTTP).
 - **Do not** add `frontend/services/*.server.ts` domain modules or `app/api/**` domain routes.
 
-**Forbidden for domain data:** `frontend/services` → Supabase JS → PostgREST (refactor toward **Edge Controller** + `@supabase-shared` Service + `@models` + `shared/dto`).
+**Forbidden for domain data:** `frontend/services` → Supabase JS → PostgREST (refactor toward **Edge Controller** + `@services` Service + `@models` + `shared/dto`).
 
 **Avoid circular dependencies.**
+
+### Canonical browser mutation flow — `create-shipment` (copy this pattern)
+
+**Use this as the prime example** when adding or reviewing any client write (mutation). Every new feature should trace the same layers, naming (**API naming parity** above), and separation of concerns.
+
+```text
+UI open (Jotai)     →  form submit (colocated hook)  →  TanStack mutation  →  frontend service
+  →  POST /functions/v1/create-shipment  →  handler  →  @services  →  @models  →  Postgres
+  →  JSON response  →  service  →  hook  →  post-create navigation / list refresh
+```
+
+**Outbound (request) — file by file:**
+
+| Step | File | Responsibility |
+|------|------|----------------|
+| 1 | `frontend/atoms/new-shipment-modal.ts` | UI flag only: `newShipmentModalOpenAtom`; `useNewShipmentModalControls().openNewShipmentModal()` |
+| 2 | `frontend/components/TopNav/AuthenticatedTopNav/` | Trigger: calls `openNewShipmentModal()` — no fetch |
+| 3 | `frontend/hosts/new-shipment-modal.tsx` | `NewShipmentModalHost`: mounts modal over `{children}`; wires `useNewShipmentModal()` |
+| 4 | `frontend/atoms/organization-workspace.ts` + `frontend/hosts/organization-workspace.tsx` | `selectedOrgId` → becomes `organization_id` on the wire body |
+| 5 | `frontend/components/NewShipmentModal/index.tsx` | Presentation: `Modal` + `NewShipmentForm` — no API calls |
+| 6 | `frontend/components/NewShipmentForm/index.tsx` | Presentation: fields + submit button — delegates to colocated hook |
+| 7 | `frontend/components/ShipmentCommercialFormFields/utils.ts` | Pure: `validateFormValues`, `formValuesToCommercialHeader`, `formValuesToIdentityLine` |
+| 8 | `frontend/components/NewShipmentForm/useNewShipmentForm.ts` | Orchestration: build `CreateShipmentBody`, call mutation, handle errors / `onCreated` |
+| 9 | `frontend/hooks/mutations/useShipments.ts` | `useCreateShipmentMutation` — `mutationFn` calls service only; no UI logic |
+| 10 | `frontend/services/shipment.service.ts` | `createShipment(body)` — `authFetch(EDGE_FUNCTION_SLUGS.shipments.create, …)` |
+| 11 | `frontend/lib/supabase/edge-function-slugs.ts` | `"create-shipment"` — never hard-code the URL path |
+| 12 | `supabase/functions/_wire/dto/logistics.dto.ts` | `CreateShipmentBody` / `CreateShipmentResponse` — shared wire contract |
+| 13 | `supabase/functions/create-shipment/index.ts` | Entry: `Deno.serve` + CORS → `handle(req)` only |
+| 14 | `supabase/functions/create-shipment/handler.ts` | Controller: auth, parse body, call `createShipment`, return JSON |
+| 15 | `supabase/functions/_services/shipment/shipment.service.ts` | Service: validate, membership check, orchestrate inserts + side effects |
+| 16 | `supabase/functions/_models/organization_members.ts` | Repository: `fetchMembershipUserIdForOrg` |
+| 17 | `supabase/functions/_models/shipments.ts` | Repository: `insertShipment` |
+| 18 | `supabase/functions/_models/shipment_lines.ts` | Repository: `insertShipmentLines` |
+| 19 | `supabase/functions/_services/shipment/document.service.ts` | Side effect: `recordShipmentCreated` (activity + notifications) |
+
+**Inbound (response) — same chain upward:**
+
+| Step | What happens |
+|------|----------------|
+| Handler | `200 { shipment_id, line_ids }` per `CreateShipmentResponse` |
+| `shipment.service.ts` | `{ ok: true, data }` or `{ ok: false, error }` |
+| `useNewShipmentForm` | Checks `r.ok`, extracts `shipment_id` |
+| `useNewShipmentModal.afterCreated` | `emitTrackingCreated()` → `router.push(/shipments/:id)` → close modal |
+
+**Layer rules illustrated by this flow (mandatory for all mutations):**
+
+- **`index.tsx`** — render UI only; receive data/callbacks via props or colocated hook.
+- **Colocated `use<Component>.ts`** — orchestration + local UI state; consumes TanStack hooks; does **not** call `fetch` or Edge URLs.
+- **`hooks/mutations/use<Domain>.ts`** — `useMutation({ mutationFn: verbNoun })` only; no toasts, routing, or modal state.
+- **`frontend/services/*.service.ts`** — sole browser HTTP transport for domain data; slug-aligned export name (`createShipment`).
+- **`handler.ts`** — thin HTTP adapter; no table `.from()` — delegate to `@services` / `@models`.
+- **`_services/`** — business rules, authz checks, orchestration across models.
+- **`_models/`** — one file per table; all `.from("<table>")` for that table lives here.
+- **Jotai atoms / hosts** — client UI state (modal open, org selection); **not** server/async data (that is TanStack Query).
+
+**Anti-patterns this flow avoids:** `fetch` in `index.tsx`; `createCommercialShipment` / mismatched mutation names; PostgREST in `frontend/services/`; fat `handler.ts`; React Context for global modals; TanStack mutation doing navigation (belongs in colocated hook or modal orchestration hook).
+
+**Bulk variant:** `bulkCreateShipments` in `frontend/services/shipment-import.service.ts` loops `createShipment` — same Edge slug, no second backend entrypoint.
+
+**Workspace edit/delete (same layers as create):** `update-shipment` → `updateShipment` → `useUpdateShipmentMutation`; `delete-shipment` → `deleteShipment` → `useDeleteShipmentMutation`. Colocated hooks on `/shipments/[shipmentId]` (`useEditShipmentDetailsModal`, `useShipmentMailTrackingPanel`, `useShipmentWorkspaceDelete`) call mutations; cache via `invalidateShipmentWorkspaceRowQuery` / `removeShipmentWorkspaceRowQuery` in `hooks/queries/useShipment.ts`.
 
 ---
 
@@ -475,9 +570,9 @@ When refactoring, **identify and move**:
 | Inline API calls | `frontend/services/` |
 | Inline Supabase in components/hooks | `frontend/services/` |
 | Server state / fetch / invalidation | `frontend/hooks/` (queries/mutations) |
-| Privileged logic inside `route.ts` | Edge handler + `@supabase-shared` + `createServiceClient()` |
+| Privileged logic inside `route.ts` | Edge handler + `@services` + `createServiceClient()` |
 | Duplicate Edge request/response shapes | `shared/dto/` (import from Edge + frontend service) |
-| PostgREST in `frontend/services/*.service.ts` | New Edge slug + `_models/` / `_lib/` + `@shared/dto` + `frontend/services/*.service.ts` caller |
+| PostgREST in `frontend/services/*.service.ts` | New Edge slug + `_models/` / `_services/` + `@shared/dto` + `frontend/services/*.service.ts` caller |
 | Pure helpers (component-specific) | Colocated `utils.ts` |
 | Pure helpers (shared across routes) | `frontend/utils/` |
 | Inline constants (classes, labels, config) | Colocated `constants.ts` |
@@ -490,6 +585,10 @@ When refactoring, **identify and move**:
 | `*-cache.ts` / optimistic helpers beside hooks | Cache helpers in `queries/use<Domain>.ts`; mutations import them |
 | Legacy `react-query` package | `@tanstack/react-query` only |
 | Odd Tailwind spacing (`p-3`, `gap-7`, `my-5`, …) | Nearest even scale key (`p-4`, `gap-8`, `my-6`, …) per **§8** |
+| `*ModalProvider` + Context for global shell modals | Jotai atoms + `frontend/hosts/*ModalHost` |
+| `createCommercialShipment` / `useCreateCommercialShipmentMutation` (etc.) | Slug-aligned `createShipment` / `useCreateShipmentMutation` per **API naming parity** |
+| `*Browser` / `*Query` on 1:1 Edge adapters | Slug-derived camelCase (`updateOrgSettings`, `deleteOrganizationMember`, …) |
+| New browser write with unclear layer placement | Match **Canonical browser mutation flow — `create-shipment`** (Dependency flow) |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 
@@ -517,17 +616,20 @@ frontend/services/
   organization.service.ts
 
 frontend/server/loaders/
-  authenticated-layout.ts     # SSR: thin loader → @supabase-shared
+  authenticated-layout.ts     # SSR: thin loader → @services
 
 frontend/app/api/auth/session/route.ts   # cookie bridge only
 
-supabase/functions/_lib/       # @supabase-shared — Edge services (auth, db, tracking, portal, …)
+supabase/functions/_services/       # @services — domain-grouped Edge services
+  shipment/shipment.service.ts
+  tracking/tracking.service.ts
+  auth.ts, db.ts, …                 # infra at root
 supabase/functions/_models/    # @models — one <table>.ts per Postgres table
 supabase/functions/_wire/dto/  # @shared/dto — HTTP contracts (frontend + Edge)
 
 supabase/functions/<slug>/
   index.ts                     # Deno.serve + CORS; hand off to handler.ts only
-  handler.ts                   # Thin HTTP adapter → @supabase-shared / @models (see search-containers)
+  handler.ts                   # Thin HTTP adapter → @services / @models (see search-containers)
 
 ```
 
@@ -536,10 +638,10 @@ supabase/functions/<slug>/
 ## Key principles
 
 - Strict separation of concerns per layer.
-- Predictable data flow: UI → Query → **`frontend/services/*.service.ts`** → Edge HTTP → **`@supabase-shared`** / **`@models`**; SSR → **`frontend/server/loaders/*.ts`** → same shared lib.
+- Predictable data flow: UI → Query → **`frontend/services/*.service.ts`** → Edge HTTP → **`@services`** / **`@models`**; SSR → **`frontend/server/loaders/*.ts`** → same _services layer.
 - No logic leakage into dumb components.
 - Centralized server state (Query + **`frontend/services/`**).
-- **Lean client/UI state** via **Jotai atoms**; reserve **Context** for imperative services and true tree-injected config — not for simple shared variables.
+- **Lean client/UI state** via **Jotai atoms** (`frontend/atoms/`) + shell **Hosts** (`frontend/hosts/`) — **no** domain React Context
 - **`shared/dto/`** aligns **frontend services** with **Supabase Edge** HTTP contracts.
 - Route-based (App Router) frontend layout.
 - Single responsibility per layer.
@@ -548,6 +650,6 @@ supabase/functions/<slug>/
 
 - Dumb, reusable components.
 - Consistent, centralized data fetching and transport.
-- Business logic in **`supabase/functions/_lib/`**, **`supabase/functions/_models/`**, with **`handler.ts`** as HTTP glue only — not bloated handlers, not in Edge **`index.ts`**, not in UI. **SSR:** thin **`frontend/server/loaders/*.ts`** calling the same `_lib`.
+- Business logic in **`supabase/functions/_services/`**, **`supabase/functions/_models/`**, with **`handler.ts`** as HTTP glue only — not bloated handlers, not in Edge **`index.ts`**, not in UI. **SSR:** thin **`frontend/server/loaders/*.ts`** calling the same `_services`.
 - Typed HTTP contracts via **`shared/dto`**; table-oriented shapes in `frontend/types/` where appropriate.
 - Organized, scalable, maintainable codebase.

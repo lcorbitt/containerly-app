@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@supabase-shared/auth.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
-import { acceptCustomerInvite } from "@supabase-shared/customer-access.service.ts";
+import { requireAuthUser } from "@services/auth.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { acceptCustomerInvite } from "@services/customer/customer-access.service.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

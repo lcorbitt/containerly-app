@@ -17,7 +17,7 @@ export async function fetchOnboardingStatus(): Promise<OnboardingStatusResponse>
   );
 }
 
-export async function createOnboardingOrganization(input: {
+export async function completeOnboardingOrganization(input: {
   name: string;
   slug: string | null;
   teamSize?: string | null;
@@ -39,7 +39,7 @@ export async function createOnboardingOrganization(input: {
   return { id: data.id };
 }
 
-export async function createAdminTenantInvite(input: {
+export async function createTenantInvite(input: {
   email: string;
   suggestedOrgName?: string | null;
 }): Promise<{ inviteId: string; invited: boolean }> {

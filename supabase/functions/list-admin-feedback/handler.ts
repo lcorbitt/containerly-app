@@ -1,7 +1,7 @@
-import { requireAuthUserId, requireSuperadmin } from "@supabase-shared/auth.ts";
-import { fetchAdminFeedbackRows } from "@supabase-shared/feedback-operations.service.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
+import { fetchAdminFeedbackRows } from "@services/feedback/feedback.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto.ts";
 
 const VALID_CATEGORIES = new Set<FeedbackCategory>(["bug", "feature", "general"]);

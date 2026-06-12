@@ -1,8 +1,7 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { OrganizationWorkspaceContext } from "@/contexts/organization-workspace";
-import { ToastProvider } from "@/contexts/toast";
+import { TestAppHosts } from "@/test-utils/app-hosts";
 import { ORG_ID } from "@/components/ShipmentShareMenu/test-utils";
 import { useShipmentAccessTabContent } from "./useShipmentAccessTabContent";
 import {
@@ -31,17 +30,7 @@ vi.mock("@/services/shipment.service", () => ({
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
-    <OrganizationWorkspaceContext.Provider
-      value={{
-        orgs: [],
-        selectedOrgId: ORG_ID,
-        setSelectedOrgId: vi.fn(),
-        refreshOrgs: vi.fn().mockResolvedValue(undefined),
-        isSuperAdmin: false,
-      }}
-    >
-      <ToastProvider>{children}</ToastProvider>
-    </OrganizationWorkspaceContext.Provider>
+    <TestAppHosts org={{ selectedOrgId: ORG_ID }}>{children}</TestAppHosts>
   );
 }
 

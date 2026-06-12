@@ -8,7 +8,7 @@ import { ProfileImageSettings } from "../ProfileImageSettings";
 import { PasswordSettingsPanel } from "../PasswordSettingsPanel";
 import { SettingsDisplayName } from "../SettingsDisplayName";
 import { canManageOrganizationSettings } from "@/utils/org-role";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 
 type TabId = "personal" | "organization";
 

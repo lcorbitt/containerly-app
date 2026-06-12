@@ -2,6 +2,6 @@
   "name": "supabase-functions",
   "private": true,
   "scripts": {
-    "test:edge": "deno test --config deno.test.json --allow-env --no-check _lib/customer-access.service.test.ts _lib/shipment-edit-activity.utils.test.ts"
+    "test:edge": "deno test --config deno.test.json --allow-env --no-check _services/customer/customer-access.service.test.ts _services/shipment/activity/edit.utils.test.ts"
   }
 }

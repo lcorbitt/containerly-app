@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { fetchOnboardingStatusForUser } from "@supabase-shared/onboarding-operations.service.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { fetchOnboardingStatusForUser } from "@services/organization/onboarding.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

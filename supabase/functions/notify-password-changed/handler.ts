@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { sendPasswordChangedEmail } from "@supabase-shared/email.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUser } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { sendPasswordChangedEmail } from "@services/email/email.service.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 function loginUrl(): string {
   const base = Deno.env.get("PUBLIC_SITE_URL")?.trim().replace(/\/$/, "") ?? "";

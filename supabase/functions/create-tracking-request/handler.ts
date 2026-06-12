@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
-import { createTrackingRequest } from "@supabase-shared/tracking-operations.service.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { createTrackingRequest } from "@services/tracking/tracking.service.ts";
 import type { CreateTrackingRequestBody } from "@shared/dto/tracking.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

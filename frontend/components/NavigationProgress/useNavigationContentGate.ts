@@ -9,7 +9,7 @@ import { useNavigationProgress } from "./useNavigationProgress";
  * second page-level loader.
  *
  * Call once at the top of a route's main component (before any early returns) with whether its data
- * is ready. While {@link NavigationProgressContextValue.isNavigating} is true the page should render
+ * is ready. While the navigation overlay is active the page should render
  * `null` in place of its own full-page loader (use the returned `overlayActive`) — the overlay is
  * already covering it. On a direct load / refresh there is no overlay, so the page shows its own
  * loader as usual.

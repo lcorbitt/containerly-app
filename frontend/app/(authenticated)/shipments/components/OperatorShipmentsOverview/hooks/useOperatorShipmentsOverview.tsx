@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import {
-  deleteCommercialShipment,
   loadOperatorShipmentsOverviewPageBrowser,
   type OperatorShipmentScope,
   type ShipmentOverviewRow,
@@ -16,9 +15,10 @@ import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentSortColumn,
 } from "@/utils/operator-shipment-sort";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useToast } from "@/atoms/toast";
+import { useDeleteShipmentMutation } from "@/hooks/mutations/useShipments";
 import { TRACKING_CREATED_EVENT } from "@/utils/tracking-created-event";
 import { fetchProfileDisplayNameMap } from "@/services/profile.service";
 import { canManageOrganizationSettings } from "@/utils/org-role";
@@ -44,6 +44,7 @@ export function useOperatorShipmentsOverview() {
   const { confirm } = useConfirm();
   const { toast } = useToast();
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
+  const deleteMutation = useDeleteShipmentMutation();
 
   const [rows, setRows] = useState<ShipmentOverviewRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -64,11 +65,14 @@ export function useOperatorShipmentsOverview() {
   const [etdTo, setEtdTo] = useState("");
   const [etaFrom, setEtaFrom] = useState("");
   const [etaTo, setEtaTo] = useState("");
-  const [deletingShipmentId, setDeletingShipmentId] = useState<string | null>(null);
   const exportPeopleLabelsRef = useRef<Record<string, string>>({});
 
   const selectedMembershipRole = orgs.find((o) => o.organizations?.id === selectedOrgId)?.role;
   const canDeleteShipments = canManageOrganizationSettings(isSuperAdmin, selectedMembershipRole);
+  const deletingShipmentId =
+    deleteMutation.isPending && deleteMutation.variables
+      ? deleteMutation.variables.shipment_id
+      : null;
 
   useEffect(() => {
     setPage(0);
@@ -225,9 +229,8 @@ export function useOperatorShipmentsOverview() {
       });
       if (!ok) return;
 
-      setDeletingShipmentId(row.id);
       try {
-        const result = await deleteCommercialShipment({
+        const result = await deleteMutation.mutateAsync({
           organization_id: selectedOrgId,
           shipment_id: row.id,
         });
@@ -239,11 +242,9 @@ export function useOperatorShipmentsOverview() {
         await load();
       } catch (e) {
         toast(e instanceof Error ? e.message : "Could not delete shipment", "error");
-      } finally {
-        setDeletingShipmentId(null);
       }
     },
-    [canDeleteShipments, confirm, load, selectedOrgId, toast],
+    [canDeleteShipments, confirm, deleteMutation, load, selectedOrgId, toast],
   );
 
   const columns: DataTableColumn<ShipmentOverviewRow>[] = useMemo(

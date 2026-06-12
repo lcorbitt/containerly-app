@@ -1,26 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { ShipmentCommercialFormFields } from "@/components/ShipmentCommercialFormFields";
-import {
-  emptyFormValues,
-  formValuesFromSource,
-  formValuesToCommercialHeader,
-  formValuesToIdentityLine,
-  validateFormValues,
-} from "@/components/ShipmentCommercialFormFields/utils";
 import type { ShipmentCommercialFormSource } from "@/components/ShipmentCommercialFormFields/types";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { updateCommercialShipment } from "@/services/shipment.service";
 import {
-  EDIT_SHIPMENT_DETAILS_CONFIRM_DESCRIPTION,
-  EDIT_SHIPMENT_DETAILS_CONFIRM_LABEL,
-  EDIT_SHIPMENT_DETAILS_CONFIRM_TITLE,
   EDIT_SHIPMENT_DETAILS_MODAL_DESCRIPTION,
   EDIT_SHIPMENT_DETAILS_MODAL_SAVE_LABEL,
   EDIT_SHIPMENT_DETAILS_MODAL_TITLE,
 } from "./constants";
+import { useEditShipmentDetailsModal } from "./useEditShipmentDetailsModal";
 
 export function EditShipmentDetailsModal({
   open,
@@ -37,53 +25,14 @@ export function EditShipmentDetailsModal({
   source: ShipmentCommercialFormSource;
   onSaved?: () => void;
 }) {
-  const { confirm } = useConfirm();
-  const [values, setValues] = useState(emptyFormValues);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    setValues(formValuesFromSource(source));
-    setError(null);
-    setSaving(false);
-  }, [open, source]);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const validationError = validateFormValues(values);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    const confirmed = await confirm({
-      title: EDIT_SHIPMENT_DETAILS_CONFIRM_TITLE,
-      description: EDIT_SHIPMENT_DETAILS_CONFIRM_DESCRIPTION,
-      confirmLabel: EDIT_SHIPMENT_DETAILS_CONFIRM_LABEL,
-      cancelLabel: "Cancel",
-    });
-    if (!confirmed) return;
-
-    setSaving(true);
-    try {
-      const r = await updateCommercialShipment({
-        organization_id: organizationId,
-        shipment_id: shipmentId,
-        header: formValuesToCommercialHeader(values),
-        lines: [formValuesToIdentityLine(values)],
-      });
-      if (!r.ok) {
-        setError(r.error);
-        return;
-      }
-      onSaved?.();
-      onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
+  const { values, setValues, error, saving, submit } = useEditShipmentDetailsModal({
+    open,
+    onClose,
+    organizationId,
+    shipmentId,
+    source,
+    onSaved,
+  });
 
   return (
     <Modal

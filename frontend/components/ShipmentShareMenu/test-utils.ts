@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import type { ShipmentAccessTabContentState } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentAccessTabContent/hooks/useShipmentAccessTabContent";
-import type { ToastVariant } from "@/contexts/toast";
+import type { ToastVariant } from "@/atoms/toast";
 import type {
   CustomerInvite,
   ShipmentCustomerAccess,

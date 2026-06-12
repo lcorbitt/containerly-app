@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fustat, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/components/AppProviders";
-import { ThemeScript } from "@/contexts/theme/ThemeScript";
+import { ThemeScript } from "@/utils/theme/ThemeScript";
 import { rootSiteMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 

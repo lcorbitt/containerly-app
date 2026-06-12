@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import { updateShipmentNotificationSubscription } from "@/services/shipment.service";
 
 export function useShipmentNotificationsPanel({

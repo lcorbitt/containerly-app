@@ -1,11 +1,11 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
-import { updateCommercialShipment } from "@supabase-shared/shipment-operations.service.ts";
-import { recordOriginalsMailed } from "@supabase-shared/document-workflow.service.ts";
-import { notifyCustomerDocumentsMailed } from "@supabase-shared/notification-workflow.service.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { updateShipment } from "@services/shipment/shipment.service.ts";
+import { recordOriginalsMailed } from "@services/shipment/document.service.ts";
+import { notifyCustomerDocumentsMailed } from "@services/notification/workflow.service.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import { listActiveCustomerAccessForShipment } from "@models/shipment_customer_access.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { UpdateShipmentBody } from "@shared/dto/logistics.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {
@@ -21,7 +21,7 @@ export async function handle(req: Request): Promise<Response> {
     if (!auth.ok) return auth.response;
 
     const mailTracking = body.physical_mail_tracking_number;
-    const result = await updateCommercialShipment(userClient, auth.userId, body);
+    const result = await updateShipment(userClient, auth.userId, body);
     if (!result.ok) {
       return jsonResponse({ error: result.error }, { status: result.status });
     }

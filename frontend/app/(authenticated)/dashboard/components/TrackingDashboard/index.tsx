@@ -3,7 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PendingTenantOnboardingPrompt } from "@/components/PendingTenantOnboardingPrompt";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { DASHBOARD_PAGE_INTRO_CLASS, DASHBOARD_PANEL_CLASS, DASHBOARD_PANEL_BODY_CLASS, DASHBOARD_SIDE_STACK_CLASS } from "../../constants";
 import { DashboardAlertsPanel } from "../DashboardAlertsPanel";
 import { DashboardInsightsGrid } from "../DashboardInsightsGrid";

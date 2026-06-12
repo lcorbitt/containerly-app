@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useConfirm } from "@/contexts/confirm-dialog";
+import { useConfirm } from "@/atoms/confirm-dialog";
 import type { ShipmentAccessTabContentState } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentAccessTabContent/hooks/useShipmentAccessTabContent";
 import { UserAvatar } from "@/components/UserAvatar";
 import { ShipmentShareImporterSettingsDialog } from "../ShipmentShareImporterSettingsDialog";

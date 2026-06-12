@@ -1,7 +1,7 @@
-import { requireAuthUserId, requireSuperadmin } from "@supabase-shared/auth.ts";
-import { createPlatformTenantInvite } from "@supabase-shared/tenant-invite-operations.service.ts";
-import { createServiceClient, createUserClient } from "@supabase-shared/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
+import { createTenantInvite } from "@services/organization/tenant-invite.service.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {
@@ -30,7 +30,7 @@ export async function handle(req: Request): Promise<Response> {
     }
 
     const admin = createServiceClient();
-    const result = await createPlatformTenantInvite({
+    const result = await createTenantInvite({
       admin,
       actingUserId: auth.userId,
       emailLower,

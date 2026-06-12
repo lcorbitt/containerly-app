@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { useSessionAvatar } from "@/atoms/session-avatar";
 import { assertProfileImageFile } from "@/utils/profile-image";
 import {

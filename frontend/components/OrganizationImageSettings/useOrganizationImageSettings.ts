@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import {
   clearOrganizationImagePathAndRemoveStorage,
   fetchOrganizationImagePath,

@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient } from "@supabase-shared/db.ts";
-import { submitUserFeedback } from "@supabase-shared/feedback-operations.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { submitUserFeedback } from "@services/feedback/feedback.service.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { SubmitFeedbackBody } from "@shared/dto/feedback.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

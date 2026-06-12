@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@supabase-shared/auth.ts";
-import { createUserClient, tryCreateServiceClient } from "@supabase-shared/db.ts";
-import { reviewShipmentDocument } from "@supabase-shared/document-workflow.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@supabase-shared/utils.ts";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { reviewShipmentDocument } from "@services/shipment/document.service.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 import type { ReviewShipmentDocumentBody } from "@shared/dto/logistics.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {

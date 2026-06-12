@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 import { useCreateOrganizationMutation } from "@/hooks/mutations/useOrganization";
 
 export function useCreateOrgForm(onCreated: (orgId: string) => Promise<void> | void) {

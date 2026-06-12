@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { fetchSettingsPageProfileQuery } from "@supabase-shared/profile-operations.service";
+import { fetchSettingsPageProfileQuery } from "@services/profile/profile.service";
 
 export type ProfileSettingsPageData = Awaited<ReturnType<typeof fetchSettingsPageProfileQuery>>;
 

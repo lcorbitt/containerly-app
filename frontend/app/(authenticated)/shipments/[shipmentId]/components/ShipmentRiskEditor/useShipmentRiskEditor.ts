@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useToast } from "@/contexts/toast";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useToast } from "@/atoms/toast";
 import {
   SHIPMENT_RISK_SAVE_CONFIRM_DESCRIPTION,
   SHIPMENT_RISK_SAVE_CONFIRM_LABEL,

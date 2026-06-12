@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DOCUMENT_TYPE_NONE_VALUE } from "@/app/(authenticated)/shipments/[shipmentId]/components/ShipmentWorkspaceScopePanel/ShipmentDocumentUploadZone/constants";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useToast } from "@/contexts/toast";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useToast } from "@/atoms/toast";
 import {
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,

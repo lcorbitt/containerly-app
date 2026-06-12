@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { notifyBolImported } from "@/services/notification.service";
 import { createTrackingRequest } from "@/services/tracking.service";
 import { lookupBolContainers } from "@/services/shipment.service";
-import { useToast } from "@/contexts/toast";
+import { useToast } from "@/atoms/toast";
 
 interface UseBolImportDialogParams {
   organizationId: string;

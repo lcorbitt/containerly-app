@@ -10,9 +10,9 @@ import {
   MAX_ATTACHMENTS_PER_MESSAGE,
 } from "@/utils/workspace-files";
 import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
-import { useConfirm } from "@/contexts/confirm-dialog";
-import { useOrganizationWorkspace } from "@/contexts/organization-workspace";
-import { useToast } from "@/contexts/toast";
+import { useConfirm } from "@/atoms/confirm-dialog";
+import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
+import { useToast } from "@/atoms/toast";
 import type { WorkspaceAttachment } from "@/types/database";
 import {
   shipmentScopeThreadQueryKey,

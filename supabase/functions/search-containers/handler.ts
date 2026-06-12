@@ -1,6 +1,6 @@
-import { createUserClient } from "@supabase-shared/db.ts";
-import { jsonResponse } from "@supabase-shared/utils.ts";
-import { searchContainers } from "@supabase-shared/tracking-operations.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
+import { searchContainers } from "@services/tracking/tracking.service.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

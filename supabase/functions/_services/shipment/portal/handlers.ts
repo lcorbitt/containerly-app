@@ -1,0 +1,144 @@
+/**
+ * Operator/importer portal + customer preview flows (Edge handlers call these from `@services/`).
+ */
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildImporterGrantShipmentPayload,
+  buildShipmentPortalPayload,
+  DEFAULT_CUSTOMER_VISIBILITY,
+  OPERATOR_SHIPMENT_PORTAL_VISIBILITY,
+  type ShipmentPortalReportMeta,
+} from "./payload.ts";
+import { fetchProfileRole } from "@models/profiles.ts";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
+import { fetchActiveAccessFull } from "@models/shipment_customer_access.ts";
+import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
+import { fetchShipmentIdAndOrganization, fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
+import { claimShipmentAccess } from "@services/customer/customer-access.service.ts";
+import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto.ts";
+
+type PortalResult =
+  | { ok: true; payload: ShipmentPortalPayload }
+  | { ok: false; status: number; error: string };
+
+export async function getShipmentForOperator(
+  userClient: SupabaseClient,
+  admin: SupabaseClient,
+  userId: string,
+  shipmentId: string,
+): Promise<PortalResult> {
+  const { data: shipment, error: shErr } = await fetchShipmentPortalOperatorRow(userClient, shipmentId);
+
+  if (shErr) return { ok: false, status: 500, error: shErr.message };
+  if (!shipment) return { ok: false, status: 404, error: "Shipment not found" };
+
+  const organizationId = shipment.organization_id as string;
+
+  const [{ data: participant }, { data: profile }, { data: membership }] = await Promise.all([
+    fetchShipmentParticipantForUser(userClient, shipmentId, userId),
+    fetchProfileRole(userClient, userId),
+    fetchMembershipByOrgAndUser(userClient, organizationId, userId),
+  ]);
+
+  const assigneeUserId = shipment.assignee_user_id as string | null | undefined;
+  const isAssignee = assigneeUserId != null && assigneeUserId === userId;
+  const isParticipant = participant != null;
+  const isOrgMember = membership != null;
+  const isPlatformSuperadmin = (profile?.role as string | undefined) === "superadmin";
+
+  if (isPlatformSuperadmin || isOrgMember || isAssignee || isParticipant) {
+    const reportMeta: ShipmentPortalReportMeta = {
+      id: shipment.id as string,
+      title: null,
+      created_at: shipment.created_at as string,
+      expires_at: null,
+    };
+
+    const result = await buildShipmentPortalPayload(
+      admin,
+      shipmentId,
+      OPERATOR_SHIPMENT_PORTAL_VISIBILITY,
+      {},
+      reportMeta,
+      null,
+      { includeInternalMessages: true },
+    );
+
+    if (!result.ok) return result;
+
+    const payload = result.payload as Record<string, unknown>;
+    payload.viewer = "org_member";
+    payload.shipment_id = shipmentId;
+    return { ok: true, payload: payload as unknown as ShipmentPortalPayload };
+  }
+
+  const { data: accessRow, error: accErr } = await fetchActiveAccessFull(userClient, shipmentId, userId);
+
+  let access = accessRow;
+  if (accErr) return { ok: false, status: 500, error: accErr.message };
+
+  if (!access) {
+    const { data: userData } = await userClient.auth.getUser();
+    const email = userData.user?.email ?? "";
+    if (email) {
+      const claim = await claimShipmentAccess(admin, userId, email, shipmentId);
+      if (claim.ok) {
+        const refetch = await fetchActiveAccessFull(userClient, shipmentId, userId);
+        access = refetch.data;
+      }
+    }
+  }
+
+  if (!access) return { ok: false, status: 403, error: "No access to this shipment" };
+
+  const grantResult = await buildImporterGrantShipmentPayload(admin, access as Record<string, unknown>);
+  if (!grantResult.ok) return grantResult;
+
+  const payload = grantResult.payload as Record<string, unknown>;
+  payload.viewer = "importer";
+  return { ok: true, payload: payload as unknown as ShipmentPortalPayload };
+}
+
+export async function previewShipmentForImporter(
+  userClient: SupabaseClient,
+  admin: SupabaseClient,
+  shipmentId: string,
+  visibilitySettings: Record<string, unknown>,
+  operatorOverrides: Record<string, unknown>,
+): Promise<PortalResult> {
+  const { data: row, error: shErr } = await fetchShipmentIdAndOrganization(userClient, shipmentId);
+
+  if (shErr || !row) {
+    return { ok: false, status: 404, error: "Shipment not found or access denied" };
+  }
+
+  const visibility = {
+    ...DEFAULT_CUSTOMER_VISIBILITY,
+    ...(visibilitySettings && typeof visibilitySettings === "object" ? visibilitySettings : {}),
+  };
+  const overrides =
+    operatorOverrides && typeof operatorOverrides === "object" ? operatorOverrides : {};
+
+  const reportMeta: ShipmentPortalReportMeta = {
+    id: "preview",
+    title: "Customer preview",
+    created_at: new Date().toISOString(),
+    expires_at: null,
+  };
+
+  const result = await buildShipmentPortalPayload(
+    admin,
+    shipmentId,
+    visibility,
+    overrides,
+    reportMeta,
+    null,
+    undefined,
+  );
+
+  if (!result.ok) return result;
+
+  const payload = result.payload as Record<string, unknown>;
+  payload.preview = true;
+  return { ok: true, payload: payload as unknown as ShipmentPortalPayload };
+}

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   fetchShipmentWorkspaceRowForBrowser,
@@ -10,6 +10,21 @@ import { loadShipmentScopeThread } from "@/services/workspace.service";
 
 export const shipmentWorkspaceRowQueryKeyRoot = ["shipment-workspace-row"] as const;
 export const documentQueueQueryKeyRoot = ["document-queue"] as const;
+
+export function invalidateShipmentWorkspaceRowQuery(
+  qc: QueryClient,
+  input: { shipmentId: string; organizationId: string },
+) {
+  return qc.invalidateQueries({
+    queryKey: [...shipmentWorkspaceRowQueryKeyRoot, input.shipmentId, input.organizationId],
+  });
+}
+
+export function removeShipmentWorkspaceRowQuery(qc: QueryClient, shipmentId: string) {
+  return qc.removeQueries({
+    queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
+  });
+}
 
 export function shipmentScopeThreadQueryKey(organizationId: string, shipmentId: string) {
   return [shipmentScopeThreadOrgQueryKeyPrefix, organizationId, shipmentId] as const;
