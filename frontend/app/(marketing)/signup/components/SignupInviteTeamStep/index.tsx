@@ -5,6 +5,7 @@ import {
   LOGIN_FORM_SUBMIT_CLASS,
   LOGIN_FORM_SUBMIT_INNER_CLASS,
 } from "@/app/(marketing)/login/components/LoginForm/constants";
+import { CustomSelect } from "@/components/CustomSelect";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
   SIGNUP_INVITE_ADD_BUTTON_CLASS,
@@ -14,7 +15,7 @@ import {
   SIGNUP_INVITE_INPUT_CLASS,
   SIGNUP_INVITE_ROLE_LABEL,
   SIGNUP_INVITE_ROLE_OPTIONS,
-  SIGNUP_INVITE_SELECT_CLASS,
+  SIGNUP_INVITE_SELECT_SHELL_CLASS,
   SIGNUP_INVITE_NEXT_LABEL,
   SIGNUP_INVITE_NEXT_LOADING_LABEL,
   SIGNUP_INVITE_SKIP_BLURB,
@@ -56,24 +57,27 @@ export function SignupInviteTeamStep({
               />
             </div>
             <div className="w-full sm:w-36">
-              <label className={SIGNUP_INVITE_FIELD_LABEL_CLASS} htmlFor={`invite-role-${row.id}`}>
+              <label
+                className={SIGNUP_INVITE_FIELD_LABEL_CLASS}
+                id={`invite-role-label-${row.id}`}
+                htmlFor={`invite-role-${row.id}`}
+              >
                 {SIGNUP_INVITE_ROLE_LABEL}
               </label>
-              <select
-                id={`invite-role-${row.id}`}
-                value={row.role}
-                onChange={(e) =>
-                  step.updateRow(row.id, { role: e.target.value as OrganizationMemberRole })
-                }
-                className={SIGNUP_INVITE_SELECT_CLASS}
-                disabled={step.loading}
-              >
-                {SIGNUP_INVITE_ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className={SIGNUP_INVITE_SELECT_SHELL_CLASS}>
+                <CustomSelect
+                  id={`invite-role-${row.id}`}
+                  aria-labelledby={`invite-role-label-${row.id}`}
+                  value={row.role}
+                  onValueChange={(value) =>
+                    step.updateRow(row.id, { role: value as OrganizationMemberRole })
+                  }
+                  options={SIGNUP_INVITE_ROLE_OPTIONS}
+                  showAvatars={false}
+                  disabled={step.loading}
+                  className="w-full"
+                />
+              </div>
             </div>
           </div>
         ))}
