@@ -17,8 +17,6 @@ export function LoginAuthPanel({ next, initialError = null }: LoginAuthPanelProp
 
   return (
     <div className={LOGIN_AUTH_PANEL_CARD_CLASS}>
-      <LoginOAuthButtons next={next} disabled={form.loading} initialError={initialError} />
-
       <LoginForm
         email={form.email}
         setEmail={form.setEmail}
@@ -33,6 +31,8 @@ export function LoginAuthPanel({ next, initialError = null }: LoginAuthPanelProp
         loadingSubtitle={form.loadingSubtitle}
         submit={form.submit}
       />
+
+      <LoginOAuthButtons next={next} disabled={form.loading} initialError={initialError} />
 
       <div className={LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS}>
         <span className={LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS}>

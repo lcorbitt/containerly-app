@@ -70,6 +70,7 @@ Logistics customer portal for operators and importers: **documentation-first shi
 - `{SITE_URL}/set-password`
 - `{SITE_URL}/forgot-password`
 - `{SITE_URL}/login`
+- `{SITE_URL}/signup` (and `/signup?step=2`, `/signup?step=3` for the onboarding wizard)
 
 Also enable **Secure password change** under **Authentication** → **Providers** → **Email** so signed-in users must re-enter their current password in **Settings** before updating.
 
@@ -77,14 +78,28 @@ Deploy the `notify-password-changed` Edge function and set `RESEND_API_KEY`, `RE
 
 Invites still require `SUPABASE_SERVICE_ROLE_KEY` on the Next server (`POST /api/organization-members` → `inviteUserByEmail`, `POST /api/admin/tenant-invites` for new tenant onboarding).
 
+### Operator sign-up and onboarding
+
+**Self-serve sign-up** lives at `/signup` (3-step wizard):
+
+1. **Create an Account** — email/password (optional referral source) or OAuth (Google, Microsoft; **dev/staging only** until launch — hidden in production builds).
+2. **Name Your Team** — organization name, team size, monthly shipment volume → `POST /api/onboarding/create-organization` (self-serve or tenant-invite path).
+3. **Invite Your Team** (optional) — multi-row teammate invites via repeated `POST /api/organization-members`; **Skip For Now** continues to the dashboard.
+
+`/login` is **sign-in only**; marketing CTAs point new users to `/signup`. After sign-up, users land on `/dashboard?welcome=1` and see a welcome modal with shortcuts to add a shipment or invite teammates.
+
+Operators **without an organization** who hit authenticated routes are redirected to `/signup?step=2`. The legacy `/onboarding/create-organization` route redirects there as well.
+
+**Organization onboarding fields** (migration `20260611120000_organization_onboarding_profile.sql`): `organizations.team_size`, `organizations.monthly_shipment_volume`.
+
 ### Operator onboarding (superadmin)
 
 Platform **Super Admin → Invites** (`/admin/invites`) supports two flows:
 
 1. **Invite to Organization** — add someone to an existing tenant (same API as Settings → Organization).
-2. **Invite New Tenant** — email invite for a new operator company; after set-password they name and create their org at `/onboarding/create-organization`.
+2. **Invite New Tenant** — email invite for a new operator company; after set-password they continue the wizard at `/signup?step=2` (suggested org name pre-filled when a pending tenant invite exists).
 
-Apply migration `20260609120000_platform_tenant_invites.sql` before using tenant invites.
+Apply migrations `20260609120000_platform_tenant_invites.sql` and `20260611120000_organization_onboarding_profile.sql` before using tenant invites and onboarding profile fields.
 
 ## Security notes
 

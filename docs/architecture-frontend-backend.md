@@ -392,7 +392,55 @@ return { ok: true, data: body as ShipmentPortalPayload };
 
 ---
 
-## 8. Related in-repo references
+## 8. Auth, sign-up, and operator onboarding
+
+Operator authentication and tenant provisioning use a mix of **Supabase Auth** (browser), **Next `/api` routes** (privileged), and **marketing-route wizards** — not Edge functions.
+
+### Routes
+
+| Route | Role |
+|-------|------|
+| `/login` | Sign-in only (email/password). Link to `/signup`. |
+| `/signup` | 3-step wizard: account → organization → optional team invites. Query `?step=2` / `?step=3`. |
+| `/set-password` | Invite/recovery password; redirects to `/signup?step=2` when the user has no org. |
+| `/dashboard?welcome=1` | Post-sign-up landing; `WelcomeModalHost` in `AuthenticatedAppShell`. |
+
+### Data flow (sign-up)
+
+```text
+/signup step 1  →  auth.service signUpWithEmail / OAuth  →  Supabase Auth
+/signup step 2  →  onboarding.service  →  POST /api/onboarding/create-organization
+                    →  tenant-invite.server completeSignupOrganization
+                    →  organization.server createOrganizationWithInitialAdmin
+/signup step 3  →  organization.service (loop)  →  POST /api/organization-members
+```
+
+**Self-serve org creation:** `completeSignupOrganization` creates an org when the user has no membership, with or without a pending `platform_tenant_invites` row (tenant invites still mark the invite accepted when present).
+
+**Onboarding profile columns** on `organizations`: `team_size`, `monthly_shipment_volume` (collected in step 2).
+
+**Gating:** `OnboardingGate` (authenticated shell) redirects users without org membership to `/signup?step=2` (superadmins exempt).
+
+### OAuth (dev/staging)
+
+`LoginOAuthButtons` renders Google (first) and Microsoft below the email form with brand icons. Visibility is controlled by `frontend/lib/oauth-buttons.ts` (`NODE_ENV !== "production"`) — same pattern as `frontend/lib/pricing-page.ts`.
+
+### Key frontend modules
+
+| Area | Location |
+|------|----------|
+| Sign-up wizard | `app/(marketing)/signup/components/` |
+| OAuth buttons | `app/(marketing)/login/components/LoginOAuthButtons/` |
+| Welcome modal | `components/WelcomeModal/`, `contexts/welcome-modal.tsx` |
+| Onboarding gate | `app/(authenticated)/components/OnboardingGate/` |
+| Browser onboarding API | `services/onboarding.service.ts` |
+| Server onboarding | `services/tenant-invite.server.ts`, `app/api/onboarding/*` |
+
+Team invites after sign-up reuse the same `POST /api/organization-members` contract as **Settings → Organization → Invite Teammate**.
+
+---
+
+## 9. Related in-repo references
 
 - Architecture rules for day-to-day edits: `.cursorrules`
 - Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@supabase-shared/" supabase/functions`, and `grep -r "@shared/dto" supabase/functions frontend`

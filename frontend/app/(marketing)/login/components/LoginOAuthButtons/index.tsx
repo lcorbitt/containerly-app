@@ -1,12 +1,15 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { areOAuthButtonsEnabled } from "@/lib/oauth-buttons";
 import {
   LOGIN_FORM_BLURRED_CONTENT_CLASS,
   LOGIN_FORM_LOADING_CARD_CLASS,
   LOGIN_FORM_LOADING_OVERLAY_CLASS,
   LOGIN_FORM_MESSAGE_CLASS,
 } from "../LoginForm/constants";
+import { GoogleIcon } from "./GoogleIcon";
+import { MicrosoftIcon } from "./MicrosoftIcon";
 import {
   LOGIN_OAUTH_BUTTON_CLASS,
   LOGIN_OAUTH_BUTTONS_CLASS,
@@ -26,9 +29,19 @@ export function LoginOAuthButtons({ next, disabled = false, initialError = null 
   const oauth = useLoginOAuthButtons({ next, initialError });
   const isBusy = disabled || oauth.loading;
 
+  if (!areOAuthButtonsEnabled()) {
+    return null;
+  }
+
   return (
     <div className="relative w-full">
       <div className={isBusy ? LOGIN_FORM_BLURRED_CONTENT_CLASS : ""}>
+        <div className={LOGIN_OAUTH_DIVIDER_CLASS} aria-hidden={false}>
+          <span className={LOGIN_OAUTH_DIVIDER_LINE_CLASS} />
+          <span className={LOGIN_OAUTH_DIVIDER_LABEL_CLASS}>{LOGIN_OAUTH_DIVIDER_LABEL}</span>
+          <span className={LOGIN_OAUTH_DIVIDER_LINE_CLASS} />
+        </div>
+
         <div className={LOGIN_OAUTH_BUTTONS_CLASS}>
           <button
             type="button"
@@ -36,6 +49,7 @@ export function LoginOAuthButtons({ next, disabled = false, initialError = null 
             className={LOGIN_OAUTH_BUTTON_CLASS}
             onClick={oauth.signInWithGoogle}
           >
+            <GoogleIcon />
             {LOGIN_OAUTH_GOOGLE_LABEL}
           </button>
           <button
@@ -44,6 +58,7 @@ export function LoginOAuthButtons({ next, disabled = false, initialError = null 
             className={LOGIN_OAUTH_BUTTON_CLASS}
             onClick={oauth.signInWithMicrosoft}
           >
+            <MicrosoftIcon />
             {LOGIN_OAUTH_MICROSOFT_LABEL}
           </button>
         </div>
@@ -53,12 +68,6 @@ export function LoginOAuthButtons({ next, disabled = false, initialError = null 
             {oauth.message}
           </p>
         ) : null}
-
-        <div className={LOGIN_OAUTH_DIVIDER_CLASS} aria-hidden={false}>
-          <span className={LOGIN_OAUTH_DIVIDER_LINE_CLASS} />
-          <span className={LOGIN_OAUTH_DIVIDER_LABEL_CLASS}>{LOGIN_OAUTH_DIVIDER_LABEL}</span>
-          <span className={LOGIN_OAUTH_DIVIDER_LINE_CLASS} />
-        </div>
       </div>
 
       {oauth.loading ? (

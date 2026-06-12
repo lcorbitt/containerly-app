@@ -45,8 +45,6 @@ export function SignupAccountStep({ onContinue, initialError = null }: SignupAcc
   return (
     <div className={`${LOGIN_FORM_SHELL_CLASS} mt-6`}>
       <div className={step.loading ? LOGIN_FORM_BLURRED_CONTENT_CLASS : ""}>
-        <LoginOAuthButtons next={OAUTH_NEXT} disabled={step.loading} initialError={initialError} />
-
         <form onSubmit={step.submit} className={LOGIN_FORM_FIELDS_CLASS} aria-busy={step.loading}>
           <div className={LOGIN_FORM_FIELD_GROUP_CLASS}>
             <User className={LOGIN_FORM_FIELD_ICON_CLASS} strokeWidth={1.75} aria-hidden />
@@ -186,6 +184,8 @@ export function SignupAccountStep({ onContinue, initialError = null }: SignupAcc
             <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>{SIGNUP_ACCOUNT_SUBMIT_LABEL}</span>
           </button>
         </form>
+
+        <LoginOAuthButtons next={OAUTH_NEXT} disabled={step.loading} initialError={initialError} />
 
         <p className={`${LOGIN_FORM_FOOTER_CLASS} mt-4`}>
           {SIGNUP_ACCOUNT_SIGN_IN_PROMPT}{" "}

@@ -28,12 +28,23 @@ Component → colocated hook → TanStack Query → frontend/services/*.service.
   → fetch /api/...              (privileged Next routes)
 ```
 
-- **Route UI** lives under `app/(authenticated)/...` (operator workspace), `app/(portal)/...` (customer/operator shipment portal), and `app/(marketing)/...` (landing, login)
+- **Route UI** lives under `app/(authenticated)/...` (operator workspace), `app/(portal)/...` (customer/operator shipment portal), and `app/(marketing)/...` (landing, login, sign-up)
 - **Shared components** — `components/` only when reused across routes
 - **Edge slugs** — `lib/supabase/edge-function-slugs.ts` (never hard-code URLs)
 - **Wire types** — `supabase/functions/_wire/dto/` (import as `@shared/dto/...`)
 
 Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture-frontend-backend.md) and [`.cursorrules`](../.cursorrules).
+
+## Auth and onboarding
+
+| Surface | Route / entry |
+|---------|----------------|
+| Sign in | `/login` — email/password only; OAuth below the form (dev/staging; hidden in production) |
+| Sign up | `/signup` — 3-step wizard: account → organization → optional team invites |
+| Set password | `/set-password` — invite/recovery; incomplete org setup → `/signup?step=2` |
+| Welcome modal | `/dashboard?welcome=1` — first-run shortcuts after sign-up |
+
+Onboarding APIs (Next `/api`, not Edge): `GET /api/onboarding/status`, `POST /api/onboarding/create-organization`. Operators without org membership are gated to `/signup?step=2` via `OnboardingGate` in the authenticated shell.
 
 ## Product surfaces
 
