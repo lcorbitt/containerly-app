@@ -1,6 +1,6 @@
-import { createUserClient, tryCreateServiceClient } from "@services/db";
-import { jsonResponse } from "@services/utils";
-import { getContainerDetails } from "@services/tracking/tracking.service";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
+import { getContainerDetails } from "@services/tracking/tracking.service.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

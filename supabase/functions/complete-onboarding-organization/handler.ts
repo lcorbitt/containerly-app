@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@services/auth";
-import { completeOnboardingOrganization } from "@services/organization/tenant-invite.service";
-import { createServiceClient, createUserClient } from "@services/db";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { requireAuthUser } from "@services/auth.ts";
+import { completeOnboardingOrganization } from "@services/organization/tenant-invite.service.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

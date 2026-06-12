@@ -1,8 +1,8 @@
 // Delegates to @services / @models; forwards signed_in token fields to the client.
-import { createServiceClient } from "@services/db";
-import { checkPortalAccessEmail } from "@services/customer/customer-access.service";
-import { edgeErrorMessage, jsonResponse } from "@services/utils";
-import type { CheckPortalAccessEmailBody } from "@shared/dto/customer-access.dto";
+import { createServiceClient } from "@services/db.ts";
+import { checkPortalAccessEmail } from "@services/customer/customer-access.service.ts";
+import { edgeErrorMessage, jsonResponse } from "@services/utils.ts";
+import type { CheckPortalAccessEmailBody } from "@shared/dto/customer-access.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

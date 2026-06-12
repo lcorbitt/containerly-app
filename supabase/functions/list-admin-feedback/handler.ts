@@ -1,8 +1,8 @@
-import { requireAuthUserId, requireSuperadmin } from "@services/auth";
-import { fetchAdminFeedbackRows } from "@services/feedback/feedback.service";
-import { createUserClient } from "@services/db";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
-import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
+import { fetchAdminFeedbackRows } from "@services/feedback/feedback.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto.ts";
 
 const VALID_CATEGORIES = new Set<FeedbackCategory>(["bug", "feature", "general"]);
 const VALID_STATUSES = new Set<FeedbackStatus>(["new", "reviewed", "resolved", "wont_fix"]);

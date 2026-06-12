@@ -1,5 +1,5 @@
-import { isRequestInMyScope } from "@shared/dashboard-scope";
-import { isInAppNotification } from "@shared/in-app-event-taxonomy";
+import { isRequestInMyScope } from "@shared/dashboard-scope.ts";
+import { isInAppNotification } from "@shared/in-app-event-taxonomy.ts";
 
 /** Minimal row shapes for dashboard triage (shared by Edge + Next). */
 export type Alert = {

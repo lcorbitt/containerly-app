@@ -1,12 +1,12 @@
-import { requireAuthUserId } from "@services/auth";
-import { createUserClient, tryCreateServiceClient } from "@services/db";
-import { updateShipment } from "@services/shipment/shipment.service";
-import { recordOriginalsMailed } from "@services/shipment/document.service";
-import { notifyCustomerDocumentsMailed } from "@services/notification/workflow.service";
-import { fetchOrganizationForPortal } from "@models/organizations";
-import { listActiveCustomerAccessForShipment } from "@models/shipment_customer_access";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
-import type { UpdateShipmentBody } from "@shared/dto/logistics.dto";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
+import { updateShipment } from "@services/shipment/shipment.service.ts";
+import { recordOriginalsMailed } from "@services/shipment/document.service.ts";
+import { notifyCustomerDocumentsMailed } from "@services/notification/workflow.service.ts";
+import { fetchOrganizationForPortal } from "@models/organizations.ts";
+import { listActiveCustomerAccessForShipment } from "@models/shipment_customer_access.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import type { UpdateShipmentBody } from "@shared/dto/logistics.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

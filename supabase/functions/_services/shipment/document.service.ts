@@ -1,25 +1,25 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { listContainersForShipment } from "@models/containers";
-import { insertShipmentActivityEvent } from "@models/shipment_activity_events";
-import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service";
-import { fetchActiveAccessId } from "@models/shipment_customer_access";
-import { fetchShipmentAssignee, updateShipmentCommercial } from "@models/shipments";
-import { fetchOrganizationForPortal } from "@models/organizations";
+import { listContainersForShipment } from "@models/containers.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
+import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service.ts";
+import { fetchActiveAccessId } from "@models/shipment_customer_access.ts";
+import { fetchShipmentAssignee, updateShipmentCommercial } from "@models/shipments.ts";
+import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import {
   fetchWorkspaceAttachmentById,
   listCustomerVisibleDraftAttachments,
   updateWorkspaceAttachmentReview,
-} from "@models/workspace_attachments";
+} from "@models/workspace_attachments.ts";
 import {
   notifyOperatorsDocumentRejected,
   notifyOperatorsDocumentsApproved,
   notifyOperatorsDraftsPublished,
-} from "@services/notification/workflow.service";
+} from "@services/notification/workflow.service.ts";
 import type {
   ReviewShipmentDocumentBody,
   ReviewShipmentDocumentResponse,
   ShipmentWorkflowStatus,
-} from "@shared/dto/logistics.dto";
+} from "@shared/dto/logistics.dto.ts";
 
 type Err = { ok: false; status: number; error: string };
 

@@ -4,8 +4,8 @@ import {
   fetchContainerNumberById,
   searchContainersInOrg,
   upsertContainerForTrackingRequest,
-} from "@models/containers";
-import { fetchMembershipUserIdForOrg } from "@models/organization_members";
+} from "@models/containers.ts";
+import { fetchMembershipUserIdForOrg } from "@models/organization_members.ts";
 import {
   fetchShipmentAssignee,
   fetchShipmentIdByGroupId,
@@ -14,28 +14,28 @@ import {
   insertShipment,
   updateShipmentAssigneeIfUnset,
   updateShipmentShippingLine,
-} from "@models/shipments";
-import { insertShipmentParticipant } from "@models/shipment_participants";
+} from "@models/shipments.ts";
+import { insertShipmentParticipant } from "@models/shipment_participants.ts";
 import {
   fetchTrackingRequestById,
   fetchTrackingRequestNormalizedById,
   fetchTrackingRequestWithContainerShipment,
   insertTrackingRequest,
   updateTrackingRequestStatus,
-} from "@models/tracking_requests";
-import { normalizeContainerNumber } from "@services/container-number";
-import { insertShipmentActivityEvent } from "@models/shipment_activity_events";
-import { notifyOperatorsTrackingSyncFailed } from "@services/notification/workflow.service";
-import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service";
-import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "@services/tracking/sync";
-import { recordShipmentCreated } from "@services/shipment/document.service";
+} from "@models/tracking_requests.ts";
+import { normalizeContainerNumber } from "@services/container-number.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
+import { notifyOperatorsTrackingSyncFailed } from "@services/notification/workflow.service.ts";
+import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service.ts";
+import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "@services/tracking/sync.ts";
+import { recordShipmentCreated } from "@services/shipment/document.service.ts";
 import type {
   CreateTrackingRequestBody,
   CreateTrackingRequestResponse,
   SyncContainerResponse,
   GetContainerDetailsResponse,
   SearchContainerRow,
-} from "@shared/dto/tracking.dto";
+} from "@shared/dto/tracking.dto.ts";
 
 type Err = { ok: false; status: number; error: string };
 

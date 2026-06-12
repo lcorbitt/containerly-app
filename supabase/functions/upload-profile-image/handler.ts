@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@services/auth";
-import { uploadProfileImageAndSetPath } from "@services/profile/profile.service";
-import { createUserClient } from "@services/db";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { requireAuthUserId } from "@services/auth.ts";
+import { uploadProfileImageAndSetPath } from "@services/profile/profile.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

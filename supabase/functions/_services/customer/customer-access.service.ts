@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { DEFAULT_CUSTOMER_VISIBILITY } from "@services/shipment/portal/payload";
+import { DEFAULT_CUSTOMER_VISIBILITY } from "@services/shipment/portal/payload.ts";
 import {
   fetchCustomerInviteByTokenHash,
   fetchInviteByEmailForShipment,
@@ -7,63 +7,63 @@ import {
   insertCustomerInvite,
   updateCustomerInviteById,
   updateCustomerInviteStatus,
-} from "@models/customer_invites";
+} from "@models/customer_invites.ts";
 import {
   countMembershipsForUser,
   fetchOrgOperatorMembershipForUser,
-} from "@models/organization_members";
-import { insertReportActivity } from "@models/report_activity";
-import { resolveAccessRequestAlerts } from "@models/alerts";
-import { recordMessageActivityEvent } from "@services/message/activity.service";
+} from "@models/organization_members.ts";
+import { insertReportActivity } from "@models/report_activity.ts";
+import { resolveAccessRequestAlerts } from "@models/alerts.ts";
+import { recordMessageActivityEvent } from "@services/message/activity.service.ts";
 import {
   fetchReportMessageParentForReply,
   insertReportMessage,
-} from "@models/report_messages";
+} from "@models/report_messages.ts";
 import {
   fetchAccessIdAndOrg,
   fetchAccessIdForUser,
   fetchActiveAccessId,
   insertShipmentCustomerAccess,
   updateShipmentCustomerAccess,
-} from "@models/shipment_customer_access";
-import { fetchShipmentIdAndOrganization } from "@models/shipments";
-import { fetchOrganizationForPortal } from "@models/organizations";
-import { fetchContainerIdAndShipmentId } from "@models/containers";
-import { updateProfileAccountKind } from "@models/profiles";
+} from "@models/shipment_customer_access.ts";
+import { fetchShipmentIdAndOrganization } from "@models/shipments.ts";
+import { fetchOrganizationForPortal } from "@models/organizations.ts";
+import { fetchContainerIdAndShipmentId } from "@models/containers.ts";
+import { updateProfileAccountKind } from "@models/profiles.ts";
 import type {
   AcceptCustomerInviteResponse,
   ClaimShipmentAccessResponse,
   CreateCustomerInviteResponse,
   CompleteCustomerSetupResponse,
   PostCustomerMessageResponse,
-} from "@shared/dto/customer-access.dto";
+} from "@shared/dto/customer-access.dto.ts";
 import {
   notifyAssigneeAccessRequest,
   notifyCustomerInviteSent,
   notifyOperatorsCustomerAccessGranted,
   notifyOperatorsNewCustomerMessage,
-} from "@services/notification/workflow.service";
+} from "@services/notification/workflow.service.ts";
 import {
   fetchProfileDisplayName,
   listOrgAdminUserIds,
   notifyCustomerInviteReceived,
-} from "@services/notification/in-app-alerts";
-import { fetchProfileIdAndRoleByEmail, fetchProfileIdByEmail } from "@models/profiles";
-import { fetchShipmentParticipantForUser } from "@models/shipment_participants";
-import { fetchShipmentPortalOperatorRow } from "@models/shipments";
-import { fetchActiveAccessForProfileEmailOnShipment } from "@models/shipment_customer_access";
+} from "@services/notification/in-app-alerts.ts";
+import { fetchProfileIdAndRoleByEmail, fetchProfileIdByEmail } from "@models/profiles.ts";
+import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
+import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
+import { fetchActiveAccessForProfileEmailOnShipment } from "@models/shipment_customer_access.ts";
 import {
   approvePendingAccessRequestsForEmail,
   fetchAccessRequestById,
   fetchPendingAccessRequestByEmailForShipment,
   insertShipmentCustomerAccessRequest,
   updateAccessRequest,
-} from "@models/shipment_customer_access_requests";
+} from "@models/shipment_customer_access_requests.ts";
 import type {
   CheckPortalAccessEmailResponse,
   PreviewCustomerInviteResponse,
   ResolveCustomerAccessRequestResponse,
-} from "@shared/dto/customer-access.dto";
+} from "@shared/dto/customer-access.dto.ts";
 
 // ---------------------------------------------------------------------------
 // Crypto helpers

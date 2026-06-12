@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@services/auth";
-import { createUserClient } from "@services/db";
-import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
-import { lookupBolContainers } from "@services/tracking/bol-lookup";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createUserClient } from "@services/db.ts";
+import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { lookupBolContainers } from "@services/tracking/bol-lookup.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

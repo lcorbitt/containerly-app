@@ -2,7 +2,7 @@
  * Transactional email via Resend (or Mailpit SMTP in local dev when RESEND_API_KEY unset).
  */
 
-import { sendViaDevSmtp } from "@services/dev-smtp";
+import { sendViaDevSmtp } from "@services/dev-smtp.ts";
 
 export type SendEmailInput = {
   to: string;

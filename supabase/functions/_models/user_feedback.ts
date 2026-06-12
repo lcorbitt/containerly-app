@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto";
+import type { FeedbackCategory, FeedbackStatus } from "@shared/dto/feedback.dto.ts";
 
 const FEEDBACK_SELECT =
   "id, user_id, organization_id, category, message, status, page_url, user_agent, viewport_width, viewport_height, context, created_at, updated_at";

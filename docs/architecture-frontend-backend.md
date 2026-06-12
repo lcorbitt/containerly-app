@@ -2,6 +2,8 @@
 
 This document describes how the Containerly app moves data from UI to persistence, where each kind of code lives, and how **`@shared/dto`** defines contracts between **browser services**, **Edge handlers**, and **SSR loaders** against a single **`_services` + `_models`** backend.
 
+**Agent constraints:** [`.cursorrules`](../.cursorrules) holds invariant rules for day-to-day edits. **This doc** holds examples, file traces, checklists, and domain-specific detail.
+
 **Product note:** Primary user journeys are **export documentation**, **customer portal**, and **manual commercial data entry**. Live carrier container tracking (JSONCargo-style API, BOL bulk import) is an **optional premium path** enabled after document approval — not the default onboarding flow.
 
 ---
@@ -14,45 +16,16 @@ This document describes how the Containerly app moves data from UI to persistenc
 Supabase Edge (models + shared + slug services)  ↔  Frontend services  →  Component
 ```
 
-- **Supabase backend (Edge bundle)** splits into three import surfaces (see `supabase/functions/deno.json`):
-  - **`supabase/functions/_models/<table>.ts`** — **table-scoped persistence** only (PostgREST-style access helpers per table). Import **`@models/<table>.ts`** from Edge code and SSR loaders. No HTTP concerns.
-  - **`supabase/functions/_services/`** — **cross-cutting domain and infra** (portal payload builders, tracking orchestration, customer access, providers, `db`, `auth`, `logger`, `utils`). Import **`@services/...`**.
-  - **`supabase/functions/<slug>/handler.ts`** — **HTTP adapter** for that slug: CORS, auth, parse input, then call **`@services/*`** and **`@models/*`** directly. Add a colocated extra module only when a slug has **large slug-only** logic; **do not** add files that only re-export shared symbols.
-- **Frontend services** — **`frontend/services/*.service.ts`** are the only place the browser talks to that backend: **`fetch`** to `/functions/v1/<name>` with the user JWT (see `frontend/lib/supabase/edge-functions.ts` for shared transport). **TanStack Query** calls these service modules; components do not call Edge URLs directly.
-- **Runtime flow:** **Component → colocated hook → TanStack Query → `frontend/services/` → HTTP → Edge `handler.ts` → `@models/*` / `@services/*` → Postgres / externals.**
-
-**SSR loaders (no HTTP):** RSC layouts and pages use **`frontend/server/loaders/*.ts`** (`import "server-only"`) to call the same **`@services/*`** + **`@models/*`** code directly with the Next server Supabase client.
-
-**Next HTTP (minimal):** Only **`/api/auth/session`** — syncs browser JWT into Next-readable cookies for RSC/middleware. **No** domain `/api` routes.
-
-**Privileged operations:** Service role and superadmin gates run on **Edge** (`createServiceClient()` in handlers after auth checks), not on Next.
-
-**Not for new data access:** `frontend/services/` calling **PostgREST** via `@/lib/supabase/client` (`.from` / `.rpc`) skips the Edge + models layer. Prefer adding or extending an Edge function whose slug service delegates to **`@models/*`** and **`@services/*`**, plus a matching caller in `frontend/services/`. (Exceptions: **Auth** session/login, **Realtime** subscriptions, **Storage** uploads with `File` — keep using the Supabase client only for those transports until you add a dedicated pattern.)
-
-**DTOs (`supabase/functions/_wire/dto/`, import `@shared/dto/`):** JSON request/response types shared by **`frontend/services/`**, **Edge handlers**, and **SSR loaders** so all runtimes stay aligned (plus envelopes like `ServiceResult<T>` in `common.dto.ts`).
+- **Backend surfaces:** `@models/<table>.ts` (table persistence), `@services/...` (orchestration + infra), `<slug>/handler.ts` (HTTP adapter). See `.cursorrules` for layer invariants.
+- **Browser path:** TanStack Query → `frontend/services/` → `/functions/v1/<slug>` → handler → `@services` / `@models` → Postgres.
+- **SSR path:** `frontend/server/loaders/` → `@services` / `@models` (no HTTP). **Auth only:** `/api/auth/session`.
+- **DTOs:** `supabase/functions/_wire/dto/` (`@shared/dto/`) — wire contracts for browser services, Edge, and SSR loaders.
 
 ### 1.0 The `supabase/functions/` directory — Edge HTTP API layer
 
-Treat **`supabase/functions/`** as the **only domain HTTP API** for the app (browser calls via **`frontend/services/*.service.ts`**).
+Each **`supabase/functions/<slug>/`** folder is one deployable Edge Function; folder name = slug = `POST …/functions/v1/<slug>`. Update **`EDGE_FUNCTION_SLUGS`**, cron, and webhooks when renaming.
 
-**Folder name = function slug = wire path.** Each immediate child folder is **one deployable Edge Function**. The **directory name must match the Supabase function slug** — that string is what the platform registers and what clients use in the URL:
-
-`POST https://<project-ref>.supabase.co/functions/v1/<slug>`
-
-The Supabase CLI deploys from **`supabase/functions/<slug>/`**; there is no separate “routing table” inside the repo. If you rename the folder, you must update **callers** (for example **`EDGE_FUNCTION_SLUGS`** in `frontend/lib/supabase/edge-function-slugs.ts`), any dashboards, cron jobs, or webhooks that target the old name.
-
-**`index.ts` — entry only, request → handler handoff.** This file should stay minimal: **`Deno.serve`**, **CORS preflight** (`OPTIONS` → `corsHeaders`), then **forward the request** to the colocated handler, for example `return handle(req)`. It should not parse bodies, enforce auth, or contain business logic — that belongs in **`handler.ts`** so every HTTP concern for the slug lives in one obvious place next to the entry.
-
-**`handler.ts` — colocated HTTP adapter for this slug.** The handler is the **per-endpoint wrapper**: HTTP method checks, read/parse JSON or query params, build the Supabase **user** or **service** client from the request, call domain code, map results and errors to **`Response`** (status + JSON). It answers: *“What does this specific HTTP call look like?”* — not *“How does tracking work end-to-end?”*
-
-**Keep handlers thin; push work down the stack.** A handler should **not** grow into a monolith. Prefer:
-
-1. **`@services/*.ts`** — orchestration, provider calls, and workflows reused across slugs (or substantial slug-only logic kept out of the handler file when a colocated extra module is justified).
-2. **`@models/<table>.ts`** — table-scoped persistence (`.from("<table>")` and related rules in one module per table).
-
-Typical flow: **`handler.ts`** → **`@services/...`** (domain service) → **`@models/...`** (and back). Shared modules import models; handlers compose shared + models only as much as needed for HTTP shaping.
-
-**Reference implementation:** `supabase/functions/search-containers/` — **`index.ts`** delegates to **`handle`**; **`handler.ts`** validates method, parses the body, obtains `createUserClient(req)`, calls **`searchContainers`** from **`@services/tracking/tracking.service.ts`**, and returns **`jsonResponse`** with appropriate status codes. No heavy logic lives in the handler file itself.
+**Reference implementation:** `supabase/functions/search-containers/` — thin **`index.ts`** → **`handler.ts`** → **`searchContainers`** in **`@services/tracking/tracking.service.ts`**.
 
 ```text
 Client  →  /functions/v1/<slug>  →  index.ts (Deno.serve, CORS)  →  handler.ts (HTTP)  →  _services/ (@services)  →  _models/ (@models)
@@ -71,7 +44,7 @@ Think in **four layers**, not two files:
 | **Contract** | `supabase/functions/_wire/dto/*.dto.ts` | Request/response shapes all runtimes import via `@shared/dto/`. |
 | **Browser adapter** | `frontend/services/<domain>.service.ts` | `fetch` to `/functions/v1/<same-slug-as-folder>`; use **`EDGE_FUNCTION_SLUGS`** in `frontend/lib/supabase/edge-function-slugs.ts` so the path is never a magic string. |
 
-**Why split `_models/` vs `_services/` vs `handler.ts`?** Edge folders are **deployment units** (one slug each). Table access stays **stable and reusable** in **`supabase/functions/_models/`**. Workflows shared by several slugs live in **`supabase/functions/_services/`**, grouped by **domain directory** (see below). Each slug’s **HTTP-specific** parsing, status mapping, and auth checks stay in **`handler.ts`** (or a colocated module only when that file would become unwieldy).
+Edge folders are deployment units; table access lives in **`_models/`**, cross-slug workflows in **`_services/`**, HTTP shaping in **`handler.ts`**.
 
 #### `_services/` domain directory layout
 
@@ -229,7 +202,7 @@ flowchart LR
 
 ## 2. End-to-end dependency flow
 
-Preferred direction of dependencies (no cycles): **`_models/`** and **`_services/`** are the single backend; **Edge `handler.ts`** is the browser HTTP adapter; **`frontend/server/loaders/`** is the SSR adapter (same `_services`, no HTTP); **`frontend/services/`** is the browser SDK; **UI** sits above.
+Preferred dependency direction (no cycles): UI → Query / atoms → `frontend/services` or SSR loaders → Edge handler (browser only) → `@services` → `@models` → DB.
 
 ```mermaid
 flowchart LR
@@ -310,13 +283,9 @@ sequenceDiagram
   Q-->>Comp: render
 ```
 
-**Example (read):** `ShipmentPortalPayload` (`@shared/dto/shipment.dto.ts`) — built from **`@services/shipment/portal/handlers.ts`** (and **`shipment/portal/payload.ts`**) plus **`@models/*`**, invoked from **`supabase/functions/get-shipment/handler.ts`**, HTTP slug `get-shipment`, caller `frontend/services/shipment.service.ts` (`EDGE_FUNCTION_SLUGS.shipments.get`).
+**Example (create):** see **§11.2** for the full `create-shipment` file trace.
 
-**Example (create, naming parity):** `create-shipment` → **`createShipment`** in `frontend/services/shipment.service.ts` and **`@services/shipment/shipment.service.ts`** → **`useCreateShipmentMutation`** in `frontend/hooks/mutations/useShipments.ts` → **`NewShipmentForm`** / **`useNewShipmentForm`**.
-
-**Supabase CLI:** Edge deploy still uses **`supabase/functions/<name>/`** (required by the CLI). **`handler.ts` / `index.ts`** stay thin; use-case code lives in **`_services/`**, table access in **`_models/`**.
-
-**Privileged operations** (service role, superadmin gates, multipart uploads) use the **same browser path**: the Edge handler calls `createServiceClient()` after `requireAuthUserId` and role checks — not Next `/api`.
+**Supabase CLI:** Edge deploy uses **`supabase/functions/<name>/`**; use-case code in **`_services/`**, table access in **`_models/`**.
 
 ### 3.2 SSR path — RSC loaders call `_services` directly (no HTTP)
 
@@ -390,18 +359,9 @@ ComponentName/
 
 Shared across routes: `frontend/utils/` (or domain-specific files under `frontend/utils/`).
 
-### 4.2 Client UI state — Jotai atoms + hosts (no domain React Context)
+### 4.2 Client UI state — Jotai atoms + hosts
 
-**Default:** shared **client/UI state** uses **Jotai atoms**, not React Context. The only library `Provider` is Jotai in **`AppProviders`**.
-
-| Kind of state | Tool |
-|---------------|------|
-| Server/async data (fetch, cache, invalidate) | **TanStack Query** (`frontend/hooks/queries/`, `mutations/`) |
-| Shared client/UI state (org selection, toast, confirm, modals, nav progress, theme) | **Jotai atoms** (`frontend/atoms/<domain>.ts`) |
-| Component-local state | `useState` in colocated `use<Component>.ts` |
-| Shell mount (portals, SSR hydrate, `{children}` + overlay UI) | **`frontend/hosts/` `*Host`** components |
-
-**Atoms in-repo:** `organization-workspace`, `toast`, `confirm-dialog`, `welcome-modal`, `new-shipment-modal`, `navigation-progress`, `theme`, `mock-journey-modal`, `session-avatar`, `feedback-widget`.
+Shared client/UI state uses **Jotai atoms** + **`frontend/hosts/*Host`** — not React Context. See `.cursorrules` §3 for ownership rules. `organization-workspace`, `toast`, `confirm-dialog`, `welcome-modal`, `new-shipment-modal`, `navigation-progress`, `theme`, `mock-journey-modal`, `session-avatar`, `feedback-widget`.
 
 **Hosts in-repo:**
 
@@ -639,13 +599,164 @@ Cascade deletes of many attachments (e.g. shipment delete) fire one trigger per 
 
 ## 10. Related in-repo references
 
-- Architecture rules for day-to-day edits: `.cursorrules` (includes **API naming parity** and **Jotai + hosts**)
+- **Agent constraints:** [`.cursorrules`](../.cursorrules) — invariant rules for Cursor agents
+- **Extended detail:** this doc — examples, traces (**§11**), domain tables, auth/cascade policy
 - Client UI state: `frontend/atoms/`, `frontend/hosts/`, `frontend/test-utils/app-hosts.tsx`
 - Cascade delete migration: `supabase/migrations/20260611130000_cascade_delete_and_storage_cleanup.sql`
 - SSR loaders: `frontend/server/loaders/`
 - Edge slug registry: `frontend/lib/supabase/edge-function-slugs.ts`
-- Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@services/" supabase/functions frontend/server`, and `grep -r "@shared/dto" supabase/functions frontend`
+- Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@services/" supabase/functions frontend/server`, `grep -r "@shared/dto" supabase/functions frontend`
 
 ---
 
-*Last aligned with: Jotai atoms + `frontend/hosts/` (no `frontend/contexts/`), API naming parity (§1.1.1), slug-aligned shipment/onboarding/org CRUD exports, `_services` domain layout, Edge + SSR loaders (`/api/auth/session` only), and cascade-delete enforcement (`20260611130000`). Update when adding Edge slugs, hosts/atoms, loaders, or FK delete policy.*
+## 11. Agent overflow reference
+
+Extended detail moved from [`.cursorrules`](../.cursorrules) — examples, traces, and refactor checklists. **Constraints** stay in `.cursorrules`; **this section** is for lookup when implementing.
+
+### 11.1 Deno import extensions (mandatory)
+
+Every local import under `supabase/functions/` must include an explicit `.ts` extension. The Supabase Edge bundler resolves Deno modules strictly; extensionless paths fail at bundle time:
+
+```text
+Module not found ".../supabase/functions/_services/utils". Maybe add a '.ts' extension
+```
+
+| Scope | Required pattern |
+|-------|------------------|
+| Slug entry / handler | `from "./handler.ts"` |
+| `@services/*` | `from "@services/utils.ts"`, `from "@services/shipment/shipment.service.ts"` |
+| `@models/*` | `from "@models/shipments.ts"` |
+| `@shared/*` | `from "@shared/dto/logistics.dto.ts"`, `from "@shared/org-role.ts"` |
+| Relative (`./`, `../`) | Always end with `.ts` |
+
+Do **not** add `.ts` to npm/jsr packages (`@supabase/supabase-js`, `@std/assert`, etc.). `deno.json` import maps are **not** a substitute for file extensions.
+
+```typescript
+// BAD — bundler fails
+import { corsHeaders } from "@services/utils";
+import { handle } from "./handler";
+
+// GOOD
+import { corsHeaders } from "@services/utils.ts";
+import { handle } from "./handler.ts";
+import type { CreateShipmentBody } from "@shared/dto/logistics.dto.ts";
+```
+
+When editing any file under `supabase/functions/`, fix **all** local imports in that file — do not add one `.ts` import beside broken neighbors.
+
+### 11.2 Canonical browser mutation flow — `create-shipment`
+
+Use this pattern for every client write (mutation). Naming follows **§1.1.1**.
+
+```text
+UI open (Jotai)  →  form submit (colocated hook)  →  TanStack mutation  →  frontend service
+  →  POST /functions/v1/create-shipment  →  handler  →  @services  →  @models  →  Postgres
+  →  JSON response  →  service  →  hook  →  post-create navigation / list refresh
+```
+
+**Outbound (request) — file by file:**
+
+| Step | File | Responsibility |
+|------|------|----------------|
+| 1 | `frontend/atoms/new-shipment-modal.ts` | UI flag: `newShipmentModalOpenAtom`; `useNewShipmentModalControls().openNewShipmentModal()` |
+| 2 | `frontend/components/TopNav/AuthenticatedTopNav/` | Trigger: calls `openNewShipmentModal()` — no fetch |
+| 3 | `frontend/hosts/new-shipment-modal.tsx` | `NewShipmentModalHost`: mounts modal; wires `useNewShipmentModal()` |
+| 4 | `frontend/atoms/organization-workspace.ts` + `frontend/hosts/organization-workspace.tsx` | `selectedOrgId` → `organization_id` on wire body |
+| 5 | `frontend/components/NewShipmentModal/index.tsx` | Presentation: `Modal` + `NewShipmentForm` — no API calls |
+| 6 | `frontend/components/NewShipmentForm/index.tsx` | Presentation: fields + submit — delegates to colocated hook |
+| 7 | `frontend/components/ShipmentCommercialFormFields/utils.ts` | Pure: `validateFormValues`, `formValuesToCommercialHeader`, `formValuesToIdentityLine` |
+| 8 | `frontend/components/NewShipmentForm/useNewShipmentForm.ts` | Orchestration: build `CreateShipmentBody`, call mutation, handle errors / `onCreated` |
+| 9 | `frontend/hooks/mutations/useShipments.ts` | `useCreateShipmentMutation` — `mutationFn` calls service only; no UI logic |
+| 10 | `frontend/services/shipment.service.ts` | `createShipment(body)` — `authFetch(EDGE_FUNCTION_SLUGS.shipments.create, …)` |
+| 11 | `frontend/lib/supabase/edge-function-slugs.ts` | `"create-shipment"` — never hard-code the URL path |
+| 12 | `supabase/functions/_wire/dto/logistics.dto.ts` | `CreateShipmentBody` / `CreateShipmentResponse` — shared wire contract |
+| 13 | `supabase/functions/create-shipment/index.ts` | Entry: `Deno.serve` + CORS → `handle(req)` only |
+| 14 | `supabase/functions/create-shipment/handler.ts` | Controller: auth, parse body, call `createShipment`, return JSON |
+| 15 | `supabase/functions/_services/shipment/shipment.service.ts` | Service: validate, membership check, orchestrate inserts + side effects |
+| 16 | `supabase/functions/_models/organization_members.ts` | Repository: `fetchMembershipUserIdForOrg` |
+| 17 | `supabase/functions/_models/shipments.ts` | Repository: `insertShipment` |
+| 18 | `supabase/functions/_models/shipment_lines.ts` | Repository: `insertShipmentLines` |
+| 19 | `supabase/functions/_services/shipment/document.service.ts` | Side effect: `recordShipmentCreated` (activity + notifications) |
+
+**Inbound (response):**
+
+| Step | What happens |
+|------|----------------|
+| Handler | `200 { shipment_id, line_ids }` per `CreateShipmentResponse` |
+| `shipment.service.ts` (frontend) | `{ ok: true, data }` or `{ ok: false, error }` |
+| `useNewShipmentForm` | Checks `r.ok`, extracts `shipment_id` |
+| `useNewShipmentModal.afterCreated` | `emitTrackingCreated()` → `router.push(/shipments/:id)` → close modal |
+
+**Related mutations (same layers):** `update-shipment` → `updateShipment` → `useUpdateShipmentMutation`; `delete-shipment` → `deleteShipment` → `useDeleteShipmentMutation`. Cache via `invalidateShipmentWorkspaceRowQuery` / `removeShipmentWorkspaceRowQuery` in `hooks/queries/useShipment.ts`. **Bulk:** `bulkCreateShipments` in `frontend/services/shipment-import.service.ts` loops `createShipment` — same Edge slug.
+
+### 11.3 Refactor checklist (From → To)
+
+| From | To |
+|------|-----|
+| Inline API calls | `frontend/services/` |
+| Inline Supabase in components/hooks | `frontend/services/` |
+| Server state / fetch / invalidation | `frontend/hooks/` (queries/mutations) |
+| Privileged logic inside `route.ts` | Edge handler + `@services` + `createServiceClient()` |
+| Duplicate Edge request/response shapes | `shared/dto/` |
+| PostgREST in `frontend/services/*.service.ts` | New Edge slug + `_models/` / `_services/` + `@shared/dto` + service caller |
+| Pure helpers (component-specific) | Colocated `utils.ts` |
+| Pure helpers (shared across routes) | `frontend/utils/` |
+| Inline constants (classes, labels, config) | Colocated `constants.ts` |
+| Component prop/object shapes | Colocated `types.ts` |
+| Heavy component logic | Colocated `use<ComponentName>.ts` |
+| Thin Context for UI flags | `frontend/atoms/<domain>.ts` or colocated `atoms.ts` |
+| Action-named TanStack hook files | `mutations/use<Domain>.ts` (multiple exports) |
+| Split domain query files | `queries/use<Domain>.ts` |
+| `*-cache.ts` beside hooks | Cache helpers in `queries/use<Domain>.ts` |
+| Legacy `react-query` | `@tanstack/react-query` |
+| Odd Tailwind spacing | Nearest even scale key (see **§11.5**) |
+| `*ModalProvider` + Context | Jotai atoms + `frontend/hosts/*ModalHost` |
+| Slug-mismatched service/mutation names | Slug-derived camelCase per **§1.1.1** |
+| Extensionless Deno imports | Add `.ts` on every local import (see **§11.1**) |
+
+### 11.4 SQL migration operations
+
+**Unique version prefix:** Supabase records migrations by the **14-digit timestamp prefix only** (`YYYYMMDDHHMMSS`). Two files must **never** share the same prefix.
+
+Before creating a migration:
+
+1. List existing files in `supabase/migrations/`.
+2. Pick a prefix strictly greater than every existing prefix.
+3. Prefer incrementing the sequence on the same day — never guess or copy timestamps.
+4. Never use round placeholders when other migrations may exist.
+
+Format: `YYYYMMDDHHMMSS_snake_case_description.sql`. If a duplicate was applied locally, rename the **not-yet-applied** file only — never rename migrations already in `schema_migrations`.
+
+**Function/RPC signature changes — never leave stale overloads.** Postgres identifies functions by **argument type list**, not name or defaults. Changing params creates a new overload; ambiguous overloads fail with `Could not choose the best candidate function between…`.
+
+When changing any `public.*` function signature, the migration must:
+
+1. `drop function if exists public.<fn>(<exact OLD arg type list>);` — `create or replace` does **not** drop differing-arity overloads.
+2. `create function public.<fn>(<new params…>)`.
+3. **Re-grant** execute on the new signature.
+4. Drop all stale overloads that may linger on production in the same migration.
+
+`supabase db reset` rebuilds from scratch (hides orphaned overloads locally). Production applies incrementally — fix prod with a **forward-only** migration. See `supabase/migrations/20260608120000_drop_stale_overview_overloads.sql`.
+
+### 11.5 UI conventions
+
+**Title Case with spaces** for short UI chrome: buttons, link CTAs, nav items, menu actions, modal titles, form field labels, select options, email action buttons (usually in colocated `constants.ts`).
+
+- Examples: `View Shipment`, `Get Started`, `Document Type`, `Commercial Invoice`
+- Document metadata in UI: use `formatDocumentTypeLabel` / `formatDocumentGroupLabel` in `frontend/utils/document-metadata-display.ts` — not raw DB/API strings
+- Do not use: `ViewShipment`, `View shipment`, `viewShipment`
+- **Sentence case OK:** body copy, descriptions, helper text, toasts, placeholders, loading states, `aria-label`
+
+**Tailwind spacing — even scale keys only** (multiples of 2 on the default scale). Applies to margin, padding, gap, space-*, inset, scroll-*, and arbitrary values on the 2px grid. `px` keyword allowed (`p-px`, `gap-px`). Non-numeric keywords (`auto`, `full`, fractions) stay allowed.
+
+| Forbidden | Correct to |
+|-----------|------------|
+| `my-5`, `p-3`, `gap-7`, `mt-1`, `space-y-3` | `my-4` or `my-6`, `p-4`, `gap-6` or `gap-8`, `mt-2`, `space-y-4` |
+| `px-3.5`, `py-2.5`, `gap-1.5` | `px-4`, `py-2` or `py-4`, `gap-2` |
+| `p-[11px]`, `gap-[0.8125rem]` | nearest even value, e.g. `p-[12px]`, `gap-3` (12px) |
+
+When odd spacing exists in edited blocks, replace with the nearest even key (ties round up).
+
+---
+
+*Last aligned with: condensed `.cursorrules` (invariants + Never), this doc §11 overflow, Jotai + hosts, API naming parity (§1.1.1), Edge + SSR loaders (`/api/auth/session` only), cascade-delete enforcement (`20260611130000`). Update when adding Edge slugs, hosts/atoms, loaders, FK delete policy, or agent-critical rules.*

@@ -1,36 +1,36 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { profileDisplayName } from "@shared/author-display-name";
-import { stripMessageMarkup } from "@shared/message-markup";
-import { isShipmentThreadUnreadForViewer } from "@shared/shipment-thread-unread";
-import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+import { profileDisplayName } from "@shared/author-display-name.ts";
+import { stripMessageMarkup } from "@shared/message-markup.ts";
+import { isShipmentThreadUnreadForViewer } from "@shared/shipment-thread-unread.ts";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto.ts";
 import type {
   ContainerWorkspaceLoadResult,
   ContainerWorkspaceSnapshot,
   OrgShipmentMessageThreadsResult,
   ShipmentScopeLoadResult,
   WorkspaceQuickSearchRow,
-} from "@shared/dto/workspace.dto";
+} from "@shared/dto/workspace.dto.ts";
 import {
   buildContainerAttachmentPath,
   buildShipmentAttachmentPath,
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,
   WORKSPACE_FILES_BUCKET,
-} from "@shared/workspace-files";
-import { persistShipmentWorkflowStatus } from "@services/shipment/document.service";
+} from "@shared/workspace-files.ts";
+import { persistShipmentWorkflowStatus } from "@services/shipment/document.service.ts";
 import {
   notifyOperatorsCustomerDocumentUploaded,
   notifyOperatorsDraftsPublished,
-} from "@services/notification/workflow.service";
+} from "@services/notification/workflow.service.ts";
 import {
   buildMessageActivityMetadata,
   messageActivityActorKind,
   messageActivityEventType,
   resolveMessageActivityBody,
-} from "@shared/message-activity-event";
-import { createServiceClient } from "@services/db";
-import { syncActivityEventsForEditedReportMessage } from "@services/message/activity-sync.service";
-import { notifyOperatorsBolImported } from "@services/notification/in-app-alerts";
+} from "@shared/message-activity-event.ts";
+import { createServiceClient } from "@services/db.ts";
+import { syncActivityEventsForEditedReportMessage } from "@services/message/activity-sync.service.ts";
+import { notifyOperatorsBolImported } from "@services/notification/in-app-alerts.ts";
 
 type ReportMessage = Record<string, unknown> & {
   id: string;

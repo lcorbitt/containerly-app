@@ -21,17 +21,17 @@ import {
   notifyUserUnassignedAsAssignee,
   notifyAssigneeCustomerAccessRequested,
   notifyCustomerInviteReceived,
-} from "@services/notification/in-app-alerts";
-import { insertAlert } from "@models/alerts";
-import { fetchProfileEmailByUserId } from "@models/profiles";
-import { listShipmentNotificationSubscriberUserIds } from "@models/shipment_notification_subscriptions";
+} from "@services/notification/in-app-alerts.ts";
+import { insertAlert } from "@models/alerts.ts";
+import { fetchProfileEmailByUserId } from "@models/profiles.ts";
+import { listShipmentNotificationSubscriberUserIds } from "@models/shipment_notification_subscriptions.ts";
 import {
   sendDocumentRejectedEmail,
   sendDocumentsApprovedEmail,
   sendDocumentsMailedEmail,
   sendNewMessageEmail,
   type SendEmailResult,
-} from "@services/email/email.service";
+} from "@services/email/email.service.ts";
 
 export {
   notifyOrgAdminsMemberJoined,
@@ -49,7 +49,7 @@ export {
   notifyAssigneeCustomerAccessRequested,
   notifyCustomerInviteReceived,
   notifyOperatorsOriginalsMailed,
-} from "@services/notification/in-app-alerts";
+} from "@services/notification/in-app-alerts.ts";
 
 function siteUrl(): string {
   return Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") ?? "";

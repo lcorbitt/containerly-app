@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@services/auth";
-import { fetchOnboardingStatusForUser } from "@services/organization/onboarding.service";
-import { createUserClient } from "@services/db";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { requireAuthUserId } from "@services/auth.ts";
+import { fetchOnboardingStatusForUser } from "@services/organization/onboarding.service.ts";
+import { createUserClient } from "@services/db.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

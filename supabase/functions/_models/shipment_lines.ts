@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { ShipmentLineInput } from "@shared/dto/logistics.dto";
+import type { ShipmentLineInput } from "@shared/dto/logistics.dto.ts";
 
 export type ShipmentLineRow = {
   id: string;

@@ -1,22 +1,22 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { listAlertsForContainers } from "@models/alerts";
-import { listContainersForShipment } from "@models/containers";
-import { fetchOrganizationForPortal } from "@models/organizations";
-import { fetchProfileEmailsByUserIds, fetchProfileImagePathsByUserIds } from "@models/profiles";
+import { listAlertsForContainers } from "@models/alerts.ts";
+import { listContainersForShipment } from "@models/containers.ts";
+import { fetchOrganizationForPortal } from "@models/organizations.ts";
+import { fetchProfileEmailsByUserIds, fetchProfileImagePathsByUserIds } from "@models/profiles.ts";
 import {
   queryReportMessagesForContainers,
   queryReportMessagesForShipment,
-} from "@models/report_messages";
-import { fetchSharedReportById } from "@models/shared_reports";
-import { listShipmentActivityEvents } from "@models/shipment_activity_events";
-import { listShipmentLinesForShipment } from "@models/shipment_lines";
-import { fetchShipmentPortalHeader } from "@models/shipments";
-import { listTrackingEventsForContainers } from "@models/tracking_events";
-import { listTrackingRequestsByContainerIds } from "@models/tracking_requests";
+} from "@models/report_messages.ts";
+import { fetchSharedReportById } from "@models/shared_reports.ts";
+import { listShipmentActivityEvents } from "@models/shipment_activity_events.ts";
+import { listShipmentLinesForShipment } from "@models/shipment_lines.ts";
+import { fetchShipmentPortalHeader } from "@models/shipments.ts";
+import { listTrackingEventsForContainers } from "@models/tracking_events.ts";
+import { listTrackingRequestsByContainerIds } from "@models/tracking_requests.ts";
 import {
   listWorkspaceAttachmentsForContainers,
   listWorkspaceAttachmentsForShipment,
-} from "@models/workspace_attachments";
+} from "@models/workspace_attachments.ts";
 import { headlineFromSummary, resolveShipmentRiskLevel, riskFromStatus } from "../insights.ts";
 
 /** Visibility for importer portal + operator preview (per `shipment_customer_access.visibility_settings`). */

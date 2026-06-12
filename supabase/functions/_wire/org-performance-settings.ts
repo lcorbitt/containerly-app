@@ -1,7 +1,7 @@
 import {
   DEFAULT_ORG_PERFORMANCE_SETTINGS,
   type OrgPerformanceSettings,
-} from "@shared/dto/performance.dto";
+} from "@shared/dto/performance.dto.ts";
 
 export function parseOrgPerformanceSettings(raw: unknown): OrgPerformanceSettings {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_ORG_PERFORMANCE_SETTINGS };

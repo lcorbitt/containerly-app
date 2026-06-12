@@ -2,7 +2,7 @@
  * Org performance guardrails for document workflow and reminders.
  */
 
-import type { OrgPerformanceSettings } from "@shared/dto/performance.dto";
+import type { OrgPerformanceSettings } from "@shared/dto/performance.dto.ts";
 
 export function missingRequiredDocumentTypes(
   requiredTypes: readonly string[],

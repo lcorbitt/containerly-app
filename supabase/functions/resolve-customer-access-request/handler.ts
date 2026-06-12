@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth";
-import { createServiceClient, createUserClient } from "@services/db";
-import { resolveCustomerAccessRequest } from "@services/customer/customer-access.service";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
-import type { ResolveCustomerAccessRequestBody } from "@shared/dto/customer-access.dto";
+import { requireAuthUserId } from "@services/auth.ts";
+import { createServiceClient, createUserClient } from "@services/db.ts";
+import { resolveCustomerAccessRequest } from "@services/customer/customer-access.service.ts";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import type { ResolveCustomerAccessRequestBody } from "@shared/dto/customer-access.dto.ts";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

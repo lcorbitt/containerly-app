@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { tryCreateServiceClient } from "@services/db";
+import { tryCreateServiceClient } from "@services/db.ts";
 import {
   fetchProfileDisplayName,
   fetchShipmentOrderPhrase,
   notifyCustomersWithPortalAccess,
   notifyShipmentStakeholdersInApp,
-} from "@services/notification/in-app-alerts";
-import { formatChangedFieldLabels, type CommercialFieldChange } from "@services/shipment/activity/edit.utils";
+} from "@services/notification/in-app-alerts.ts";
+import { formatChangedFieldLabels, type CommercialFieldChange } from "@services/shipment/activity/edit.utils.ts";
 
 const SKIP_NOTIFICATION_EVENT_TYPES = new Set([
   "drafts_attached",

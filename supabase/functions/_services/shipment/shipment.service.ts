@@ -2,23 +2,23 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   fetchMembershipRoleForOrg,
   fetchMembershipUserIdForOrg,
-} from "@models/organization_members";
-import { fetchProfileRole } from "@models/profiles";
-import { insertShipmentActivityEvent } from "@models/shipment_activity_events";
+} from "@models/organization_members.ts";
+import { fetchProfileRole } from "@models/profiles.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
 import {
   deleteShipmentInOrganization,
   fetchShipmentInOrganization,
   insertShipment,
   updateShipmentCommercial,
-} from "@models/shipments";
-import { insertShipmentLines, upsertShipmentLines } from "@models/shipment_lines";
-import { recordShipmentCreated } from "@services/shipment/document.service";
-import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service";
-import { recordShipmentEdited } from "@services/shipment/activity/edit.service";
+} from "@models/shipments.ts";
+import { insertShipmentLines, upsertShipmentLines } from "@models/shipment_lines.ts";
+import { recordShipmentCreated } from "@services/shipment/document.service.ts";
+import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service.ts";
+import { recordShipmentEdited } from "@services/shipment/activity/edit.service.ts";
 import {
   buildCommercialEditChanges,
   isMailOrWorkflowOnlyUpdate,
-} from "@services/shipment/activity/edit.utils";
+} from "@services/shipment/activity/edit.utils.ts";
 import type {
   CreateShipmentBody,
   CreateShipmentResponse,
@@ -29,30 +29,30 @@ import type {
   UpdateShipmentRiskBody,
   UpdateShipmentRiskResponse,
   UpdateShipmentResponse,
-} from "@shared/dto/logistics.dto";
-import { profileDisplayName } from "@shared/author-display-name";
-import { normalizeShipmentTagList } from "@shared/shipment-tags";
+} from "@shared/dto/logistics.dto.ts";
+import { profileDisplayName } from "@shared/author-display-name.ts";
+import { normalizeShipmentTagList } from "@shared/shipment-tags.ts";
 import {
   buildShipmentContextSummary,
   buildShipmentInsightCards,
   computeShipmentMetrics,
-} from "@services/shipment/metrics";
-import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
+} from "@services/shipment/metrics.ts";
+import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto.ts";
 import type {
   ShipmentContextSummary,
   ShipmentInsightCard,
   ShipmentMetricsSummary,
   ShipmentRootCause,
-} from "@shared/dto/performance.dto";
-import type { ShipmentOverviewTrackingRow } from "@services/shipment/list.service";
+} from "@shared/dto/performance.dto.ts";
+import type { ShipmentOverviewTrackingRow } from "@services/shipment/list.service.ts";
 import {
   notifyUserAssignedAsAssignee,
   notifyUserAssignedAsParticipant,
   notifyUserRemovedAsParticipant,
   notifyUserUnassignedAsAssignee,
-} from "@services/notification/in-app-alerts";
-import { createServiceClient } from "@services/db";
-import { isSuperadminRole } from "@shared/profile-role";
+} from "@services/notification/in-app-alerts.ts";
+import { createServiceClient } from "@services/db.ts";
+import { isSuperadminRole } from "@shared/profile-role.ts";
 
 type Err = { ok: false; status: number; error: string };
 

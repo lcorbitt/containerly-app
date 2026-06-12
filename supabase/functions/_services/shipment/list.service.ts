@@ -1,15 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { OperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters";
+import type { OperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters.ts";
 import type {
   ImporterGrantedShipmentSortColumn,
   SortDirection as ImporterSortDirection,
-} from "@shared/importer-shipment-sort";
+} from "@shared/importer-shipment-sort.ts";
 import type {
   OperatorShipmentScope,
   OperatorShipmentSortColumn,
   SortDirection,
-} from "@shared/operator-shipment-sort";
-import { sanitizeIlikeTerm } from "@shared/utils/sanitize-ilike";
+} from "@shared/operator-shipment-sort.ts";
+import { sanitizeIlikeTerm } from "@shared/utils/sanitize-ilike.ts";
 
 export type ShipmentOverviewTrackingRow = {
   id: string;

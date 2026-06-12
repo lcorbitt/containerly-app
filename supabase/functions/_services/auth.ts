@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchProfileRole } from "@models/profiles";
-import { isSuperadminRole } from "@shared/profile-role";
+import { fetchProfileRole } from "@models/profiles.ts";
+import { isSuperadminRole } from "@shared/profile-role.ts";
 import { jsonResponse } from "./utils.ts";
 
 export async function requireAuthUser(

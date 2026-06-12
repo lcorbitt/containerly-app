@@ -1,5 +1,5 @@
-import { createServiceClient } from "@services/db";
-import { jsonResponse } from "@services/utils";
+import { createServiceClient } from "@services/db.ts";
+import { jsonResponse } from "@services/utils.ts";
 
 type OrgSettings = {
   sla_response_hours: number;

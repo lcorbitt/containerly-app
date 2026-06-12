@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { insertExternalApiLog } from "@models/external_api_logs";
+import { insertExternalApiLog } from "@models/external_api_logs.ts";
 
 export async function logExternalCall(
   admin: SupabaseClient | null,
