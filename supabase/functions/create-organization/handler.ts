@@ -1,10 +1,10 @@
-import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth";
 import {
   createOrganizationWithInitialAdmin,
   resolveUserIdByEmail,
-} from "@services/organization/organization.service.ts";
-import { createServiceClient, createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+} from "@services/organization/organization.service";
+import { createServiceClient, createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

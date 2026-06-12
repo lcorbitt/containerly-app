@@ -1,5 +1,5 @@
-import { buildBrandedEmailHtml, sendTransactionalEmail } from "@services/email/email.service.ts";
-import type { FeedbackCategory } from "@shared/dto/feedback.dto.ts";
+import { buildBrandedEmailHtml, sendTransactionalEmail } from "@services/email/email.service";
+import type { FeedbackCategory } from "@shared/dto/feedback.dto";
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   bug: "Bug Report",

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
-import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service.ts";
-import type { CommercialFieldChange } from "@services/shipment/activity/edit.utils.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events";
+import { notifyForShipmentActivityEvent } from "@services/shipment/activity/notifications.service";
+import type { CommercialFieldChange } from "@services/shipment/activity/edit.utils";
 
 export async function recordShipmentEdited(
   client: SupabaseClient,

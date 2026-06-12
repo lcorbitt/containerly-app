@@ -1,5 +1,7 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { TestAppHosts } from "@/test-utils/app-hosts";
 import { ORG_ID } from "@/components/ShipmentShareMenu/test-utils";
@@ -11,15 +13,16 @@ import {
 } from "@/test/msw/share-handlers";
 import { CUSTOMER_INVITE_OPERATOR_EMAIL_ERROR } from "@/utils/customer-invite-errors";
 
-const { mockFetchSnapshot, mockCreateInvite, mockResolveAccessRequest } = vi.hoisted(() => ({
-  mockFetchSnapshot: vi.fn(),
-  mockCreateInvite: vi.fn(),
-  mockResolveAccessRequest: vi.fn(),
-}));
+const { mockGetShipmentAccessTab, mockCreateCustomerInvite, mockResolveAccessRequest } =
+  vi.hoisted(() => ({
+    mockGetShipmentAccessTab: vi.fn(),
+    mockCreateCustomerInvite: vi.fn(),
+    mockResolveAccessRequest: vi.fn(),
+  }));
 
 vi.mock("@/services/shipment.service", () => ({
-  fetchShipmentAccessTabSnapshotForBrowser: mockFetchSnapshot,
-  createImporterInvite: mockCreateInvite,
+  getShipmentAccessTab: mockGetShipmentAccessTab,
+  createCustomerInvite: mockCreateCustomerInvite,
   resolveCustomerAccessRequest: mockResolveAccessRequest,
   deleteShipmentParticipantRow: vi.fn(),
   insertShipmentParticipant: vi.fn(),
@@ -29,8 +32,17 @@ vi.mock("@/services/shipment.service", () => ({
 }));
 
 function wrapper({ children }: { children: ReactNode }) {
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      }),
+  );
+
   return (
-    <TestAppHosts org={{ selectedOrgId: ORG_ID }}>{children}</TestAppHosts>
+    <QueryClientProvider client={client}>
+      <TestAppHosts org={{ selectedOrgId: ORG_ID }}>{children}</TestAppHosts>
+    </QueryClientProvider>
   );
 }
 
@@ -45,8 +57,8 @@ function hookOptions(onMetaChanged = vi.fn()) {
 
 describe("useShipmentAccessTabContent", () => {
   beforeEach(() => {
-    mockFetchSnapshot.mockResolvedValue(emptySnapshot);
-    mockCreateInvite.mockReset();
+    mockGetShipmentAccessTab.mockResolvedValue(emptySnapshot);
+    mockCreateCustomerInvite.mockReset();
     mockResolveAccessRequest.mockReset();
   });
 
@@ -55,7 +67,7 @@ describe("useShipmentAccessTabContent", () => {
   });
 
   it("loads access tab snapshot on mount", async () => {
-    mockFetchSnapshot.mockResolvedValue({
+    mockGetShipmentAccessTab.mockResolvedValue({
       ...emptySnapshot,
       pendingInvites: [
         {
@@ -76,14 +88,14 @@ describe("useShipmentAccessTabContent", () => {
 
     const { result } = renderHook(() => useShipmentAccessTabContent(hookOptions()), { wrapper });
 
-    await waitFor(() => expect(mockFetchSnapshot).toHaveBeenCalled());
+    await waitFor(() => expect(mockGetShipmentAccessTab).toHaveBeenCalled());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.pendingInvites).toHaveLength(1);
     expect(result.current.pendingInvites[0]?.invited_email).toBe("pending@example.com");
   });
 
   it("creates invite successfully and sets lastInviteUrl", async () => {
-    mockCreateInvite.mockResolvedValue({
+    mockCreateCustomerInvite.mockResolvedValue({
       ok: true,
       invite_url: "/invite/accept?token=abc123",
       expires_at: "2026-12-31T00:00:00Z",
@@ -107,7 +119,7 @@ describe("useShipmentAccessTabContent", () => {
       );
     });
     expect(result.current.inviteEmail).toBe("");
-    expect(mockCreateInvite).toHaveBeenCalledWith({
+    expect(mockCreateCustomerInvite).toHaveBeenCalledWith({
       organizationId: ORG_ID,
       shipmentId: SHIPMENT_ID,
       invitedEmail: "importer@example.com",
@@ -116,7 +128,7 @@ describe("useShipmentAccessTabContent", () => {
   });
 
   it("sets inviteFieldError for operator email failures", async () => {
-    mockCreateInvite.mockResolvedValue({
+    mockCreateCustomerInvite.mockResolvedValue({
       ok: false,
       status: 400,
       error: CUSTOMER_INVITE_OPERATOR_EMAIL_ERROR,
@@ -140,7 +152,7 @@ describe("useShipmentAccessTabContent", () => {
   });
 
   it("resolves access request and reloads snapshot", async () => {
-    mockFetchSnapshot
+    mockGetShipmentAccessTab
       .mockResolvedValueOnce({
         ...emptySnapshot,
         pendingAccessRequests: [
@@ -160,7 +172,11 @@ describe("useShipmentAccessTabContent", () => {
         ],
       })
       .mockResolvedValueOnce(emptySnapshot);
-    mockResolveAccessRequest.mockResolvedValue({ ok: true });
+    mockResolveAccessRequest.mockResolvedValue({
+      ok: true,
+      status: "approved",
+      shipment_id: SHIPMENT_ID,
+    });
 
     const onMetaChanged = vi.fn();
     const { result } = renderHook(() => useShipmentAccessTabContent(hookOptions(onMetaChanged)), {

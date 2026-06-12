@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { updateShipmentRisk } from "@services/shipment/shipment.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import type { UpdateShipmentRiskBody } from "@shared/dto/logistics.dto.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { updateShipmentRisk } from "@services/shipment/shipment.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import type { UpdateShipmentRiskBody } from "@shared/dto/logistics.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

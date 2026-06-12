@@ -1,28 +1,28 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { notifyOperatorsTrackingSyncFailed } from "@services/notification/workflow.service.ts";
-import { notifyShipmentStakeholdersCarrierAlert } from "@services/notification/in-app-alerts.ts";
-import { buildContainerEnrichment } from "@services/tracking/providers/jsoncargo/enrichment.ts";
-import { getJsoncargoConfig } from "@services/tracking/providers/jsoncargo/client.ts";
-import { fetchLiveFromProvider, type NormalizedContainer } from "@services/tracking/providers/jsoncargo/container-tracking.ts";
+import { notifyOperatorsTrackingSyncFailed } from "@services/notification/workflow.service";
+import { notifyShipmentStakeholdersCarrierAlert } from "@services/notification/in-app-alerts";
+import { buildContainerEnrichment } from "@services/tracking/providers/jsoncargo/enrichment";
+import { getJsoncargoConfig } from "@services/tracking/providers/jsoncargo/client";
+import { fetchLiveFromProvider, type NormalizedContainer } from "@services/tracking/providers/jsoncargo/container-tracking";
 import {
   fetchContainerByNormalizedNumber,
   fetchContainerShipmentId,
   upsertContainerFromProvider,
   updateContainerEnrichment,
   updateContainerLastCheckedAt,
-} from "@models/containers.ts";
-import { logExternalCall } from "@services/logger.ts";
+} from "@models/containers";
+import { logExternalCall } from "@services/logger";
 import {
   fetchLatestTrackingEventForRequest,
   insertTrackingEvent,
-} from "@models/tracking_events.ts";
+} from "@models/tracking_events";
 import {
   fetchTrackingRequestContainerId,
   fetchTrackingRequestWithShipmentLine,
   listTrackingRequestsDueForSync,
   updateTrackingRequestStatus,
-} from "@models/tracking_requests.ts";
-import { normalizeContainerNumber } from "@services/container-number.ts";
+} from "@models/tracking_requests";
+import { normalizeContainerNumber } from "@services/container-number";
 
 const STALE_MS = Number(Deno.env.get("CONTAINER_STALE_MS") ?? 15 * 60 * 1000);
 

@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { notifyFeedbackSubmitted } from "@services/feedback/notifications.service.ts";
-import { insertUserFeedback } from "@models/user_feedback.ts";
-import { fetchProfileEmailByUserId } from "@models/profiles.ts";
+import { notifyFeedbackSubmitted } from "@services/feedback/notifications.service";
+import { insertUserFeedback } from "@models/user_feedback";
+import { fetchProfileEmailByUserId } from "@models/profiles";
 import type {
   FeedbackCategory,
   FeedbackStatus,
   SubmitFeedbackBody,
   UserFeedbackRow,
-} from "@shared/dto/feedback.dto.ts";
+} from "@shared/dto/feedback.dto";
 
 export type AdminFeedbackListRow = UserFeedbackRow & {
   submitter_email: string | null;

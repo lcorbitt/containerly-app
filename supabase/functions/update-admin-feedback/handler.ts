@@ -1,8 +1,8 @@
-import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
-import { updateAdminFeedbackStatus } from "@services/feedback/feedback.service.ts";
-import { createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import type { FeedbackStatus } from "@shared/dto/feedback.dto.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth";
+import { updateAdminFeedbackStatus } from "@services/feedback/feedback.service";
+import { createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import type { FeedbackStatus } from "@shared/dto/feedback.dto";
 
 const VALID_STATUSES = new Set<FeedbackStatus>(["new", "reviewed", "resolved", "wont_fix"]);
 

@@ -1,7 +1,7 @@
-import { requireAuthUserId, requireSuperadmin } from "@services/auth.ts";
-import { updateProfileRoleAsSuperadmin } from "@services/profile/profile.service.ts";
-import { createServiceClient, createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { requireAuthUserId, requireSuperadmin } from "@services/auth";
+import { updateProfileRoleAsSuperadmin } from "@services/profile/profile.service";
+import { createServiceClient, createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "PATCH") {

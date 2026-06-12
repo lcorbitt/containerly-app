@@ -1,4 +1,4 @@
-import { jsonResponse } from "@services/utils.ts";
+import { jsonResponse } from "@services/utils";
 
 /** Legacy anonymous endpoint — disabled. */
 export async function handle(req: Request): Promise<Response> {

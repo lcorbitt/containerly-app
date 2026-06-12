@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events";
 
 const MESSAGE_PREVIEW_MAX_LEN = 120;
 

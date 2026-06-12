@@ -1,4 +1,4 @@
-import { corsHeaders } from "@services/utils.ts";
+import { corsHeaders } from "@services/utils";
 import { handle } from "./handler.ts";
 
 Deno.serve(async (req) => {

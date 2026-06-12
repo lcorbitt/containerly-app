@@ -2,6 +2,7 @@ import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   fetchShipmentWorkspaceRowForBrowser,
+  getShipmentAccessTab,
   loadDocumentQueuePageBrowser,
   type DocumentQueueFilter,
   type OperatorShipmentScope,
@@ -9,7 +10,21 @@ import {
 import { loadShipmentScopeThread } from "@/services/workspace.service";
 
 export const shipmentWorkspaceRowQueryKeyRoot = ["shipment-workspace-row"] as const;
+export const shipmentAccessTabQueryKeyRoot = ["shipment-access-tab"] as const;
 export const documentQueueQueryKeyRoot = ["document-queue"] as const;
+
+export function shipmentAccessTabQueryKey(shipmentId: string, organizationId: string) {
+  return [...shipmentAccessTabQueryKeyRoot, shipmentId, organizationId] as const;
+}
+
+export function invalidateShipmentAccessTabQuery(
+  qc: QueryClient,
+  input: { shipmentId: string; organizationId: string },
+) {
+  return qc.invalidateQueries({
+    queryKey: shipmentAccessTabQueryKey(input.shipmentId, input.organizationId),
+  });
+}
 
 export function invalidateShipmentWorkspaceRowQuery(
   qc: QueryClient,
@@ -39,6 +54,23 @@ export function useShipmentWorkspaceRowQuery(input: {
     queryFn: async () => {
       if (!input.organizationId) throw new Error("organizationId required");
       return fetchShipmentWorkspaceRowForBrowser({
+        shipmentId: input.shipmentId,
+        organizationId: input.organizationId,
+      });
+    },
+    enabled: Boolean(input.organizationId && input.shipmentId),
+  });
+}
+
+export function useShipmentAccessTabQuery(input: {
+  shipmentId: string;
+  organizationId: string | null;
+}) {
+  return useQuery({
+    queryKey: [...shipmentAccessTabQueryKeyRoot, input.shipmentId, input.organizationId],
+    queryFn: async () => {
+      if (!input.organizationId) throw new Error("organizationId required");
+      return getShipmentAccessTab({
         shipmentId: input.shipmentId,
         organizationId: input.organizationId,
       });

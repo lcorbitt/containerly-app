@@ -1,10 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useToast } from "@/atoms/toast";
-import { updateShipmentRootCause } from "@/services/shipment.service";
-import type { ShipmentRootCause } from "@shared/dto/performance.dto";
 import { ShipmentRootCauseEditor } from "@/components/ShipmentRootCauseEditor";
+import type { ShipmentRootCause } from "@shared/dto/performance.dto";
+import { useShipmentRootCauseSection } from "./useShipmentRootCauseSection";
 
 export function ShipmentRootCauseSection({
   shipmentId,
@@ -19,30 +17,12 @@ export function ShipmentRootCauseSection({
   onSaved?: () => void;
   variant?: "default" | "inline";
 }) {
-  const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
-  const [value, setValue] = useState(initialRootCause);
-
-  const handleChange = useCallback(
-    async (next: ShipmentRootCause | null) => {
-      setValue(next);
-      setSaving(true);
-      try {
-        await updateShipmentRootCause({
-          shipmentId,
-          organizationId,
-          rootCause: next,
-        });
-        onSaved?.();
-      } catch (e) {
-        toast(e instanceof Error ? e.message : "Could not save root cause", "error");
-        setValue(initialRootCause);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [initialRootCause, onSaved, organizationId, shipmentId, toast],
-  );
+  const { value, saving, handleChange } = useShipmentRootCauseSection({
+    shipmentId,
+    organizationId,
+    initialRootCause,
+    onSaved,
+  });
 
   return (
     <ShipmentRootCauseEditor

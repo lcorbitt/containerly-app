@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useToast } from "@/atoms/toast";
-import { updateShipmentTags } from "@/services/shipment.service";
+import { useUpdateShipmentTagsMutation } from "@/hooks/mutations/useShipments";
 import {
   mergeShipmentTags,
   removeShipmentTag,
@@ -24,12 +24,13 @@ export function useShipmentTagsPanel({
 }) {
   const { toast } = useToast();
   const { selectedOrgId } = useOrganizationWorkspace();
+  const updateTagsMutation = useUpdateShipmentTagsMutation();
   const [tags, setTags] = useState(initialTags);
   const [draft, setDraft] = useState("");
-  const [saving, setSaving] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const suppressOpenRef = useRef(false);
+  const saving = updateTagsMutation.isPending;
 
   useEffect(() => {
     setTags(initialTags);
@@ -38,9 +39,8 @@ export function useShipmentTagsPanel({
   const persistTags = useCallback(
     async (nextTags: string[]) => {
       if (!selectedOrgId) return;
-      setSaving(true);
       try {
-        const saved = await updateShipmentTags({
+        const saved = await updateTagsMutation.mutateAsync({
           shipmentId,
           organizationId: selectedOrgId,
           tags: nextTags,
@@ -50,11 +50,9 @@ export function useShipmentTagsPanel({
       } catch (e) {
         toast(e instanceof Error ? e.message : "Could not update tags", "error");
         setTags(initialTags);
-      } finally {
-        setSaving(false);
       }
     },
-    [initialTags, onTagsChanged, selectedOrgId, shipmentId, toast],
+    [initialTags, onTagsChanged, selectedOrgId, shipmentId, toast, updateTagsMutation],
   );
 
   const suggestions = useMemo(

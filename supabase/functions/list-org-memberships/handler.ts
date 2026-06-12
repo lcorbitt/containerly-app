@@ -1,9 +1,9 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { fetchOrgMembershipRows } from "@services/organization/organization.service.ts";
-import { fetchProfileRole } from "@models/profiles.ts";
-import { isSuperadminRole } from "@shared/profile-role.ts";
-import { createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { requireAuthUserId } from "@services/auth";
+import { fetchOrgMembershipRows } from "@services/organization/organization.service";
+import { fetchProfileRole } from "@models/profiles";
+import { isSuperadminRole } from "@shared/profile-role";
+import { createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

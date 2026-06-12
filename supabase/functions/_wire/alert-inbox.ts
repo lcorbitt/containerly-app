@@ -1,4 +1,4 @@
-import { MESSAGE_EVENT_TYPES } from "@shared/in-app-event-taxonomy.ts";
+import { MESSAGE_EVENT_TYPES } from "@shared/in-app-event-taxonomy";
 
 export interface AlertInboxRow {
   actor_user_id?: string | null;

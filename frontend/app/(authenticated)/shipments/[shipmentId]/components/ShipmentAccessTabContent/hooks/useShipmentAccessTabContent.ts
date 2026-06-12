@@ -1,25 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  createImporterInvite,
-  deleteShipmentParticipantRow,
-  fetchShipmentAccessTabSnapshotForBrowser,
-  insertShipmentParticipant,
-  resolveCustomerAccessRequest,
-  revokeCustomerInviteRow,
-  revokeShipmentCustomerAccessRow,
-  updateShipmentAssignee,
-} from "@/services/shipment.service";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
+import type { ShipmentAccessTabSnapshot } from "@/services/shipment.service";
 import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
 import { useToast } from "@/atoms/toast";
-import type {
-  CustomerInvite,
-  ShipmentCustomerAccess,
-  ShipmentCustomerAccessRequest,
-  ShipmentParticipant,
-} from "@/types/database";
+import { useResolveCustomerAccessRequestMutation } from "@/hooks/mutations/useAlerts";
+import {
+  useCreateCustomerInviteMutation,
+  useDeleteShipmentParticipantMutation,
+  useInsertShipmentParticipantMutation,
+  useRevokeCustomerInviteMutation,
+  useRevokeShipmentCustomerAccessMutation,
+  useUpdateShipmentAssigneeMutation,
+} from "@/hooks/mutations/useShipments";
+import {
+  invalidateShipmentAccessTabQuery,
+  shipmentAccessTabQueryKey,
+  useShipmentAccessTabQuery,
+} from "@/hooks/queries/useShipment";
 import type { CustomSelectOption } from "@/components/CustomSelect";
 import { parseCustomerInviteRecipients } from "@/utils/customer-invite-recipients";
 import { isCustomerInviteOperatorEmailError } from "@/utils/customer-invite-errors";
@@ -37,85 +37,73 @@ export function useShipmentAccessTabContent({
   organizationId?: string | null;
 }) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const workspaceOrgId = useOrganizationWorkspaceOptional()?.selectedOrgId ?? null;
   const selectedOrgId = organizationIdProp ?? workspaceOrgId;
-  const [assigneeUserId, setAssigneeUserId] = useState<string | null>(initialAssigneeUserId);
-  const [assigneeSaving, setAssigneeSaving] = useState(false);
-  const [participantRows, setParticipantRows] = useState<ShipmentParticipant[]>([]);
-  const [orgPeers, setOrgPeers] = useState<{ id: string; label: string }[]>([]);
-  const [profileImagePathByUserId, setProfileImagePathByUserId] = useState<
-    Record<string, string | null>
-  >({});
-  const [participantBusy, setParticipantBusy] = useState(false);
-  const [removingParticipantId, setRemovingParticipantId] = useState<string | null>(null);
-  const [customerAccessRows, setCustomerAccessRows] = useState<ShipmentCustomerAccess[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<CustomerInvite[]>([]);
-  const [pendingAccessRequests, setPendingAccessRequests] = useState<ShipmentCustomerAccessRequest[]>(
-    [],
-  );
+
+  const accessTabQuery = useShipmentAccessTabQuery({
+    shipmentId,
+    organizationId: selectedOrgId,
+  });
+  const snap = accessTabQuery.data;
+
+  const assigneeMutation = useUpdateShipmentAssigneeMutation();
+  const insertParticipantMutation = useInsertShipmentParticipantMutation();
+  const deleteParticipantMutation = useDeleteShipmentParticipantMutation();
+  const createInviteMutation = useCreateCustomerInviteMutation();
+  const revokeInviteMutation = useRevokeCustomerInviteMutation();
+  const revokeAccessMutation = useRevokeShipmentCustomerAccessMutation();
+  const resolveAccessRequestMutation = useResolveCustomerAccessRequestMutation(selectedOrgId);
+
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFieldError, setInviteFieldError] = useState<string | null>(null);
   const [inviteCreating, setInviteCreating] = useState(false);
   const [resolvingRequestId, setResolvingRequestId] = useState<string | null>(null);
-  const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">("email_invite");
-  const [messageAuthorByUserId, setMessageAuthorByUserId] = useState<Record<string, string>>({});
-  const [customerEmailByUserId, setCustomerEmailByUserId] = useState<Record<string, string>>({});
-  const [tags, setTags] = useState<string[]>([]);
-  const [orgTagSuggestions, setOrgTagSuggestions] = useState<string[]>([]);
-  const [emailNotificationsSubscribed, setEmailNotificationsSubscribed] = useState(false);
-  const [loading, setLoading] = useState(true);
-  // Only the first load (per shipment/org) shows the full "Loading…" swap. Refreshes after
-  // a mutation (approve/deny/invite/revoke) update data in place so the sidebar doesn't blank.
-  const hasLoadedRef = useRef(false);
+  const [removingParticipantId, setRemovingParticipantId] = useState<string | null>(null);
+  const [inviteDeliveryMode, setInviteDeliveryMode] = useState<"email_invite" | "allowlist_only">(
+    "email_invite",
+  );
 
-  useEffect(() => {
-    setAssigneeUserId(initialAssigneeUserId);
-  }, [initialAssigneeUserId, shipmentId]);
+  const loading = accessTabQuery.isLoading;
 
-  useEffect(() => {
-    hasLoadedRef.current = false;
-    setLoading(true);
-  }, [shipmentId, selectedOrgId]);
-
-  const load = useCallback(async () => {
+  const refreshAccessTab = useCallback(async () => {
     if (!selectedOrgId) return;
-    if (!hasLoadedRef.current) setLoading(true);
-    try {
-      const snap = await fetchShipmentAccessTabSnapshotForBrowser({
-        shipmentId,
-        organizationId: selectedOrgId,
-      });
-      setAssigneeUserId(snap.assigneeUserId);
-      setParticipantRows(snap.participantRows);
-      setCustomerAccessRows(snap.customerAccessRows);
-      setPendingInvites(snap.pendingInvites);
-      setPendingAccessRequests(snap.pendingAccessRequests);
-      setOrgPeers(snap.orgPeers);
-      setProfileImagePathByUserId(snap.profileImagePathByUserId);
-      setMessageAuthorByUserId(snap.messageAuthorByUserId);
-      setCustomerEmailByUserId(snap.customerEmailByUserId);
-      setTags(snap.tags);
-      setOrgTagSuggestions(snap.orgTagSuggestions);
-      setEmailNotificationsSubscribed(snap.emailNotificationsSubscribed);
-    } finally {
-      hasLoadedRef.current = true;
-      setLoading(false);
-    }
-  }, [selectedOrgId, shipmentId]);
+    await invalidateShipmentAccessTabQuery(qc, { shipmentId, organizationId: selectedOrgId });
+  }, [qc, selectedOrgId, shipmentId]);
 
-  const applySavedTags = useCallback((savedTags: string[]) => {
-    setTags(savedTags);
-    setOrgTagSuggestions((prev) => {
-      const merged = new Set(prev);
-      for (const tag of savedTags) merged.add(tag);
-      return [...merged].sort((a, b) => a.localeCompare(b));
-    });
-  }, []);
+  const applySavedTags = useCallback(
+    (savedTags: string[]) => {
+      if (!selectedOrgId) return;
+      qc.setQueryData(
+        shipmentAccessTabQueryKey(shipmentId, selectedOrgId),
+        (prev: ShipmentAccessTabSnapshot | undefined) => {
+          if (!prev) return prev;
+          const mergedSuggestions = new Set(prev.orgTagSuggestions);
+          for (const tag of savedTags) mergedSuggestions.add(tag);
+          return {
+            ...prev,
+            tags: savedTags,
+            orgTagSuggestions: [...mergedSuggestions].sort((a, b) => a.localeCompare(b)),
+          };
+        },
+      );
+    },
+    [qc, selectedOrgId, shipmentId],
+  );
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const assigneeUserId = snap?.assigneeUserId ?? initialAssigneeUserId;
+  const participantRows = snap?.participantRows ?? [];
+  const orgPeers = snap?.orgPeers ?? [];
+  const profileImagePathByUserId = snap?.profileImagePathByUserId ?? {};
+  const customerAccessRows = snap?.customerAccessRows ?? [];
+  const pendingInvites = snap?.pendingInvites ?? [];
+  const pendingAccessRequests = snap?.pendingAccessRequests ?? [];
+  const messageAuthorByUserId = snap?.messageAuthorByUserId ?? {};
+  const customerEmailByUserId = snap?.customerEmailByUserId ?? {};
+  const tags = snap?.tags ?? [];
+  const orgTagSuggestions = snap?.orgTagSuggestions ?? [];
+  const emailNotificationsSubscribed = snap?.emailNotificationsSubscribed ?? false;
 
   const participantUserIdSet = useMemo(
     () => new Set(participantRows.map((p) => p.user_id)),
@@ -163,64 +151,67 @@ export function useShipmentAccessTabContent({
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-  async function updateAssignee(userId: string | null) {
-    if (!selectedOrgId) return;
-    setAssigneeSaving(true);
-    try {
-      await updateShipmentAssignee({
-        shipmentId,
-        organizationId: selectedOrgId,
-        assigneeUserId: userId,
-      });
-      setAssigneeUserId(userId);
-      toast("Assignee updated", "success");
-      onMetaChanged();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not update assignee", "error");
-    } finally {
-      setAssigneeSaving(false);
-    }
-  }
+  const updateAssignee = useCallback(
+    async (userId: string | null) => {
+      if (!selectedOrgId) return;
+      try {
+        await assigneeMutation.mutateAsync({
+          shipmentId,
+          organizationId: selectedOrgId,
+          assigneeUserId: userId,
+        });
+        toast("Assignee updated", "success");
+        await refreshAccessTab();
+        onMetaChanged();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not update assignee", "error");
+      }
+    },
+    [assigneeMutation, onMetaChanged, refreshAccessTab, selectedOrgId, shipmentId, toast],
+  );
 
-  async function addParticipantUser(userId: string) {
-    if (!userId || !selectedOrgId) return;
-    setParticipantBusy(true);
-    try {
-      await insertShipmentParticipant({
-        organizationId: selectedOrgId,
-        shipmentId,
-        userId,
-      });
-      toast("Participant added", "success");
-      await load();
-      onMetaChanged();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not add participant", "error");
-    } finally {
-      setParticipantBusy(false);
-    }
-  }
+  const addParticipantUser = useCallback(
+    async (userId: string) => {
+      if (!userId || !selectedOrgId) return;
+      try {
+        await insertParticipantMutation.mutateAsync({
+          organizationId: selectedOrgId,
+          shipmentId,
+          userId,
+        });
+        toast("Participant added", "success");
+        await refreshAccessTab();
+        onMetaChanged();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not add participant", "error");
+      }
+    },
+    [insertParticipantMutation, onMetaChanged, refreshAccessTab, selectedOrgId, shipmentId, toast],
+  );
 
-  async function removeParticipantRow(rowId: string) {
-    setRemovingParticipantId(rowId);
-    try {
-      await deleteShipmentParticipantRow(rowId);
-      toast("Participant removed", "success");
-      await load();
-      onMetaChanged();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not remove participant", "error");
-    } finally {
-      setRemovingParticipantId(null);
-    }
-  }
+  const removeParticipantRow = useCallback(
+    async (rowId: string) => {
+      setRemovingParticipantId(rowId);
+      try {
+        await deleteParticipantMutation.mutateAsync(rowId);
+        toast("Participant removed", "success");
+        await refreshAccessTab();
+        onMetaChanged();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not remove participant", "error");
+      } finally {
+        setRemovingParticipantId(null);
+      }
+    },
+    [deleteParticipantMutation, onMetaChanged, refreshAccessTab, toast],
+  );
 
   const handleInviteEmailChange = useCallback((value: string) => {
     setInviteEmail(value);
     setInviteFieldError(null);
   }, []);
 
-  async function createInvite() {
+  const createInvite = useCallback(async () => {
     if (!selectedOrgId) return;
     setInviteFieldError(null);
 
@@ -245,7 +236,7 @@ export function useShipmentAccessTabContent({
       const failures: string[] = [];
 
       for (const email of emails) {
-        const r = await createImporterInvite({
+        const r = await createInviteMutation.mutateAsync({
           organizationId: selectedOrgId,
           shipmentId,
           invitedEmail: email,
@@ -283,7 +274,7 @@ export function useShipmentAccessTabContent({
 
       setInviteEmail("");
       setInviteFieldError(null);
-      await load();
+      await refreshAccessTab();
 
       if (successCount === 1 && singleInviteUrl) {
         setLastInviteUrl(singleInviteUrl);
@@ -322,44 +313,69 @@ export function useShipmentAccessTabContent({
     } finally {
       setInviteCreating(false);
     }
-  }
+  }, [
+    createInviteMutation,
+    inviteDeliveryMode,
+    inviteEmail,
+    origin,
+    refreshAccessTab,
+    selectedOrgId,
+    shipmentId,
+    toast,
+  ]);
 
-  async function resolveAccessRequestRow(accessRequestId: string, action: "approve" | "deny") {
-    setResolvingRequestId(accessRequestId);
-    try {
-      const r = await resolveCustomerAccessRequest({ accessRequestId, action });
-      if (!r.ok) {
-        toast(r.error, "error");
-        return;
+  const resolveAccessRequestRow = useCallback(
+    async (accessRequestId: string, action: "approve" | "deny") => {
+      setResolvingRequestId(accessRequestId);
+      try {
+        const r = await resolveAccessRequestMutation.mutateAsync({ accessRequestId, action });
+        if (!r.ok) {
+          toast(r.error, "error");
+          return;
+        }
+        toast(action === "approve" ? "Access approved and invite sent." : "Request denied.", "success");
+        onMetaChanged();
+      } finally {
+        setResolvingRequestId(null);
       }
-      toast(action === "approve" ? "Access approved and invite sent." : "Request denied.", "success");
-      await load();
-      onMetaChanged();
-    } finally {
-      setResolvingRequestId(null);
-    }
-  }
+    },
+    [onMetaChanged, resolveAccessRequestMutation, toast],
+  );
 
-  async function revokeInviteRow(id: string): Promise<void> {
-    await revokeCustomerInviteRow(id);
-    await load();
-  }
+  const revokeInviteRow = useCallback(
+    async (id: string) => {
+      try {
+        await revokeInviteMutation.mutateAsync(id);
+        await refreshAccessTab();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not revoke invite", "error");
+      }
+    },
+    [refreshAccessTab, revokeInviteMutation, toast],
+  );
 
-  async function revokeAccessRow(id: string): Promise<void> {
-    await revokeShipmentCustomerAccessRow(id);
-    await load();
-  }
+  const revokeAccessRow = useCallback(
+    async (id: string) => {
+      try {
+        await revokeAccessMutation.mutateAsync(id);
+        await refreshAccessTab();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Could not revoke access", "error");
+      }
+    },
+    [refreshAccessTab, revokeAccessMutation, toast],
+  );
 
   return {
     selectedOrgId,
     loading,
 
     assigneeUserId,
-    assigneeSaving,
+    assigneeSaving: assigneeMutation.isPending,
     assigneeSelectOptions,
     updateAssignee,
 
-    participantBusy,
+    participantBusy: insertParticipantMutation.isPending,
     removingParticipantId,
     participantRowsWithoutAssignee,
     participantsMenuOptions,
@@ -386,7 +402,7 @@ export function useShipmentAccessTabContent({
     createInvite,
     revokeInviteRow,
     revokeAccessRow,
-    load,
+    load: refreshAccessTab,
     toast,
 
     tags,

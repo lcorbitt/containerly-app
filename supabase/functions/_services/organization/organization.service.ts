@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { inviteRedirectTo } from "@shared/auth-redirect.ts";
-import { deriveOrgMemberInviteStatus } from "@shared/org-member-invite-status.ts";
-import { assertOrgImageFile, buildOrgImageObjectPath, ORG_IMAGES_BUCKET } from "@shared/org-image.ts";
-import { parseOrgPerformanceSettings } from "@shared/org-performance-settings.ts";
-import { slugFromOrganizationName } from "@shared/organization-slug.ts";
-import { isSuperadminRole } from "@shared/profile-role.ts";
-import { fetchProfileRole } from "@models/profiles.ts";
-import type { OrgPerformanceSettings } from "@shared/dto/performance.dto.ts";
+import { inviteRedirectTo } from "@shared/auth-redirect";
+import { deriveOrgMemberInviteStatus } from "@shared/org-member-invite-status";
+import { assertOrgImageFile, buildOrgImageObjectPath, ORG_IMAGES_BUCKET } from "@shared/org-image";
+import { parseOrgPerformanceSettings } from "@shared/org-performance-settings";
+import { slugFromOrganizationName } from "@shared/organization-slug";
+import { isSuperadminRole } from "@shared/profile-role";
+import { fetchProfileRole } from "@models/profiles";
+import type { OrgPerformanceSettings } from "@shared/dto/performance.dto";
 
 const ALLOWED_MEMBER_ROLES = new Set(["admin", "member"]);
 

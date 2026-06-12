@@ -1,6 +1,6 @@
-import { createServiceClient } from "@services/db.ts";
-import { jsonResponse } from "@services/utils.ts";
-import { syncStaleRequests } from "@services/tracking/sync.ts";
+import { createServiceClient } from "@services/db";
+import { jsonResponse } from "@services/utils";
+import { syncStaleRequests } from "@services/tracking/sync";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST" && req.method !== "GET") {

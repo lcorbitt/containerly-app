@@ -2,18 +2,18 @@
  * Shipment hub / customer portal messaging (customers + org assignee/participant).
  */
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { fetchProfileDisplayName } from "@services/notification/in-app-alerts.ts";
-import { fetchProfileRole } from "@models/profiles.ts";
-import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
-import { fetchReportMessageParentForReply, insertReportMessage } from "@models/report_messages.ts";
-import { fetchAccessIdAndOrg } from "@models/shipment_customer_access.ts";
-import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
-import { fetchContainerIdAndShipmentId } from "@models/containers.ts";
-import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
-import { postCustomerMessage } from "@services/customer/customer-access.service.ts";
-import { notifyOperatorsNewCustomerMessage } from "@services/notification/workflow.service.ts";
-import { fetchOrganizationForPortal } from "@models/organizations.ts";
-import { recordMessageActivityEvent } from "@services/message/activity.service.ts";
+import { fetchProfileDisplayName } from "@services/notification/in-app-alerts";
+import { fetchProfileRole } from "@models/profiles";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members";
+import { fetchReportMessageParentForReply, insertReportMessage } from "@models/report_messages";
+import { fetchAccessIdAndOrg } from "@models/shipment_customer_access";
+import { fetchShipmentParticipantForUser } from "@models/shipment_participants";
+import { fetchContainerIdAndShipmentId } from "@models/containers";
+import { fetchShipmentPortalOperatorRow } from "@models/shipments";
+import { postCustomerMessage } from "@services/customer/customer-access.service";
+import { notifyOperatorsNewCustomerMessage } from "@services/notification/workflow.service";
+import { fetchOrganizationForPortal } from "@models/organizations";
+import { recordMessageActivityEvent } from "@services/message/activity.service";
 
 const MAX_BODY = 4000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

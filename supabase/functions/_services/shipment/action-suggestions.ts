@@ -2,8 +2,8 @@
  * Edge-side shipment action suggestions. Mirrors `frontend/utils/shipment-actions.ts`.
  */
 
-import type { SuggestedShipmentAction } from "@shared/dto/performance.dto.ts";
-import type { TriageBucketKey } from "@shared/dto/performance.types.ts";
+import type { SuggestedShipmentAction } from "@shared/dto/performance.dto";
+import type { TriageBucketKey } from "@shared/dto/performance.types";
 
 export type ShipmentActionAudience = "operator" | "customer";
 

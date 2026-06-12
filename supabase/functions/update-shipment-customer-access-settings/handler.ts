@@ -1,7 +1,7 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { updateShipmentCustomerAccessSettingsQuery } from "@services/shipment/shipment.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { updateShipmentCustomerAccessSettingsQuery } from "@services/shipment/shipment.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

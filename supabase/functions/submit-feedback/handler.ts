@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { submitUserFeedback } from "@services/feedback/feedback.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import type { SubmitFeedbackBody } from "@shared/dto/feedback.dto.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { submitUserFeedback } from "@services/feedback/feedback.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import type { SubmitFeedbackBody } from "@shared/dto/feedback.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

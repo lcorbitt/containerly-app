@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { acknowledgeAllAlertsForViewer } from "@services/alert/alert.service.ts";
-import { createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import type { AcknowledgeAllAlertsBody } from "@shared/dto/alert.dto.ts";
+import { requireAuthUserId } from "@services/auth";
+import { acknowledgeAllAlertsForViewer } from "@services/alert/alert.service";
+import { createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import type { AcknowledgeAllAlertsBody } from "@shared/dto/alert.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "PATCH" && req.method !== "POST") {

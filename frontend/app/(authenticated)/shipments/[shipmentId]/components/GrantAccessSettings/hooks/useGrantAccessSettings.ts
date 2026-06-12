@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { previewImporterPortalShipment, updateShipmentCustomerAccessSettings } from "@/services/shipment.service";
+import { previewImporterPortalShipment } from "@/services/shipment.service";
 import { useToast } from "@/atoms/toast";
+import { useUpdateShipmentCustomerAccessSettingsMutation } from "@/hooks/mutations/useShipments";
 import type { ShipmentCustomerAccess } from "@/types/database";
 import type { PublicReportPayload } from "@/types/public-report";
 
@@ -32,7 +33,7 @@ export function useGrantAccessSettings({
   onSaved: () => void;
 }) {
   const { toast } = useToast();
-  const [saving, setSaving] = useState(false);
+  const updateSettingsMutation = useUpdateShipmentCustomerAccessSettingsMutation();
   const [vis, setVis] = useState(() => mergeVis(access.visibility_settings ?? undefined));
   const [ov, setOv] = useState<Record<string, string>>(() => {
     const o = (access.operator_overrides ?? undefined) as Record<string, unknown> | undefined;
@@ -65,9 +66,8 @@ export function useGrantAccessSettings({
   }, [ov]);
 
   async function save() {
-    setSaving(true);
     try {
-      await updateShipmentCustomerAccessSettings({
+      await updateSettingsMutation.mutateAsync({
         accessId: access.id,
         visibilitySettings: visibilityPayload(),
         operatorOverrides: overridesPayload(),
@@ -76,8 +76,6 @@ export function useGrantAccessSettings({
       onSaved();
     } catch (e) {
       toast(e instanceof Error ? e.message : "Save failed", "error");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -107,7 +105,7 @@ export function useGrantAccessSettings({
   }
 
   return {
-    saving,
+    saving: updateSettingsMutation.isPending,
     vis,
     setVis,
     ov,

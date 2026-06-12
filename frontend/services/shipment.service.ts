@@ -259,7 +259,7 @@ export type ShipmentAccessTabSnapshot = {
   emailNotificationsSubscribed: boolean;
 };
 
-export async function fetchShipmentAccessTabSnapshotForBrowser(input: {
+export async function getShipmentAccessTab(input: {
   shipmentId: string;
   organizationId: string;
 }): Promise<ShipmentAccessTabSnapshot> {
@@ -679,7 +679,7 @@ export async function previewCustomerInvite(token: string): Promise<
   }
 }
 
-export async function createImporterInvite(args: {
+export async function createCustomerInvite(args: {
   organizationId: string;
   shipmentId: string;
   invitedEmail: string;
@@ -690,7 +690,7 @@ export async function createImporterInvite(args: {
   | { ok: false; status: number; error: string }
 > {
   try {
-    const r = await authFetch("create-customer-invite", {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.customers.createInvite, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

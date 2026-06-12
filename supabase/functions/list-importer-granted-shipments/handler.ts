@@ -1,12 +1,12 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { fetchImporterGrantedShipmentsPage } from "@services/shipment/list.service.ts";
-import { parseOperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { fetchImporterGrantedShipmentsPage } from "@services/shipment/list.service";
+import { parseOperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters";
 import {
   normalizeImporterGrantedShipmentSortColumn,
   type SortDirection,
-} from "@shared/importer-shipment-sort.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+} from "@shared/importer-shipment-sort";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "GET") {

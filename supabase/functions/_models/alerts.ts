@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isInAppNotification } from "@shared/in-app-event-taxonomy.ts";
-import { filterInboxAlertsForViewer, type AlertInboxRow } from "@shared/alert-inbox.ts";
+import { isInAppNotification } from "@shared/in-app-event-taxonomy";
+import { filterInboxAlertsForViewer, type AlertInboxRow } from "@shared/alert-inbox";
 
 function isNotificationBellRow(row: { alert_type: string; inbox_kind?: string | null }): boolean {
   return isInAppNotification(row);

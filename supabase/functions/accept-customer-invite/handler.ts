@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@services/auth.ts";
-import { createServiceClient, createUserClient } from "@services/db.ts";
-import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import { acceptCustomerInvite } from "@services/customer/customer-access.service.ts";
+import { requireAuthUser } from "@services/auth";
+import { createServiceClient, createUserClient } from "@services/db";
+import { isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { acceptCustomerInvite } from "@services/customer/customer-access.service";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

@@ -7,7 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   inboxKindForAlertType,
   type InboxKind,
-} from "@shared/in-app-event-taxonomy.ts";
+} from "@shared/in-app-event-taxonomy";
 
 export interface ShipmentAlertContext {
   organizationId: string;

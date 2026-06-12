@@ -9,13 +9,13 @@ import {
   OPERATOR_SHIPMENT_PORTAL_VISIBILITY,
   type ShipmentPortalReportMeta,
 } from "./payload.ts";
-import { fetchProfileRole } from "@models/profiles.ts";
-import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
-import { fetchActiveAccessFull } from "@models/shipment_customer_access.ts";
-import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
-import { fetchShipmentIdAndOrganization, fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
-import { claimShipmentAccess } from "@services/customer/customer-access.service.ts";
-import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto.ts";
+import { fetchProfileRole } from "@models/profiles";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members";
+import { fetchActiveAccessFull } from "@models/shipment_customer_access";
+import { fetchShipmentParticipantForUser } from "@models/shipment_participants";
+import { fetchShipmentIdAndOrganization, fetchShipmentPortalOperatorRow } from "@models/shipments";
+import { claimShipmentAccess } from "@services/customer/customer-access.service";
+import type { ShipmentPortalPayload } from "@shared/dto/shipment.dto";
 
 type PortalResult =
   | { ok: true; payload: ShipmentPortalPayload }

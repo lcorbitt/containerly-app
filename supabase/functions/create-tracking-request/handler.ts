@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import { createTrackingRequest } from "@services/tracking/tracking.service.ts";
-import type { CreateTrackingRequestBody } from "@shared/dto/tracking.dto.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient, tryCreateServiceClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { createTrackingRequest } from "@services/tracking/tracking.service";
+import type { CreateTrackingRequestBody } from "@shared/dto/tracking.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

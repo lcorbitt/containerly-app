@@ -1,7 +1,7 @@
-import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
-import { jsonResponse } from "@services/utils.ts";
-import { syncContainer } from "@services/tracking/tracking.service.ts";
-import type { SyncContainerBody } from "@shared/dto/tracking.dto.ts";
+import { createUserClient, tryCreateServiceClient } from "@services/db";
+import { jsonResponse } from "@services/utils";
+import { syncContainer } from "@services/tracking/tracking.service";
+import type { SyncContainerBody } from "@shared/dto/tracking.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
-import { fetchProfileRole } from "@models/profiles.ts";
+import { fetchMembershipByOrgAndUser } from "@models/organization_members";
+import { fetchProfileRole } from "@models/profiles";
 import { fetchBolContainers, getJsoncargoConfig } from "./providers/jsoncargo/client.ts";
 import { toJsoncargoShippingLineParam } from "./providers/jsoncargo/shipping-line.ts";
-import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto.ts";
+import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

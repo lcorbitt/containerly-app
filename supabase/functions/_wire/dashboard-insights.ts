@@ -1,13 +1,13 @@
-import type { Alert, ReportMessage } from "@shared/dashboard-metrics.ts";
-import { buildDaySeries } from "@shared/dashboard-metrics.ts";
-import { isInAppNotification, isOperationalAlert } from "@shared/in-app-event-taxonomy.ts";
-import { normalizeShipmentWorkflowStatus, shipmentWorkflowDisplayLabel } from "@shared/shipment-workflow-status.ts";
-import { SHIPMENT_WORKFLOW_STATUSES } from "@shared/dto/logistics.dto.ts";
+import type { Alert, ReportMessage } from "@shared/dashboard-metrics";
+import { buildDaySeries } from "@shared/dashboard-metrics";
+import { isInAppNotification, isOperationalAlert } from "@shared/in-app-event-taxonomy";
+import { normalizeShipmentWorkflowStatus, shipmentWorkflowDisplayLabel } from "@shared/shipment-workflow-status";
+import { SHIPMENT_WORKFLOW_STATUSES } from "@shared/dto/logistics.dto";
 import {
   SHIPMENT_ROOT_CAUSE_LABELS,
   SHIPMENT_ROOT_CAUSES,
   type ShipmentRootCause,
-} from "@shared/dto/performance.dto.ts";
+} from "@shared/dto/performance.dto";
 
 export interface DashboardBreakdownRow {
   key: string;

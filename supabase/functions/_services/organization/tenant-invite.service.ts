@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { inviteRedirectTo } from "@shared/auth-redirect.ts";
+import { inviteRedirectTo } from "@shared/auth-redirect";
 import {
   createOrganizationWithInitialAdmin,
-} from "@services/organization/organization.service.ts";
+} from "@services/organization/organization.service";
 
 export interface AdminTenantInviteRow {
   id: string;

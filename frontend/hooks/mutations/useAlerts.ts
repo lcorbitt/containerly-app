@@ -11,6 +11,7 @@ import {
   orgAlertsQueryKeyRoot,
   restoreAlertsQueryCache,
 } from "@/hooks/queries/useAlerts";
+import { invalidateShipmentAccessTabQuery } from "@/hooks/queries/useShipment";
 
 export function useAcknowledgeAlertMutation(organizationId: string | null) {
   const qc = useQueryClient();
@@ -75,9 +76,15 @@ export function useResolveCustomerAccessRequestMutation(organizationId: string |
   return useMutation({
     mutationFn: (input: { accessRequestId: string; action: "approve" | "deny" }) =>
       resolveCustomerAccessRequest(input),
-    onSuccess: () => {
+    onSuccess: (data) => {
       if (organizationId) {
         void qc.invalidateQueries({ queryKey: [...orgAlertsQueryKeyRoot, organizationId] });
+      }
+      if (data.ok && organizationId) {
+        void invalidateShipmentAccessTabQuery(qc, {
+          shipmentId: data.shipment_id,
+          organizationId,
+        });
       }
     },
   });

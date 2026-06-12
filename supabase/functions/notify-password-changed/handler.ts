@@ -1,7 +1,7 @@
-import { requireAuthUser } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { sendPasswordChangedEmail } from "@services/email/email.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+import { requireAuthUser } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { sendPasswordChangedEmail } from "@services/email/email.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 function loginUrl(): string {
   const base = Deno.env.get("PUBLIC_SITE_URL")?.trim().replace(/\/$/, "") ?? "";

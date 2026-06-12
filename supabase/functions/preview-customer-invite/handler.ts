@@ -1,7 +1,7 @@
-import { createServiceClient } from "@services/db.ts";
-import { previewCustomerInvite } from "@services/customer/customer-access.service.ts";
-import { edgeErrorMessage, jsonResponse } from "@services/utils.ts";
-import type { PreviewCustomerInviteBody } from "@shared/dto/customer-access.dto.ts";
+import { createServiceClient } from "@services/db";
+import { previewCustomerInvite } from "@services/customer/customer-access.service";
+import { edgeErrorMessage, jsonResponse } from "@services/utils";
+import type { PreviewCustomerInviteBody } from "@shared/dto/customer-access.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

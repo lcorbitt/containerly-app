@@ -1,11 +1,11 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { inviteOrAddOrganizationMember } from "@services/organization/organization.service.ts";
+import { requireAuthUserId } from "@services/auth";
+import { inviteOrAddOrganizationMember } from "@services/organization/organization.service";
 import {
   fetchProfileDisplayName,
   notifyOrgAdminsMemberJoined,
-} from "@services/notification/in-app-alerts.ts";
-import { createServiceClient, createUserClient } from "@services/db.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
+} from "@services/notification/in-app-alerts";
+import { createServiceClient, createUserClient } from "@services/db";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

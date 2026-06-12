@@ -12,8 +12,8 @@ import type {
   ShipmentMetricsSummary,
   WaitingCustomerRow,
   WorkflowStepDwell,
-} from "@shared/dto/performance.dto.ts";
-import type { TriageBucketKey } from "@shared/dashboard-metrics.ts";
+} from "@shared/dto/performance.dto";
+import type { TriageBucketKey } from "@shared/dashboard-metrics";
 
 const WORKFLOW_LABELS: Record<string, string> = {
   pending_drafts: "Pending Drafts",

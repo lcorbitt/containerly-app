@@ -2,7 +2,7 @@ import {
   assertProfileImageFile,
   PROFILE_IMAGE_ACCEPT,
   PROFILE_IMAGE_MAX_BYTES,
-} from "@shared/profile-image.ts";
+} from "@shared/profile-image";
 
 export const ORG_IMAGES_BUCKET = "org-images";
 

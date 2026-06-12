@@ -1,13 +1,13 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient } from "@services/db.ts";
-import { fetchOperatorShipmentsOverviewPage } from "@services/shipment/list.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import { parseOperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient } from "@services/db";
+import { fetchOperatorShipmentsOverviewPage } from "@services/shipment/list.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import { parseOperatorShipmentDateRangeFilter } from "@shared/operator-shipment-date-filters";
 import {
   normalizeOperatorShipmentSortColumn,
   type OperatorShipmentScope,
   type SortDirection,
-} from "@shared/operator-shipment-sort.ts";
+} from "@shared/operator-shipment-sort";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

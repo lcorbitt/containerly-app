@@ -1,6 +1,6 @@
-import { createUserClient } from "@services/db.ts";
-import { jsonResponse } from "@services/utils.ts";
-import { searchContainers } from "@services/tracking/tracking.service.ts";
+import { createUserClient } from "@services/db";
+import { jsonResponse } from "@services/utils";
+import { searchContainers } from "@services/tracking/tracking.service";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {

@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { profileDisplayName } from "@shared/author-display-name.ts";
+import { profileDisplayName } from "@shared/author-display-name";
 import {
   assertProfileImageFile,
   buildProfileImageObjectPath,
   PROFILE_IMAGES_BUCKET,
-} from "@shared/profile-image.ts";
+} from "@shared/profile-image";
 
 const ALLOWED_ROLES = new Set(["user", "superadmin"]);
 

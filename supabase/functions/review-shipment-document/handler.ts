@@ -1,8 +1,8 @@
-import { requireAuthUserId } from "@services/auth.ts";
-import { createUserClient, tryCreateServiceClient } from "@services/db.ts";
-import { reviewShipmentDocument } from "@services/shipment/document.service.ts";
-import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils.ts";
-import type { ReviewShipmentDocumentBody } from "@shared/dto/logistics.dto.ts";
+import { requireAuthUserId } from "@services/auth";
+import { createUserClient, tryCreateServiceClient } from "@services/db";
+import { reviewShipmentDocument } from "@services/shipment/document.service";
+import { edgeErrorMessage, isLikelyUnauthorizedFromCatch, jsonResponse } from "@services/utils";
+import type { ReviewShipmentDocumentBody } from "@shared/dto/logistics.dto";
 
 export async function handle(req: Request): Promise<Response> {
   if (req.method !== "POST") {
