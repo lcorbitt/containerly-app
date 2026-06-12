@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getBrowserAuthSession } from "@/services/auth.service";
+import {
+  getBrowserAuthSession,
+  subscribeToAuthState,
+} from "@/services/auth.service";
 import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
 import {
   clearStoredSignupOrganizationId,
@@ -21,9 +24,29 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
 
+  const refreshSession = useCallback(async () => {
+    const session = await getBrowserAuthSession();
+    const signedIn = Boolean(session);
+    setHasSession(signedIn);
+    setSessionChecked(true);
+    return signedIn;
+  }, []);
+
+  const markSessionReady = useCallback(() => {
+    setHasSession(true);
+    setSessionChecked(true);
+  }, []);
+
   useEffect(() => {
     void getBrowserAuthSession().then((session) => {
       setHasSession(Boolean(session));
+      setSessionChecked(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    return subscribeToAuthState((signedIn) => {
+      setHasSession(signedIn);
       setSessionChecked(true);
     });
   }, []);
@@ -65,10 +88,12 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   ]);
 
   const goToStep = useCallback(
-    (next: SignupWizardStep) => {
+    async (next: SignupWizardStep) => {
+      await refreshSession();
       router.push(signupStepHref(next));
+      router.refresh();
     },
-    [router],
+    [router, refreshSession],
   );
 
   const onOrganizationCreated = useCallback(
@@ -97,5 +122,6 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
     organizationId,
     onOrganizationCreated,
     finishSignup,
+    markSessionReady,
   };
 }

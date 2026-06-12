@@ -42,10 +42,14 @@ import { useSignupAccountStep } from "./useSignupAccountStep";
 
 const OAUTH_NEXT = "/signup?step=2";
 
-export function SignupAccountStep({ onContinue, initialError = null }: SignupAccountStepProps) {
+export function SignupAccountStep({
+  onContinue,
+  onSessionReady,
+  initialError = null,
+}: SignupAccountStepProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const step = useSignupAccountStep({ onContinue });
+  const step = useSignupAccountStep({ onContinue, onSessionReady });
 
   return (
     <div className={`${LOGIN_FORM_SHELL_CLASS} mt-6`}>

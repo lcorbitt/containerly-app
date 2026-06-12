@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { signUpWithEmail } from "@/services/auth.service";
+import { signInWithPassword, signUpWithEmail } from "@/services/auth.service";
 import { passwordsMatch, resolveReferralSource } from "./utils";
 
 interface UseSignupAccountStepInput {
-  onContinue: () => void;
+  onContinue: () => void | Promise<void>;
+  onSessionReady?: () => void;
 }
 
-export function useSignupAccountStep({ onContinue }: UseSignupAccountStepInput) {
+export function useSignupAccountStep({ onContinue, onSessionReady }: UseSignupAccountStepInput) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,12 +42,18 @@ export function useSignupAccountStep({ onContinue }: UseSignupAccountStepInput) 
         referralSource,
       });
       if (error) throw error;
-      if (session) {
-        onContinue();
-        return;
+
+      if (!session) {
+        const signIn = await signInWithPassword(email, password);
+        if (signIn.error) {
+          setMessage("Check your email to confirm, then return here to continue.");
+          setLoading(false);
+          return;
+        }
       }
-      setMessage("Check your email to confirm, then return here to continue.");
-      setLoading(false);
+
+      onSessionReady?.();
+      await onContinue();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Could not create account");
       setLoading(false);

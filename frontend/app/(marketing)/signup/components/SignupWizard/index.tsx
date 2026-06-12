@@ -50,6 +50,7 @@ export function SignupWizard({ initialStep, initialError = null }: SignupWizardP
 
       {wizard.step === 1 ? (
         <SignupAccountStep
+          onSessionReady={wizard.markSessionReady}
           onContinue={() => wizard.goToStep(2)}
           initialError={initialError}
         />
