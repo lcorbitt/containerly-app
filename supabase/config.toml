@@ -36,6 +36,39 @@ additional_redirect_urls = [
 [auth.email]
 enable_confirmations = false
 
+# Branded Auth emails — same layout as transactional mail in _services/email/email.service.ts.
+# content_path is relative to the repo root (where you run `supabase start`).
+# After edits: `supabase stop && supabase start`. For hosted projects, paste HTML into
+# Dashboard → Authentication → Email Templates (see supabase/templates/README.md).
+
+[auth.email.template.invite]
+subject = "You've been invited to Containerly"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Containerly password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Sign in to Containerly"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your Containerly email address"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new Containerly email address"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.reauthentication]
+subject = "Your Containerly verification code"
+content_path = "./supabase/templates/reauthentication.html"
+
+# Post-change password notice is sent via Resend (`notify-password-changed`), not Supabase Auth.
+[auth.email.notification.password_changed]
+enabled = false
+
 [api]
 enabled = true
 

@@ -63,7 +63,7 @@ Logistics customer portal for operators and importers: **documentation-first shi
 3. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (or your dev origin) so teammate **invite** links redirect through `/auth/callback` to `/set-password`. Local redirect allow-list lives in `supabase/config.toml` under `[auth]`; add more URLs there if you change host or port.
 4. Copy `supabase/functions/.env.example` to `supabase/functions/.env`. **Do not** set `RESEND_API_KEY` locally. Set `DEV_SMTP_HOST=inbucket`, `DEV_SMTP_PORT=1025`, and `PUBLIC_SITE_URL=http://localhost:3000` so transactional emails (customer invites, document events, messages) deliver to Mailpit via the Supabase Docker network. Mailpit UI: [http://127.0.0.1:54324](http://127.0.0.1:54324). If you run `supabase functions serve` on the host instead of Docker, use `DEV_SMTP_HOST=127.0.0.1` and `DEV_SMTP_PORT=54325` only when your CLI exposes SMTP on that port.
 5. Open **Mailpit** at [http://127.0.0.1:54324](http://127.0.0.1:54324) to read **all** local emails: Auth (invites, password reset, magic links) and Containerly transactional (same inbox). No Resend or external SMTP provider is required locally.
-6. After editing `config.toml` or `supabase/functions/.env`, run `supabase stop && supabase start` so Auth and Edge pick up changes.
+6. After editing `config.toml` or `supabase/functions/.env`, run `supabase stop && supabase start` so Auth and Edge pick up changes. Branded Auth email HTML lives in `supabase/templates/` (wired via `[auth.email.template.*]` in `config.toml`).
 
 **Hosted projects (beta operator onboarding):** configure **SMTP** (or a provider) under Supabase Dashboard → **Authentication** → **SMTP Settings**, and add redirect URLs under **URL Configuration**:
 
@@ -75,7 +75,7 @@ Logistics customer portal for operators and importers: **documentation-first shi
 
 Also enable **Secure password change** under **Authentication** → **Providers** → **Email** so signed-in users must re-enter their current password in **Settings** before updating.
 
-Deploy the `notify-password-changed` Edge function and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `PUBLIC_SITE_URL` so password-update confirmations send via Containerly (Resend). Supabase Auth still sends invite and reset links; Resend sends the post-change security notification.
+Deploy the `notify-password-changed` Edge function and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `PUBLIC_SITE_URL` so password-update confirmations send via Containerly (Resend). Supabase Auth still sends invite and reset links; Resend sends the post-change security notification. Copy branded Auth templates from `supabase/templates/` into Dashboard → **Authentication → Email Templates** (see `supabase/templates/README.md`).
 
 Invites still require `SUPABASE_SERVICE_ROLE_KEY` on the Next server (`POST /api/organization-members` → `inviteUserByEmail`, `POST /api/admin/tenant-invites` for new tenant onboarding).
 
