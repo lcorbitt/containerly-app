@@ -23,15 +23,8 @@ import {
   messageActivityEventType,
   resolveMessageActivityBody,
 } from "@/utils/message-activity-event";
-import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  deleteAlertsForReportMessageIds,
-} from "@/services/alert.server";
-import {
-  deleteActivityEventsForReportMessageIds,
-  syncActivityEventsForEditedReportMessage,
-} from "@/services/message-activity.server";
+import { syncActivityEventsForEditedReportMessage } from "@/services/message-activity.server";
 
 async function insertMessageActivityEventForUser(
   supabase: SupabaseClient,
@@ -49,6 +42,7 @@ async function insertMessageActivityEventForUser(
   const activityBody = resolveMessageActivityBody(input.body, input.attachmentCount ?? 0);
   const { error } = await supabase.from("shipment_activity_events").insert({
     shipment_id: input.shipmentId,
+    report_message_id: input.messageId,
     event_type: messageActivityEventType(input.authorKind),
     body: activityBody,
     actor_kind: messageActivityActorKind(input.authorKind),
@@ -212,43 +206,6 @@ export async function deleteReportMessageByIdForUser(
   supabase: SupabaseClient,
   messageId: string,
 ): Promise<void> {
-  const { data: root, error: rootErr } = await supabase
-    .from("report_messages")
-    .select("id, parent_message_id, shipment_id, container_id")
-    .eq("id", messageId)
-    .maybeSingle();
-  if (rootErr) throw new Error(rootErr.message);
-  if (!root) {
-    throw new Error(
-      "Could not delete this message. It may have already been removed, or you can only delete messages you posted.",
-    );
-  }
-
-  let scopeQuery = supabase.from("report_messages").select("id, parent_message_id");
-  if (root.shipment_id) {
-    scopeQuery = scopeQuery.eq("shipment_id", root.shipment_id as string);
-  } else if (root.container_id) {
-    scopeQuery = scopeQuery.eq("container_id", root.container_id as string);
-  }
-
-  const { data: scopeMessages, error: scopeErr } = await scopeQuery;
-  if (scopeErr) throw new Error(scopeErr.message);
-
-  const subtreeIds = [
-    ...collectMessageSubtreeIds(
-      (scopeMessages ?? []) as Pick<ReportMessage, "id" | "parent_message_id">[],
-      messageId,
-    ),
-  ];
-
-  try {
-    const admin = createAdminClient();
-    await deleteAlertsForReportMessageIds(admin, subtreeIds);
-    await deleteActivityEventsForReportMessageIds(admin, subtreeIds);
-  } catch {
-    /* best-effort — DB cascade on report_message_id also removes linked alerts */
-  }
-
   const { data: deletedRows, error } = await supabase
     .from("report_messages")
     .delete()
@@ -508,21 +465,14 @@ async function syncActivityEventAttachmentDisplayNames(
 export async function removeWorkspaceAttachmentByIdForUser(
   supabase: SupabaseClient,
   attachmentId: string,
-): Promise<{ storageCleanupIncomplete: boolean }> {
-  const { data: row, error: fErr } = await supabase
+): Promise<void> {
+  const { data: deletedRows, error } = await supabase
     .from("workspace_attachments")
-    .select("storage_path")
+    .delete()
     .eq("id", attachmentId)
-    .maybeSingle();
-  if (fErr) throw new Error(fErr.message);
-  const storagePath = row?.storage_path as string | undefined;
-  if (!storagePath) throw new Error("Attachment not found");
-
-  const { error: dbErr } = await supabase.from("workspace_attachments").delete().eq("id", attachmentId);
-  if (dbErr) throw new Error(dbErr.message);
-
-  const { error: stErr } = await supabase.storage.from(WORKSPACE_FILES_BUCKET).remove([storagePath]);
-  return { storageCleanupIncomplete: Boolean(stErr) };
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!deletedRows?.length) throw new Error("Attachment not found");
 }
 
 export async function loadShipmentScopeThreadForUser(

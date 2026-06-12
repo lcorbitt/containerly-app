@@ -1,5 +1,5 @@
 /**
- * Keep shipment timeline message activity rows in sync when thread messages are edited or deleted.
+ * Keep shipment timeline message activity rows in sync when thread messages are edited.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -19,31 +19,14 @@ async function listActivityEventsLinkedToReportMessage(
   const { data, error } = await client
     .from("shipment_activity_events")
     .select("id, metadata")
-    .in("event_type", [...MESSAGE_EVENT_TYPES])
-    .contains("metadata", { message_id: reportMessageId });
+    .eq("report_message_id", reportMessageId)
+    .in("event_type", [...MESSAGE_EVENT_TYPES]);
   if (error) throw error;
 
   return (data ?? []).map((row) => ({
     id: row.id as string,
     metadata: (row.metadata as Record<string, unknown>) ?? {},
   }));
-}
-
-/** Remove timeline message activity rows tied to deleted thread messages. */
-export async function deleteActivityEventsForReportMessageIds(
-  client: SupabaseClient,
-  messageIds: string[],
-): Promise<void> {
-  if (messageIds.length === 0) return;
-
-  for (const messageId of messageIds) {
-    const { error } = await client
-      .from("shipment_activity_events")
-      .delete()
-      .in("event_type", [...MESSAGE_EVENT_TYPES])
-      .contains("metadata", { message_id: messageId });
-    if (error) throw error;
-  }
 }
 
 /** Rewrite body + preview on timeline rows linked to an edited thread message. */

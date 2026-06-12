@@ -11,6 +11,7 @@ import {
   SIGNUP_ORG_SHIPMENT_VOLUME_LABEL,
   SIGNUP_ORG_SHIPMENT_VOLUME_OPTIONS,
   SIGNUP_ORG_SUBMIT_LABEL,
+  SIGNUP_ORG_SUBMIT_LOADING_LABEL,
   SIGNUP_ORG_TEAM_NAME_LABEL,
   SIGNUP_ORG_TEAM_SIZE_LABEL,
   SIGNUP_ORG_TEAM_SIZE_OPTIONS,
@@ -88,7 +89,7 @@ export function SignupOrganizationStep({ pendingInvite, onComplete }: SignupOrga
         className={LOGIN_FORM_SUBMIT_CLASS}
       >
         <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>
-          {step.loading ? "Creating…" : SIGNUP_ORG_SUBMIT_LABEL}
+          {step.loading ? SIGNUP_ORG_SUBMIT_LOADING_LABEL : SIGNUP_ORG_SUBMIT_LABEL}
         </span>
       </button>
     </form>

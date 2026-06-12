@@ -55,8 +55,8 @@ export async function DELETE(
   }
 
   try {
-    const result = await removeWorkspaceAttachmentByIdForUser(supabase, attachmentId);
-    return NextResponse.json(result);
+    await removeWorkspaceAttachmentByIdForUser(supabase, attachmentId);
+    return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Delete failed" },

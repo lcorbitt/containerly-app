@@ -89,7 +89,7 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 | Shared report links | **`shared_reports`** |
 | Activity feed | **`report_activity`**, **`shipment_activity_events`** (structured portal timeline) |
 | Org / membership | **`organizations`**, **`organization_members`**, **`profiles`** |
-| Collaboration | **`shipment_participants`**, **`tracking_request_participants`**, **`tracking_request_watchers`** |
+| Collaboration | **`shipment_participants`**, **`shipment_notification_subscriptions`**, **`shipment_message_thread_reads`** |
 
 **Convention:** **`supabase/models/<table>.ts`** holds **table-scoped reads/writes** for that Postgres table (exact identifier, e.g. `report_messages.ts`, `workspace_attachments.ts`, `shipment_lines.ts`, `shipment_activity_events.ts`). **Shared workflows** (`shipment-portal-payload.ts`, `shipment-portal-handlers.ts`, `shipment-operations.service.ts`, `document-workflow.service.ts`, `customer-access.service.ts`, `notification-workflow.service.ts`, `email.service.ts`, `tracking-operations.service.ts`, `tracking-bol-lookup.ts`, …) **import `@models/*`** and do not call `.from("<table>")` directly except inside the matching model file. Implemented model modules in-repo include: `alerts`, `containers`, `customer_invites`, `external_api_logs`, `organization_members`, `organizations`, `profiles`, `report_activity`, `report_messages`, `shared_reports`, `shipment_activity_events`, `shipment_customer_access`, `shipment_lines`, `shipment_participants`, `shipments`, `tracking_events`, `tracking_requests`, `workspace_attachments`.
 
@@ -114,13 +114,16 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 | `shared_reports` | Shareable report metadata for a shipment |
 | `report_messages` | Thread messages (shipment and/or container scope) |
 | `report_activity` | Legacy activity / audit stream |
-| `shipment_activity_events` | Structured portal activity (docs approved, mail sent, etc.) |
+| `shipment_activity_events` | Structured portal activity (docs approved, mail sent, thread messages, etc.); message rows link via **`report_message_id`** FK |
 | `customer_invites` | Importer invite tokens; `delivery_mode` for email vs allowlist |
 | `shipment_customer_access` | Grant linking customer user to shipment + visibility |
+| `shipment_customer_access_requests` | Customer access request workflow (approve/deny) |
 | `workspace_attachments` | File metadata; document workflow columns when customer-facing |
 | `shipment_participants` | Org users participating on a shipment |
-| `tracking_request_participants` | Users tied to a tracking request |
-| `tracking_request_watchers` | Watchers on a tracking request |
+| `shipment_notification_subscriptions` | Per-user shipment notification preferences |
+| `shipment_message_thread_reads` | Per-user read cursors for shipment threads |
+| `platform_tenant_invites` | Superadmin-issued invites for new operator tenants |
+| `user_feedback` | In-app feedback submissions |
 
 **Auth:** `auth.users` is managed by Supabase Auth, not a custom service file; **`profiles`** is the table-aligned module for app-level user fields.
 
@@ -389,6 +392,7 @@ return { ok: true, data: body as ShipmentPortalPayload };
 5. **Frontend service:** add a caller in **`frontend/services/<area>.service.ts`** using **`EDGE_FUNCTION_SLUGS`** from **`frontend/lib/supabase/edge-function-slugs.ts`** with **`edgeFunctionFetch`** / the same auth header pattern. Query hooks call **only** `frontend/services/`.
 6. **Privileged:** implement **`frontend/services/<domain>.server.ts`** + **`app/api/.../route.ts`**; call from **`frontend/services/*.service.ts`** with `fetch("/api/...")`.
 7. **Avoid** new PostgREST (`.from` / `.rpc`) inside `frontend/services/` for domain data — route through Edge + **`models/`** / **`shared/`** instead.
+8. **Parent–child deletes:** use **`ON DELETE CASCADE`** in migrations for owned rows (see **§9**); delete handlers should remove **one** parent row and let Postgres cascade — no manual child cleanup in app code.
 
 ---
 
@@ -440,11 +444,88 @@ Team invites after sign-up reuse the same `POST /api/organization-members` contr
 
 ---
 
-## 9. Related in-repo references
+## 9. Referential integrity and cascade deletes
+
+Parent–child **ownership** is enforced in **Postgres**, not in application code. When a parent row is deleted, owned children are removed by **`ON DELETE CASCADE`** foreign keys. Do not add sequential multi-table deletes in Edge handlers, Next server services, or TanStack mutations to compensate for missing cascades — add or fix a migration instead.
+
+**Migration:** `supabase/migrations/20260611130000_cascade_delete_and_storage_cleanup.sql`
+
+### 9.1 Ownership hierarchy (CASCADE)
+
+```text
+organizations
+  └── organization_members, shipments, … (denormalized organization_id on most children)
+shipments
+  └── containers, shipment_lines, shipment_participants, report_messages,
+      workspace_attachments, alerts (shipment_id), customer access/invites,
+      shipment_activity_events, subscriptions, thread reads, …
+containers
+  └── container-scoped report_messages, workspace_attachments,
+      tracking_requests, tracking_events, alerts (container_id)
+report_messages
+  └── parent_message_id replies, workspace_attachments.report_message_id,
+      alerts.report_message_id, shipment_activity_events.report_message_id
+```
+
+**Application delete paths stay single-table.** Examples: `deleteShipmentInOrganization` (Edge/`shipment.server.ts`), `deleteReportMessageByIdForUser`, `removeWorkspaceAttachmentByIdForUser` — each deletes one row; Postgres cascades the rest.
+
+### 9.2 FK fixes in `20260611130000`
+
+| Child | Parent column | Policy | Rationale |
+|-------|---------------|--------|-----------|
+| `tracking_events` | `container_id` | **CASCADE** | Events are owned by container; prior `SET NULL` on a NOT NULL column blocked shipment delete |
+| `tracking_requests` | `container_id` | **CASCADE** | Sync row has no meaning without its container |
+| `alerts` | `container_id` | **CASCADE** | Container-scoped triage alerts should not outlive the container |
+| `shipment_activity_events` | `report_message_id` | **CASCADE** (new FK) | Replaces JSON-only `metadata.message_id` link; timeline rows die with the thread message |
+| `tracking_requests` | `created_by` | **SET NULL** | Audit attribution, not ownership — user delete must not wipe sync rows |
+| `shared_reports` | `created_by` | **SET NULL** | Same — share links survive creator removal |
+
+New message activity inserts set **`report_message_id`** in `workspace-actions.server.ts` and `@supabase-shared/message-activity.service.ts`. Edit sync queries by FK, not JSON.
+
+### 9.3 Intentionally not CASCADE
+
+| Pattern | Examples | Policy |
+|---------|----------|--------|
+| User attribution | `actor_user_id`, `author_user_id`, `assignee_user_id`, `acknowledged_by`, `reviewed_by_user_id` | **SET NULL** |
+| User delete guard | `workspace_attachments.uploaded_by` | **RESTRICT** — reassign or delete files before removing the uploader |
+| Telemetry / retention | `external_api_logs.organization_id`, `user_feedback.organization_id`, `platform_tenant_invites.organization_id` | **SET NULL** |
+| Audit survivability | `report_activity` optional FKs, access-request link columns | **SET NULL** |
+| Commercial unlink | `shipment_lines.container_id` | **SET NULL** — line may outlive container association |
+| Soft revoke | `shipment_customer_access.revoked_at`, `shared_reports.revoked_at`, invite `status` | Row kept; RLS/RPC filters, not FK delete |
+
+Optional context FKs such as `alerts.tracking_request_id` remain **SET NULL** (alert history may survive sync-row removal).
+
+### 9.4 Storage cleanup (DB triggers)
+
+Storage buckets are not FK-linked to `public` tables. **`SECURITY DEFINER`** triggers remove matching **`storage.objects`** rows when parent DB rows are deleted (with `storage.allow_delete_query` for Supabase’s protect-delete guard):
+
+| Trigger | Table | Bucket | Path source |
+|---------|-------|--------|-------------|
+| `workspace_attachments_storage_cleanup_trigger` | `workspace_attachments` | `workspace-files` | `storage_path` |
+| `profiles_storage_cleanup_trigger` | `profiles` | `profile-images` | `profile_image_path` |
+| `organizations_storage_cleanup_trigger` | `organizations` | `org-images` | `org_image_path` |
+
+Cascade deletes of many attachments (e.g. shipment delete) fire one trigger per row — no app-side storage loop. Direct attachment delete also relies on the trigger (no duplicate `storage.remove` in Next services).
+
+**Limitation:** SQL deletes update `storage.objects` metadata. On hosted Supabase with S3, physical blob removal is normally handled by the Storage API; if orphaned blobs appear in production, add an Edge + `pg_net` follow-up — do not reintroduce manual cleanup in UI services for the happy path.
+
+**Orphans without DB rows:** failed uploads may leave storage objects with no `workspace_attachments` row — not FK-related; consider a separate sweep job.
+
+### 9.5 Adding new parent–child tables
+
+1. Define the FK in a forward-only migration with explicit **`ON DELETE CASCADE`** when the child is **owned** by the parent.
+2. Use **`SET NULL`** only for optional audit/context columns; **`RESTRICT`** when deletion must be blocked until dependents are handled.
+3. If the child stores a Storage path, add a matching cleanup trigger (same `allow_delete_query` pattern).
+4. Keep delete handlers **single-table**; verify with `supabase db reset` and a local delete smoke test.
+
+---
+
+## 10. Related in-repo references
 
 - Architecture rules for day-to-day edits: `.cursorrules`
+- Cascade delete migration: `supabase/migrations/20260611130000_cascade_delete_and_storage_cleanup.sql`
 - Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@supabase-shared/" supabase/functions`, and `grep -r "@shared/dto" supabase/functions frontend`
 
 ---
 
-*Last aligned with repository layout as of internal documentation authoring; update this page when changing how Edge vs Next privileged boundaries work.*
+*Last aligned with repository layout as of cascade-delete enforcement (`20260611130000`); update this page when changing Edge vs Next privileged boundaries or FK delete policy.*

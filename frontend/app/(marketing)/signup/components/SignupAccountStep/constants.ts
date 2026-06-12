@@ -1,3 +1,8 @@
+import {
+  SIGNUP_WIZARD_NEXT_LABEL,
+  SIGNUP_WIZARD_NEXT_LOADING_LABEL,
+} from "../SignupWizard/constants";
+
 export const SIGNUP_ACCOUNT_REFERRAL_OPTIONS = [
   { value: "", label: "Select an option (optional)" },
   { value: "google_search", label: "Google Search" },
@@ -10,9 +15,9 @@ export const SIGNUP_ACCOUNT_REFERRAL_OPTIONS = [
 
 export const SIGNUP_ACCOUNT_REFERRAL_OTHER_LABEL = "Please Specify";
 
-export const SIGNUP_ACCOUNT_SUBMIT_LABEL = "Create Account";
+export const SIGNUP_ACCOUNT_SUBMIT_LABEL = SIGNUP_WIZARD_NEXT_LABEL;
 
-export const SIGNUP_ACCOUNT_LOADING_TITLE = "Creating account…";
+export const SIGNUP_ACCOUNT_LOADING_TITLE = SIGNUP_WIZARD_NEXT_LOADING_LABEL;
 
 export const SIGNUP_ACCOUNT_LOADING_SUBTITLE = "Setting up your account.";
 

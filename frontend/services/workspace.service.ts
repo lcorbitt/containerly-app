@@ -166,9 +166,9 @@ export async function renameContainerWorkspaceAttachment(input: {
 export async function removeContainerWorkspaceAttachment(input: {
   attachmentId: string;
   storagePath: string;
-}): Promise<{ storageCleanupIncomplete: boolean }> {
+}): Promise<void> {
   void input.storagePath;
-  return apiJson<{ storageCleanupIncomplete: boolean }>(
+  await apiJson<{ ok: true }>(
     `/api/workspace-attachments/${encodeURIComponent(input.attachmentId)}`,
     { method: "DELETE" },
   );
@@ -281,7 +281,7 @@ export async function renameWorkspaceAttachmentDisplayName(
 }
 
 export async function removeWorkspaceAttachmentRow(row: WorkspaceAttachment): Promise<void> {
-  await apiJson<{ storageCleanupIncomplete: boolean }>(
+  await apiJson<{ ok: true }>(
     `/api/workspace-attachments/${encodeURIComponent(row.id)}`,
     { method: "DELETE" },
   );

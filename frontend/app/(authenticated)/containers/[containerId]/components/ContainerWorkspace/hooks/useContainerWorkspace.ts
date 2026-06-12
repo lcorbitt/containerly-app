@@ -509,13 +509,10 @@ export function useContainerWorkspace({
       if (!ok) return;
       setRemovingAttachmentId(attachmentId);
       try {
-        const { storageCleanupIncomplete } = await removeContainerWorkspaceAttachment({
+        await removeContainerWorkspaceAttachment({
           attachmentId,
           storagePath: row.storage_path,
         });
-        if (storageCleanupIncomplete) {
-          toast("Document deleted; storage cleanup may be incomplete.", "info");
-        }
         setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
         toast("Document deleted", "success");
       } catch (e) {

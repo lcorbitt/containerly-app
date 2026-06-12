@@ -47,6 +47,7 @@ export async function recordMessageActivityEvent(
 
   const { error } = await insertShipmentActivityEvent(client, {
     shipment_id: input.shipmentId,
+    report_message_id: input.messageId,
     event_type: isCustomer ? "customer_message" : "operator_message",
     body: activityBody,
     actor_kind: isCustomer ? "customer" : "operator",

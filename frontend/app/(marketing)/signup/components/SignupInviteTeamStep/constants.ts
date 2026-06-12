@@ -1,6 +1,13 @@
+import {
+  SIGNUP_WIZARD_NEXT_LABEL,
+  SIGNUP_WIZARD_NEXT_LOADING_LABEL,
+} from "../SignupWizard/constants";
+
 export const SIGNUP_INVITE_SKIP_LABEL = "Skip For Now";
 
-export const SIGNUP_INVITE_SEND_LABEL = "Send Invites";
+export const SIGNUP_INVITE_NEXT_LABEL = SIGNUP_WIZARD_NEXT_LABEL;
+
+export const SIGNUP_INVITE_NEXT_LOADING_LABEL = SIGNUP_WIZARD_NEXT_LOADING_LABEL;
 
 export const SIGNUP_INVITE_ADD_PERSON_LABEL = "Add Another Person";
 

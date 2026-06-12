@@ -15,7 +15,8 @@ import {
   SIGNUP_INVITE_ROLE_LABEL,
   SIGNUP_INVITE_ROLE_OPTIONS,
   SIGNUP_INVITE_SELECT_CLASS,
-  SIGNUP_INVITE_SEND_LABEL,
+  SIGNUP_INVITE_NEXT_LABEL,
+  SIGNUP_INVITE_NEXT_LOADING_LABEL,
   SIGNUP_INVITE_SKIP_BLURB,
   SIGNUP_INVITE_SKIP_BUTTON_CLASS,
   SIGNUP_INVITE_SKIP_LABEL,
@@ -95,7 +96,7 @@ export function SignupInviteTeamStep({
         onClick={() => void step.sendInvites()}
       >
         <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>
-          {step.loading ? "Sending…" : SIGNUP_INVITE_SEND_LABEL}
+          {step.loading ? SIGNUP_INVITE_NEXT_LOADING_LABEL : SIGNUP_INVITE_NEXT_LABEL}
         </span>
       </button>
 

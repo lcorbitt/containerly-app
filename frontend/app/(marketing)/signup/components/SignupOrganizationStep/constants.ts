@@ -1,3 +1,8 @@
+import {
+  SIGNUP_WIZARD_NEXT_LABEL,
+  SIGNUP_WIZARD_NEXT_LOADING_LABEL,
+} from "../SignupWizard/constants";
+
 export const SIGNUP_ORG_TEAM_SIZE_OPTIONS = [
   { value: "", label: "Select team size" },
   { value: "1", label: "Just Me" },
@@ -15,7 +20,9 @@ export const SIGNUP_ORG_SHIPMENT_VOLUME_OPTIONS = [
   { value: "200+", label: "200+" },
 ] as const;
 
-export const SIGNUP_ORG_SUBMIT_LABEL = "Continue";
+export const SIGNUP_ORG_SUBMIT_LABEL = SIGNUP_WIZARD_NEXT_LABEL;
+
+export const SIGNUP_ORG_SUBMIT_LOADING_LABEL = SIGNUP_WIZARD_NEXT_LOADING_LABEL;
 
 export const SIGNUP_ORG_TEAM_NAME_LABEL = "Team Name";
 

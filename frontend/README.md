@@ -33,7 +33,7 @@ Component → colocated hook → TanStack Query → frontend/services/*.service.
 - **Edge slugs** — `lib/supabase/edge-function-slugs.ts` (never hard-code URLs)
 - **Wire types** — `supabase/functions/_wire/dto/` (import as `@shared/dto/...`)
 
-Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture-frontend-backend.md) and [`.cursorrules`](../.cursorrules).
+Full layer rules: [`docs/architecture-frontend-backend.md`](../docs/architecture-frontend-backend.md) (including **§9** cascade delete policy) and [`.cursorrules`](../.cursorrules).
 
 ## Auth and onboarding
 

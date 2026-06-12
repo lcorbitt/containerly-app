@@ -107,6 +107,7 @@ Apply migrations `20260609120000_platform_tenant_invites.sql` and `2026061112000
 - **Three access tiers:** (1) **Platform superadmin** — `profiles.role = superadmin`, not an org member; RLS helpers treat you as bypassing tenant checks (`is_superadmin()`). (2) **Org admin** — `profiles.role = user` and `organization_members.role = admin` for that org. (3) **Org member** — `profiles.role = user` and `organization_members.role = member`.
 - Promote someone to platform superadmin with SQL or the Platform UI, e.g. `update public.profiles set role = 'superadmin' where id = '<user uuid>';` — not from an untrusted client.
 - All tenant data is scoped with **RLS** via `organization_id` and membership helpers.
+- **Referential integrity:** owned child rows are removed by Postgres **`ON DELETE CASCADE`** (see `docs/architecture-frontend-backend.md` §9 and migration `20260611130000_cascade_delete_and_storage_cleanup.sql`). Delete handlers delete a single parent row; storage blobs for attachments and org/profile images are cleaned by DB triggers on row delete.
 - `external_api_logs` has deny-all RLS for JWT clients; inserts use the service role from Edge Functions.
 
 ## Local demo seed

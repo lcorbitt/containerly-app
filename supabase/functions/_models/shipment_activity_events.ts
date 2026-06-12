@@ -2,6 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export type ShipmentActivityInsert = {
   shipment_id: string;
+  report_message_id?: string | null;
   event_type: string;
   body: string;
   actor_kind?: string;
@@ -24,6 +25,7 @@ export async function insertShipmentActivityEvent(
 ) {
   return client.from("shipment_activity_events").insert({
     shipment_id: row.shipment_id,
+    report_message_id: row.report_message_id ?? null,
     event_type: row.event_type,
     body: row.body,
     actor_kind: row.actor_kind ?? "system",

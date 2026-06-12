@@ -16,3 +16,7 @@ export const SIGNUP_WIZARD_STEP_LABELS: Record<1 | 2 | 3, string> = {
   2: "Name Your Team",
   3: "Invite Your Team",
 };
+
+export const SIGNUP_WIZARD_NEXT_LABEL = "Next";
+
+export const SIGNUP_WIZARD_NEXT_LOADING_LABEL = "Continuing…";
