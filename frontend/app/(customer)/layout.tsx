@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CustomerAppShell } from "./components/CustomerAppShell";
-import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { loadAuthenticatedLayoutSession } from "@/server/loaders/authenticated-layout";
 
 /** Customer-only shell: sidenav + personal settings; operators are bounced out. */
 export default async function CustomerLayout({

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { loadAuthenticatedLayoutSession } from "@/server/loaders/authenticated-layout";
 
 /** Superadmin-only segment; parent `(authenticated)/layout` already enforces sign-in. */
 export default async function AdminSectionLayout({

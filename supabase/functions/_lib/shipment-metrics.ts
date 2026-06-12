@@ -7,9 +7,13 @@ import type {
   DocTurnaroundInsight,
   PerformanceInsights,
   ResponseTimeInsight,
+  ShipmentContextSummary,
+  ShipmentInsightCard,
+  ShipmentMetricsSummary,
   WaitingCustomerRow,
   WorkflowStepDwell,
 } from "@shared/dto/performance.dto.ts";
+import type { TriageBucketKey } from "@shared/dashboard-metrics.ts";
 
 const WORKFLOW_LABELS: Record<string, string> = {
   pending_drafts: "Pending Drafts",
@@ -23,6 +27,8 @@ type MessageRow = {
   author_kind: string;
   created_at: string;
   is_internal?: boolean;
+  shipment_id?: string | null;
+  container_id?: string | null;
 };
 
 type WorkflowShipmentRow = {
@@ -225,5 +231,111 @@ export function buildPerformanceInsights(input: {
     waiting_customers: buildWaitingCustomers(input.messageThreads, nowMs),
     doc_turnaround: computeDocTurnaround(input.activityEvents),
     response_time: computeMedianResponseTimeHours(input.messages),
+  };
+}
+
+export function computeShipmentMetrics(input: {
+  shipmentId: string;
+  workflowStatus: string | null;
+  workflowStatusSince?: string | null;
+  messages: readonly MessageRow[];
+  nowMs?: number;
+}): ShipmentMetricsSummary {
+  const nowMs = input.nowMs ?? Date.now();
+  const scoped = input.messages.filter(
+    (m) => m.shipment_id === input.shipmentId && !m.container_id && !m.is_internal,
+  );
+  const sorted = [...scoped].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const response = computeMedianResponseTimeHours(scoped);
+
+  let backAndForth = 0;
+  let prevKind: string | null = null;
+  for (const msg of sorted) {
+    if (msg.author_kind !== prevKind) {
+      if (prevKind != null) backAndForth += 1;
+      prevKind = msg.author_kind;
+    }
+  }
+
+  const since = input.workflowStatusSince ?? sorted[0]?.created_at;
+  const daysInStatus =
+    since && input.workflowStatus
+      ? Math.round(daysBetween(since, new Date(nowMs).toISOString()) * 10) / 10
+      : null;
+
+  return {
+    message_count: scoped.length,
+    back_and_forth_count: backAndForth,
+    median_response_hours: response.median_hours,
+    days_in_workflow_status: daysInStatus,
+    workflow_status: input.workflowStatus,
+  };
+}
+
+export function buildShipmentInsightCards(input: {
+  metrics: ShipmentMetricsSummary;
+  orgAvgMessages: number;
+  orgMedianResponseHours: number | null;
+  triageBucketKey: TriageBucketKey | null;
+}): ShipmentInsightCard[] {
+  const cards: ShipmentInsightCard[] = [];
+
+  if (input.orgAvgMessages > 0 && input.metrics.message_count > input.orgAvgMessages * 2) {
+    const ratio = Math.round((input.metrics.message_count / input.orgAvgMessages) * 10) / 10;
+    cards.push({
+      id: "high_message_volume",
+      tone: "warning",
+      headline: `${ratio}× more messages than org average`,
+      detail: "Extra back-and-forth may signal confusion or missing information.",
+    });
+  }
+
+  if (
+    input.metrics.median_response_hours != null &&
+    input.orgMedianResponseHours != null &&
+    input.metrics.median_response_hours > input.orgMedianResponseHours * 1.5
+  ) {
+    cards.push({
+      id: "slow_response",
+      tone: "warning",
+      headline: "Response time above org average",
+      detail: `Median reply time on this shipment is ${input.metrics.median_response_hours}h vs org ${input.orgMedianResponseHours}h.`,
+    });
+  }
+
+  if (input.triageBucketKey === "docs") {
+    cards.push({
+      id: "missing_docs",
+      tone: "critical",
+      headline: "Missing documents flagged",
+      detail: "Shipments without docs after 24h often see downstream delays.",
+    });
+  }
+
+  if (input.triageBucketKey === "customer") {
+    cards.push({
+      id: "customer_waiting",
+      tone: "warning",
+      headline: "Customer is waiting for a reply",
+      detail: "Latest message is from the customer.",
+    });
+  }
+
+  return cards;
+}
+
+export function buildShipmentContextSummary(input: {
+  tags: string[];
+  risk_level: string | null;
+  risk_message: string | null;
+  triage_bucket_key: TriageBucketKey | null;
+  metrics: ShipmentMetricsSummary;
+}): ShipmentContextSummary {
+  return {
+    tags: input.tags,
+    risk_level: input.risk_level,
+    risk_message: input.risk_message,
+    triage_bucket_key: input.triage_bucket_key,
+    metrics: input.metrics,
   };
 }

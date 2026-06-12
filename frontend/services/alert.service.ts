@@ -1,12 +1,35 @@
-import { apiJson } from "@/utils/api-client";
+import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
+import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import type { Alert } from "@/types/database";
+import type {
+  AcknowledgeAlertsResponse,
+  ListAlertsResponse,
+} from "@shared/dto/alert.dto";
+
+async function parseEdgeJson<T>(result: { res: Response; text: string }): Promise<T> {
+  if (!result.res.ok) {
+    let message = result.res.statusText;
+    try {
+      const parsed = JSON.parse(result.text) as { error?: string };
+      if (parsed.error) message = parsed.error;
+    } catch {
+      if (result.text) message = result.text;
+    }
+    throw new Error(message);
+  }
+  return JSON.parse(result.text) as T;
+}
 
 export async function fetchOrgAlertsPage(organizationId: string, limit = 50): Promise<Alert[]> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  const { alerts } = await apiJson<{ alerts: Alert[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/alerts?${params}`,
-  );
-  return alerts ?? [];
+  const params = new URLSearchParams({
+    scope: "org",
+    organization_id: organizationId,
+    limit: String(limit),
+  });
+  const result = await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.alerts.list}?${params}`);
+  if ("error" in result) throw new Error(result.error);
+  const body = await parseEdgeJson<ListAlertsResponse>(result);
+  return (body.alerts ?? []) as Alert[];
 }
 
 export function orgAlertsRealtimeDedupeKey(organizationId: string): string {
@@ -14,9 +37,11 @@ export function orgAlertsRealtimeDedupeKey(organizationId: string): string {
 }
 
 export async function fetchMyAlertsPage(limit = 50): Promise<Alert[]> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  const { alerts } = await apiJson<{ alerts: Alert[] }>(`/api/me/alerts?${params}`);
-  return alerts ?? [];
+  const params = new URLSearchParams({ scope: "me", limit: String(limit) });
+  const result = await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.alerts.list}?${params}`);
+  if ("error" in result) throw new Error(result.error);
+  const body = await parseEdgeJson<ListAlertsResponse>(result);
+  return (body.alerts ?? []) as Alert[];
 }
 
 export function myAlertsRealtimeDedupeKey(userId: string): string {
@@ -24,20 +49,33 @@ export function myAlertsRealtimeDedupeKey(userId: string): string {
 }
 
 export async function acknowledgeAllMyAlerts(): Promise<{ acknowledged: number }> {
-  return apiJson<{ ok: true; acknowledged: number }>(`/api/me/alerts/acknowledge-all`, {
+  const result = await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.alerts.acknowledgeAll, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope: "me" }),
   });
+  if ("error" in result) throw new Error(result.error);
+  const body = await parseEdgeJson<AcknowledgeAlertsResponse>(result);
+  return { acknowledged: body.acknowledged ?? 0 };
 }
 
 export async function acknowledgeAlert(alertId: string): Promise<void> {
-  await apiJson<{ ok: true }>(`/api/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
+  const result = await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.alerts.acknowledge, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ alert_id: alertId }),
   });
+  if ("error" in result) throw new Error(result.error);
+  await parseEdgeJson<{ ok: true }>(result);
 }
 
 export async function acknowledgeAllOrgAlerts(organizationId: string): Promise<{ acknowledged: number }> {
-  return apiJson<{ ok: true; acknowledged: number }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/alerts/acknowledge-all`,
-    { method: "PATCH" },
-  );
+  const result = await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.alerts.acknowledgeAll, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scope: "org", organization_id: organizationId }),
+  });
+  if ("error" in result) throw new Error(result.error);
+  const body = await parseEdgeJson<AcknowledgeAlertsResponse>(result);
+  return { acknowledged: body.acknowledged ?? 0 };
 }

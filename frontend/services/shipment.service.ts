@@ -27,8 +27,7 @@ import type {
 import type { ServiceResult } from "@shared/dto/common.dto";
 import type { LookupBolContainersResponse } from "@shared/dto/tracking.dto";
 import { createClient } from "@/lib/supabase/client";
-import { apiJson } from "@/utils/api-client";
-import { profileDisplayName } from "@/utils/author-display-name";
+import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import {
   OPERATOR_SHIPMENT_SORT_COLUMNS,
   normalizeOperatorShipmentSortColumn,
@@ -44,7 +43,7 @@ import type {
   TrackingRequest,
 } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
-import { loadOperatorTrackingRequestsPageBrowser as loadOperatorTrackingRequestsViaApi } from "@/services/tracking.service";
+import { loadOperatorTrackingRequestsPageBrowser as loadOperatorTrackingRequestsViaEdge } from "@/services/tracking.service";
 import type {
   OperatorRequestScope,
   OperatorRequestSortColumn,
@@ -103,6 +102,32 @@ function parseEdgeJson<T>(r: { res: Response; text: string }): T | null {
   } catch {
     return null;
   }
+}
+
+async function parseEdgeGetJson<T>(path: string): Promise<T> {
+  const result = await edgeFunctionFetch(path, { method: "GET" });
+  if ("error" in result) throw new Error(result.error);
+  const parsed = parseEdgeJson<T & { error?: string }>(result);
+  if (!result.res.ok) {
+    throw new Error(parsed?.error ?? result.res.statusText);
+  }
+  if (!parsed) throw new Error("Invalid response from Edge function");
+  return parsed;
+}
+
+async function parseEdgePostJson<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const result = await authFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if ("error" in result) throw new Error(result.error);
+  const parsed = parseEdgeJson<T & { error?: string }>(result);
+  if (!result.res.ok) {
+    throw new Error(parsed?.error ?? result.res.statusText);
+  }
+  if (!parsed) throw new Error("Invalid response from Edge function");
+  return parsed;
 }
 
 /* ------------------------------------------------------------------ */
@@ -238,8 +263,12 @@ export async function fetchShipmentAccessTabSnapshotForBrowser(input: {
   shipmentId: string;
   organizationId: string;
 }): Promise<ShipmentAccessTabSnapshot> {
-  const { snapshot } = await apiJson<{ snapshot: ShipmentAccessTabSnapshot }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/access-tab`,
+  const params = new URLSearchParams({
+    organization_id: input.organizationId,
+    shipment_id: input.shipmentId,
+  });
+  const { snapshot } = await parseEdgeGetJson<{ snapshot: ShipmentAccessTabSnapshot }>(
+    `${EDGE_FUNCTION_SLUGS.shipments.accessTab}?${params}`,
   );
   return snapshot;
 }
@@ -249,14 +278,11 @@ export async function updateShipmentAssignee(input: {
   organizationId: string;
   assigneeUserId: string | null;
 }): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/assignee`,
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assignee_user_id: input.assigneeUserId }),
-    },
-  );
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.updateAssignee, {
+    organization_id: input.organizationId,
+    shipment_id: input.shipmentId,
+    assignee_user_id: input.assigneeUserId,
+  });
 }
 
 export async function updateShipmentTags(input: {
@@ -264,12 +290,12 @@ export async function updateShipmentTags(input: {
   organizationId: string;
   tags: string[];
 }): Promise<string[]> {
-  const r = await apiJson<{ ok: true; tags: string[] }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/tags`,
+  const r = await parseEdgePostJson<{ ok: true; tags: string[] }>(
+    EDGE_FUNCTION_SLUGS.shipments.updateTags,
     {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tags: input.tags }),
+      organization_id: input.organizationId,
+      shipment_id: input.shipmentId,
+      tags: input.tags,
     },
   );
   return r.tags;
@@ -280,12 +306,12 @@ export async function updateShipmentRootCause(input: {
   organizationId: string;
   rootCause: ShipmentRootCause | null;
 }): Promise<ShipmentRootCause | null> {
-  const r = await apiJson<{ ok: true; root_cause: ShipmentRootCause | null }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/root-cause`,
+  const r = await parseEdgePostJson<{ ok: true; root_cause: ShipmentRootCause | null }>(
+    EDGE_FUNCTION_SLUGS.shipments.updateRootCause,
     {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ root_cause: input.rootCause }),
+      organization_id: input.organizationId,
+      shipment_id: input.shipmentId,
+      root_cause: input.rootCause,
     },
   );
   return r.root_cause;
@@ -296,12 +322,12 @@ export async function updateShipmentNotificationSubscription(input: {
   organizationId: string;
   subscribed: boolean;
 }): Promise<boolean> {
-  const r = await apiJson<{ ok: true; subscribed: boolean }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/notifications`,
+  const r = await parseEdgePostJson<{ ok: true; subscribed: boolean }>(
+    EDGE_FUNCTION_SLUGS.shipments.updateNotificationSubscription,
     {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscribed: input.subscribed }),
+      organization_id: input.organizationId,
+      shipment_id: input.shipmentId,
+      subscribed: input.subscribed,
     },
   );
   return r.subscribed;
@@ -312,33 +338,29 @@ export async function insertShipmentParticipant(input: {
   shipmentId: string;
   userId: string;
 }): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipment-participants`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shipment_id: input.shipmentId, user_id: input.userId }),
-    },
-  );
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.insertParticipant, {
+    organization_id: input.organizationId,
+    shipment_id: input.shipmentId,
+    user_id: input.userId,
+  });
 }
 
 export async function deleteShipmentParticipantRow(participantRowId: string): Promise<void> {
-  await apiJson<{ ok: true }>(`/api/shipment-participants/${encodeURIComponent(participantRowId)}`, {
-    method: "DELETE",
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.deleteParticipant, {
+    participant_id: participantRowId,
   });
 }
 
 export async function revokeCustomerInviteRow(inviteId: string): Promise<void> {
-  await apiJson<{ ok: true }>(`/api/customer-invites/${encodeURIComponent(inviteId)}/revoke`, {
-    method: "POST",
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.revokeCustomerInvite, {
+    invite_id: inviteId,
   });
 }
 
 export async function revokeShipmentCustomerAccessRow(accessId: string): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/shipment-customer-access/${encodeURIComponent(accessId)}/revoke`,
-    { method: "POST" },
-  );
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.revokeCustomerAccess, {
+    access_id: accessId,
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -350,15 +372,12 @@ export async function updateShipmentCustomerAccessSettings(input: {
   visibilitySettings: Record<string, boolean>;
   operatorOverrides: Record<string, string>;
 }): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/shipment-customer-access/${encodeURIComponent(input.accessId)}/settings`,
+  await parseEdgePostJson<{ ok: true }>(
+    EDGE_FUNCTION_SLUGS.shipments.updateCustomerAccessSettings,
     {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        visibility_settings: input.visibilitySettings,
-        operator_overrides: input.operatorOverrides,
-      }),
+      access_id: input.accessId,
+      visibility_settings: input.visibilitySettings,
+      operator_overrides: input.operatorOverrides,
     },
   );
 }
@@ -411,8 +430,12 @@ export async function fetchShipmentWorkspaceRowForBrowser(input: {
   shipmentId: string;
   organizationId: string;
 }): Promise<{ ok: true; row: ShipmentWorkspaceRow } | { ok: false; error: string }> {
-  return apiJson<{ ok: true; row: ShipmentWorkspaceRow } | { ok: false; error: string }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/workspace-row`,
+  const params = new URLSearchParams({
+    organization_id: input.organizationId,
+    shipment_id: input.shipmentId,
+  });
+  return parseEdgeGetJson<{ ok: true; row: ShipmentWorkspaceRow } | { ok: false; error: string }>(
+    `${EDGE_FUNCTION_SLUGS.shipments.workspaceRow}?${params}`,
   );
 }
 
@@ -799,23 +822,21 @@ export async function loadImporterGrantedShipmentsPageBrowser(args: {
 }) {
   const { data: auth } = await createClient().auth.getUser();
   if (!auth.user?.id) return { rows: [], totalCount: 0 };
-  return apiJson<{ rows: ImporterGrantedShipmentRow[]; totalCount: number }>(
-    "/api/me/importer-shipments/page",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        page: args.page,
-        pageSize: args.pageSize,
-        sortColumn: args.sortColumn,
-        sortDirection: args.sortDirection,
-        search: args.search,
-        etaFrom: args.dateRangeFilter?.etaFrom,
-        etaTo: args.dateRangeFilter?.etaTo,
-        etdFrom: args.dateRangeFilter?.etdFrom,
-        etdTo: args.dateRangeFilter?.etdTo,
-      }),
-    },
+
+  const params = new URLSearchParams({
+    page: String(args.page),
+    pageSize: String(args.pageSize),
+    sortColumn: args.sortColumn,
+    sortDirection: args.sortDirection,
+    search: args.search,
+  });
+  if (args.dateRangeFilter?.etaFrom) params.set("etaFrom", args.dateRangeFilter.etaFrom);
+  if (args.dateRangeFilter?.etaTo) params.set("etaTo", args.dateRangeFilter.etaTo);
+  if (args.dateRangeFilter?.etdFrom) params.set("etdFrom", args.dateRangeFilter.etdFrom);
+  if (args.dateRangeFilter?.etdTo) params.set("etdTo", args.dateRangeFilter.etdTo);
+
+  return parseEdgeGetJson<{ rows: ImporterGrantedShipmentRow[]; totalCount: number }>(
+    `${EDGE_FUNCTION_SLUGS.shipmentsList.importerGranted}?${params}`,
   );
 }
 
@@ -830,7 +851,8 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
   page: number;
   pageSize: number;
 }) {
-  const params = new URLSearchParams({
+  const edgeParams = new URLSearchParams({
+    organization_id: args.organizationId,
     page: String(args.page),
     pageSize: String(args.pageSize),
     scope: args.scope,
@@ -839,15 +861,31 @@ export async function loadOperatorShipmentsOverviewPageBrowser(args: {
     sortDirection: args.sortDirection,
   });
   if (args.tagFilter?.trim()) {
-    params.set("tagFilter", args.tagFilter.trim());
+    edgeParams.set("tagFilter", args.tagFilter.trim());
   }
-  if (args.dateRangeFilter?.etaFrom) params.set("etaFrom", args.dateRangeFilter.etaFrom);
-  if (args.dateRangeFilter?.etaTo) params.set("etaTo", args.dateRangeFilter.etaTo);
-  if (args.dateRangeFilter?.etdFrom) params.set("etdFrom", args.dateRangeFilter.etdFrom);
-  if (args.dateRangeFilter?.etdTo) params.set("etdTo", args.dateRangeFilter.etdTo);
-  return apiJson<{ rows: ShipmentOverviewRow[]; totalCount: number }>(
-    `/api/organizations/${encodeURIComponent(args.organizationId)}/operator-shipments?${params}`,
+  if (args.dateRangeFilter?.etaFrom) edgeParams.set("etaFrom", args.dateRangeFilter.etaFrom);
+  if (args.dateRangeFilter?.etaTo) edgeParams.set("etaTo", args.dateRangeFilter.etaTo);
+  if (args.dateRangeFilter?.etdFrom) edgeParams.set("etdFrom", args.dateRangeFilter.etdFrom);
+  if (args.dateRangeFilter?.etdTo) edgeParams.set("etdTo", args.dateRangeFilter.etdTo);
+
+  const result = await authFetch(
+    `${EDGE_FUNCTION_SLUGS.shipmentsList.operatorOverview}?${edgeParams}`,
+    { method: "GET" },
   );
+  if ("error" in result) throw new Error(result.error);
+  let parsed: { rows: ShipmentOverviewRow[]; totalCount: number; error?: string } = {
+    rows: [],
+    totalCount: 0,
+  };
+  try {
+    parsed = result.text ? JSON.parse(result.text) : parsed;
+  } catch {
+    throw new Error("Invalid response from list-operator-shipments");
+  }
+  if (!result.res.ok) {
+    throw new Error(parsed.error ?? result.res.statusText);
+  }
+  return { rows: parsed.rows ?? [], totalCount: parsed.totalCount ?? 0 };
 }
 
 export type DocumentQueueFilter =
@@ -877,14 +915,15 @@ export async function loadDocumentQueuePageBrowser(args: {
   pageSize: number;
 }): Promise<{ rows: DocumentQueueRow[]; totalCount: number }> {
   const params = new URLSearchParams({
+    organization_id: args.organizationId,
     page: String(args.page),
     pageSize: String(args.pageSize),
     scope: args.scope,
     workflowFilter: args.workflowFilter,
     search: args.search,
   });
-  return apiJson<{ rows: DocumentQueueRow[]; totalCount: number }>(
-    `/api/organizations/${encodeURIComponent(args.organizationId)}/document-queue?${params}`,
+  return parseEdgeGetJson<{ rows: DocumentQueueRow[]; totalCount: number }>(
+    `${EDGE_FUNCTION_SLUGS.shipmentsList.documentQueue}?${params}`,
   );
 }
 
@@ -897,7 +936,7 @@ export async function loadOperatorTrackingRequestsPageBrowser(args: {
   sortDirection: RequestSortDirection;
   search: string;
 }) {
-  return loadOperatorTrackingRequestsViaApi(args);
+  return loadOperatorTrackingRequestsViaEdge(args);
 }
 
 /* ------------------------------------------------------------------ */
@@ -914,9 +953,12 @@ export async function fetchOrganizationShipmentsForTrackingPick(
   organizationId: string,
   limit = 200,
 ): Promise<ShipmentPickRow[]> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  const { rows } = await apiJson<{ rows: ShipmentPickRow[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/shipments/pick?${params}`,
+  const params = new URLSearchParams({
+    organization_id: organizationId,
+    limit: String(limit),
+  });
+  const { rows } = await parseEdgeGetJson<{ rows: ShipmentPickRow[] }>(
+    `${EDGE_FUNCTION_SLUGS.shipments.pickRows}?${params}`,
   );
   return rows ?? [];
 }
@@ -1005,11 +1047,20 @@ export async function deleteCommercialShipment(
   body: DeleteShipmentBody,
 ): Promise<{ ok: true; data: DeleteShipmentResponse } | { ok: false; status: number; error: string }> {
   try {
-    const data = await apiJson<DeleteShipmentResponse>(
-      `/api/organizations/${encodeURIComponent(body.organization_id)}/shipments/${encodeURIComponent(body.shipment_id)}`,
-      { method: "DELETE" },
-    );
-    return { ok: true, data };
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.delete, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if ("error" in r) return { ok: false, status: r.status, error: r.error };
+    const parsed = parseEdgeJson<DeleteShipmentResponse & { error?: string }>(r);
+    if (!r.res.ok) {
+      return { ok: false, status: r.res.status, error: parsed?.error ?? r.res.statusText };
+    }
+    if (!parsed?.shipment_id) {
+      return { ok: false, status: 500, error: "Invalid response" };
+    }
+    return { ok: true, data: parsed };
   } catch (e) {
     return {
       ok: false,

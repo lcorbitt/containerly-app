@@ -38,3 +38,21 @@ export async function edgeFunctionFetch(
   const text = await res.text();
   return { res, text };
 }
+
+/** Parse Edge JSON or throw with server error message. */
+export async function parseEdgeJson<T>(
+  result: { res: Response; text: string } | { error: string; status: number },
+): Promise<T> {
+  if ("error" in result) throw new Error(result.error);
+  if (!result.res.ok) {
+    let message = result.res.statusText;
+    try {
+      const parsed = JSON.parse(result.text) as { error?: string };
+      if (parsed.error) message = parsed.error;
+    } catch {
+      if (result.text) message = result.text;
+    }
+    throw new Error(message);
+  }
+  return JSON.parse(result.text) as T;
+}

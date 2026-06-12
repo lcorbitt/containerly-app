@@ -1,6 +1,6 @@
 # Frontend ↔ backend communication and code organization
 
-This document describes how the Containerly app moves data from UI to persistence, where each kind of code lives, and how **shared DTOs** define HTTP contracts between **Supabase Edge code** and **frontend services**.
+This document describes how the Containerly app moves data from UI to persistence, where each kind of code lives, and how **`@shared/dto`** defines contracts between **browser services**, **Edge handlers**, and **SSR loaders** against a single **`_lib` + `_models`** backend.
 
 **Product note:** Primary user journeys are **export documentation**, **customer portal**, and **manual commercial data entry**. Live carrier container tracking (JSONCargo-style API, BOL bulk import) is an **optional premium path** enabled after document approval — not the default onboarding flow.
 
@@ -15,21 +15,25 @@ Supabase Edge (models + shared + slug services)  ↔  Frontend services  →  Co
 ```
 
 - **Supabase backend (Edge bundle)** splits into three import surfaces (see `supabase/functions/deno.json`):
-  - **`supabase/models/<table>.ts`** — **table-scoped persistence** only (PostgREST-style access helpers per table). Import **`@models/<table>.ts`** from Edge code. No HTTP concerns.
-  - **`supabase/shared/`** — **cross-cutting domain and infra** (portal payload builders, tracking orchestration, customer access, providers, `db`, `auth`, `logger`, `utils`). Import **`@supabase-shared/...`**.
+  - **`supabase/functions/_models/<table>.ts`** — **table-scoped persistence** only (PostgREST-style access helpers per table). Import **`@models/<table>.ts`** from Edge code and SSR loaders. No HTTP concerns.
+  - **`supabase/functions/_lib/`** — **cross-cutting domain and infra** (portal payload builders, tracking orchestration, customer access, providers, `db`, `auth`, `logger`, `utils`). Import **`@supabase-shared/...`**.
   - **`supabase/functions/<slug>/handler.ts`** — **HTTP adapter** for that slug: CORS, auth, parse input, then call **`@supabase-shared/*`** and **`@models/*`** directly. Add a colocated extra module only when a slug has **large slug-only** logic; **do not** add files that only re-export shared symbols.
 - **Frontend services** — **`frontend/services/*.service.ts`** are the only place the browser talks to that backend: **`fetch`** to `/functions/v1/<name>` with the user JWT (see `frontend/lib/supabase/edge-functions.ts` for shared transport). **TanStack Query** calls these service modules; components do not call Edge URLs directly.
 - **Runtime flow:** **Component → colocated hook → TanStack Query → `frontend/services/` → HTTP → Edge `handler.ts` → `@models/*` / `@supabase-shared/*` → Postgres / externals.**
 
-**Privileged Next (separate):** Operations that need the **service role**, admin client, or secrets that must not run in the browser use **`frontend/services/<domain>.server.ts`** (`import "server-only"`) behind **`frontend/app/api/**/route.ts`**. The browser still enters only through **`frontend/services/`** (`fetch("/api/...")`). That is not PostgREST from the client; it is the same “frontend service as adapter” idea with a Next-hosted backend.
+**SSR loaders (no HTTP):** RSC layouts and pages use **`frontend/server/loaders/*.ts`** (`import "server-only"`) to call the same **`@supabase-shared/*`** + **`@models/*`** code directly with the Next server Supabase client.
+
+**Next HTTP (minimal):** Only **`/api/auth/session`** — syncs browser JWT into Next-readable cookies for RSC/middleware. **No** domain `/api` routes.
+
+**Privileged operations:** Service role and superadmin gates run on **Edge** (`createServiceClient()` in handlers after auth checks), not on Next.
 
 **Not for new data access:** `frontend/services/` calling **PostgREST** via `@/lib/supabase/client` (`.from` / `.rpc`) skips the Edge + models layer. Prefer adding or extending an Edge function whose slug service delegates to **`@models/*`** and **`@supabase-shared/*`**, plus a matching caller in `frontend/services/`. (Exceptions: **Auth** session/login, **Realtime** subscriptions, **Storage** uploads with `File` — keep using the Supabase client only for those transports until you add a dedicated pattern.)
 
-**DTOs (`shared/dto/`):** JSON request/response types shared by **`frontend/services/`** and **`supabase/functions/`** so the two sides stay aligned (plus envelopes like `ServiceResult<T>` in `common.dto.ts`). Next-only `/api` payloads can stay as small local types in `frontend/services/` unless you promote them to a shared contract.
+**DTOs (`supabase/functions/_wire/dto/`, import `@shared/dto/`):** JSON request/response types shared by **`frontend/services/`**, **Edge handlers**, and **SSR loaders** so all runtimes stay aligned (plus envelopes like `ServiceResult<T>` in `common.dto.ts`).
 
 ### 1.0 The `supabase/functions/` directory — Edge HTTP API layer
 
-Treat **`supabase/functions/`** as the **Supabase-hosted HTTP API surface** for the app (parallel in spirit to **`frontend/app/api/**/route.ts`** on Next, but deployed and invoked as Edge Functions).
+Treat **`supabase/functions/`** as the **only domain HTTP API** for the app (browser calls via **`frontend/services/*.service.ts`**).
 
 **Folder name = function slug = wire path.** Each immediate child folder is **one deployable Edge Function**. The **directory name must match the Supabase function slug** — that string is what the platform registers and what clients use in the URL:
 
@@ -51,7 +55,7 @@ Typical flow: **`handler.ts`** → **`@supabase-shared/...`** (domain service) �
 **Reference implementation:** `supabase/functions/search-containers/` — **`index.ts`** delegates to **`handle`**; **`handler.ts`** validates method, parses the body, obtains `createUserClient(req)`, calls **`searchContainers`** from **`@supabase-shared/tracking-operations.service.ts`**, and returns **`jsonResponse`** with appropriate status codes. No heavy logic lives in the handler file itself.
 
 ```text
-Client  →  /functions/v1/<slug>  →  index.ts (Deno.serve, CORS)  →  handler.ts (HTTP)  →  supabase/shared/  →  supabase/models/
+Client  →  /functions/v1/<slug>  →  index.ts (Deno.serve, CORS)  →  handler.ts (HTTP)  →  _lib/ (@supabase-shared)  →  _models/ (@models)
 ```
 
 ### 1.1 Repeatable pipeline (Supabase path)
@@ -61,13 +65,13 @@ Think in **four layers**, not two files:
 | Layer | Location | Role |
 |-------|----------|------|
 | **Wire slug** | `supabase/functions/<slug>/index.ts` + `handler.ts` | **API layer** (see **§1.0**): **`index.ts`** → **`handler.ts`**; CORS, parse body/query, auth, call **`@supabase-shared/*`** / **`@models/*`**, return JSON. Slugs are **flat** (CLI rule); names are **verb-first** (`get-shipment`, `sync-container`, `create-customer-invite`, …). |
-| **Use-case logic** | `supabase/shared/*.ts` (and **`supabase/models/*.ts`**) | Composed by **`handler.ts`**. Optional colocated file under **`functions/<slug>/`** only if logic is **substantial and slug-specific** — not for one-line re-exports. |
-| **Table persistence** | `supabase/models/<table>.ts` | RLS-safe reads/writes for one Postgres table; **no** route-specific orchestration. |
-| **Shared domain / infra** | `supabase/shared/*.ts` (+ `shared/providers/...`) | Reused across multiple slugs (portal payload, tracking ops, providers, auth helpers). |
-| **Contract** | `shared/dto/*.dto.ts` | Request/response shapes both sides import. |
+| **Use-case logic** | `supabase/functions/_lib/*.ts` (and **`_models/*.ts`**) | Composed by **`handler.ts`** and **SSR loaders**. Optional colocated file under **`functions/<slug>/`** only if logic is **substantial and slug-specific** — not for one-line re-exports. |
+| **Table persistence** | `supabase/functions/_models/<table>.ts` | RLS-safe reads/writes for one Postgres table; **no** route-specific orchestration. |
+| **Shared domain / infra** | `supabase/functions/_lib/*.ts` (+ `providers/...`) | Reused across multiple slugs (portal payload, tracking ops, providers, auth helpers). |
+| **Contract** | `supabase/functions/_wire/dto/*.dto.ts` | Request/response shapes all runtimes import via `@shared/dto/`. |
 | **Browser adapter** | `frontend/services/<domain>.service.ts` | `fetch` to `/functions/v1/<same-slug-as-folder>`; use **`EDGE_FUNCTION_SLUGS`** in `frontend/lib/supabase/edge-function-slugs.ts` so the path is never a magic string. |
 
-**Why split `models/` vs `shared/` vs `handler.ts`?** Edge folders are **deployment units** (one slug each). Table access stays **stable and reusable** in **`supabase/models/`**. Workflows shared by several slugs live in **`supabase/shared/`**. Each slug’s **HTTP-specific** parsing, status mapping, and auth checks stay in **`handler.ts`** (or a colocated module only when that file would become unwieldy).
+**Why split `_models/` vs `_lib/` vs `handler.ts`?** Edge folders are **deployment units** (one slug each). Table access stays **stable and reusable** in **`supabase/functions/_models/`**. Workflows shared by several slugs live in **`supabase/functions/_lib/`**. Each slug’s **HTTP-specific** parsing, status mapping, and auth checks stay in **`handler.ts`** (or a colocated module only when that file would become unwieldy).
 
 **Not strict 1:1 file-to-file:** One shared module (e.g. **`shipment-portal-payload.ts`**) can back **`get-shipment`** and **`preview-customer-shipment`** via different slug services. The **repeatable rule** is: **one Edge slug per HTTP entrypoint**, **one frontend service module per browser-facing domain**, **`shared/dto` per wire contract**, **models per table**, **shared per cross-slug workflow**.
 
@@ -91,11 +95,11 @@ For **separation of concerns at persistence**, treat **each table** (or an insep
 | Org / membership | **`organizations`**, **`organization_members`**, **`profiles`** |
 | Collaboration | **`shipment_participants`**, **`shipment_notification_subscriptions`**, **`shipment_message_thread_reads`** |
 
-**Convention:** **`supabase/models/<table>.ts`** holds **table-scoped reads/writes** for that Postgres table (exact identifier, e.g. `report_messages.ts`, `workspace_attachments.ts`, `shipment_lines.ts`, `shipment_activity_events.ts`). **Shared workflows** (`shipment-portal-payload.ts`, `shipment-portal-handlers.ts`, `shipment-operations.service.ts`, `document-workflow.service.ts`, `customer-access.service.ts`, `notification-workflow.service.ts`, `email.service.ts`, `tracking-operations.service.ts`, `tracking-bol-lookup.ts`, …) **import `@models/*`** and do not call `.from("<table>")` directly except inside the matching model file. Implemented model modules in-repo include: `alerts`, `containers`, `customer_invites`, `external_api_logs`, `organization_members`, `organizations`, `profiles`, `report_activity`, `report_messages`, `shared_reports`, `shipment_activity_events`, `shipment_customer_access`, `shipment_lines`, `shipment_participants`, `shipments`, `tracking_events`, `tracking_requests`, `workspace_attachments`.
+**Convention:** **`supabase/functions/_models/<table>.ts`** holds **table-scoped reads/writes** for that Postgres table (exact identifier, e.g. `report_messages.ts`, `workspace_attachments.ts`, `shipment_lines.ts`, `shipment_activity_events.ts`). **Shared workflows** (`shipment-portal-payload.ts`, `shipment-portal-handlers.ts`, `shipment-operations.service.ts`, `document-workflow.service.ts`, `customer-access.service.ts`, `notification-workflow.service.ts`, `email.service.ts`, `tracking-operations.service.ts`, `workspace-operations.service.ts`, `tracking-bol-lookup.ts`, …) **import `@models/*`** and do not call `.from("<table>")` directly except inside the matching model file. Implemented model modules in-repo include: `alerts`, `containers`, `customer_invites`, `external_api_logs`, `organization_members`, `organizations`, `profiles`, `report_activity`, `report_messages`, `shared_reports`, `shipment_activity_events`, `shipment_customer_access`, `shipment_lines`, `shipment_participants`, `shipments`, `tracking_events`, `tracking_requests`, `workspace_attachments`.
 
-**Orchestration:** A **use-case** (e.g. “shipment portal JSON”, “create tracking request + first sync”) **composes** several models. That orchestrator usually lives in **`supabase/shared/`** (reused across slugs). It **must not** bury all table access in one giant model long-term—**call into `models/`** so each table’s rules stay in one place.
+**Orchestration:** A **use-case** (e.g. “shipment portal JSON”, “create tracking request + first sync”) **composes** several models. That orchestrator usually lives in **`supabase/functions/_lib/`** (reused across slugs and SSR loaders). It **must not** bury all table access in one giant model long-term—**call into `_models/`** so each table’s rules stay in one place.
 
-**Frontend mirror:** Prefer the same granularity in **`frontend/services/`** over time: table-scoped helpers or facades that call Edge/Next per resource. PostgREST in `frontend/services/` remains **refactor debt**; new domain writes should go through Edge + **`supabase/models/`** (§7).
+**Frontend mirror:** **`frontend/services/`** exposes one browser adapter per product domain, each calling Edge slugs. PostgREST in `frontend/services/` is **not allowed** for domain data; new writes go through Edge + **`_models/`** / **`_lib/`** (§7).
 
 **Registry — `public` tables in this repo (persistence domains):**
 
@@ -166,14 +170,16 @@ flowchart LR
   GP --> ACT
 ```
 
-| Step | Edge slug | Shared module | DTO |
+| Step | Edge slug | `_lib` module | DTO |
 |------|-----------|---------------|-----|
-| Create / update commercial shipment | `create-shipment`, `update-shipment` | `shipment-operations.service.ts` | `shared/dto/logistics.dto.ts`, `shipment.dto.ts` |
+| Create / update commercial shipment | `create-shipment`, `update-shipment` | `shipment-operations.service.ts` | `@shared/dto/logistics.dto.ts`, `shipment.dto.ts` |
 | Customer document approve/reject | `review-shipment-document` | `document-workflow.service.ts` | `logistics.dto.ts` |
 | Portal read (docs, activity, commercial) | `get-shipment` | `shipment-portal-payload.ts`, `shipment-portal-handlers.ts` | `shipment.dto.ts` |
 | Notion-style allowlist claim | `claim-shipment-access` | `customer-access.service.ts` | `customer-access.dto.ts` |
-| Transactional email + in-app alerts | (called from shared services) | `email.service.ts`, `notification-workflow.service.ts` | — |
-| Acknowledge alert | Next `/api/alerts/[id]/acknowledge` | `alert.server.ts` | — |
+| Transactional email + in-app alerts | (called from `_lib` services) | `email.service.ts`, `notification-workflow.service.ts` | — |
+| List / acknowledge alerts | `list-alerts`, `acknowledge-alert`, `acknowledge-all-alerts` | `alert-operations.service.ts` | `alert.dto.ts` |
+| Operator shipment list | `list-operator-shipments` | `shipment-list-operations.service.ts` | — |
+| Tracking dashboard snapshot | `get-tracking-dashboard` | `tracking-dashboard-operations.service.ts` | — |
 
 **`workflow_status` on `shipments`:** `draft` → `awaiting_review` → `revisions_needed` | `approved` → `mailed` → `in_transit` (when carrier tracking is linked).
 
@@ -183,51 +189,57 @@ flowchart LR
 
 ## 2. End-to-end dependency flow
 
-Preferred direction of dependencies (no cycles): **`supabase/models/`**, **`supabase/shared/`**, and **Edge `handler.ts`** (Supabase) together with **Next `server/services`** sit next to persistence; **`frontend/services/`** adapts the browser; **UI** sits above.
+Preferred direction of dependencies (no cycles): **`_models/`** and **`_lib/`** are the single backend; **Edge `handler.ts`** is the browser HTTP adapter; **`frontend/server/loaders/`** is the SSR adapter (same `_lib`, no HTTP); **`frontend/services/`** is the browser SDK; **UI** sits above.
 
 ```mermaid
 flowchart LR
   subgraph ui [UI layer]
     C[Route components / shared components]
     H[Colocated hooks useComponent]
+    RSC[RSC layouts / pages]
   end
-  subgraph fs [Frontend services]
+  subgraph browser [Browser path]
     Q[TanStack Query hooks]
     FSvc[frontend/services/*.service.ts]
   end
-  subgraph supa [Supabase backend]
-    Edge[Edge handlers]
-    Svc[models + shared]
+  subgraph ssr [SSR path]
+    L[frontend/server/loaders/*.ts]
   end
-  subgraph next [Next privileged backend]
-    API[app/api route.ts]
-    NSvc[frontend/services/*.server.ts]
+  subgraph backend [Single backend code]
+    Edge[Edge handler.ts]
+    Lib[_lib @supabase-shared]
+    Models[_models @models]
+  end
+  subgraph authOnly [Next auth only]
+    AuthRoute[/api/auth/session]
   end
   subgraph persistence [Persistence]
     DB[(Postgres / Supabase)]
   end
   subgraph contracts [Wire contract]
-    DTO[shared/dto]
+    DTO[_wire/dto @shared/dto]
   end
 
   C --> H
   H --> Q
   Q --> FSvc
   FSvc -->|functions/v1| Edge
-  FSvc -->|/api| API
-  Edge --> Svc
-  API --> NSvc
-  Svc --> DB
-  NSvc --> DB
+  FSvc --> AuthRoute
+  RSC --> L
+  L --> Lib
+  Edge --> Lib
+  Lib --> Models
+  Models --> DB
   DTO -.-> FSvc
   DTO -.-> Edge
+  DTO -.-> L
 ```
 
 ---
 
-## 3. Request flowcharts — same pattern, Edge vs Next host
+## 3. Request flowcharts — browser, SSR, and auth
 
-### 3.1 Supabase Edge path (default) — `frontend/services` ↔ Edge ↔ `models` + `shared`
+### 3.1 Browser path — `frontend/services` ↔ Edge ↔ `_lib` + `_models`
 
 ```mermaid
 sequenceDiagram
@@ -236,55 +248,61 @@ sequenceDiagram
   participant Q as useQuery
   participant FS as frontend/services
   participant Edge as Edge handler
-  participant Core as models + shared
+  participant Lib as _lib + _models
   participant DB as DB / externals
 
   Comp->>Hook: need domain data
   Hook->>Q: queryFn
   Q->>FS: e.g. fetchShipment(...)
   FS->>Edge: GET/POST /functions/v1/get-shipment
-  Edge->>Core: @models/* @supabase-shared/*
-  Core->>DB: queries / rules
-  DB-->>Core: data
-  Core-->>Edge: composed result
-  Edge-->>FS: JSON per shared/dto
+  Edge->>Lib: @models/* @supabase-shared/*
+  Lib->>DB: queries / rules
+  DB-->>Lib: data
+  Lib-->>Edge: composed result
+  Edge-->>FS: JSON per @shared/dto
   FS-->>Q: typed result
   Q-->>Comp: render
 ```
 
-**Example:** `ShipmentPortalPayload` (`shared/dto/shipment.dto.ts`) — built from **`@supabase-shared/shipment-portal-handlers.ts`** (and **`shipment-portal-payload.ts`**) plus **`@models/*`**, invoked from **`supabase/functions/get-shipment/handler.ts`**, HTTP slug `get-shipment`, caller `frontend/services/shipment.service.ts` (`EDGE_FUNCTION_SLUGS.shipments.get`).
+**Example:** `ShipmentPortalPayload` (`@shared/dto/shipment.dto.ts`) — built from **`@supabase-shared/shipment-portal-handlers.ts`** (and **`shipment-portal-payload.ts`**) plus **`@models/*`**, invoked from **`supabase/functions/get-shipment/handler.ts`**, HTTP slug `get-shipment`, caller `frontend/services/shipment.service.ts` (`EDGE_FUNCTION_SLUGS.shipments.get`).
 
-**Supabase CLI:** Edge deploy still uses **`supabase/functions/<name>/`** (required by the CLI). **`handler.ts` / `index.ts`** stay thin; use-case code lives in **`supabase/shared/`**, table access in **`supabase/models/`**.
+**Supabase CLI:** Edge deploy still uses **`supabase/functions/<name>/`** (required by the CLI). **`handler.ts` / `index.ts`** stay thin; use-case code lives in **`_lib/`**, table access in **`_models/`**.
 
-### 3.2 Next server service (privileged only)
+**Privileged operations** (service role, superadmin gates, multipart uploads) use the **same browser path**: the Edge handler calls `createServiceClient()` after `requireAuthUserId` and role checks — not Next `/api`.
 
-Same **frontend service → HTTP** shape; handler is **Next** `route.ts` → **`frontend/services/<domain>.server.ts`** when service role, admin client, or secrets require it.
+### 3.2 SSR path — RSC loaders call `_lib` directly (no HTTP)
 
 ```mermaid
 sequenceDiagram
-  participant Comp as Component
-  participant Hook as useX / colocated hook
-  participant Mut as useMutation
-  participant FS as frontend/services
-  participant Route as app/api/.../route.ts
-  participant SS as server/services
-  participant DB as Supabase admin / server
+  participant RSC as Layout / page RSC
+  participant Loader as frontend/server/loaders
+  participant Next as createClient server
+  participant Lib as @supabase-shared
+  participant Models as @models
+  participant DB as Postgres
 
-  Comp->>Hook: user action
-  Hook->>Mut: mutate(...)
-  Mut->>FS: e.g. inviteOrganizationMember(...)
-  FS->>Route: fetch("/api/organization-members", ...)
-  Route->>SS: inviteOrAddOrganizationMember(...)
-  SS->>DB: privileged operations
-  DB-->>SS: result
-  SS-->>Route: ok / error
-  Route-->>FS: JSON
-  FS-->>Mut: parsed result
-  Mut-->>Hook: invalidateQueries
-  Hook-->>Comp: UI updates
+  RSC->>Loader: loadAuthenticatedLayoutSession()
+  Loader->>Next: getUser + session profile
+  Loader->>Lib: fetchOrgMembershipRows(userClient, ...)
+  Lib->>Models: table-scoped queries
+  Models->>DB: RLS queries
+  DB-->>Models: rows
+  Models-->>Lib: composed result
+  Lib-->>Loader: typed payload
+  Loader-->>RSC: props for shell / page
 ```
 
-**Example files:** `frontend/app/api/organization-members/route.ts` → `frontend/services/organization.server.ts`; caller in `frontend/services/organization.service.ts`.
+**Example:** `frontend/server/loaders/authenticated-layout.ts` imports `fetchOrgMembershipRows` from `@supabase-shared/organization-operations.service` and `getSessionProfile` from `frontend/services/auth-server.service.ts` (SSR session helper only).
+
+**Loaders in-repo:** `authenticated-layout.ts`, `profile-settings.ts`, `admin.ts`.
+
+### 3.3 Auth cookie bridge — `/api/auth/session` only
+
+The browser writes the Supabase JWT into Next-readable cookies so RSC and middleware can read the session. This is the **only** domain-adjacent Next route.
+
+```text
+auth.service.ts  →  POST /api/auth/session  →  supabase.auth.setSession  →  cookie store
+```
 
 ---
 
@@ -294,16 +312,17 @@ sequenceDiagram
 |----------|------|
 | `frontend/app/(routes)/...` | App Router pages; route-specific UI colocated under the route |
 | `frontend/components/` | Reusable, route-agnostic UI only |
-| `frontend/app/api/**/route.ts` | Thin controllers: auth, parse body, call `frontend/services/<domain>.server.ts`, return `NextResponse` |
-| `frontend/services/<domain>.server.ts` | **Next** privileged services (`server-only`; service role / admin); only from `app/api` |
-| `frontend/services/` | **Frontend services:** browser adapters calling **Supabase** (`/functions/v1/...`) and **Next** (`/api/...`). Prefer **no** PostgREST `.from` / `.rpc` here — add Edge slug + **`models/`** / **`shared/`** instead |
-| `supabase/models/<table>.ts` | **Table persistence** — one module per Postgres table; import **`@models/<table>.ts`** from Edge code only |
-| `supabase/shared/` | **Cross-slug domain + infra** — portal builders, tracking ops, customer access, providers, `db`, `auth`, `logger`; import **`@supabase-shared/...`** |
+| `frontend/app/api/auth/session/route.ts` | **Only** Next route: sync browser JWT into cookies for RSC/middleware |
+| `frontend/server/loaders/*.ts` | **SSR loaders** (`server-only`): session glue + call **`@supabase-shared/*`** / **`@models/*`** directly — no HTTP |
+| `frontend/services/*.service.ts` | **Browser SDK:** `edgeFunctionFetch` to `/functions/v1/<slug>`; **no** PostgREST `.from` / `.rpc` for domain data |
+| `frontend/services/auth-server.service.ts` | SSR-only session profile helper (not a domain backend) |
+| `supabase/functions/_models/<table>.ts` | **Table persistence** — one module per Postgres table; import **`@models/<table>.ts`** |
+| `supabase/functions/_lib/` | **Cross-slug domain + infra** — portal builders, tracking ops, workspace ops, providers, `db`, `auth`, `logger`; import **`@supabase-shared/...`** |
 | `supabase/functions/<slug>/handler.ts` + `index.ts` | **Deployable Edge HTTP API** (see **§1.0**): slug = folder name = `/functions/v1/<slug>`; **`index.ts`** hands off to **`handler.ts`**; handler stays thin and delegates to **`@supabase-shared/*`** / **`@models/*`** |
 | `frontend/hooks/queries/`, `frontend/hooks/mutations/` | TanStack Query; call `frontend/services` only |
-| `frontend/lib/supabase/` | Supabase client factories (browser, server, admin) |
+| `frontend/lib/supabase/` | Supabase client factories (browser, server) + `edgeFunctionFetch` / `EDGE_FUNCTION_SLUGS` |
 | `frontend/types/` | App-specific and DB-aligned types (e.g. generated or hand-maintained table shapes) |
-| `shared/dto/` | HTTP contract between **frontend services** and **Supabase Edge** (same types as `index.ts` handlers + `frontend/services/`) |
+| `supabase/functions/_wire/dto/` | HTTP contract (`@shared/dto/`) shared by **frontend services**, **Edge handlers**, and **SSR loaders** |
 
 ### 4.1 Component folder convention (route or shared)
 
@@ -312,8 +331,8 @@ Colocated pure helpers live in a **single** `utils.ts` next to the component —
 ```
 ComponentName/
   index.tsx              # presentation
-  hooks/
-    useComponentName.ts  # optional orchestration; uses Query hooks
+  useComponentName.ts    # optional orchestration; uses Query hooks
+  constants.ts           # optional — labels, class strings, static config
   utils.ts               # optional — pure helpers only (one file)
   types.ts               # optional
 ```
@@ -322,15 +341,16 @@ Shared across routes: `frontend/utils/` (or domain-specific files under `fronten
 
 ---
 
-## 5. DTO strategy (`shared/dto`)
+## 5. DTO strategy (`supabase/functions/_wire/dto/`)
 
 ### 5.1 Purpose
 
 - **Single source of truth** for JSON bodies and query semantics between:
   - **Frontend services:** `frontend/services/*.ts`
-  - **Supabase Edge:** `supabase/models/`, `supabase/shared/`, and `supabase/functions/<slug>/` (Deno)
+  - **Supabase Edge:** `supabase/functions/<slug>/handler.ts` (Deno)
+  - **SSR loaders:** `frontend/server/loaders/*.ts` (when returning typed shapes)
 - Avoid duplicating large portal or tracking shapes in two places.
-- `shared/dto/index.ts` re-exports modules for convenient barrel imports when desired.
+- `supabase/functions/_wire/dto/index.ts` re-exports modules; import as `@shared/dto/...` from Edge and frontend.
 
 ### 5.2 What belongs in `shared/dto`
 
@@ -341,11 +361,11 @@ Shared across routes: `frontend/utils/` (or domain-specific files under `fronten
 
 - React props or view models.
 - Types that only describe PostgREST rows — prefer `frontend/types/database.ts` (or generated types) unless an Edge function intentionally mirrors a table 1:1 in its public API.
-- Next.js Route Handler–only payloads, unless you later promote the same contract to Edge or another consumer.
+- Next.js Route Handler–only payloads (auth session is the only route; no domain DTOs on Next).
 
 ### 5.4 Example (trimmed)
 
-**DTO** (`shared/dto/shipment.dto.ts`):
+**DTO** (`@shared/dto/shipment.dto.ts`):
 
 ```ts
 export type ShipmentPortalPayload = {
@@ -369,17 +389,21 @@ return { ok: true, data: body as ShipmentPortalPayload };
 
 ---
 
-## 6. Mental model: frontend services vs Supabase Edge vs Next services
+## 6. Mental model: NestJS mapping
 
-| | **Frontend services** `frontend/services/*.service.ts` | **Supabase Edge** `models` + `shared` + **`functions/<slug>/handler.ts`** | **Next** `frontend/services/*.server.ts` |
-|--|------------------|------------------------|----------------------|
-| **Role** | Browser adapter; calls HTTP only | Persistence + workflows behind Edge | Privileged logic behind `/api` |
-| **Runs in** | Browser | Deno (Edge) | Node |
-| **Called from** | TanStack Query, hooks | Edge `index.ts` → `handler.ts` → `@supabase-shared` / `@models` | `app/api/**/route.ts` |
-| **Calls** | `fetch` → `functions/v1` or `/api` | `@models/*`, `@supabase-shared/*`, Supabase clients, externals | Admin / service role as needed |
-| **Contract** | `shared/dto` + Edge paths | Implements DTO shapes | Local JSON or promoted DTOs |
+| NestJS | This repo |
+|--------|-----------|
+| **UI** | Components + colocated hooks |
+| **Client cache** | TanStack Query (`frontend/hooks/`) |
+| **HTTP client SDK** | `frontend/services/*.service.ts` |
+| **Controller (browser)** | `supabase/functions/<slug>/handler.ts` |
+| **Controller (SSR)** | `frontend/server/loaders/*.ts` (no HTTP) |
+| **Service** | `supabase/functions/_lib/*.ts` (`@supabase-shared/`) |
+| **Repository** | `supabase/functions/_models/<table>.ts` (`@models/`) |
+| **DTOs** | `supabase/functions/_wire/dto/` (`@shared/dto/`) |
+| **Auth cookie bridge** | `app/api/auth/session/route.ts` only |
 
-`shared/dto/` keeps **frontend services** and **Supabase (Edge) handlers** aligned on the wire format.
+`@shared/dto/` keeps **frontend services**, **Edge handlers**, and **SSR loaders** aligned on typed shapes.
 
 ---
 
@@ -388,17 +412,19 @@ return { ok: true, data: body as ShipmentPortalPayload };
 1. **UI** in route folder or `frontend/components/`; no `fetch`, no Supabase in `index.tsx`.
 2. **Colocated hook** if orchestration or local UI state is non-trivial.
 3. **TanStack Query** hook in `frontend/hooks/queries/` or `mutations/`.
-4. **Supabase Edge first:** add or extend **`supabase/models/<table>.ts`** for new table access, **`supabase/shared/`** for cross-slug logic, **`shared/dto`** for the HTTP contract, and a thin **`supabase/functions/<slug>/handler.ts`** (and **`index.ts`**) that calls **`@models/*`** and **`@supabase-shared/*`**.
-5. **Frontend service:** add a caller in **`frontend/services/<area>.service.ts`** using **`EDGE_FUNCTION_SLUGS`** from **`frontend/lib/supabase/edge-function-slugs.ts`** with **`edgeFunctionFetch`** / the same auth header pattern. Query hooks call **only** `frontend/services/`.
-6. **Privileged:** implement **`frontend/services/<domain>.server.ts`** + **`app/api/.../route.ts`**; call from **`frontend/services/*.service.ts`** with `fetch("/api/...")`.
-7. **Avoid** new PostgREST (`.from` / `.rpc`) inside `frontend/services/` for domain data — route through Edge + **`models/`** / **`shared/`** instead.
-8. **Parent–child deletes:** use **`ON DELETE CASCADE`** in migrations for owned rows (see **§9**); delete handlers should remove **one** parent row and let Postgres cascade — no manual child cleanup in app code.
+4. **Backend logic:** add or extend **`supabase/functions/_models/<table>.ts`** for table access and **`supabase/functions/_lib/`** for cross-slug use-cases; add **`supabase/functions/_wire/dto/`** for the wire contract.
+5. **Edge slug:** thin **`supabase/functions/<slug>/handler.ts`** (+ **`index.ts`**) — auth, parse input, call **`@models/*`** / **`@supabase-shared/*`**, return JSON. Register slug in **`EDGE_FUNCTION_SLUGS`** and **`supabase/config.toml`**.
+6. **Frontend service:** add a caller in **`frontend/services/<area>.service.ts`** using **`edgeFunctionFetch`** + **`EDGE_FUNCTION_SLUGS`**. Query hooks call **only** `frontend/services/`.
+7. **Privileged ops:** use **`createServiceClient()`** inside the Edge handler after `requireAuthUserId` + role checks — **not** Next `/api`.
+8. **SSR reads:** add **`frontend/server/loaders/<page>.ts`** that calls the same **`@supabase-shared/*`** modules with Next `createClient()` — no HTTP round-trip.
+9. **Avoid** PostgREST (`.from` / `.rpc`) inside `frontend/services/` for domain data.
+10. **Parent–child deletes:** use **`ON DELETE CASCADE`** in migrations for owned rows (see **§9**); delete handlers remove **one** parent row and let Postgres cascade.
 
 ---
 
 ## 8. Auth, sign-up, and operator onboarding
 
-Operator authentication and tenant provisioning use a mix of **Supabase Auth** (browser), **Next `/api` routes** (privileged), and **marketing-route wizards** — not Edge functions.
+Operator authentication and tenant provisioning use **Supabase Auth** (browser), **Edge functions** (org creation, invites, onboarding status), **`/api/auth/session`** (cookie bridge), and **marketing-route wizards**.
 
 ### Routes
 
@@ -413,13 +439,13 @@ Operator authentication and tenant provisioning use a mix of **Supabase Auth** (
 
 ```text
 /signup step 1  →  auth.service signUpWithEmail / OAuth  →  Supabase Auth
-/signup step 2  →  onboarding.service  →  POST /api/onboarding/create-organization
-                    →  tenant-invite.server completeSignupOrganization
-                    →  organization.server createOrganizationWithInitialAdmin
-/signup step 3  →  organization.service (loop)  →  POST /api/organization-members
+                  →  auth.service syncSessionCookies  →  POST /api/auth/session
+/signup step 2  →  onboarding.service  →  Edge complete-onboarding-organization
+                    →  @supabase-shared/onboarding-operations.service
+/signup step 3  →  organization.service (loop)  →  Edge invite-organization-member
 ```
 
-**Self-serve org creation:** `completeSignupOrganization` creates an org when the user has no membership, with or without a pending `platform_tenant_invites` row (tenant invites still mark the invite accepted when present).
+**Self-serve org creation:** `complete-onboarding-organization` creates an org when the user has no membership, with or without a pending `platform_tenant_invites` row (tenant invites still mark the invite accepted when present).
 
 **Onboarding profile columns** on `organizations`: `team_size`, `monthly_shipment_volume` (collected in step 2).
 
@@ -437,16 +463,16 @@ Operator authentication and tenant provisioning use a mix of **Supabase Auth** (
 | OAuth buttons | `app/(marketing)/login/components/LoginOAuthButtons/` |
 | Welcome modal | `components/WelcomeModal/`, `contexts/welcome-modal.tsx` |
 | Onboarding gate | `app/(authenticated)/components/OnboardingGate/` |
-| Browser onboarding API | `services/onboarding.service.ts` |
-| Server onboarding | `services/tenant-invite.server.ts`, `app/api/onboarding/*` |
+| Browser onboarding API | `services/onboarding.service.ts` → Edge `get-onboarding-status`, `complete-onboarding-organization` |
+| Org invites | `services/organization.service.ts` → Edge `invite-organization-member` |
 
-Team invites after sign-up reuse the same `POST /api/organization-members` contract as **Settings → Organization → Invite Teammate**.
+Team invites after sign-up reuse the same Edge `invite-organization-member` contract as **Settings → Organization → Invite Teammate**.
 
 ---
 
 ## 9. Referential integrity and cascade deletes
 
-Parent–child **ownership** is enforced in **Postgres**, not in application code. When a parent row is deleted, owned children are removed by **`ON DELETE CASCADE`** foreign keys. Do not add sequential multi-table deletes in Edge handlers, Next server services, or TanStack mutations to compensate for missing cascades — add or fix a migration instead.
+Parent–child **ownership** is enforced in **Postgres**, not in application code. When a parent row is deleted, owned children are removed by **`ON DELETE CASCADE`** foreign keys. Do not add sequential multi-table deletes in Edge handlers, `_lib` services, or TanStack mutations to compensate for missing cascades — add or fix a migration instead.
 
 **Migration:** `supabase/migrations/20260611130000_cascade_delete_and_storage_cleanup.sql`
 
@@ -467,7 +493,7 @@ report_messages
       alerts.report_message_id, shipment_activity_events.report_message_id
 ```
 
-**Application delete paths stay single-table.** Examples: `deleteShipmentInOrganization` (Edge/`shipment.server.ts`), `deleteReportMessageByIdForUser`, `removeWorkspaceAttachmentByIdForUser` — each deletes one row; Postgres cascades the rest.
+**Application delete paths stay single-table.** Examples: `deleteShipmentInOrganization` (`@models/shipments.ts` via `shipment-operations.service.ts`), `deleteReportMessageByIdForUser`, `removeWorkspaceAttachmentByIdForUser` — each deletes one row; Postgres cascades the rest.
 
 ### 9.2 FK fixes in `20260611130000`
 
@@ -480,7 +506,7 @@ report_messages
 | `tracking_requests` | `created_by` | **SET NULL** | Audit attribution, not ownership — user delete must not wipe sync rows |
 | `shared_reports` | `created_by` | **SET NULL** | Same — share links survive creator removal |
 
-New message activity inserts set **`report_message_id`** in `workspace-actions.server.ts` and `@supabase-shared/message-activity.service.ts`. Edit sync queries by FK, not JSON.
+New message activity inserts set **`report_message_id`** in `@supabase-shared/workspace-operations.service.ts` and `@supabase-shared/message-activity.service.ts`. Edit sync queries by FK, not JSON.
 
 ### 9.3 Intentionally not CASCADE
 
@@ -505,7 +531,7 @@ Storage buckets are not FK-linked to `public` tables. **`SECURITY DEFINER`** tri
 | `profiles_storage_cleanup_trigger` | `profiles` | `profile-images` | `profile_image_path` |
 | `organizations_storage_cleanup_trigger` | `organizations` | `org-images` | `org_image_path` |
 
-Cascade deletes of many attachments (e.g. shipment delete) fire one trigger per row — no app-side storage loop. Direct attachment delete also relies on the trigger (no duplicate `storage.remove` in Next services).
+Cascade deletes of many attachments (e.g. shipment delete) fire one trigger per row — no app-side storage loop. Direct attachment delete also relies on the trigger (no duplicate `storage.remove` in `_lib` services).
 
 **Limitation:** SQL deletes update `storage.objects` metadata. On hosted Supabase with S3, physical blob removal is normally handled by the Storage API; if orphaned blobs appear in production, add an Edge + `pg_net` follow-up — do not reintroduce manual cleanup in UI services for the happy path.
 
@@ -524,8 +550,10 @@ Cascade deletes of many attachments (e.g. shipment delete) fire one trigger per 
 
 - Architecture rules for day-to-day edits: `.cursorrules`
 - Cascade delete migration: `supabase/migrations/20260611130000_cascade_delete_and_storage_cleanup.sql`
-- Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@supabase-shared/" supabase/functions`, and `grep -r "@shared/dto" supabase/functions frontend`
+- SSR loaders: `frontend/server/loaders/`
+- Edge slug registry: `frontend/lib/supabase/edge-function-slugs.ts`
+- Example imports: `grep -r "@models/" supabase/functions`, `grep -r "@supabase-shared/" supabase/functions frontend/server`, and `grep -r "@shared/dto" supabase/functions frontend`
 
 ---
 
-*Last aligned with repository layout as of cascade-delete enforcement (`20260611130000`); update this page when changing Edge vs Next privileged boundaries or FK delete policy.*
+*Last aligned with single-backend migration (Edge + SSR loaders; `/api/auth/session` only) and cascade-delete enforcement (`20260611130000`). Update when adding Edge slugs, loaders, or FK delete policy.*

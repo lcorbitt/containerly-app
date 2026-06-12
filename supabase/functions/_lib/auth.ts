@@ -1,4 +1,6 @@
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { fetchProfileRole } from "@models/profiles.ts";
+import { isSuperadminRole } from "@shared/profile-role.ts";
 import { jsonResponse } from "./utils.ts";
 
 export async function requireAuthUser(
@@ -23,4 +25,15 @@ export async function requireAuthUserId(
   const r = await requireAuthUser(userClient);
   if (!r.ok) return r;
   return { ok: true, userId: r.userId };
+}
+
+export async function requireSuperadmin(
+  userClient: SupabaseClient,
+  userId: string,
+): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const { data, error } = await fetchProfileRole(userClient, userId);
+  if (error || !isSuperadminRole(data?.role as string | undefined)) {
+    return { ok: false, response: jsonResponse({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { ok: true };
 }

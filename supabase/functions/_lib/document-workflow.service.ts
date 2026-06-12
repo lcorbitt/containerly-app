@@ -309,3 +309,19 @@ export async function recordOriginalsMailed(
 }
 
 export { recomputeWorkflowStatus };
+
+export async function persistShipmentWorkflowStatus(
+  client: SupabaseClient,
+  shipmentId: string,
+): Promise<ShipmentWorkflowStatus> {
+  const { data: containers, error: contErr } = await listContainersForShipment(client, shipmentId);
+  if (contErr) throw contErr;
+  const containerIds = (containers ?? []).map((c) => c.id as string);
+  const workflowStatus = await recomputeWorkflowStatus(client, shipmentId, containerIds);
+  const { error } = await client
+    .from("shipments")
+    .update({ workflow_status: workflowStatus })
+    .eq("id", shipmentId);
+  if (error) throw error;
+  return workflowStatus;
+}

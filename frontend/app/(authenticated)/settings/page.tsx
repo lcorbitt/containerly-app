@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { SettingsPageTabs } from "./components/SettingsPageTabs";
 import { createClient } from "@/lib/supabase/server";
-import { fetchSettingsPageProfileQuery } from "@/services/profile.server";
+import { loadProfileSettingsPageData } from "@/server/loaders/profile-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +16,9 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  let profile: Awaited<ReturnType<typeof fetchSettingsPageProfileQuery>>;
+  let profile: Awaited<ReturnType<typeof loadProfileSettingsPageData>>;
   try {
-    profile = await fetchSettingsPageProfileQuery(supabase, user.id);
+    profile = await loadProfileSettingsPageData(user.id);
   } catch (e) {
     return (
       <div className="mx-auto w-full max-w-4xl px-4 py-10">

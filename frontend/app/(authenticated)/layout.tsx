@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { loadAuthenticatedLayoutSession } from "@/server/loaders/authenticated-layout";
 import { AuthenticatedAppShell } from "./components/AuthenticatedAppShell";
 
 export default async function AuthenticatedLayout({

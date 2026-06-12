@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
-import { apiJson } from "@/utils/api-client";
-import { readApiJson } from "@/utils/json-api";
+import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
+import { edgeFunctionFetch, parseEdgeJson } from "@/lib/supabase/edge-functions";
 import type { OrganizationMemberRole } from "@/types/database";
 import type { OrgMembershipRow } from "@/types/organization-workspace";
 import type {
@@ -13,7 +13,7 @@ import { getOrgImagePublicUrl } from "@/utils/org-image";
 export type { AdminOrgMemberRow, OrgMemberRow, OrganizationMemberRecord };
 
 // ---------------------------------------------------------------------------
-// Organization image (public URL only in browser; path I/O via /api)
+// Organization image (public URL only in browser; path I/O via Edge)
 // ---------------------------------------------------------------------------
 
 export function getOrgImagePublicUrlBrowser(path: string | null | undefined): string | null {
@@ -21,8 +21,9 @@ export function getOrgImagePublicUrlBrowser(path: string | null | undefined): st
 }
 
 export async function fetchOrganizationImagePath(organizationId: string): Promise<string | null> {
-  const { path } = await apiJson<{ path: string | null }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/org-image`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { path } = await parseEdgeJson<{ path: string | null }>(
+    await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.imageGet}?${params}`),
   );
   return path?.trim() || null;
 }
@@ -33,19 +34,17 @@ export async function uploadOrganizationImageAndSetPath(input: {
   previousPath: string | null;
 }): Promise<string> {
   const formData = new FormData();
+  formData.set("organization_id", input.organizationId);
   formData.set("file", input.file);
   if (input.previousPath?.trim()) {
     formData.set("previousPath", input.previousPath.trim());
   }
-  const res = await fetch(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/org-image`,
-    {
+  const data = await parseEdgeJson<{ path?: string }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.imageUpload, {
       method: "POST",
       body: formData,
-      credentials: "include",
-    },
+    }),
   );
-  const data = await readApiJson<{ path?: string }>(res);
   if (!data.path) throw new Error("Missing path in response");
   return data.path;
 }
@@ -54,13 +53,15 @@ export async function clearOrganizationImagePathAndRemoveStorage(input: {
   organizationId: string;
   storagePath: string;
 }): Promise<{ storageRemoved: boolean }> {
-  return apiJson<{ storageRemoved: boolean }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/org-image`,
-    {
+  return parseEdgeJson<{ storageRemoved: boolean }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.imageDelete, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storagePath: input.storagePath }),
-    },
+      body: JSON.stringify({
+        organization_id: input.organizationId,
+        storagePath: input.storagePath,
+      }),
+    }),
   );
 }
 
@@ -72,7 +73,9 @@ export async function fetchOrganizationMembershipRows(_input: {
   userId: string;
   isSuperAdmin: boolean;
 }): Promise<OrgMembershipRow[]> {
-  const { memberships } = await apiJson<{ memberships: OrgMembershipRow[] }>("/api/me/org-memberships");
+  const { memberships } = await parseEdgeJson<{ memberships: OrgMembershipRow[] }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.listMemberships),
+  );
   return memberships;
 }
 
@@ -81,15 +84,17 @@ export async function fetchOrganizationMembershipRows(_input: {
 // ---------------------------------------------------------------------------
 
 export async function fetchOrganizationMetricsBrowser(organizationId: string) {
-  const { metrics } = await apiJson<{
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { metrics } = await parseEdgeJson<{
     metrics: { trackingRequests: number | null; shipments: number | null; members: number | null };
-  }>(`/api/organizations/${encodeURIComponent(organizationId)}/metrics`);
+  }>(await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.metrics}?${params}`));
   return metrics;
 }
 
 export async function fetchOrganizationMemberRowsBrowser(organizationId: string): Promise<OrgMemberRow[]> {
-  const { members } = await apiJson<{ members: OrgMemberRow[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/members`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { members } = await parseEdgeJson<{ members: OrgMemberRow[] }>(
+    await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.members}?${params}`),
   );
   return members;
 }
@@ -99,34 +104,39 @@ export async function updateOrganizationNameAndSlugBrowser(
   name: string,
   slug: string,
 ): Promise<void> {
-  await apiJson(`/api/organizations/${encodeURIComponent(organizationId)}/settings`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, slug }),
-  });
+  await parseEdgeJson<{ ok: true }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.updateSettings, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization_id: organizationId, name, slug }),
+    }),
+  );
 }
 
 export async function deleteOrganizationMemberByIdBrowser(membershipId: string): Promise<void> {
-  await apiJson(`/api/organization-members/${encodeURIComponent(membershipId)}`, {
-    method: "DELETE",
-  });
+  await parseEdgeJson<{ ok: true }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.deleteMember, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ membership_id: membershipId }),
+    }),
+  );
 }
 
 // ---------------------------------------------------------------------------
-// Organization members (API)
+// Organization members (Edge)
 // ---------------------------------------------------------------------------
 
 export async function patchOrganizationMemberRole(
   membershipId: string,
   role: OrganizationMemberRole,
 ): Promise<OrganizationMemberRecord> {
-  const data = await apiJson<{ membership?: OrganizationMemberRecord }>(
-    `/api/organization-members/${encodeURIComponent(membershipId)}`,
-    {
+  const data = await parseEdgeJson<{ membership?: OrganizationMemberRecord }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.patchMember, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    },
+      body: JSON.stringify({ membership_id: membershipId, role }),
+    }),
   );
   if (!data.membership) throw new Error("Missing membership in response");
   return data.membership;
@@ -137,19 +147,21 @@ export async function inviteOrganizationMember(input: {
   email: string;
   role: OrganizationMemberRole;
 }): Promise<{ membership: { id: string }; invited: boolean }> {
-  return apiJson("/api/organization-members", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      organization_id: input.organization_id,
-      email: input.email.trim().toLowerCase(),
-      role: input.role,
+  return parseEdgeJson<{ membership: { id: string }; invited: boolean }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.inviteMember, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        organization_id: input.organization_id,
+        email: input.email.trim().toLowerCase(),
+        role: input.role,
+      }),
     }),
-  });
+  );
 }
 
 // ---------------------------------------------------------------------------
-// Create organization (API)
+// Create organization (Edge)
 // ---------------------------------------------------------------------------
 
 export async function createOrganization(input: {
@@ -157,25 +169,29 @@ export async function createOrganization(input: {
   slug: string | null;
   initialAdminEmail?: string | null;
 }): Promise<{ id: string }> {
-  const data = await apiJson<{ id?: string }>("/api/organizations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: input.name.trim(),
-      slug: input.slug?.trim() || null,
-      initial_admin_email: input.initialAdminEmail?.trim().toLowerCase() || null,
+  const data = await parseEdgeJson<{ id?: string }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.create, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: input.name.trim(),
+        slug: input.slug?.trim() || null,
+        initial_admin_email: input.initialAdminEmail?.trim().toLowerCase() || null,
+      }),
     }),
-  });
+  );
   if (!data.id) throw new Error("Missing organization id");
   return { id: data.id };
 }
 
 // ---------------------------------------------------------------------------
-// Admin org directory (API)
+// Admin org directory (Edge)
 // ---------------------------------------------------------------------------
 
 export async function fetchAdminOrgMemberDirectoryRows(): Promise<AdminOrgMemberRow[]> {
-  const { rows } = await apiJson<{ rows: AdminOrgMemberRow[] }>("/api/admin/org-member-directory");
+  const { rows } = await parseEdgeJson<{ rows: AdminOrgMemberRow[] }>(
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.adminMemberDirectory),
+  );
   return rows;
 }
 
@@ -199,8 +215,9 @@ export type CustomerDirectoryRow = {
 export async function fetchPendingAccessRequestsBrowser(
   organizationId: string,
 ): Promise<PendingAccessRequestRow[]> {
-  const { rows } = await apiJson<{ rows: PendingAccessRequestRow[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/pending-access-requests`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { rows } = await parseEdgeJson<{ rows: PendingAccessRequestRow[] }>(
+    await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.pendingAccessRequests}?${params}`),
   );
   return rows ?? [];
 }
@@ -208,8 +225,9 @@ export async function fetchPendingAccessRequestsBrowser(
 export async function fetchCustomerDirectoryBrowser(
   organizationId: string,
 ): Promise<CustomerDirectoryRow[]> {
-  const { rows } = await apiJson<{ rows: CustomerDirectoryRow[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/customer-directory`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { rows } = await parseEdgeJson<{ rows: CustomerDirectoryRow[] }>(
+    await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.customerDirectory}?${params}`),
   );
   return rows ?? [];
 }

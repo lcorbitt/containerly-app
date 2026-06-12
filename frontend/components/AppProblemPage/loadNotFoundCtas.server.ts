@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getProblemPageCtas } from "@/components/AppProblemPage/utils";
-import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { loadAuthenticatedLayoutSession } from "@/server/loaders/authenticated-layout";
 
 export async function loadNotFoundPageCtas() {
   const session = await loadAuthenticatedLayoutSession();

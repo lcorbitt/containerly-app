@@ -26,7 +26,7 @@ export const emptySnapshot: ShipmentAccessTabSnapshot = {
 
 export function accessTabHandler(snapshot: ShipmentAccessTabSnapshot = emptySnapshot) {
   return http.get(
-    `*/api/organizations/${ORG_ID}/shipments/${SHIPMENT_ID}/access-tab`,
+    `${SUPABASE_BASE}/functions/v1/${EDGE_FUNCTION_SLUGS.shipments.accessTab}`,
     () => HttpResponse.json({ snapshot }),
   );
 }

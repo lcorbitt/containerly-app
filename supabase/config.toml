@@ -117,3 +117,184 @@ verify_jwt = false
 
 [functions.notify-password-changed]
 verify_jwt = false
+
+[functions.list-alerts]
+
+[functions.acknowledge-alert]
+
+[functions.acknowledge-all-alerts]
+
+[functions.list-operator-shipments]
+
+[functions.get-tracking-dashboard]
+
+[functions.get-my-profile]
+verify_jwt = false
+
+[functions.update-my-profile]
+verify_jwt = false
+
+[functions.upload-profile-image]
+verify_jwt = false
+
+[functions.delete-profile-image]
+verify_jwt = false
+
+[functions.get-profile-display-names]
+verify_jwt = false
+
+[functions.update-profile-role]
+verify_jwt = false
+
+[functions.get-onboarding-status]
+verify_jwt = false
+
+[functions.complete-onboarding-organization]
+verify_jwt = false
+
+[functions.list-admin-feedback]
+verify_jwt = false
+
+[functions.update-admin-feedback]
+verify_jwt = false
+
+[functions.list-tenant-invites]
+verify_jwt = false
+
+[functions.create-tenant-invite]
+verify_jwt = false
+
+[functions.list-org-memberships]
+verify_jwt = false
+
+[functions.get-org-metrics]
+verify_jwt = false
+
+[functions.list-org-members]
+verify_jwt = false
+
+[functions.update-org-settings]
+verify_jwt = false
+
+[functions.get-org-performance-settings]
+verify_jwt = false
+
+[functions.update-org-performance-settings]
+verify_jwt = false
+
+[functions.list-pending-access-requests]
+verify_jwt = false
+
+[functions.get-customer-directory]
+verify_jwt = false
+
+[functions.get-org-image]
+verify_jwt = false
+
+[functions.upload-org-image]
+verify_jwt = false
+
+[functions.delete-org-image]
+verify_jwt = false
+
+[functions.create-organization]
+verify_jwt = false
+
+[functions.invite-organization-member]
+verify_jwt = false
+
+[functions.patch-organization-member]
+verify_jwt = false
+
+[functions.delete-organization-member]
+verify_jwt = false
+
+[functions.list-admin-org-member-directory]
+verify_jwt = false
+
+[functions.get-workspace-summary]
+
+[functions.get-tracking-dashboard-analytics]
+
+[functions.list-recent-tracking-requests]
+
+[functions.list-operator-tracking-requests]
+
+[functions.list-document-queue]
+
+[functions.list-importer-granted-shipments]
+
+[functions.get-shipment-access-tab]
+
+[functions.update-shipment-assignee]
+
+[functions.update-shipment-tags]
+
+[functions.update-shipment-root-cause]
+
+[functions.update-shipment-notification-subscription]
+
+[functions.insert-shipment-participant]
+
+[functions.delete-shipment-participant]
+
+[functions.revoke-customer-invite]
+
+[functions.revoke-shipment-customer-access]
+
+[functions.update-shipment-customer-access-settings]
+
+[functions.get-shipment-workspace-row]
+
+[functions.list-shipment-pick-rows]
+
+[functions.create-workspace-signed-url]
+verify_jwt = false
+
+[functions.get-container-workspace]
+verify_jwt = false
+
+[functions.get-workspace-quick-search]
+verify_jwt = false
+
+[functions.post-container-message]
+verify_jwt = false
+
+[functions.upload-container-documents]
+verify_jwt = false
+
+[functions.patch-report-message]
+verify_jwt = false
+
+[functions.delete-report-message]
+verify_jwt = false
+
+[functions.patch-workspace-attachment]
+verify_jwt = false
+
+[functions.delete-workspace-attachment]
+verify_jwt = false
+
+[functions.get-shipment-scope-thread]
+verify_jwt = false
+
+[functions.post-shipment-message]
+verify_jwt = false
+
+[functions.upload-shipment-documents]
+verify_jwt = false
+
+[functions.list-org-shipment-message-threads]
+verify_jwt = false
+
+[functions.mark-shipment-thread-read]
+verify_jwt = false
+
+[functions.list-importer-shipment-message-threads]
+verify_jwt = false
+
+[functions.mark-importer-shipment-thread-read]
+verify_jwt = false
+
+[functions.notify-bol-import]
+verify_jwt = false

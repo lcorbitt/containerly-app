@@ -1,6 +1,6 @@
-import { apiJson } from "@/utils/api-client";
+import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
+import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import type { WorkspaceStoragePreviewVariant } from "@/utils/workspace-storage-preview";
-import { readApiJson } from "@/utils/json-api";
 import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
 import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
 import type {
@@ -10,6 +10,9 @@ import type {
   ShipmentScopeLoadResult,
   WorkspaceQuickSearchRow,
 } from "@/types/workspace-load";
+import type {
+  CreateWorkspaceSignedUrlResponse,
+} from "@shared/dto/workspace.dto";
 
 export type {
   ContainerWorkspaceLoadResult,
@@ -18,6 +21,32 @@ export type {
   ShipmentScopeLoadResult,
   WorkspaceQuickSearchRow,
 };
+
+async function parseEdgeJson<T>(result: { res: Response; text: string }): Promise<T> {
+  if (!result.res.ok) {
+    let message = result.res.statusText;
+    try {
+      const parsed = JSON.parse(result.text) as { error?: string };
+      if (parsed.error) message = parsed.error;
+    } catch {
+      if (result.text) message = result.text;
+    }
+    throw new Error(message);
+  }
+  return JSON.parse(result.text) as T;
+}
+
+async function edgeJson<T>(slug: string, init?: RequestInit): Promise<T> {
+  const result = await edgeFunctionFetch(slug, init);
+  if ("error" in result) throw new Error(result.error);
+  return parseEdgeJson<T>(result);
+}
+
+async function edgeFormData<T>(slug: string, formData: FormData): Promise<T> {
+  const result = await edgeFunctionFetch(slug, { method: "POST", body: formData });
+  if ("error" in result) throw new Error(result.error);
+  return parseEdgeJson<T>(result);
+}
 
 // ---------------------------------------------------------------------------
 // Storage signed URL (workspace-files bucket)
@@ -28,17 +57,20 @@ export async function createWorkspaceStorageSignedUrl(
   expiresSec = 3600,
   options?: { downloadFileName?: string; previewVariant?: WorkspaceStoragePreviewVariant },
 ): Promise<string> {
-  const { url } = await apiJson<{ url: string }>("/api/workspace/signed-url", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      storagePath,
-      expiresSec,
-      downloadFileName: options?.downloadFileName,
-      previewVariant: options?.previewVariant,
-    }),
-  });
-  return url;
+  const body = await edgeJson<CreateWorkspaceSignedUrlResponse>(
+    EDGE_FUNCTION_SLUGS.workspace.createSignedUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storage_path: storagePath,
+        expires_sec: expiresSec,
+        download_file_name: options?.downloadFileName,
+        preview_variant: options?.previewVariant,
+      }),
+    },
+  );
+  return body.url;
 }
 
 /** Cached-friendly fetch; falls back to full-size URL if transform signing fails. */
@@ -87,8 +119,12 @@ export async function loadContainerWorkspaceData(input: {
   containerId: string;
   organizationId: string;
 }): Promise<ContainerWorkspaceLoadResult> {
-  return apiJson<ContainerWorkspaceLoadResult>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/containers/${encodeURIComponent(input.containerId)}/workspace`,
+  const params = new URLSearchParams({
+    organization_id: input.organizationId,
+    container_id: input.containerId,
+  });
+  return edgeJson<ContainerWorkspaceLoadResult>(
+    `${EDGE_FUNCTION_SLUGS.workspace.getContainer}?${params}`,
   );
 }
 
@@ -96,21 +132,23 @@ export async function patchReportMessage(input: {
   messageId: string;
   body: string;
 }): Promise<ReportMessage> {
-  const { message } = await apiJson<{ message: ReportMessage }>(
-    `/api/report-messages/${encodeURIComponent(input.messageId)}`,
+  const { message } = await edgeJson<{ message: ReportMessage }>(
+    EDGE_FUNCTION_SLUGS.workspace.patchReportMessage,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: input.body }),
+      body: JSON.stringify({ message_id: input.messageId, body: input.body }),
     },
   );
   return message;
 }
 
 export async function deleteContainerReportMessage(input: { messageId: string }): Promise<void> {
-  await apiJson<{ ok: true }>(`/api/report-messages/${encodeURIComponent(input.messageId)}`, {
-    method: "DELETE",
-  });
+  const params = new URLSearchParams({ message_id: input.messageId });
+  await edgeJson<{ ok: true }>(
+    `${EDGE_FUNCTION_SLUGS.workspace.deleteReportMessage}?${params}`,
+    { method: "DELETE" },
+  );
 }
 
 export async function postContainerWorkspaceMessage(input: {
@@ -121,17 +159,18 @@ export async function postContainerWorkspaceMessage(input: {
   files: File[];
 }): Promise<{ message: ReportMessage; attachmentErrors: string[] }> {
   const formData = new FormData();
+  formData.set("organization_id", input.organizationId);
+  formData.set("container_id", input.containerId);
   formData.set("body", input.body);
   formData.set("internalOnly", "false");
   formData.set("replyParentId", input.replyParentId ?? "");
   for (const f of input.files) {
     formData.append("file", f);
   }
-  const res = await fetch(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/containers/${encodeURIComponent(input.containerId)}/messages`,
-    { method: "POST", body: formData, credentials: "include" },
+  return edgeFormData<{ message: ReportMessage; attachmentErrors: string[] }>(
+    EDGE_FUNCTION_SLUGS.workspace.postContainerMessage,
+    formData,
   );
-  return readApiJson<{ message: ReportMessage; attachmentErrors: string[] }>(res);
 }
 
 export async function uploadContainerWorkspaceDocuments(input: {
@@ -141,25 +180,26 @@ export async function uploadContainerWorkspaceDocuments(input: {
   isInternal: boolean;
 }): Promise<{ inserted: WorkspaceAttachment[]; errors: string[] }> {
   const formData = new FormData();
+  formData.set("organization_id", input.organizationId);
+  formData.set("container_id", input.containerId);
   formData.set("isInternal", input.isInternal ? "true" : "false");
   for (const f of input.files) {
     formData.append("file", f);
   }
-  const res = await fetch(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/containers/${encodeURIComponent(input.containerId)}/documents`,
-    { method: "POST", body: formData, credentials: "include" },
+  return edgeFormData<{ inserted: WorkspaceAttachment[]; errors: string[] }>(
+    EDGE_FUNCTION_SLUGS.workspace.uploadContainerDocuments,
+    formData,
   );
-  return readApiJson<{ inserted: WorkspaceAttachment[]; errors: string[] }>(res);
 }
 
 export async function renameContainerWorkspaceAttachment(input: {
   attachmentId: string;
   fileName: string;
 }): Promise<void> {
-  await apiJson(`/api/workspace-attachments/${encodeURIComponent(input.attachmentId)}`, {
+  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.patchAttachment, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ file_name: input.fileName }),
+    body: JSON.stringify({ attachment_id: input.attachmentId, file_name: input.fileName }),
   });
 }
 
@@ -168,8 +208,9 @@ export async function removeContainerWorkspaceAttachment(input: {
   storagePath: string;
 }): Promise<void> {
   void input.storagePath;
-  await apiJson<{ ok: true }>(
-    `/api/workspace-attachments/${encodeURIComponent(input.attachmentId)}`,
+  const params = new URLSearchParams({ attachment_id: input.attachmentId });
+  await edgeJson<{ ok: true }>(
+    `${EDGE_FUNCTION_SLUGS.workspace.deleteAttachment}?${params}`,
     { method: "DELETE" },
   );
 }
@@ -182,16 +223,21 @@ export async function loadShipmentScopeThread(input: {
   organizationId: string;
   shipmentId: string;
 }): Promise<ShipmentScopeLoadResult> {
-  return apiJson<ShipmentScopeLoadResult>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/workspace-scope-thread`,
+  const params = new URLSearchParams({
+    organization_id: input.organizationId,
+    shipment_id: input.shipmentId,
+  });
+  return edgeJson<ShipmentScopeLoadResult>(
+    `${EDGE_FUNCTION_SLUGS.workspace.getShipmentScopeThread}?${params}`,
   );
 }
 
 export async function fetchOrgShipmentMessageThreads(
   organizationId: string,
 ): Promise<OrgShipmentMessageThreadsResult> {
-  return apiJson<OrgShipmentMessageThreadsResult>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/shipment-message-threads`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  return edgeJson<OrgShipmentMessageThreadsResult>(
+    `${EDGE_FUNCTION_SLUGS.workspace.listOrgShipmentMessageThreads}?${params}`,
   );
 }
 
@@ -199,21 +245,28 @@ export async function markShipmentThreadRead(input: {
   organizationId: string;
   shipmentId: string;
 }): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipment-message-threads/${encodeURIComponent(input.shipmentId)}/read`,
-    { method: "PATCH" },
-  );
+  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.markShipmentThreadRead, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      organization_id: input.organizationId,
+      shipment_id: input.shipmentId,
+    }),
+  });
 }
 
 export async function fetchImporterShipmentMessageThreads(): Promise<OrgShipmentMessageThreadsResult> {
-  return apiJson<OrgShipmentMessageThreadsResult>("/api/me/importer-shipment-message-threads");
+  return edgeJson<OrgShipmentMessageThreadsResult>(
+    EDGE_FUNCTION_SLUGS.workspace.listImporterShipmentMessageThreads,
+  );
 }
 
 export async function markImporterShipmentThreadRead(input: { shipmentId: string }): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/me/importer-shipment-message-threads/${encodeURIComponent(input.shipmentId)}/read`,
-    { method: "PATCH" },
-  );
+  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.markImporterShipmentThreadRead, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ shipment_id: input.shipmentId }),
+  });
 }
 
 export async function deleteShipmentScopeMessage(input: {
@@ -221,9 +274,11 @@ export async function deleteShipmentScopeMessage(input: {
   messages: ReportMessage[];
 }): Promise<{ deletedIds: Set<string> }> {
   const idsToRemove = collectMessageSubtreeIds(input.messages, input.messageId);
-  await apiJson<{ ok: true }>(`/api/report-messages/${encodeURIComponent(input.messageId)}`, {
-    method: "DELETE",
-  });
+  const params = new URLSearchParams({ message_id: input.messageId });
+  await edgeJson<{ ok: true }>(
+    `${EDGE_FUNCTION_SLUGS.workspace.deleteReportMessage}?${params}`,
+    { method: "DELETE" },
+  );
   return { deletedIds: idsToRemove };
 }
 
@@ -235,17 +290,18 @@ export async function postShipmentScopeMessageWithAttachments(input: {
   files: File[];
 }): Promise<{ messageId: string; attachmentErrors: string[] }> {
   const formData = new FormData();
+  formData.set("organization_id", input.organizationId);
+  formData.set("shipment_id", input.shipmentId);
   formData.set("body", input.body);
   formData.set("internalOnly", "false");
   formData.set("replyParentId", input.replyParentId ?? "");
   for (const f of input.files) {
     formData.append("file", f);
   }
-  const res = await fetch(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/messages`,
-    { method: "POST", body: formData, credentials: "include" },
+  return edgeFormData<{ messageId: string; attachmentErrors: string[] }>(
+    EDGE_FUNCTION_SLUGS.workspace.postShipmentMessage,
+    formData,
   );
-  return readApiJson<{ messageId: string; attachmentErrors: string[] }>(res);
 }
 
 export async function uploadShipmentScopeStandaloneFiles(input: {
@@ -256,16 +312,17 @@ export async function uploadShipmentScopeStandaloneFiles(input: {
   documentGroup?: string | null;
 }): Promise<WorkspaceAttachment[]> {
   const formData = new FormData();
+  formData.set("organization_id", input.organizationId);
+  formData.set("shipment_id", input.shipmentId);
   if (input.documentType) formData.set("documentType", input.documentType);
   if (input.documentGroup) formData.set("documentGroup", input.documentGroup);
   for (const f of input.files) {
     formData.append("file", f);
   }
-  const res = await fetch(
-    `/api/organizations/${encodeURIComponent(input.organizationId)}/shipments/${encodeURIComponent(input.shipmentId)}/documents`,
-    { method: "POST", body: formData, credentials: "include" },
+  const data = await edgeFormData<{ uploaded: WorkspaceAttachment[] }>(
+    EDGE_FUNCTION_SLUGS.workspace.uploadShipmentDocuments,
+    formData,
   );
-  const data = await readApiJson<{ uploaded: WorkspaceAttachment[] }>(res);
   return data.uploaded ?? [];
 }
 
@@ -273,16 +330,17 @@ export async function renameWorkspaceAttachmentDisplayName(
   attachmentId: string,
   trimmedName: string,
 ): Promise<void> {
-  await apiJson(`/api/workspace-attachments/${encodeURIComponent(attachmentId)}`, {
+  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.patchAttachment, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ file_name: trimmedName }),
+    body: JSON.stringify({ attachment_id: attachmentId, file_name: trimmedName }),
   });
 }
 
 export async function removeWorkspaceAttachmentRow(row: WorkspaceAttachment): Promise<void> {
-  await apiJson<{ ok: true }>(
-    `/api/workspace-attachments/${encodeURIComponent(row.id)}`,
+  const params = new URLSearchParams({ attachment_id: row.id });
+  await edgeJson<{ ok: true }>(
+    `${EDGE_FUNCTION_SLUGS.workspace.deleteAttachment}?${params}`,
     { method: "DELETE" },
   );
 }
@@ -299,11 +357,12 @@ export async function fetchWorkspaceQuickSearchBrowser(args: {
   const q = args.query.trim();
   if (q.length < 2) return [];
   const params = new URLSearchParams({
+    organization_id: args.organizationId,
     q,
     limit: String(args.limit ?? 8),
   });
-  const { results } = await apiJson<{ results: WorkspaceQuickSearchRow[] }>(
-    `/api/organizations/${encodeURIComponent(args.organizationId)}/workspace-quick-search?${params}`,
+  const { results } = await edgeJson<{ results: WorkspaceQuickSearchRow[] }>(
+    `${EDGE_FUNCTION_SLUGS.workspace.getQuickSearch}?${params}`,
   );
   return results ?? [];
 }

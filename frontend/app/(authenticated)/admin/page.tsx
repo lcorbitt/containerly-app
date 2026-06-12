@@ -3,7 +3,7 @@ import { Building2, Mail, MessageSquarePlus } from "lucide-react";
 import { AdminOrgMembersTable } from "@/app/(authenticated)/admin/components/AdminOrgMembersTable";
 import { AdminProfilesTable } from "@/app/(authenticated)/admin/components/AdminProfilesTable";
 import { createClient } from "@/lib/supabase/server";
-import { loadAdminProfilesWithOrgLabels } from "@/services/admin.server";
+import { loadAdminProfilesWithOrgLabels } from "@/server/loaders/admin";
 
 export const dynamic = "force-dynamic";
 

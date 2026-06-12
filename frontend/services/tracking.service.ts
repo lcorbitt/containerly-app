@@ -1,6 +1,6 @@
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import { createClient } from "@/lib/supabase/client";
-import { apiJson } from "@/utils/api-client";
+import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import type { TrackingRequest } from "@/types/database";
 import type { TrackingDashboardSnapshot } from "@/types/tracking-dashboard-snapshot";
 import type {
@@ -36,20 +36,49 @@ export {
 // Dashboard snapshot
 // ---------------------------------------------------------------------------
 
-/** Dashboard triage snapshot via Next API (no browser PostgREST). */
+/** Dashboard triage snapshot via Supabase Edge (no browser PostgREST). */
 export async function fetchTrackingDashboardSnapshot(
   organizationId: string,
 ): Promise<TrackingDashboardSnapshot> {
-  const { snapshot } = await apiJson<{ snapshot: TrackingDashboardSnapshot }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/tracking-dashboard`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const result = await edgeFunctionFetch(
+    `${EDGE_FUNCTION_SLUGS.dashboard.trackingSnapshot}?${params}`,
   );
-  return snapshot;
+  if ("error" in result) throw new Error(result.error);
+  if (!result.res.ok) {
+    let message = result.res.statusText;
+    try {
+      const parsed = JSON.parse(result.text) as { error?: string };
+      if (parsed.error) message = parsed.error;
+    } catch {
+      if (result.text) message = result.text;
+    }
+    throw new Error(message);
+  }
+  const body = JSON.parse(result.text) as { snapshot: TrackingDashboardSnapshot };
+  return body.snapshot;
+}
+
+async function parseEdgeGetJson<T>(path: string): Promise<T> {
+  const result = await edgeFunctionFetch(path, { method: "GET" });
+  if ("error" in result) throw new Error(result.error);
+  let parsed: T & { error?: string };
+  try {
+    parsed = result.text ? JSON.parse(result.text) : ({} as T & { error?: string });
+  } catch {
+    throw new Error("Invalid response from Edge function");
+  }
+  if (!result.res.ok) {
+    throw new Error(parsed.error ?? result.res.statusText);
+  }
+  return parsed;
 }
 
 /** Side-nav badge: personal triage count only. */
 export async function fetchWorkspaceSummary(organizationId: string): Promise<WorkspaceSummary> {
-  const { summary } = await apiJson<{ summary: WorkspaceSummary }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/workspace-summary`,
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const { summary } = await parseEdgeGetJson<{ summary: WorkspaceSummary }>(
+    `${EDGE_FUNCTION_SLUGS.tracking.workspaceSummary}?${params}`,
   );
   return summary;
 }
@@ -61,10 +90,10 @@ export async function fetchTrackingDashboardAnalytics(
   organizationId: string,
   scope: TrackingDashboardAnalyticsScope,
 ): Promise<TrackingDashboardInsightsBundle | TrackingDashboardReportsBundle> {
-  const q = new URLSearchParams({ scope });
-  const { bundle } = await apiJson<{
+  const params = new URLSearchParams({ organization_id: organizationId, include: scope });
+  const { bundle } = await parseEdgeGetJson<{
     bundle: TrackingDashboardInsightsBundle | TrackingDashboardReportsBundle;
-  }>(`/api/organizations/${encodeURIComponent(organizationId)}/tracking-dashboard/analytics?${q}`);
+  }>(`${EDGE_FUNCTION_SLUGS.tracking.dashboardAnalytics}?${params}`);
   return bundle;
 }
 
@@ -76,15 +105,18 @@ export async function fetchRecentTrackingRequestsForOrganization(
   organizationId: string,
   limit = 50,
 ): Promise<TrackingRequest[]> {
-  const q = new URLSearchParams({ limit: String(limit) });
-  const { requests } = await apiJson<{ requests: TrackingRequest[] }>(
-    `/api/organizations/${encodeURIComponent(organizationId)}/tracking-requests/recent?${q}`,
+  const params = new URLSearchParams({
+    organization_id: organizationId,
+    limit: String(limit),
+  });
+  const { requests } = await parseEdgeGetJson<{ requests: TrackingRequest[] }>(
+    `${EDGE_FUNCTION_SLUGS.tracking.listRecentRequests}?${params}`,
   );
   return requests;
 }
 
 // ---------------------------------------------------------------------------
-// Operator tracking-requests page (browser → API)
+// Operator tracking-requests page (browser → Edge)
 // ---------------------------------------------------------------------------
 
 export async function loadOperatorTrackingRequestsPageBrowser(args: {
@@ -96,7 +128,8 @@ export async function loadOperatorTrackingRequestsPageBrowser(args: {
   sortDirection: SortDirection;
   search: string;
 }): Promise<{ rows: TrackingRequest[]; totalCount: number }> {
-  const sp = new URLSearchParams({
+  const params = new URLSearchParams({
+    organization_id: args.organizationId,
     page: String(args.page),
     pageSize: String(args.pageSize),
     scope: args.scope,
@@ -104,8 +137,8 @@ export async function loadOperatorTrackingRequestsPageBrowser(args: {
     sortDirection: args.sortDirection,
     search: args.search,
   });
-  return apiJson<{ rows: TrackingRequest[]; totalCount: number }>(
-    `/api/organizations/${encodeURIComponent(args.organizationId)}/operator-tracking-requests?${sp}`,
+  return parseEdgeGetJson<{ rows: TrackingRequest[]; totalCount: number }>(
+    `${EDGE_FUNCTION_SLUGS.tracking.listOperatorRequests}?${params}`,
   );
 }
 

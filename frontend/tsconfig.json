@@ -22,6 +22,7 @@
       "@/*": ["./*"],
       "@shared/*": ["../supabase/functions/_wire/*"],
       "@supabase-shared/*": ["../supabase/functions/_lib/*"],
+      "@models/*": ["../supabase/functions/_models/*"],
       "@supabase/supabase-js": ["./node_modules/@supabase/supabase-js"]
     }
   },

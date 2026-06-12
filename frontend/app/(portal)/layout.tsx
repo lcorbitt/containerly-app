@@ -1,4 +1,4 @@
-import { loadAuthenticatedLayoutSession } from "@/services/authenticated-layout.server";
+import { loadAuthenticatedLayoutSession } from "@/server/loaders/authenticated-layout";
 import { AuthenticatedAppShell } from "@/app/(authenticated)/components/AuthenticatedAppShell";
 import { CustomerAppShell } from "@/app/(customer)/components/CustomerAppShell";
 import { PortalLayoutShell } from "./components/PortalLayoutShell";

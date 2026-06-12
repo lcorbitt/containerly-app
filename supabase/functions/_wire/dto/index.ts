@@ -9,6 +9,8 @@ export {
 export type * from "./attachment.dto.ts";
 export type * from "./performance.dto.ts";
 export type * from "./feedback.dto.ts";
+export type * from "./alert.dto.ts";
+export type * from "./workspace.dto.ts";
 export type * from "./performance.types.ts";
 export {
   SHIPMENT_ROOT_CAUSES,
