@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithPassword, signUpWithEmail } from "@/services/auth.service";
+import {
+  signInWithPassword,
+  signUpWithEmail,
+  syncServerAuthSession,
+} from "@/services/auth.service";
 import { passwordsMatch, resolveReferralSource } from "./utils";
 
 interface UseSignupAccountStepInput {
   onContinue: () => void | Promise<void>;
-  onSessionReady?: () => void;
 }
 
-export function useSignupAccountStep({ onContinue, onSessionReady }: UseSignupAccountStepInput) {
+export function useSignupAccountStep({ onContinue }: UseSignupAccountStepInput) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +55,13 @@ export function useSignupAccountStep({ onContinue, onSessionReady }: UseSignupAc
         }
       }
 
-      onSessionReady?.();
+      const sync = await syncServerAuthSession();
+      if (sync.error) {
+        setMessage(sync.error.message);
+        setLoading(false);
+        return;
+      }
+
       await onContinue();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Could not create account");

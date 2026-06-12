@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { completeSignupOrganization } from "@/services/tenant-invite.server";
+import { completeSignupOrganizationForUser } from "@/services/onboarding.server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -10,11 +9,6 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const emailLower = (user.email ?? "").trim().toLowerCase();
-  if (!emailLower) {
-    return NextResponse.json({ error: "Account email not found" }, { status: 400 });
   }
 
   let body: {
@@ -45,29 +39,24 @@ export async function POST(request: Request) {
       ? body.monthly_shipment_volume.trim()
       : null;
 
-  let admin;
   try {
-    admin = createAdminClient();
-  } catch {
-    return NextResponse.json(
-      { error: "Server misconfigured: service role unavailable" },
-      { status: 500 },
-    );
+    const result = await completeSignupOrganizationForUser(supabase, {
+      name,
+      slug: slugInput,
+      teamSize,
+      monthlyShipmentVolume,
+    });
+
+    return NextResponse.json({ id: result.organizationId, inviteId: result.inviteId });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not create organization";
+    const status = /already belong|slug already exists/i.test(message)
+      ? 409
+      : /unauthorized|different user/i.test(message)
+        ? 403
+        : /required|invalid|not found/i.test(message)
+          ? 400
+          : 500;
+    return NextResponse.json({ error: message }, { status });
   }
-
-  const result = await completeSignupOrganization({
-    admin,
-    userId: user.id,
-    emailLower,
-    name,
-    slugInput,
-    teamSize,
-    monthlyShipmentVolume,
-  });
-
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  return NextResponse.json({ id: result.organizationId, inviteId: result.inviteId });
 }

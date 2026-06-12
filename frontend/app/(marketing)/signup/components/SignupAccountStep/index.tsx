@@ -44,12 +44,11 @@ const OAUTH_NEXT = "/signup?step=2";
 
 export function SignupAccountStep({
   onContinue,
-  onSessionReady,
   initialError = null,
 }: SignupAccountStepProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const step = useSignupAccountStep({ onContinue, onSessionReady });
+  const step = useSignupAccountStep({ onContinue });
 
   return (
     <div className={`${LOGIN_FORM_SHELL_CLASS} mt-6`}>

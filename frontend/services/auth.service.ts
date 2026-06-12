@@ -3,6 +3,7 @@ import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import { createClient } from "@/lib/supabase/client";
 import { authCallbackUrl, SET_PASSWORD_PATH } from "@/utils/auth-redirect";
+import { apiJson } from "@/utils/api-client";
 
 export async function getBrowserAuthUserId(): Promise<string | null> {
   const supabase = createClient();
@@ -14,6 +15,39 @@ export async function getBrowserAuthSession() {
   const supabase = createClient();
   const { data } = await supabase.auth.getSession();
   return data.session ?? null;
+}
+
+/** Validates the browser session with Supabase Auth (not just local cookie storage). */
+export async function getVerifiedBrowserAuthSession() {
+  const supabase = createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session ?? null;
+}
+
+/** Writes the current browser session into Next.js-readable auth cookies via `/api/auth/session`. */
+export async function syncServerAuthSession(): Promise<{ error: Error | null }> {
+  const session = await getVerifiedBrowserAuthSession();
+  if (!session) {
+    return { error: new Error("Not signed in") };
+  }
+
+  try {
+    await apiJson<{ ok: boolean }>("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      }),
+    });
+    return { error: null };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err : new Error("Could not sync session"),
+    };
+  }
 }
 
 /**

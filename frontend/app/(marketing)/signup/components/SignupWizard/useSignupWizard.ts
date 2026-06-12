@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  getBrowserAuthSession,
+  getVerifiedBrowserAuthSession,
   subscribeToAuthState,
+  syncServerAuthSession,
 } from "@/services/auth.service";
 import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
 import {
@@ -25,24 +26,22 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   const [hasSession, setHasSession] = useState(false);
 
   const refreshSession = useCallback(async () => {
-    const session = await getBrowserAuthSession();
+    let session = await getVerifiedBrowserAuthSession();
+    if (session) {
+      const sync = await syncServerAuthSession();
+      if (sync.error) {
+        session = null;
+      }
+    }
     const signedIn = Boolean(session);
     setHasSession(signedIn);
     setSessionChecked(true);
     return signedIn;
   }, []);
 
-  const markSessionReady = useCallback(() => {
-    setHasSession(true);
-    setSessionChecked(true);
-  }, []);
-
   useEffect(() => {
-    void getBrowserAuthSession().then((session) => {
-      setHasSession(Boolean(session));
-      setSessionChecked(true);
-    });
-  }, []);
+    void refreshSession();
+  }, [refreshSession]);
 
   useEffect(() => {
     return subscribeToAuthState((signedIn) => {
@@ -60,6 +59,15 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
     null;
 
   const hasOrgMembership = statusQuery.data?.hasOrgMembership ?? false;
+
+  useEffect(() => {
+    if (
+      statusQuery.error instanceof Error &&
+      /unauthorized/i.test(statusQuery.error.message)
+    ) {
+      setHasSession(false);
+    }
+  }, [statusQuery.error]);
 
   useEffect(() => {
     if (!sessionChecked) return;
@@ -89,7 +97,8 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
 
   const goToStep = useCallback(
     async (next: SignupWizardStep) => {
-      await refreshSession();
+      const signedIn = await refreshSession();
+      if (!signedIn) return;
       router.push(signupStepHref(next));
       router.refresh();
     },
@@ -122,6 +131,5 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
     organizationId,
     onOrganizationCreated,
     finishSignup,
-    markSessionReady,
   };
 }
