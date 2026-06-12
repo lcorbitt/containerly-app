@@ -44,7 +44,7 @@ export function LandingPage() {
               {HERO_SUBHEAD}
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link href="/login" className={ACCENT_BTN_CLASS}>
+              <Link href="/signup" className={ACCENT_BTN_CLASS}>
                 Start Free
               </Link>
               <Link href="/how-it-works" className={GHOST_BTN_CLASS}>
@@ -317,7 +317,7 @@ export function LandingPage() {
             carrier tracking once documents are signed off and numbers are published.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/login" className={ACCENT_BTN_CLASS}>
+            <Link href="/signup" className={ACCENT_BTN_CLASS}>
               Start Free
             </Link>
             <Link href="/login" className={GHOST_BTN_CLASS}>

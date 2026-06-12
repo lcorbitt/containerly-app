@@ -11,6 +11,7 @@ import {
   MapPin,
   MessageSquare,
   Package,
+  Pencil,
   Shield,
   ShieldAlert,
   Ship,
@@ -206,6 +207,23 @@ export function hasTimelineDocumentMeta(meta: TimelineDocumentMeta): boolean {
   );
 }
 
+function readChangedFieldLabels(metadata: Record<string, unknown>): string | null {
+  const raw = metadata.changed_fields;
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const labels = raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+      const label = readMetadataString(entry as Record<string, unknown>, "label");
+      return label;
+    })
+    .filter((label): label is string => Boolean(label));
+  return labels.length > 0 ? labels.join(", ") : null;
+}
+
+export function formatShipmentEditedSubtitle(metadata: Record<string, unknown>): string | null {
+  return readChangedFieldLabels(metadata);
+}
+
 export function formatShipmentCreatedSubtitle(metadata: Record<string, unknown>): string | null {
   const parts: string[] = [];
   const orderNumber = readMetadataString(metadata, "order_number");
@@ -257,6 +275,8 @@ export function activityEventTitle(event: ShipmentActivityEvent): string {
   switch (event.event_type) {
     case "shipment_created":
       return "Shipment created";
+    case "shipment_edited":
+      return "Shipment details updated";
     case "drafts_attached":
       return "Draft documents uploaded";
     case "documents_approved":
@@ -315,6 +335,8 @@ export function mapActivityEventToTimelineEvent(
       : null);
   const shipmentCreatedSubtitle =
     event.event_type === "shipment_created" ? formatShipmentCreatedSubtitle(metadata) : null;
+  const shipmentEditedSubtitle =
+    event.event_type === "shipment_edited" ? formatShipmentEditedSubtitle(metadata) : null;
   const trackingNumberSubtitle = isTrackingNumberActivityEvent(event.event_type, metadata)
     ? readMetadataString(metadata, "tracking_number")
     : null;
@@ -331,7 +353,12 @@ export function mapActivityEventToTimelineEvent(
     occurred_at: event.occurred_at,
     source: "activity",
     displayTitle: activityEventTitle(event),
-    displaySubtitle: messagePreview ?? shipmentCreatedSubtitle ?? trackingNumberSubtitle ?? riskMessageSubtitle,
+    displaySubtitle:
+      messagePreview ??
+      shipmentCreatedSubtitle ??
+      shipmentEditedSubtitle ??
+      trackingNumberSubtitle ??
+      riskMessageSubtitle,
     documentMeta: isTrackingNumberEvent
       ? null
       : enrichTimelineDocumentMeta(parsedMeta, metadata, attachmentDisplayNamesById),
@@ -403,6 +430,9 @@ export function inferTimelineVisual(
 
   if (/shipment_created/.test(t)) {
     return { tone: "shipmentCreated", Icon: Package, label: "Created" };
+  }
+  if (/shipment_edited/.test(t)) {
+    return { tone: "system", Icon: Pencil, label: "Updated" };
   }
   if (isTrackingNumberActivityEvent(eventType, metadata)) {
     return { tone: "trackingNumber", Icon: Barcode, label: "Tracking" };

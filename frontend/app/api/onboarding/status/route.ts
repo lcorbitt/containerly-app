@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   fetchPendingTenantInviteForUser,
+  fetchUserPrimaryOrganizationId,
   userHasOrganizationMembership,
 } from "@/services/tenant-invite.server";
 
@@ -32,6 +33,9 @@ export async function GET() {
 
   try {
     const hasOrgMembership = await userHasOrganizationMembership(admin, user.id);
+    const organizationId = hasOrgMembership
+      ? await fetchUserPrimaryOrganizationId(admin, user.id)
+      : null;
     const pendingTenantInvite = hasOrgMembership
       ? null
       : await fetchPendingTenantInviteForUser(admin, {
@@ -41,6 +45,7 @@ export async function GET() {
 
     return NextResponse.json({
       hasOrgMembership,
+      organizationId,
       pendingTenantInvite,
     });
   } catch (e) {

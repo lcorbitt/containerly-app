@@ -6,7 +6,9 @@ import { SessionAvatarInit } from "@/components/SessionAvatarInit";
 import { NewShipmentModalProvider } from "@/components/NewShipmentModal";
 import { AuthenticatedMainPane } from "../AuthenticatedMainPane";
 import { OrgWorkspaceRealtimeBridge } from "../OrgWorkspaceRealtimeBridge";
+import { OnboardingGate } from "../OnboardingGate";
 import { SideNav } from "../SideNav";
+import { WelcomeModalHost } from "@/contexts/welcome-modal";
 import {
   AUTHENTICATED_APP_SHELL_BODY_CLASS,
   AUTHENTICATED_APP_SHELL_MAIN_CLASS,
@@ -35,6 +37,8 @@ export function AuthenticatedAppShell({
       <SessionAvatarInit initialProfileImagePath={initialProfileImagePath} />
       <NewShipmentModalProvider>
         <MockJourneyModalHost>
+          <WelcomeModalHost userId={userId} fullName={fullName} email={email}>
+          <OnboardingGate>
           <OrgWorkspaceRealtimeBridge />
             <div className={AUTHENTICATED_APP_SHELL_ROOT_CLASS}>
               <AuthenticatedTopNav
@@ -52,6 +56,8 @@ export function AuthenticatedAppShell({
               </div>
             </div>
           <FeedbackWidget />
+          </OnboardingGate>
+          </WelcomeModalHost>
         </MockJourneyModalHost>
       </NewShipmentModalProvider>
     </OrganizationWorkspaceProvider>

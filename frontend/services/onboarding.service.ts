@@ -6,6 +6,7 @@ import type {
 
 export interface OnboardingStatusResponse {
   hasOrgMembership: boolean;
+  organizationId: string | null;
   pendingTenantInvite: PendingTenantInviteSummary | null;
 }
 
@@ -16,6 +17,8 @@ export async function fetchOnboardingStatus(): Promise<OnboardingStatusResponse>
 export async function createOnboardingOrganization(input: {
   name: string;
   slug: string | null;
+  teamSize?: string | null;
+  monthlyShipmentVolume?: string | null;
 }): Promise<{ id: string }> {
   const data = await apiJson<{ id?: string }>("/api/onboarding/create-organization", {
     method: "POST",
@@ -23,6 +26,8 @@ export async function createOnboardingOrganization(input: {
     body: JSON.stringify({
       name: input.name.trim(),
       slug: input.slug?.trim() || null,
+      team_size: input.teamSize?.trim() || null,
+      monthly_shipment_volume: input.monthlyShipmentVolume?.trim() || null,
     }),
   });
   if (!data.id) throw new Error("Missing organization id");

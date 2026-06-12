@@ -24,6 +24,21 @@ export async function userHasOrganizationMembership(
   return (count ?? 0) > 0;
 }
 
+export async function fetchUserPrimaryOrganizationId(
+  admin: AdminClient,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await admin
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.organization_id as string | undefined) ?? null;
+}
+
 export async function fetchPendingTenantInviteByEmailLower(
   admin: AdminClient,
   emailLower: string,
@@ -182,14 +197,16 @@ export async function createPlatformTenantInvite(input: {
   return { ok: true, inviteId: inserted.id as string, invited: resolved.invited };
 }
 
-export async function completeTenantOnboardingOrganization(input: {
+export async function completeSignupOrganization(input: {
   admin: AdminClient;
   userId: string;
   emailLower: string;
   name: string;
   slugInput: string | null;
+  teamSize?: string | null;
+  monthlyShipmentVolume?: string | null;
 }): Promise<
-  | { ok: true; organizationId: string; inviteId: string }
+  | { ok: true; organizationId: string; inviteId: string | null }
   | { ok: false; error: string; status: number }
 > {
   if (await userHasOrganizationMembership(input.admin, input.userId)) {
@@ -197,12 +214,11 @@ export async function completeTenantOnboardingOrganization(input: {
   }
 
   const pending = await fetchPendingTenantInviteByEmailLower(input.admin, input.emailLower);
-  if (!pending) {
-    return { ok: false, error: "No pending tenant invite found for your account", status: 403 };
-  }
 
-  if (pending.user_id && pending.user_id !== input.userId) {
-    return { ok: false, error: "Tenant invite is assigned to a different user", status: 403 };
+  if (pending) {
+    if (pending.user_id && pending.user_id !== input.userId) {
+      return { ok: false, error: "Tenant invite is assigned to a different user", status: 403 };
+    }
   }
 
   const orgResult = await createOrganizationWithInitialAdmin({
@@ -210,10 +226,20 @@ export async function completeTenantOnboardingOrganization(input: {
     name: input.name,
     slugInput: input.slugInput,
     adminUserId: input.userId,
+    teamSize: input.teamSize,
+    monthlyShipmentVolume: input.monthlyShipmentVolume,
   });
 
   if (!orgResult.ok) {
     return { ok: false, error: orgResult.error, status: orgResult.status };
+  }
+
+  if (!pending) {
+    return {
+      ok: true,
+      organizationId: orgResult.organizationId,
+      inviteId: null,
+    };
   }
 
   const now = new Date().toISOString();
@@ -237,4 +263,23 @@ export async function completeTenantOnboardingOrganization(input: {
     organizationId: orgResult.organizationId,
     inviteId: pending.id,
   };
+}
+
+/** @deprecated Use completeSignupOrganization — kept for callers that expect invite-only errors. */
+export async function completeTenantOnboardingOrganization(input: {
+  admin: AdminClient;
+  userId: string;
+  emailLower: string;
+  name: string;
+  slugInput: string | null;
+}): Promise<
+  | { ok: true; organizationId: string; inviteId: string }
+  | { ok: false; error: string; status: number }
+> {
+  const result = await completeSignupOrganization(input);
+  if (!result.ok) return result;
+  if (!result.inviteId) {
+    return { ok: false, error: "No pending tenant invite found for your account", status: 403 };
+  }
+  return { ok: true, organizationId: result.organizationId, inviteId: result.inviteId };
 }

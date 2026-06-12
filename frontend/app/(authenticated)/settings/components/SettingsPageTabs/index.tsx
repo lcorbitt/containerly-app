@@ -2,6 +2,7 @@
 
 import { Building2, User } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { OrganizationSettingsPanel } from "../OrganizationSettingsPanel";
 import { ProfileImageSettings } from "../ProfileImageSettings";
 import { PasswordSettingsPanel } from "../PasswordSettingsPanel";
@@ -21,7 +22,6 @@ export type SettingsPageTabsProps = {
 export function SettingsPageTabs({
   email,
   fullName,
-  displayLabel,
   profileImagePath,
 }: SettingsPageTabsProps) {
   const { orgs, selectedOrgId, isSuperAdmin } = useOrganizationWorkspace();
@@ -34,10 +34,15 @@ export function SettingsPageTabs({
     selectedRow?.role ?? null,
   );
 
+  const searchParams = useSearchParams();
+  const urlWantsOrganizationTab = searchParams.get("tab") === "organization";
   const [tab, setTab] = useState<TabId>("personal");
 
-  const activeTab: TabId =
-    !showOrganizationTab && tab === "organization" ? "personal" : tab;
+  const activeTab: TabId = useMemo(() => {
+    if (!showOrganizationTab) return "personal";
+    if (urlWantsOrganizationTab) return "organization";
+    return tab;
+  }, [showOrganizationTab, urlWantsOrganizationTab, tab]);
 
   const personalSection = (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">

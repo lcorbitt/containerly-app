@@ -11,8 +11,12 @@ import {
   validateFormValues,
 } from "@/components/ShipmentCommercialFormFields/utils";
 import type { ShipmentCommercialFormSource } from "@/components/ShipmentCommercialFormFields/types";
+import { useConfirm } from "@/contexts/confirm-dialog";
 import { updateCommercialShipment } from "@/services/shipment.service";
 import {
+  EDIT_SHIPMENT_DETAILS_CONFIRM_DESCRIPTION,
+  EDIT_SHIPMENT_DETAILS_CONFIRM_LABEL,
+  EDIT_SHIPMENT_DETAILS_CONFIRM_TITLE,
   EDIT_SHIPMENT_DETAILS_MODAL_DESCRIPTION,
   EDIT_SHIPMENT_DETAILS_MODAL_SAVE_LABEL,
   EDIT_SHIPMENT_DETAILS_MODAL_TITLE,
@@ -33,6 +37,7 @@ export function EditShipmentDetailsModal({
   source: ShipmentCommercialFormSource;
   onSaved?: () => void;
 }) {
+  const { confirm } = useConfirm();
   const [values, setValues] = useState(emptyFormValues);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -52,6 +57,14 @@ export function EditShipmentDetailsModal({
       setError(validationError);
       return;
     }
+
+    const confirmed = await confirm({
+      title: EDIT_SHIPMENT_DETAILS_CONFIRM_TITLE,
+      description: EDIT_SHIPMENT_DETAILS_CONFIRM_DESCRIPTION,
+      confirmLabel: EDIT_SHIPMENT_DETAILS_CONFIRM_LABEL,
+      cancelLabel: "Cancel",
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     try {

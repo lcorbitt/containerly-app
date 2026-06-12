@@ -35,8 +35,8 @@ export const MARKETING_FOOTER_LINK_GROUPS: readonly MarketingFooterLinkGroup[] =
   {
     title: "App",
     links: [
-      { href: "/login", label: "Sign in" },
-      { href: "/login", label: "Get started" },
+      { href: "/login", label: "Sign In" },
+      { href: "/signup", label: "Get Started" },
     ],
   },
 ];

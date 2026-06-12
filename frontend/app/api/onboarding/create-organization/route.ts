@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { completeTenantOnboardingOrganization } from "@/services/tenant-invite.server";
+import { completeSignupOrganization } from "@/services/tenant-invite.server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -17,7 +17,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Account email not found" }, { status: 400 });
   }
 
-  let body: { name?: string; slug?: string | null };
+  let body: {
+    name?: string;
+    slug?: string | null;
+    team_size?: string | null;
+    monthly_shipment_volume?: string | null;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -31,6 +36,14 @@ export async function POST(request: Request) {
 
   const slugInput =
     typeof body.slug === "string" && body.slug.trim() !== "" ? body.slug.trim() : null;
+  const teamSize =
+    typeof body.team_size === "string" && body.team_size.trim() !== ""
+      ? body.team_size.trim()
+      : null;
+  const monthlyShipmentVolume =
+    typeof body.monthly_shipment_volume === "string" && body.monthly_shipment_volume.trim() !== ""
+      ? body.monthly_shipment_volume.trim()
+      : null;
 
   let admin;
   try {
@@ -42,12 +55,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await completeTenantOnboardingOrganization({
+  const result = await completeSignupOrganization({
     admin,
     userId: user.id,
     emailLower,
     name,
     slugInput,
+    teamSize,
+    monthlyShipmentVolume,
   });
 
   if (!result.ok) {

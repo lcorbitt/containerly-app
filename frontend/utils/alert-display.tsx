@@ -11,7 +11,10 @@ import {
   Mail,
   MailOpen,
   MessageSquareReply,
+  Package,
+  Pencil,
   RefreshCw,
+  ShieldAlert,
   ScrollText,
   Send,
   User,
@@ -69,6 +72,12 @@ export function alertTypeIconConfig(alertType: string): IconConfig {
       return { Icon: AlertTriangle, className: "text-amber-600 dark:text-amber-400" };
     case "DRAFTS_PUBLISHED":
       return { Icon: FileUp, className: "text-emerald-600 dark:text-emerald-400" };
+    case "SHIPMENT_EDITED":
+      return { Icon: Pencil, className: "text-blue-600 dark:text-blue-400" };
+    case "RISK_STATUS_UPDATED":
+      return { Icon: ShieldAlert, className: "text-amber-600 dark:text-amber-400" };
+    case "SHIPMENT_CREATED":
+      return { Icon: Package, className: "text-teal-600 dark:text-teal-400" };
     case "MESSAGE_TEAM":
       return { Icon: MessageSquareReply, className: "text-indigo-600 dark:text-indigo-400" };
     case "ASSIGNMENT_REMOVED":

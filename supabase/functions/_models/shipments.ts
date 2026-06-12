@@ -118,7 +118,9 @@ export async function fetchShipmentInOrganization(
 ) {
   return client
     .from("shipments")
-    .select("id, risk_level")
+    .select(
+      "id, risk_level, order_number, carrier_booking_number, container_number, customer_name, consignee, country, port_of_loading, port_of_destination, estimated_departure_at, estimated_arrival_at, freight_booking_carrier, vessel, voyage, health_certificate_no, trade_terms, bill_of_lading, shipping_line, physical_mail_tracking_number, physical_mail_sent_at, workflow_status",
+    )
     .eq("id", shipmentId)
     .eq("organization_id", organizationId)
     .maybeSingle();

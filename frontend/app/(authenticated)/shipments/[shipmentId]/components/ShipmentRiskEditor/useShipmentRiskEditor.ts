@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useConfirm } from "@/contexts/confirm-dialog";
 import { useToast } from "@/contexts/toast";
+import {
+  SHIPMENT_RISK_SAVE_CONFIRM_DESCRIPTION,
+  SHIPMENT_RISK_SAVE_CONFIRM_LABEL,
+  SHIPMENT_RISK_SAVE_CONFIRM_TITLE,
+} from "./ShipmentRiskMessageModal/constants";
 import { useUpdateShipmentRiskMutation } from "@/hooks/mutations/useShipments";
 import { shipmentRiskSelectValue } from "./utils";
 import type { ShipmentRiskEditorProps, ShipmentRiskSelectValue } from "./types";
@@ -14,6 +20,7 @@ export function useShipmentRiskEditor({
   primaryCarrierStatus,
   onSaved,
 }: ShipmentRiskEditorProps) {
+  const { confirm } = useConfirm();
   const { toast } = useToast();
   const mutation = useUpdateShipmentRiskMutation();
 
@@ -70,12 +77,20 @@ export function useShipmentRiskEditor({
   }, []);
 
   const saveMessageFromModal = useCallback(async () => {
+    const confirmed = await confirm({
+      title: SHIPMENT_RISK_SAVE_CONFIRM_TITLE,
+      description: SHIPMENT_RISK_SAVE_CONFIRM_DESCRIPTION,
+      confirmLabel: SHIPMENT_RISK_SAVE_CONFIRM_LABEL,
+      cancelLabel: "Cancel",
+    });
+    if (!confirmed) return;
+
     const ok = await persistRisk(modalRiskSelect, modalMessage);
     if (ok) {
       setMessageModalOpen(false);
       setModalMessage("");
     }
-  }, [modalMessage, modalRiskSelect, persistRisk]);
+  }, [confirm, modalMessage, modalRiskSelect, persistRisk]);
 
   return {
     displayRisk,

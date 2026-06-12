@@ -234,6 +234,8 @@ export async function createOrganizationWithInitialAdmin(input: {
   name: string;
   slugInput: string | null;
   adminUserId: string;
+  teamSize?: string | null;
+  monthlyShipmentVolume?: string | null;
 }): Promise<{ ok: true; organizationId: string } | { ok: false; error: string; status: number }> {
   const name = input.name.trim();
   if (!name) {
@@ -248,9 +250,23 @@ export async function createOrganizationWithInitialAdmin(input: {
     return { ok: false, error: "Invalid slug", status: 400 };
   }
 
+  const teamSize =
+    typeof input.teamSize === "string" && input.teamSize.trim() !== ""
+      ? input.teamSize.trim()
+      : null;
+  const monthlyShipmentVolume =
+    typeof input.monthlyShipmentVolume === "string" && input.monthlyShipmentVolume.trim() !== ""
+      ? input.monthlyShipmentVolume.trim()
+      : null;
+
   const { data: org, error: orgErr } = await input.admin
     .from("organizations")
-    .insert({ name, slug: slugFinal })
+    .insert({
+      name,
+      slug: slugFinal,
+      team_size: teamSize,
+      monthly_shipment_volume: monthlyShipmentVolume,
+    })
     .select("id")
     .single();
 

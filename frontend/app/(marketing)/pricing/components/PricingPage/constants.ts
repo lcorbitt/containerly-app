@@ -14,6 +14,8 @@ export const SALES_EMAIL_HREF = "mailto:sales@containerly.com?subject=Containerl
 
 export const LOGIN_HREF = "/login";
 
+export const SIGNUP_HREF = "/signup";
+
 export const BILLING_CYCLE_OPTIONS: readonly { id: BillingCycle; label: string }[] = [
   { id: "monthly", label: "Monthly" },
   { id: "annual", label: "Annual" },
@@ -29,7 +31,7 @@ export const pricingTiers: readonly PricingTier[] = [
     annualPrice: 0,
     priceUnit: "forever",
     ctaLabel: "Start Free",
-    ctaHref: LOGIN_HREF,
+    ctaHref: SIGNUP_HREF,
     highlighted: false,
     features: [
       "Up to 3 teammates",
@@ -48,7 +50,7 @@ export const pricingTiers: readonly PricingTier[] = [
     annualPrice: 39,
     priceUnit: "/ seat / mo",
     ctaLabel: "Start Free",
-    ctaHref: LOGIN_HREF,
+    ctaHref: SIGNUP_HREF,
     highlighted: true,
     badge: "Most popular",
     features: [

@@ -63,8 +63,8 @@ export function useSetPasswordForm({ initialFlow }: UseSetPasswordFormInput) {
 
       try {
         const status = await fetchOnboardingStatus();
-        if (status.pendingTenantInvite && !status.hasOrgMembership) {
-          router.push("/onboarding/create-organization");
+        if (!status.hasOrgMembership) {
+          router.push("/signup?step=2");
           router.refresh();
           return;
         }

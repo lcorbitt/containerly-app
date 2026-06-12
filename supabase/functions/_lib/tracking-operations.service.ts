@@ -24,10 +24,9 @@ import {
   updateTrackingRequestStatus,
 } from "@models/tracking_requests.ts";
 import { normalizeContainerNumber } from "@supabase-shared/container-number.ts";
-import {
-  notifyOperatorsTrackingLinked,
-  notifyOperatorsTrackingSyncFailed,
-} from "@supabase-shared/notification-workflow.service.ts";
+import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
+import { notifyOperatorsTrackingSyncFailed } from "@supabase-shared/notification-workflow.service.ts";
+import { notifyForShipmentActivityEvent } from "@supabase-shared/shipment-activity-notifications.service.ts";
 import { resolveShippingLineForTrackingRequest, syncContainerByNumber } from "@supabase-shared/tracking-sync.ts";
 import { recordShipmentCreated } from "@supabase-shared/document-workflow.service.ts";
 import type {
@@ -103,7 +102,7 @@ export async function createTrackingRequest(
       if (shipErr) throw shipErr;
       if (!ship?.id) throw new Error("Could not create shipment for BOL batch");
       shipmentId = ship.id as string;
-      await recordShipmentCreated(userClient, shipmentId, userId, {
+      await recordShipmentCreated(userClient, input.organization_id, shipmentId, userId, {
         order_number: booking,
         container_number: containerNum,
         bill_of_lading: bol,
@@ -139,7 +138,7 @@ export async function createTrackingRequest(
     if (shipErr) throw shipErr;
     if (!ship?.id) throw new Error("Could not create shipment");
     shipmentId = ship.id as string;
-    await recordShipmentCreated(userClient, shipmentId, userId, {
+    await recordShipmentCreated(userClient, input.organization_id, shipmentId, userId, {
       order_number: orderNum,
       container_number: containerNum,
       carrier_booking_number: booking,
@@ -221,12 +220,24 @@ export async function createTrackingRequest(
 
   const skipPerContainerLinkedAlert = Boolean(groupId && bol);
   if (!skipPerContainerLinkedAlert) {
+    const containerNumber = input.container_number.trim();
+    const trackingLinkedMetadata = { container_number: containerNumber };
     try {
-      await notifyOperatorsTrackingLinked(notifyClient, {
+      await insertShipmentActivityEvent(userClient, {
+        shipment_id: shipmentId,
+        event_type: "tracking_linked",
+        body: `Carrier tracking linked for container ${containerNumber}`,
+        actor_kind: "operator",
+        actor_user_id: userId,
+        metadata: trackingLinkedMetadata,
+      });
+      await notifyForShipmentActivityEvent({
+        client: notifyClient,
         organizationId: input.organization_id,
         shipmentId,
         actorUserId: userId,
-        containerNumber: input.container_number.trim(),
+        eventType: "tracking_linked",
+        metadata: trackingLinkedMetadata,
       });
     } catch {
       /* best-effort */

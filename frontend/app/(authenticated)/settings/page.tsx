@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { SettingsPageTabs } from "./components/SettingsPageTabs";
 import { createClient } from "@/lib/supabase/server";
@@ -45,12 +46,14 @@ export default async function SettingsPage() {
         Personal profile and, for organization admins, branding and team access.
       </p>
 
-      <SettingsPageTabs
-        email={email}
-        fullName={fullName}
-        displayLabel={displayLabel}
-        profileImagePath={profileImagePath}
-      />
+      <Suspense fallback={<div className="mt-8 text-sm text-zinc-500">Loading settings…</div>}>
+        <SettingsPageTabs
+          email={email}
+          fullName={fullName}
+          displayLabel={displayLabel}
+          profileImagePath={profileImagePath}
+        />
+      </Suspense>
     </div>
   );
 }

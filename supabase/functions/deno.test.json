@@ -1,6 +1,7 @@
 {
   "imports": {
     "@shared/": "./_wire/",
+    "@shared/in-app-event-taxonomy": "./_wire/in-app-event-taxonomy.ts",
     "@supabase-shared/": "./_lib/",
     "@models/": "./_models/",
     "@models/profiles.ts": "./_lib/testing/mocks/profiles.mock.ts",

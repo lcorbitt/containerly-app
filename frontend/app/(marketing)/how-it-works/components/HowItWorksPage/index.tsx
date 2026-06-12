@@ -93,7 +93,7 @@ export function HowItWorksPage() {
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Link
-                  href="/login"
+                  href="/signup"
                   className="inline-flex items-center justify-center rounded-full border border-primary-orange/70 bg-primary-orange px-6 py-3 text-sm font-semibold text-white shadow-sm transition-[box-shadow,transform,background-color] hover:bg-primary-orange/90 active:scale-[0.98]"
                 >
                   {HOW_IT_WORKS_HERO.primaryCta}

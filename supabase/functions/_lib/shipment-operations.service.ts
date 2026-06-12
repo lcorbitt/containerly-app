@@ -13,6 +13,12 @@ import {
 } from "@models/shipments.ts";
 import { insertShipmentLines, upsertShipmentLines } from "@models/shipment_lines.ts";
 import { recordShipmentCreated } from "@supabase-shared/document-workflow.service.ts";
+import { notifyForShipmentActivityEvent } from "@supabase-shared/shipment-activity-notifications.service.ts";
+import { recordShipmentEdited } from "@supabase-shared/shipment-edit-activity.service.ts";
+import {
+  buildCommercialEditChanges,
+  isMailOrWorkflowOnlyUpdate,
+} from "@supabase-shared/shipment-edit-activity.utils.ts";
 import type {
   CreateShipmentBody,
   CreateShipmentResponse,
@@ -102,7 +108,7 @@ export async function createCommercialShipment(
   );
   if (lineErr) return { ok: false, status: 500, error: lineErr.message };
 
-  await recordShipmentCreated(userClient, shipmentId, userId, {
+  await recordShipmentCreated(userClient, orgId, shipmentId, userId, {
     order_number: input.header.order_number.trim(),
     customer_name: input.header.customer_name?.trim() || null,
     container_number: input.header.container_number.trim(),
@@ -199,6 +205,13 @@ export async function updateCommercialShipment(
     updateFields.workflow_status = input.workflow_status;
   }
 
+  const commercialChanges = buildCommercialEditChanges(
+    existing as Record<string, unknown>,
+    updateFields,
+  );
+  const shouldRecordCommercialEdit =
+    commercialChanges.length > 0 && !isMailOrWorkflowOnlyUpdate(updateFields);
+
   if (Object.keys(updateFields).length > 0) {
     const { error: upErr } = await updateShipmentCommercial(userClient, shipmentId, updateFields);
     if (upErr) return { ok: false, status: 500, error: upErr.message };
@@ -213,6 +226,21 @@ export async function updateCommercialShipment(
     );
     if (lineErr) return { ok: false, status: 500, error: lineErr.message };
     lineIds = ids ?? [];
+  }
+
+  if (shouldRecordCommercialEdit) {
+    try {
+      await recordShipmentEdited(
+        userClient,
+        orgId,
+        shipmentId,
+        userId,
+        commercialChanges,
+      );
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Could not record shipment edit";
+      return { ok: false, status: 500, error: message };
+    }
   }
 
   return { ok: true, shipment_id: shipmentId, line_ids: lineIds };
@@ -282,19 +310,33 @@ export async function updateShipmentRisk(
   });
   if (upErr) return { ok: false, status: 500, error: upErr.message };
 
+  const riskMetadata = {
+    risk_level: level,
+    risk_message: message,
+    previous_risk_level: previousLevel ?? null,
+  };
   const { error: activityErr } = await insertShipmentActivityEvent(userClient, {
     shipment_id: shipmentId,
     event_type: "risk_status_updated",
     body: `Risk status updated to ${riskLabel}`,
     actor_kind: "operator",
     actor_user_id: userId,
-    metadata: {
-      risk_level: level,
-      risk_message: message,
-      previous_risk_level: previousLevel ?? null,
-    },
+    metadata: riskMetadata,
   });
   if (activityErr) return { ok: false, status: 500, error: activityErr.message };
+
+  try {
+    await notifyForShipmentActivityEvent({
+      client: userClient,
+      organizationId: orgId,
+      shipmentId,
+      actorUserId: userId,
+      eventType: "risk_status_updated",
+      metadata: riskMetadata,
+    });
+  } catch {
+    /* best-effort */
+  }
 
   return { ok: true, shipment_id: shipmentId };
 }

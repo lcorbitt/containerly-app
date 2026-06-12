@@ -31,6 +31,24 @@ export function subscribeToAuthState(
   return () => data.subscription.unsubscribe();
 }
 
+export type OAuthProvider = "google" | "azure";
+
+/**
+ * OAuth redirect chain: provider (Google/Azure) → Supabase Auth → `/auth/callback` (PKCE) → `nextPath`.
+ */
+export async function signInWithOAuth(
+  provider: OAuthProvider,
+  nextPath = "/dashboard",
+): Promise<{ error: Error | null }> {
+  const supabase = createClient();
+  const redirectTo = authCallbackUrl(nextPath);
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: redirectTo ? { redirectTo } : undefined,
+  });
+  return { error: error ? new Error(error.message) : null };
+}
+
 export async function signInWithPassword(email: string, password: string): Promise<{ error: Error | null }> {
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -41,16 +59,21 @@ export async function signUpWithEmail(input: {
   email: string;
   password: string;
   fullName?: string;
+  referralSource?: string;
 }): Promise<{
   error: Error | null;
   session: { access_token: string } | null;
 }> {
   const supabase = createClient();
   const trimmedName = input.fullName?.trim() ?? "";
+  const referralSource = input.referralSource?.trim() ?? "";
+  const metadata: Record<string, string> = {};
+  if (trimmedName !== "") metadata.full_name = trimmedName;
+  if (referralSource !== "") metadata.referral_source = referralSource;
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
-    options: trimmedName !== "" ? { data: { full_name: trimmedName } } : undefined,
+    options: Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
   });
   if (error) return { error: new Error(error.message), session: null };
   return { error: null, session: data.session };

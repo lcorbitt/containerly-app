@@ -288,6 +288,40 @@ export async function notifyShipmentStakeholdersInApp(
   return recipients;
 }
 
+export async function notifyCustomersWithPortalAccess(
+  client: SupabaseClient,
+  args: ShipmentAlertContext & {
+    alertType: string;
+    message: string;
+    actorUserId?: string | null;
+    details?: Record<string, unknown> | null;
+  },
+): Promise<void> {
+  const { data: customers, error } = await client
+    .from("shipment_customer_access")
+    .select("customer_user_id")
+    .eq("shipment_id", args.shipmentId)
+    .is("revoked_at", null);
+  if (error) throw error;
+
+  for (const row of customers ?? []) {
+    const customerUserId = row.customer_user_id as string | null;
+    if (!customerUserId) continue;
+    if (args.actorUserId && customerUserId === args.actorUserId) continue;
+    await insertInAppNotification(client, {
+      organization_id: args.organizationId,
+      shipment_id: args.shipmentId,
+      container_id: args.containerId ?? null,
+      alert_type: args.alertType,
+      severity: "info",
+      message: args.message,
+      recipient_user_id: customerUserId,
+      actor_user_id: args.actorUserId ?? null,
+      details: args.details ?? null,
+    });
+  }
+}
+
 export async function notifyOperatorsCustomerAccessGranted(
   client: SupabaseClient,
   args: ShipmentAlertContext & {

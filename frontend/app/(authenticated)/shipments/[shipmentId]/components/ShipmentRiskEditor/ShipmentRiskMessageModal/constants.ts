@@ -29,3 +29,10 @@ export const SHIPMENT_RISK_MESSAGE_MODAL_CANCEL_CLASS =
 
 export const SHIPMENT_RISK_MESSAGE_MODAL_SAVE_CLASS =
   "rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900";
+
+export const SHIPMENT_RISK_SAVE_CONFIRM_TITLE = "Save Risk Changes?";
+
+export const SHIPMENT_RISK_SAVE_CONFIRM_DESCRIPTION =
+  "Saving will add a timeline event and notify assignees and customers with portal access.";
+
+export const SHIPMENT_RISK_SAVE_CONFIRM_LABEL = "Save Changes";

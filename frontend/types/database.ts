@@ -23,6 +23,10 @@ export type Organization = {
   slug: string;
   /** Object path in bucket `org-images` (first segment = organization id). */
   org_image_path?: string | null;
+  /** Self-reported team size band from sign-up onboarding. */
+  team_size?: string | null;
+  /** Self-reported monthly shipment volume band from sign-up onboarding. */
+  monthly_shipment_volume?: string | null;
   created_at: string;
   updated_at: string;
 };

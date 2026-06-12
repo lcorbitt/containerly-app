@@ -6,7 +6,7 @@ import {
 } from "./constants";
 import type { LoginPageProps } from "./types";
 
-export function LoginPage({ initialMode, next }: LoginPageProps) {
+export function LoginPage({ next, initialError = null }: LoginPageProps) {
   return (
     <div className={LOGIN_PAGE_CLASS}>
       <div className={LOGIN_PAGE_BACKGROUND_CLASS} aria-hidden>
@@ -15,7 +15,7 @@ export function LoginPage({ initialMode, next }: LoginPageProps) {
       </div>
 
       <div className={LOGIN_PAGE_INNER_CLASS}>
-        <LoginAuthPanel initialMode={initialMode} next={next} />
+        <LoginAuthPanel next={next} initialError={initialError} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { listContainersForShipment } from "@models/containers.ts";
 import { insertShipmentActivityEvent } from "@models/shipment_activity_events.ts";
+import { notifyForShipmentActivityEvent } from "@supabase-shared/shipment-activity-notifications.service.ts";
 import { fetchActiveAccessId } from "@models/shipment_customer_access.ts";
 import { fetchShipmentAssignee, updateShipmentCommercial } from "@models/shipments.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
@@ -245,6 +246,7 @@ export async function publishDraftDocuments(
 
 export async function recordShipmentCreated(
   client: SupabaseClient,
+  organizationId: string,
   shipmentId: string,
   userId: string,
   metadata: Record<string, unknown>,
@@ -257,6 +259,19 @@ export async function recordShipmentCreated(
     actor_user_id: userId,
     metadata,
   });
+
+  try {
+    await notifyForShipmentActivityEvent({
+      client,
+      organizationId,
+      shipmentId,
+      actorUserId: userId,
+      eventType: "shipment_created",
+      metadata,
+    });
+  } catch {
+    /* best-effort */
+  }
 }
 
 export async function recordOriginalsMailed(
