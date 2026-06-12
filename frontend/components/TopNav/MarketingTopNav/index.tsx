@@ -25,7 +25,7 @@ import {
 import { useMarketingTopNav } from "./useMarketingTopNav";
 
 export function MarketingTopNav() {
-  const { hideMarketingLinks, mobileOpen, toggleMobile, closeMobile } = useMarketingTopNav();
+  const { mobileOpen, toggleMobile, closeMobile } = useMarketingTopNav();
   const navLinks = withoutPricingLinks(MARKETING_TOP_NAV_LINKS);
 
   return (
@@ -36,17 +36,13 @@ export function MarketingTopNav() {
             <NavBrand href="/" variant="marketing" />
           </div>
 
-          {!hideMarketingLinks ? (
-            <nav className={MARKETING_TOP_NAV_DESKTOP_NAV_CLASS} aria-label="Marketing">
-              {navLinks.map(({ href, label }) => (
-                <Link key={href} href={href} className={MARKETING_TOP_NAV_LINK_CLASS}>
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          ) : (
-            <div className="hidden flex-1 md:block" aria-hidden />
-          )}
+          <nav className={MARKETING_TOP_NAV_DESKTOP_NAV_CLASS} aria-label="Marketing">
+            {navLinks.map(({ href, label }) => (
+              <Link key={href} href={href} className={MARKETING_TOP_NAV_LINK_CLASS}>
+                {label}
+              </Link>
+            ))}
+          </nav>
 
           <div className={MARKETING_TOP_NAV_RIGHT_CLUSTER_CLASS}>
             <div className={MARKETING_TOP_NAV_DESKTOP_ACTIONS_CLASS}>
@@ -76,21 +72,17 @@ export function MarketingTopNav() {
       {mobileOpen ? (
         <div className={MARKETING_TOP_NAV_MOBILE_OVERLAY_CLASS}>
           <div className="flex flex-1 flex-col gap-1 px-4 py-6">
-            {!hideMarketingLinks
-              ? navLinks.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={MARKETING_TOP_NAV_MOBILE_LINK_CLASS}
-                    onClick={closeMobile}
-                  >
-                    {label}
-                  </Link>
-                ))
-              : null}
-            {!hideMarketingLinks ? (
-              <hr className="my-4 border-zinc-200 dark:border-white/10" />
-            ) : null}
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={MARKETING_TOP_NAV_MOBILE_LINK_CLASS}
+                onClick={closeMobile}
+              >
+                {label}
+              </Link>
+            ))}
+            <hr className="my-4 border-zinc-200 dark:border-white/10" />
             <Link
               href={MARKETING_TOP_NAV_LOGIN_PATH}
               className={MARKETING_TOP_NAV_MOBILE_LINK_CLASS}

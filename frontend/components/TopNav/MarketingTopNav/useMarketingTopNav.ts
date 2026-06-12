@@ -1,12 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MARKETING_TOP_NAV_LOGIN_PATH } from "./constants";
 
 export function useMarketingTopNav() {
-  const pathname = usePathname();
-  const hideMarketingLinks = pathname === MARKETING_TOP_NAV_LOGIN_PATH;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -22,7 +18,6 @@ export function useMarketingTopNav() {
   const closeMobile = () => setMobileOpen(false);
 
   return {
-    hideMarketingLinks,
     mobileOpen,
     toggleMobile,
     closeMobile,

@@ -1,6 +1,7 @@
 export const SIGNUP_ACCOUNT_REFERRAL_OPTIONS = [
   { value: "", label: "Select an option (optional)" },
   { value: "google_search", label: "Google Search" },
+  { value: "chatgpt", label: "ChatGPT" },
   { value: "social_media", label: "Social Media" },
   { value: "referral", label: "Referral" },
   { value: "trade_show", label: "Trade Show / Event" },

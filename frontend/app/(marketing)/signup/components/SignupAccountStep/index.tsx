@@ -4,6 +4,11 @@ import Link from "next/link";
 import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { LoginOAuthButtons } from "@/app/(marketing)/login/components/LoginOAuthButtons";
+import {
+  LOGIN_AUTH_PANEL_MODE_SWITCH_BUTTON_CLASS,
+  LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS,
+  LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS,
+} from "@/app/(marketing)/login/components/LoginAuthPanel/constants";
 import { TextInput } from "@/components/TextInput";
 import {
   LOGIN_FORM_BLURRED_CONTENT_CLASS,
@@ -187,12 +192,14 @@ export function SignupAccountStep({ onContinue, initialError = null }: SignupAcc
 
         <LoginOAuthButtons next={OAUTH_NEXT} disabled={step.loading} initialError={initialError} />
 
-        <p className={`${LOGIN_FORM_FOOTER_CLASS} mt-4`}>
-          {SIGNUP_ACCOUNT_SIGN_IN_PROMPT}{" "}
-          <Link href="/login" className={LOGIN_FORM_FOOTER_LINK_CLASS}>
+        <div className={LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS}>
+          <span className={LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS}>
+            {SIGNUP_ACCOUNT_SIGN_IN_PROMPT}
+          </span>
+          <Link href="/login" className={LOGIN_AUTH_PANEL_MODE_SWITCH_BUTTON_CLASS}>
             {SIGNUP_ACCOUNT_SIGN_IN_LABEL}
           </Link>
-        </p>
+        </div>
 
         <p className={LOGIN_FORM_FOOTER_CLASS}>
           <Link href="/" className={LOGIN_FORM_FOOTER_LINK_CLASS}>
