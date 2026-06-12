@@ -28,6 +28,7 @@ export function WelcomeModalHost({ userId, fullName, email, children }: WelcomeM
         onClose={modal.close}
         onAddShipment={modal.onAddShipment}
         onInviteTeam={modal.onInviteTeam}
+        onOrganizationSettings={modal.onOrganizationSettings}
       />
     </>
   );

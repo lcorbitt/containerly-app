@@ -37,6 +37,7 @@ import {
   SIGNUP_ACCOUNT_SIGN_IN_PROMPT,
   SIGNUP_ACCOUNT_SUBMIT_LABEL,
 } from "./constants";
+import { SignupWizardBackButton } from "../SignupWizard/SignupWizardBackButton";
 import type { SignupAccountStepProps } from "./types";
 import { useSignupAccountStep } from "./useSignupAccountStep";
 
@@ -44,6 +45,7 @@ const OAUTH_NEXT = "/signup?step=2";
 
 export function SignupAccountStep({
   onContinue,
+  onBack,
   initialError = null,
 }: SignupAccountStepProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +56,8 @@ export function SignupAccountStep({
     <div className={`${LOGIN_FORM_SHELL_CLASS} mt-6`}>
       <div className={step.loading ? LOGIN_FORM_BLURRED_CONTENT_CLASS : ""}>
         <form onSubmit={step.submit} className={LOGIN_FORM_FIELDS_CLASS} aria-busy={step.loading}>
+          <SignupWizardBackButton onClick={onBack} disabled={step.loading} />
+
           <div className={LOGIN_FORM_FIELD_GROUP_CLASS}>
             <User className={LOGIN_FORM_FIELD_ICON_CLASS} strokeWidth={1.75} aria-hidden />
             <TextInput

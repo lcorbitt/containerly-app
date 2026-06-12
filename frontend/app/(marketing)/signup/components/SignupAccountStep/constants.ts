@@ -4,7 +4,7 @@ import {
 } from "../SignupWizard/constants";
 
 export const SIGNUP_ACCOUNT_REFERRAL_OPTIONS = [
-  { value: "", label: "Select an option (optional)" },
+  { value: "", label: "Select an Option" },
   { value: "google_search", label: "Google Search" },
   { value: "chatgpt", label: "ChatGPT" },
   { value: "social_media", label: "Social Media" },

@@ -51,6 +51,7 @@ export function SignupWizard({ initialStep, initialError = null }: SignupWizardP
       {wizard.step === 1 ? (
         <SignupAccountStep
           onContinue={() => wizard.goToStep(2)}
+          onBack={wizard.goBackToLogin}
           initialError={initialError}
         />
       ) : null}
@@ -58,7 +59,10 @@ export function SignupWizard({ initialStep, initialError = null }: SignupWizardP
       {wizard.step === 2 ? (
         <SignupOrganizationStep
           pendingInvite={wizard.pendingInvite}
-          onComplete={wizard.onOrganizationCreated}
+          organizationId={wizard.organizationId}
+          onOrganizationIdReady={wizard.onOrganizationIdReady}
+          onComplete={wizard.onOrganizationStepComplete}
+          onBack={wizard.goBack}
         />
       ) : null}
 
@@ -67,6 +71,7 @@ export function SignupWizard({ initialStep, initialError = null }: SignupWizardP
           organizationId={wizard.organizationId}
           onSkip={wizard.finishSignup}
           onComplete={wizard.finishSignup}
+          onBack={wizard.goBack}
         />
       ) : null}
     </div>

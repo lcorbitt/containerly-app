@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/contexts/toast";
-import { assertOrgImageFile } from "@/utils/org-image";
 import {
-  getOrgImagePublicUrlBrowser,
   clearOrganizationImagePathAndRemoveStorage,
   fetchOrganizationImagePath,
+  getOrgImagePublicUrlBrowser,
   uploadOrganizationImageAndSetPath,
 } from "@/services/organization.service";
+import { assertOrgImageFile } from "@/utils/org-image";
 
 export function useOrganizationImageSettings({
   organizationId,
@@ -25,6 +25,10 @@ export function useOrganizationImageSettings({
   const inputRef = useRef<HTMLInputElement>(null);
   const [path, setPath] = useState<string | null>(initialOrgImagePath);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setPath(initialOrgImagePath);
+  }, [initialOrgImagePath, organizationId]);
 
   const publicUrl = getOrgImagePublicUrlBrowser(path);
   const initials = (organizationName.trim().slice(0, 2) || "?").toUpperCase();

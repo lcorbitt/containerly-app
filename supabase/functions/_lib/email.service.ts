@@ -1,6 +1,8 @@
 /**
- * Transactional email via Resend (or console log in local dev when RESEND_API_KEY unset).
+ * Transactional email via Resend (or Mailpit SMTP in local dev when RESEND_API_KEY unset).
  */
+
+import { sendViaDevSmtp } from "@supabase-shared/dev-smtp.ts";
 
 export type SendEmailInput = {
   to: string;
@@ -11,16 +13,26 @@ export type SendEmailInput = {
 
 export type SendEmailResult = { ok: true; providerId?: string } | { ok: false; error: string };
 
+function logDevEmailFallback(input: SendEmailInput): void {
+  console.log("[email:dev]", {
+    to: input.to,
+    subject: input.subject,
+    text: input.text ?? input.html.replace(/<[^>]+>/g, " "),
+  });
+}
+
 export async function sendTransactionalEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY")?.trim();
   const from = Deno.env.get("RESEND_FROM_EMAIL")?.trim() ?? "Containerly <notifications@containerly.app>";
 
   if (!apiKey) {
-    console.log("[email:dev]", {
-      to: input.to,
-      subject: input.subject,
-      text: input.text ?? input.html.replace(/<[^>]+>/g, " "),
-    });
+    const smtpResult = await sendViaDevSmtp({ ...input, from });
+    if (smtpResult.ok) {
+      console.log("[email:dev-smtp] sent", { to: input.to, subject: input.subject });
+      return { ok: true };
+    }
+    console.error("[email:dev-smtp] send failed", smtpResult.error);
+    logDevEmailFallback(input);
     return { ok: true };
   }
 

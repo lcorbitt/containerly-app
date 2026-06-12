@@ -80,11 +80,6 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
 
     if (hasOrgMembership && step === 1) {
       router.replace("/signup?step=3");
-      return;
-    }
-
-    if (hasOrgMembership && step === 2) {
-      router.replace("/signup?step=3");
     }
   }, [
     sessionChecked,
@@ -97,15 +92,33 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
 
   const goToStep = useCallback(
     async (next: SignupWizardStep) => {
-      const signedIn = await refreshSession();
-      if (!signedIn) return;
+      if (next > 1) {
+        const signedIn = await refreshSession();
+        if (!signedIn) return;
+      }
       router.push(signupStepHref(next));
       router.refresh();
     },
     [router, refreshSession],
   );
 
-  const onOrganizationCreated = useCallback(
+  const goBack = useCallback(() => {
+    if (step <= 1) return;
+    const previous = (step - 1) as SignupWizardStep;
+    router.push(signupStepHref(previous));
+    router.refresh();
+  }, [step, router]);
+
+  const goBackToLogin = useCallback(() => {
+    router.push("/login");
+  }, [router]);
+
+  const onOrganizationIdReady = useCallback((orgId: string) => {
+    storeSignupOrganizationId(orgId);
+    setCreatedOrgId(orgId);
+  }, []);
+
+  const onOrganizationStepComplete = useCallback(
     (orgId: string) => {
       storeSignupOrganizationId(orgId);
       setCreatedOrgId(orgId);
@@ -123,13 +136,16 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   return {
     step,
     goToStep,
+    goBack,
+    goBackToLogin,
     hasSession,
     sessionChecked,
     statusLoading: statusQuery.isLoading,
     pendingInvite: statusQuery.data?.pendingTenantInvite ?? null,
     hasOrgMembership,
     organizationId,
-    onOrganizationCreated,
+    onOrganizationIdReady,
+    onOrganizationStepComplete,
     finishSignup,
   };
 }

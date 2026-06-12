@@ -4,8 +4,10 @@ project_id = "containerly-app"
 # -----------------------------------------------------------------------------
 # Local email (Mailpit)
 # -----------------------------------------------------------------------------
-# After `supabase start`, open http://127.0.0.1:54324 — all Auth emails (invites, magic links,
-# password reset, optional sign-up confirmation) are captured there; nothing is sent to the internet.
+# After `supabase start`, open http://127.0.0.1:54324 — Auth emails (invites, magic links,
+# password reset, optional sign-up confirmation) and Containerly transactional emails (when
+# RESEND_API_KEY is unset in supabase/functions/.env) are captured there; nothing is sent externally.
+# Transactional email uses Mailpit SMTP on the Docker network (inbucket:1025); see functions/.env.example.
 #
 # Next.js must call the same API URL as this stack (`supabase status` → Project URL) and use the
 # Secret key server-side for admin.inviteUserByEmail (see frontend/.env.local.example + README).

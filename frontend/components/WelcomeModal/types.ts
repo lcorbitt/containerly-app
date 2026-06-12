@@ -4,4 +4,5 @@ export interface WelcomeModalProps {
   onClose: () => void;
   onAddShipment: () => void;
   onInviteTeam: () => void;
+  onOrganizationSettings: () => void;
 }

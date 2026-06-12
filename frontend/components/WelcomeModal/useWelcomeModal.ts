@@ -61,11 +61,17 @@ export function useWelcomeModal({ fullName, email, userId }: UseWelcomeModalInpu
     router.push("/settings?tab=organization");
   }, [close, router]);
 
+  const onOrganizationSettings = useCallback(() => {
+    close();
+    router.push("/settings?tab=organization");
+  }, [close, router]);
+
   return {
     open,
     displayName,
     close,
     onAddShipment,
     onInviteTeam,
+    onOrganizationSettings,
   };
 }

@@ -22,6 +22,7 @@ import {
   SIGNUP_INVITE_SKIP_BUTTON_CLASS,
   SIGNUP_INVITE_SKIP_LABEL,
 } from "./constants";
+import { SignupWizardBackButton } from "../SignupWizard/SignupWizardBackButton";
 import type { SignupInviteTeamStepProps } from "./types";
 import { useSignupInviteTeamStep } from "./useSignupInviteTeamStep";
 
@@ -29,11 +30,14 @@ export function SignupInviteTeamStep({
   organizationId,
   onSkip,
   onComplete,
+  onBack,
 }: SignupInviteTeamStepProps) {
   const step = useSignupInviteTeamStep({ organizationId, onComplete });
 
   return (
     <div className="mt-6 space-y-4">
+      <SignupWizardBackButton onClick={onBack} disabled={step.loading} />
+
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
         Invite colleagues to collaborate on shipments. This step is optional.
       </p>

@@ -38,3 +38,6 @@ export const SIGNUP_ORG_SELECT_CLASS =
 
 export const SIGNUP_ORG_TEXT_INPUT_CLASS =
   "h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 transition-[border-color,box-shadow] placeholder:text-zinc-400 focus:border-primary-orange/45 focus:outline-none focus:ring-2 focus:ring-primary-orange/15 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-primary-orange/55 dark:focus:ring-primary-orange/20";
+
+export const SIGNUP_ORG_IMAGE_SECTION_CLASS =
+  "rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/40";

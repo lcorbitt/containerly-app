@@ -56,13 +56,14 @@ Logistics customer portal for operators and importers: **documentation-first shi
    cd frontend && npm run dev
    ```
 
-### Local Supabase + Mailpit (Auth emails and invites)
+### Local Supabase + Mailpit (all local emails)
 
 1. Run `supabase start` in `supabase/` (or from the repo root with the CLI pointed at this project).
 2. Run `supabase status` and copy **Project URL**, **Publishable** key, and **Secret** key into `frontend/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Older CLI versions label the keys “anon” and “service_role”; either shape works if it matches your stack.
 3. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (or your dev origin) so teammate **invite** links redirect through `/auth/callback` to `/set-password`. Local redirect allow-list lives in `supabase/config.toml` under `[auth]`; add more URLs there if you change host or port.
-4. Open **Mailpit** at [http://127.0.0.1:54324](http://127.0.0.1:54324) to read every Auth email (invites, password reset, magic links, and sign-up confirmation if you enable it). No SMTP provider is required locally.
-5. After editing `config.toml`, run `supabase stop && supabase start` so Auth picks up changes.
+4. Copy `supabase/functions/.env.example` to `supabase/functions/.env`. **Do not** set `RESEND_API_KEY` locally. Set `DEV_SMTP_HOST=inbucket`, `DEV_SMTP_PORT=1025`, and `PUBLIC_SITE_URL=http://localhost:3000` so transactional emails (customer invites, document events, messages) deliver to Mailpit via the Supabase Docker network. Mailpit UI: [http://127.0.0.1:54324](http://127.0.0.1:54324). If you run `supabase functions serve` on the host instead of Docker, use `DEV_SMTP_HOST=127.0.0.1` and `DEV_SMTP_PORT=54325` only when your CLI exposes SMTP on that port.
+5. Open **Mailpit** at [http://127.0.0.1:54324](http://127.0.0.1:54324) to read **all** local emails: Auth (invites, password reset, magic links) and Containerly transactional (same inbox). No Resend or external SMTP provider is required locally.
+6. After editing `config.toml` or `supabase/functions/.env`, run `supabase stop && supabase start` so Auth and Edge pick up changes.
 
 **Hosted projects (beta operator onboarding):** configure **SMTP** (or a provider) under Supabase Dashboard → **Authentication** → **SMTP Settings**, and add redirect URLs under **URL Configuration**:
 
