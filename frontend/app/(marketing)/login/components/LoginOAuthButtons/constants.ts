@@ -3,7 +3,7 @@ export const LOGIN_OAUTH_BUTTONS_CLASS = "flex flex-col gap-2";
 export const LOGIN_OAUTH_BUTTON_CLASS =
   "inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-sm font-semibold text-zinc-900 transition-[border-color,background-color,opacity] hover:bg-zinc-50 disabled:cursor-wait disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800";
 
-export const LOGIN_OAUTH_DIVIDER_CLASS = "relative mt-5 flex items-center";
+export const LOGIN_OAUTH_DIVIDER_CLASS = "relative my-4 flex items-center";
 
 export const LOGIN_OAUTH_DIVIDER_LINE_CLASS = "flex-1 border-t border-zinc-200 dark:border-zinc-700";
 

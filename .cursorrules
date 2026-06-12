@@ -134,6 +134,45 @@ Nested sub-components follow the same pattern inside the parent folder:
 
 ---
 
+### 8. Tailwind spacing system (even numbers only)
+
+**Strict rule:** All spacing in Tailwind class strings, colocated **`constants.ts`** layout tokens, and inline `style` margin/padding/gap values **must use even-number scale keys only** — multiples of 2 on the default Tailwind spacing scale.
+
+**Allowed scale keys:** `0`, `2`, `4`, `6`, `8`, `10`, `12`, `14`, `16`, `20`, `24`, `28`, `32`, `36`, `40`, `44`, `48`, `52`, `56`, `60`, `64`, `72`, `80`, `96`, and larger even keys on the same scale. **`px`** (1px) is allowed where Tailwind exposes it as a keyword (e.g. `p-px`, `gap-px`).
+
+**Forbidden scale keys (odd numbers):** `1`, `3`, `5`, `7`, `9`, `11`, `13`, `15`, `17`, `19`, `21`, … and fractional odd halves such as `0.5`, `1.5`, `2.5`, `3.5`.
+
+**Applies to every spacing-related utility**, including but not limited to:
+
+- **Margin:** `m-*`, `mx-*`, `my-*`, `mt-*`, `mr-*`, `mb-*`, `ml-*`, `ms-*`, `me-*`, and negative variants (`-m-*`, …)
+- **Padding:** `p-*`, `px-*`, `py-*`, `pt-*`, `pr-*`, `pb-*`, `pl-*`, `ps-*`, `pe-*`
+- **Gap:** `gap-*`, `gap-x-*`, `gap-y-*`
+- **Space between:** `space-x-*`, `space-y-*`
+- **Inset / position offsets:** `inset-*`, `top-*`, `right-*`, `bottom-*`, `left-*`, `start-*`, `end-*`, and negative variants
+- **Scroll spacing:** `scroll-m-*`, `scroll-p-*`, `scroll-mt-*`, etc.
+- **Arbitrary spacing:** `p-[…]`, `m-[…]`, `gap-[…]`, etc. — numeric values must also resolve to an even pixel/rem value on the 2px grid (e.g. `12px` ✓, `13px` ✗ → `12px` or `14px`)
+
+**Non-numeric keywords stay allowed:** `auto`, `full`, `screen`, `min`, `max`, `fit`, fractional layout (`1/2`, `1/3`, …), and semantic tokens not tied to the numeric spacing scale.
+
+**Examples**
+
+| Forbidden | Correct to |
+|-----------|------------|
+| `my-5`, `p-3`, `gap-7`, `mt-1`, `space-y-3` | `my-4` or `my-6`, `p-4`, `gap-6` or `gap-8`, `mt-2`, `space-y-4` |
+| `px-3.5`, `py-2.5`, `gap-1.5` | `px-4`, `py-2` or `py-4`, `gap-2` |
+| `p-[11px]`, `gap-[0.8125rem]` | nearest even value, e.g. `p-[12px]`, `gap-3` (12px) |
+
+**Correction rule:** When odd spacing is present, **replace it with the nearest allowed even scale key** (ties round up). Do not introduce new odd values. When touching a file for any reason, fix odd spacing in the lines or blocks you edit.
+
+**Agent behavior (mandatory):**
+
+- **Never** add odd-number spacing utilities or odd arbitrary spacing values.
+- **Reject** odd spacing in new code — use an even alternative instead.
+- **Auto-correct** existing odd spacing when editing that component, `constants.ts`, or shared layout class strings.
+- Prefer extracting repeated even spacing into colocated **`constants.ts`** rather than sprinkling magic numbers.
+
+---
+
 ### Anti-Patterns (Avoid)
 - Route-specific components inside frontend/components/
 - Global "components" folders outside frontend/components/
@@ -142,6 +181,7 @@ Nested sub-components follow the same pattern inside the parent folder:
 - Kebab-case component files (`authenticated-top-nav.tsx`) instead of TitleCase folders
 - Nested `hooks/` folders when `useComponentName.ts` beside `index.tsx` is enough
 - Inline Tailwind class constants or config arrays in `index.tsx` instead of `constants.ts`
+- Odd-number Tailwind spacing (`p-3`, `my-5`, `gap-7`, `mt-1`, `px-3.5`, etc.) — use **even scale keys only** (see **§8 Tailwind spacing system**)
 - Heavy React Context for simple client/UI state — prefer **Jotai atoms** (see **§9 Client UI state**)
 
 ---
@@ -442,6 +482,7 @@ When refactoring, **identify and move**:
 | Split domain query files (`useAlert.ts` + `useMyAlerts.ts`) | `queries/use<Domain>.ts` |
 | `*-cache.ts` / optimistic helpers beside hooks | Cache helpers in `queries/use<Domain>.ts`; mutations import them |
 | Legacy `react-query` package | `@tanstack/react-query` only |
+| Odd Tailwind spacing (`p-3`, `gap-7`, `my-5`, …) | Nearest even scale key (`p-4`, `gap-8`, `my-6`, …) per **§8** |
 
 **Simplify components:** replace logic-heavy blocks with hook-driven data and actions; keep presentation-only UI.
 
