@@ -1,8 +1,9 @@
+import type { SignupInviteDraft } from "../SignupWizard/types";
+
 export interface SignupInviteTeamStepProps {
-  organizationId: string | null;
-  onSkip: () => void;
-  onComplete: () => void;
+  onSubmit: (invites: SignupInviteDraft[]) => void | Promise<void>;
   onBack: () => void;
+  isSubmitting: boolean;
 }
 
 export interface SignupInviteRow {

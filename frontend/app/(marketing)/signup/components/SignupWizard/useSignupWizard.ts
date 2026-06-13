@@ -1,19 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSignupDraft } from "@/atoms/signup-draft";
 import {
   getVerifiedBrowserAuthSession,
-  subscribeToAuthState,
   syncServerAuthSession,
 } from "@/services/auth.service";
-import { useOnboardingStatusQuery } from "@/hooks/queries/useOnboarding";
+import { getOnboardingStatus } from "@/services/onboarding.service";
 import {
-  clearStoredSignupOrganizationId,
+  emptySignupDraft,
+  mergeStoredSignupDraft,
   parseSignupStep,
-  readStoredSignupOrganizationId,
+  readStoredSignupDraft,
   signupStepHref,
-  storeSignupOrganizationId,
 } from "./utils";
 import type { SignupWizardStep } from "./types";
 
@@ -22,118 +22,78 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   const searchParams = useSearchParams();
   const step = parseSignupStep(searchParams.get("step") ?? String(initialStep));
 
-  const [sessionChecked, setSessionChecked] = useState(false);
+  const { replaceDraft, patchDraft } = useSignupDraft();
+  const [bootstrapReady, setBootstrapReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const [suggestedOrgName, setSuggestedOrgName] = useState("");
+  const bootstrapStarted = useRef(false);
 
-  const refreshSession = useCallback(async () => {
-    let session = await getVerifiedBrowserAuthSession();
-    if (session) {
-      const sync = await syncServerAuthSession();
-      if (sync.error) {
-        session = null;
+  useEffect(() => {
+    if (bootstrapStarted.current) return;
+    bootstrapStarted.current = true;
+
+    void (async () => {
+      let currentDraft = emptySignupDraft();
+      const stored = readStoredSignupDraft();
+      if (stored) {
+        currentDraft = mergeStoredSignupDraft(stored, "");
+        replaceDraft(currentDraft);
       }
-    }
-    const signedIn = Boolean(session);
-    setHasSession(signedIn);
-    setSessionChecked(true);
-    return signedIn;
-  }, []);
 
-  useEffect(() => {
-    void refreshSession();
-  }, [refreshSession]);
+      let session = await getVerifiedBrowserAuthSession();
+      if (session) {
+        const sync = await syncServerAuthSession();
+        if (sync.error) {
+          session = null;
+        }
+      }
 
-  useEffect(() => {
-    return subscribeToAuthState((signedIn) => {
+      const signedIn = Boolean(session);
       setHasSession(signedIn);
-      setSessionChecked(true);
-    });
+
+      if (signedIn) {
+        try {
+          const status = await getOnboardingStatus();
+          if (status.hasOrgMembership) {
+            router.replace("/dashboard");
+            return;
+          }
+          const suggested = status.pendingTenantInvite?.suggestedOrgName?.trim() ?? "";
+          setSuggestedOrgName(suggested);
+          if (suggested && !currentDraft.organization?.name) {
+            patchDraft({
+              organization: {
+                name: suggested,
+                teamSize: currentDraft.organization?.teamSize ?? "",
+                monthlyShipmentVolume: currentDraft.organization?.monthlyShipmentVolume ?? "",
+              },
+            });
+          }
+        } catch {
+          /* optional during draft browsing */
+        }
+      }
+
+      setBootstrapReady(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time bootstrap on mount
   }, []);
-
-  const statusQuery = useOnboardingStatusQuery(sessionChecked && hasSession);
-  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
-  const organizationId =
-    createdOrgId ??
-    readStoredSignupOrganizationId() ??
-    statusQuery.data?.organizationId ??
-    null;
-
-  const hasOrgMembership =
-    hasSession && statusQuery.isSuccess
-      ? (statusQuery.data?.hasOrgMembership ?? false)
-      : false;
-
-  useEffect(() => {
-    if (
-      statusQuery.error instanceof Error &&
-      /unauthorized/i.test(statusQuery.error.message)
-    ) {
-      setHasSession(false);
-    }
-  }, [statusQuery.error]);
-
-  useEffect(() => {
-    if (!sessionChecked) return;
-    if (hasSession && statusQuery.isLoading) return;
-
-    if (!hasSession && step > 1) {
-      router.replace("/signup");
-      return;
-    }
-
-    if (hasSession && hasOrgMembership && step === 1) {
-      router.replace("/signup?step=3");
-    }
-  }, [
-    sessionChecked,
-    statusQuery.isLoading,
-    hasSession,
-    hasOrgMembership,
-    step,
-    router,
-  ]);
 
   const goToStep = useCallback(
-    async (next: SignupWizardStep) => {
-      if (next > 1) {
-        const signedIn = await refreshSession();
-        if (!signedIn) return;
-      }
+    (next: SignupWizardStep) => {
       router.push(signupStepHref(next));
-      router.refresh();
     },
-    [router, refreshSession],
+    [router],
   );
 
   const goBack = useCallback(() => {
     if (step <= 1) return;
     const previous = (step - 1) as SignupWizardStep;
     router.push(signupStepHref(previous));
-    router.refresh();
   }, [step, router]);
 
   const goBackToLogin = useCallback(() => {
     router.push("/login");
-  }, [router]);
-
-  const onOrganizationIdReady = useCallback((orgId: string) => {
-    storeSignupOrganizationId(orgId);
-    setCreatedOrgId(orgId);
-  }, []);
-
-  const onOrganizationStepComplete = useCallback(
-    (orgId: string) => {
-      storeSignupOrganizationId(orgId);
-      setCreatedOrgId(orgId);
-      goToStep(3);
-    },
-    [goToStep],
-  );
-
-  const finishSignup = useCallback(() => {
-    clearStoredSignupOrganizationId();
-    router.push("/dashboard?welcome=1");
-    router.refresh();
   }, [router]);
 
   return {
@@ -142,13 +102,7 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
     goBack,
     goBackToLogin,
     hasSession,
-    sessionChecked,
-    statusLoading: statusQuery.isLoading,
-    pendingInvite: statusQuery.data?.pendingTenantInvite ?? null,
-    hasOrgMembership,
-    organizationId,
-    onOrganizationIdReady,
-    onOrganizationStepComplete,
-    finishSignup,
+    bootstrapReady,
+    suggestedOrgName,
   };
 }

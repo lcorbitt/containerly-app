@@ -1,76 +1,54 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/atoms/toast";
-import { useCompleteOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
-import { useOrganizationImageQuery } from "@/hooks/queries/useOrganization";
-import { slugFromOrganizationName } from "@/utils/organization-slug";
-import type { PendingTenantInviteSummary } from "@/types/platform-tenant-invite";
-import { storeSignupOrganizationId } from "../SignupWizard/utils";
+import { useSignupDraft } from "@/atoms/signup-draft";
 
 interface UseSignupOrganizationStepInput {
-  pendingInvite: PendingTenantInviteSummary | null;
-  organizationId: string | null;
-  onOrganizationIdReady: (organizationId: string) => void;
-  onComplete: (organizationId: string) => void;
+  suggestedOrgName: string;
+  onContinue: () => void;
 }
 
 export function useSignupOrganizationStep({
-  pendingInvite,
-  organizationId,
-  onOrganizationIdReady,
-  onComplete,
+  suggestedOrgName,
+  onContinue,
 }: UseSignupOrganizationStepInput) {
-  const { toast } = useToast();
-  const mutation = useCompleteOnboardingOrganizationMutation();
+  const { draft, patchDraft } = useSignupDraft();
 
-  const [name, setName] = useState("");
-  const [teamSize, setTeamSize] = useState("");
-  const [monthlyShipmentVolume, setMonthlyShipmentVolume] = useState("");
-  const [localOrganizationId, setLocalOrganizationId] = useState<string | null>(null);
+  const [name, setName] = useState(
+    draft.organization?.name || suggestedOrgName,
+  );
+  const [teamSize, setTeamSize] = useState(draft.organization?.teamSize ?? "");
+  const [monthlyShipmentVolume, setMonthlyShipmentVolume] = useState(
+    draft.organization?.monthlyShipmentVolume ?? "",
+  );
+  const [message, setMessage] = useState<string | null>(null);
 
-  const suggestedOrgName = pendingInvite?.suggestedOrgName?.trim() ?? "";
-  const activeOrganizationId = organizationId ?? localOrganizationId;
-  const fieldsLocked = Boolean(activeOrganizationId);
-
-  const orgImageQuery = useOrganizationImageQuery(activeOrganizationId);
-  const orgImagePath = activeOrganizationId ? (orgImageQuery.data ?? null) : null;
-
-  async function submit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (activeOrganizationId) {
-      onComplete(activeOrganizationId);
-      return;
-    }
+    setMessage(null);
 
     const trimmedName = (name.trim() || suggestedOrgName).trim();
     if (!trimmedName) {
-      toast("Team name is required.", "error");
+      setMessage("Team name is required.");
       return;
     }
     if (!teamSize) {
-      toast("Please select your team size.", "error");
+      setMessage("Please select your team size.");
       return;
     }
     if (!monthlyShipmentVolume) {
-      toast("Please select your monthly shipment volume.", "error");
+      setMessage("Please select your monthly shipment volume.");
       return;
     }
 
-    try {
-      const result = await mutation.mutateAsync({
+    patchDraft({
+      organization: {
         name: trimmedName,
-        slug: slugFromOrganizationName(trimmedName),
         teamSize,
         monthlyShipmentVolume,
-      });
-      setLocalOrganizationId(result.id);
-      storeSignupOrganizationId(result.id);
-      onOrganizationIdReady(result.id);
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Could not create organization", "error");
-    }
+      },
+    });
+    onContinue();
   }
 
   return {
@@ -80,10 +58,7 @@ export function useSignupOrganizationStep({
     setTeamSize,
     monthlyShipmentVolume,
     setMonthlyShipmentVolume,
-    activeOrganizationId,
-    orgImagePath,
-    fieldsLocked,
+    message,
     submit,
-    loading: mutation.isPending,
   };
 }

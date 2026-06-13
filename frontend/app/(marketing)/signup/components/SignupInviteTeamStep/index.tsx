@@ -27,16 +27,15 @@ import type { SignupInviteTeamStepProps } from "./types";
 import { useSignupInviteTeamStep } from "./useSignupInviteTeamStep";
 
 export function SignupInviteTeamStep({
-  organizationId,
-  onSkip,
-  onComplete,
+  onSubmit,
   onBack,
+  isSubmitting,
 }: SignupInviteTeamStepProps) {
-  const step = useSignupInviteTeamStep({ organizationId, onComplete });
+  const step = useSignupInviteTeamStep({ onSubmit });
 
   return (
     <div className="mt-6 space-y-4">
-      <SignupWizardBackButton onClick={onBack} disabled={step.loading} />
+      <SignupWizardBackButton onClick={onBack} disabled={isSubmitting} />
 
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
         Invite colleagues to collaborate on shipments. This step is optional.
@@ -57,7 +56,7 @@ export function SignupInviteTeamStep({
                 placeholder="colleague@company.com"
                 value={row.email}
                 onChange={(e) => step.updateRow(row.id, { email: e.target.value })}
-                disabled={step.loading}
+                disabled={isSubmitting}
               />
             </div>
             <div className="w-full sm:w-36">
@@ -78,7 +77,7 @@ export function SignupInviteTeamStep({
                   }
                   options={SIGNUP_INVITE_ROLE_OPTIONS}
                   showAvatars={false}
-                  disabled={step.loading}
+                  disabled={isSubmitting}
                   className="w-full"
                 />
               </div>
@@ -91,28 +90,28 @@ export function SignupInviteTeamStep({
         type="button"
         className={SIGNUP_INVITE_ADD_BUTTON_CLASS}
         onClick={step.addRow}
-        disabled={step.loading}
+        disabled={isSubmitting}
       >
         {SIGNUP_INVITE_ADD_PERSON_LABEL}
       </button>
 
       <button
         type="button"
-        disabled={step.loading}
-        aria-busy={step.loading}
+        disabled={isSubmitting}
+        aria-busy={isSubmitting}
         className={LOGIN_FORM_SUBMIT_CLASS}
         onClick={() => void step.sendInvites()}
       >
         <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>
-          {step.loading ? SIGNUP_INVITE_NEXT_LOADING_LABEL : SIGNUP_INVITE_NEXT_LABEL}
+          {isSubmitting ? SIGNUP_INVITE_NEXT_LOADING_LABEL : SIGNUP_INVITE_NEXT_LABEL}
         </span>
       </button>
 
       <button
         type="button"
         className={SIGNUP_INVITE_SKIP_BUTTON_CLASS}
-        onClick={onSkip}
-        disabled={step.loading}
+        onClick={() => void step.skipInvites()}
+        disabled={isSubmitting}
       >
         {SIGNUP_INVITE_SKIP_LABEL}
       </button>

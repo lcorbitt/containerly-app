@@ -13,11 +13,13 @@ import {
 } from "./constants";
 import type { SignupWizardProps } from "./types";
 import { useSignupWizard } from "./useSignupWizard";
+import { useSubmitSignup } from "./useSubmitSignup";
 
 export function SignupWizard({ initialStep, initialError = null }: SignupWizardProps) {
   const wizard = useSignupWizard(initialStep);
+  const { submitSignup, isSubmitting } = useSubmitSignup({ hasSession: wizard.hasSession });
 
-  if (!wizard.sessionChecked || (wizard.hasSession && wizard.statusLoading)) {
+  if (!wizard.bootstrapReady) {
     return (
       <div className={SIGNUP_WIZARD_CARD_CLASS}>
         <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
@@ -58,20 +60,17 @@ export function SignupWizard({ initialStep, initialError = null }: SignupWizardP
 
       {wizard.step === 2 ? (
         <SignupOrganizationStep
-          pendingInvite={wizard.pendingInvite}
-          organizationId={wizard.organizationId}
-          onOrganizationIdReady={wizard.onOrganizationIdReady}
-          onComplete={wizard.onOrganizationStepComplete}
+          suggestedOrgName={wizard.suggestedOrgName}
+          onContinue={() => wizard.goToStep(3)}
           onBack={wizard.goBack}
         />
       ) : null}
 
       {wizard.step === 3 ? (
         <SignupInviteTeamStep
-          organizationId={wizard.organizationId}
-          onSkip={wizard.finishSignup}
-          onComplete={wizard.finishSignup}
+          onSubmit={submitSignup}
           onBack={wizard.goBack}
+          isSubmitting={isSubmitting}
         />
       ) : null}
     </div>

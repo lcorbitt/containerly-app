@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { LoginOAuthButtons } from "@/app/(marketing)/login/components/LoginOAuthButtons";
 import {
@@ -11,15 +11,12 @@ import {
 } from "@/app/(marketing)/login/components/LoginAuthPanel/constants";
 import { TextInput } from "@/components/TextInput";
 import {
-  LOGIN_FORM_BLURRED_CONTENT_CLASS,
   LOGIN_FORM_FIELD_GROUP_CLASS,
   LOGIN_FORM_FIELD_ICON_CLASS,
   LOGIN_FORM_FIELDS_CLASS,
   LOGIN_FORM_FOOTER_CLASS,
   LOGIN_FORM_FOOTER_LINK_CLASS,
   LOGIN_FORM_INPUT_CLASS,
-  LOGIN_FORM_LOADING_CARD_CLASS,
-  LOGIN_FORM_LOADING_OVERLAY_CLASS,
   LOGIN_FORM_MESSAGE_CLASS,
   LOGIN_FORM_PASSWORD_TOGGLE_CLASS,
   LOGIN_FORM_SHELL_CLASS,
@@ -28,8 +25,6 @@ import {
 } from "@/app/(marketing)/login/components/LoginForm/constants";
 import {
   SIGNUP_ACCOUNT_FIELD_LABEL_CLASS,
-  SIGNUP_ACCOUNT_LOADING_SUBTITLE,
-  SIGNUP_ACCOUNT_LOADING_TITLE,
   SIGNUP_ACCOUNT_REFERRAL_OPTIONS,
   SIGNUP_ACCOUNT_REFERRAL_OTHER_LABEL,
   SIGNUP_ACCOUNT_SELECT_CLASS,
@@ -54,9 +49,8 @@ export function SignupAccountStep({
 
   return (
     <div className={`${LOGIN_FORM_SHELL_CLASS} mt-6`}>
-      <div className={step.loading ? LOGIN_FORM_BLURRED_CONTENT_CLASS : ""}>
-        <form onSubmit={step.submit} className={LOGIN_FORM_FIELDS_CLASS} aria-busy={step.loading}>
-          <SignupWizardBackButton onClick={onBack} disabled={step.loading} />
+      <form onSubmit={step.submit} className={LOGIN_FORM_FIELDS_CLASS}>
+        <SignupWizardBackButton onClick={onBack} />
 
           <div className={LOGIN_FORM_FIELD_GROUP_CLASS}>
             <User className={LOGIN_FORM_FIELD_ICON_CLASS} strokeWidth={1.75} aria-hidden />
@@ -69,7 +63,6 @@ export function SignupAccountStep({
               value={step.fullName}
               onChange={(e) => step.setFullName(e.target.value)}
               required
-              disabled={step.loading}
             />
           </div>
 
@@ -84,7 +77,6 @@ export function SignupAccountStep({
               value={step.email}
               onChange={(e) => step.setEmail(e.target.value)}
               required
-              disabled={step.loading}
             />
           </div>
 
@@ -99,14 +91,12 @@ export function SignupAccountStep({
               onChange={(e) => step.setPassword(e.target.value)}
               required
               minLength={6}
-              disabled={step.loading}
             />
             <button
               type="button"
               className={LOGIN_FORM_PASSWORD_TOGGLE_CLASS}
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              disabled={step.loading}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -127,14 +117,12 @@ export function SignupAccountStep({
               onChange={(e) => step.setConfirmPassword(e.target.value)}
               required
               minLength={6}
-              disabled={step.loading}
             />
             <button
               type="button"
               className={LOGIN_FORM_PASSWORD_TOGGLE_CLASS}
               onClick={() => setShowConfirmPassword((v) => !v)}
               aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-              disabled={step.loading}
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -153,7 +141,6 @@ export function SignupAccountStep({
               value={step.referralOption}
               onChange={(e) => step.setReferralOption(e.target.value)}
               className={SIGNUP_ACCOUNT_SELECT_CLASS}
-              disabled={step.loading}
             >
               {SIGNUP_ACCOUNT_REFERRAL_OPTIONS.map((opt) => (
                 <option key={opt.value || "empty"} value={opt.value}>
@@ -176,7 +163,6 @@ export function SignupAccountStep({
                 placeholder="Tell us how you found us"
                 value={step.referralOther}
                 onChange={(e) => step.setReferralOther(e.target.value)}
-                disabled={step.loading}
               />
             </div>
           ) : null}
@@ -187,17 +173,12 @@ export function SignupAccountStep({
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={step.loading}
-            aria-busy={step.loading}
-            className={LOGIN_FORM_SUBMIT_CLASS}
-          >
+          <button type="submit" className={LOGIN_FORM_SUBMIT_CLASS}>
             <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>{SIGNUP_ACCOUNT_SUBMIT_LABEL}</span>
           </button>
         </form>
 
-        <LoginOAuthButtons next={OAUTH_NEXT} disabled={step.loading} initialError={initialError} />
+        <LoginOAuthButtons next={OAUTH_NEXT} initialError={initialError} />
 
         <div className={LOGIN_AUTH_PANEL_MODE_SWITCH_CLASS}>
           <span className={LOGIN_AUTH_PANEL_MODE_SWITCH_PROMPT_CLASS}>
@@ -213,28 +194,6 @@ export function SignupAccountStep({
             Back Home
           </Link>
         </p>
-      </div>
-
-      {step.loading ? (
-        <div
-          className={LOGIN_FORM_LOADING_OVERLAY_CLASS}
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className={LOGIN_FORM_LOADING_CARD_CLASS}>
-            <Loader2 className="h-6 w-6 animate-spin text-primary-orange" aria-hidden />
-            <div>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                {SIGNUP_ACCOUNT_LOADING_TITLE}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                {SIGNUP_ACCOUNT_LOADING_SUBTITLE}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

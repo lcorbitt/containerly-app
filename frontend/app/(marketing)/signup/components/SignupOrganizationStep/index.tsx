@@ -1,8 +1,8 @@
 "use client";
 
-import { OrganizationImageSettings } from "@/components/OrganizationImageSettings";
 import {
   LOGIN_FORM_FIELDS_CLASS,
+  LOGIN_FORM_MESSAGE_CLASS,
   LOGIN_FORM_SUBMIT_CLASS,
   LOGIN_FORM_SUBMIT_INNER_CLASS,
 } from "@/app/(marketing)/login/components/LoginForm/constants";
@@ -13,33 +13,26 @@ import {
   SIGNUP_ORG_SHIPMENT_VOLUME_LABEL,
   SIGNUP_ORG_SHIPMENT_VOLUME_OPTIONS,
   SIGNUP_ORG_SUBMIT_LABEL,
-  SIGNUP_ORG_SUBMIT_LOADING_LABEL,
   SIGNUP_ORG_TEAM_NAME_LABEL,
   SIGNUP_ORG_TEAM_SIZE_LABEL,
   SIGNUP_ORG_TEAM_SIZE_OPTIONS,
   SIGNUP_ORG_TEXT_INPUT_CLASS,
 } from "./constants";
+import { SignupOrgImagePicker } from "./SignupOrgImagePicker";
 import { SignupWizardBackButton } from "../SignupWizard/SignupWizardBackButton";
 import type { SignupOrganizationStepProps } from "./types";
 import { useSignupOrganizationStep } from "./useSignupOrganizationStep";
 
 export function SignupOrganizationStep({
-  pendingInvite,
-  organizationId,
-  onOrganizationIdReady,
-  onComplete,
+  suggestedOrgName,
+  onContinue,
   onBack,
 }: SignupOrganizationStepProps) {
-  const step = useSignupOrganizationStep({
-    pendingInvite,
-    organizationId,
-    onOrganizationIdReady,
-    onComplete,
-  });
+  const step = useSignupOrganizationStep({ suggestedOrgName, onContinue });
 
   return (
-    <form onSubmit={step.submit} className={`${LOGIN_FORM_FIELDS_CLASS} mt-6`} aria-busy={step.loading}>
-      <SignupWizardBackButton onClick={onBack} disabled={step.loading} />
+    <form onSubmit={step.submit} className={`${LOGIN_FORM_FIELDS_CLASS} mt-6`}>
+      <SignupWizardBackButton onClick={onBack} />
 
       <div>
         <label className={SIGNUP_ORG_FIELD_LABEL_CLASS} htmlFor="signup-team-name">
@@ -54,7 +47,6 @@ export function SignupOrganizationStep({
           value={step.name}
           onChange={(e) => step.setName(e.target.value)}
           required
-          disabled={step.loading || step.fieldsLocked}
         />
       </div>
 
@@ -68,7 +60,6 @@ export function SignupOrganizationStep({
           onChange={(e) => step.setTeamSize(e.target.value)}
           className={SIGNUP_ORG_SELECT_CLASS}
           required
-          disabled={step.loading || step.fieldsLocked}
         >
           {SIGNUP_ORG_TEAM_SIZE_OPTIONS.map((opt) => (
             <option key={opt.value || "empty"} value={opt.value}>
@@ -88,7 +79,6 @@ export function SignupOrganizationStep({
           onChange={(e) => step.setMonthlyShipmentVolume(e.target.value)}
           className={SIGNUP_ORG_SELECT_CLASS}
           required
-          disabled={step.loading || step.fieldsLocked}
         >
           {SIGNUP_ORG_SHIPMENT_VOLUME_OPTIONS.map((opt) => (
             <option key={opt.value || "empty"} value={opt.value}>
@@ -98,26 +88,18 @@ export function SignupOrganizationStep({
         </select>
       </div>
 
-      {step.activeOrganizationId ? (
-        <div className={SIGNUP_ORG_IMAGE_SECTION_CLASS}>
-          <OrganizationImageSettings
-            key={step.activeOrganizationId}
-            organizationId={step.activeOrganizationId}
-            organizationName={step.name}
-            initialOrgImagePath={step.orgImagePath}
-          />
-        </div>
+      <div className={SIGNUP_ORG_IMAGE_SECTION_CLASS}>
+        <SignupOrgImagePicker organizationName={step.name} />
+      </div>
+
+      {step.message ? (
+        <p className={LOGIN_FORM_MESSAGE_CLASS} role="alert">
+          {step.message}
+        </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={step.loading}
-        aria-busy={step.loading}
-        className={LOGIN_FORM_SUBMIT_CLASS}
-      >
-        <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>
-          {step.loading ? SIGNUP_ORG_SUBMIT_LOADING_LABEL : SIGNUP_ORG_SUBMIT_LABEL}
-        </span>
+      <button type="submit" className={LOGIN_FORM_SUBMIT_CLASS}>
+        <span className={LOGIN_FORM_SUBMIT_INNER_CLASS}>{SIGNUP_ORG_SUBMIT_LABEL}</span>
       </button>
     </form>
   );
