@@ -13,6 +13,6 @@ export interface ShipmentDataImportModalProps {
   onApply?: (draft: ShipmentImportDraft, meta: { fileName: string }) => void;
   /** Close single import and open bulk import (`variant="single"` only). */
   onSwitchToBulkImport?: () => void;
-  /** Called after bulk create finishes (`variant="bulk"` only). */
-  onBulkComplete?: (result: BulkImportResult) => void;
+  /** Called when the user dismisses the bulk results screen (`variant="bulk"` only), not when the mutation finishes. */
+  onBulkDismissed?: (result: BulkImportResult) => void;
 }

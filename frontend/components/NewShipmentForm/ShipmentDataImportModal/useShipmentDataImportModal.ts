@@ -20,7 +20,7 @@ export function useShipmentDataImportModal({
   organizationId,
   variant,
   onApply,
-  onBulkComplete,
+  onBulkDismissed,
 }: ShipmentDataImportModalProps) {
   const isBulk = variant === "bulk";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,13 +133,19 @@ export function useShipmentDataImportModal({
         onProgress: (done, total) => setProgress({ done, total }),
       });
       setBulkResult(result);
-      onBulkComplete?.(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Bulk import failed.");
     } finally {
       setProgress(null);
     }
-  }, [bulkCreateMutation, bulkParse, onBulkComplete, organizationId]);
+  }, [bulkCreateMutation, bulkParse, organizationId]);
+
+  const handleBulkDismiss = useCallback(() => {
+    if (bulkResult) {
+      onBulkDismissed?.(bulkResult);
+    }
+    onClose();
+  }, [bulkResult, onBulkDismissed, onClose]);
 
   return {
     isBulk,
@@ -158,5 +164,6 @@ export function useShipmentDataImportModal({
     bulkCount: bulkParse?.rows.length ?? 0,
     handleFiles,
     handleBulkCreate,
+    handleBulkDismiss,
   };
 }

@@ -100,15 +100,32 @@
 
 ---
 
-## 10. Canonical mutation flow (`create-shipment`)
+## 10. Canonical mutation flow (`create-shipment`, bulk import)
+
+Two hook layers — both required for creates/updates:
+
+- **TanStack mutation hook** (`hooks/mutations/useShipments.ts` → `useCreateShipmentMutation`, `useBulkCreateShipmentsMutation`): `mutationFn` only (+ query-cache invalidation when needed). Calls the service; returns data. No toasts, routing, or modal state.
+- **Colocated component hook** (`useNewShipmentForm`, `useShipmentDataImportModal`): form/UI orchestration — when to call the mutation, local state (errors, progress, results). Host callbacks (`onCreated`, `onBulkDismissed`) for navigation / toast / modal close when the user is done.
+
+**Single create:**
 
 ```text
-newShipmentModalOpenAtom → useNewShipmentForm → useCreateShipmentMutation → createShipment
-→ POST create-shipment → handler → shipment.service → @models → Postgres
-→ response → colocated hook (navigation/toast) — not mutation hook
+newShipmentModalOpenAtom → useNewShipmentForm (colocated)
+  → useCreateShipmentMutation (TanStack) → createShipment
+  → POST create-shipment → handler → shipment.service → @models → Postgres
+  → response back to useNewShipmentForm → navigation / toast / modal close here
 ```
 
-Reference: `frontend/atoms/new-shipment-modal.ts`, `components/NewShipmentForm/useNewShipmentForm.ts`, `hooks/mutations/useShipments.ts`, `services/shipment.service.ts`, `supabase/functions/create-shipment/handler.ts`, `_services/shipment/shipment.service.ts`, `_models/shipments.ts`. Full file-by-file trace in docs §11.
+**Bulk import** (results screen before dismiss):
+
+```text
+newShipmentBulkImportOpenAtom → useShipmentDataImportModal (colocated)
+  → useBulkCreateShipmentsMutation → bulkCreateShipments → createShipment × N
+  → response → show results in modal
+  → user dismisses → useNewShipmentModal (host) → navigation / emitTrackingCreated
+```
+
+Reference: `frontend/atoms/new-shipment-modal.ts`, `components/NewShipmentForm/useNewShipmentForm.ts`, `components/NewShipmentForm/ShipmentDataImportModal/useShipmentDataImportModal.ts`, `components/NewShipmentModal/useNewShipmentModal.ts`, `hooks/mutations/useShipments.ts`, `services/shipment.service.ts`, `services/shipment-import.service.ts`, `supabase/functions/create-shipment/handler.ts`, `_services/shipment/shipment.service.ts`, `_models/shipments.ts`. Full file-by-file trace in docs §11.
 
 ---
 

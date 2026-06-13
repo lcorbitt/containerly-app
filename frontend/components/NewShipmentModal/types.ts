@@ -16,5 +16,5 @@ export interface NewShipmentBulkImportModalProps {
   open: boolean;
   onClose: () => void;
   selectedOrgId: string | null;
-  onBulkComplete: (result: BulkImportResult) => void;
+  onBulkDismissed: (result: BulkImportResult) => void;
 }

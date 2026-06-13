@@ -29,7 +29,7 @@ export function NewShipmentModalHost({ children }: { children: React.ReactNode }
         open={modal.bulkImportOpen}
         onClose={modal.closeBulkImport}
         selectedOrgId={modal.selectedOrgId}
-        onBulkComplete={modal.onBulkComplete}
+        onBulkDismissed={modal.onBulkDismissed}
       />
     </>
   );

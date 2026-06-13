@@ -48,7 +48,7 @@ export function useNewShipmentModal() {
     setBulkImportOpen(false);
   }, [setBulkImportOpen]);
 
-  const onBulkComplete = useCallback(
+  const onBulkDismissed = useCallback(
     (result: BulkImportResult) => {
       emitTrackingCreated();
       if (result.created.length > 0) {
@@ -73,6 +73,6 @@ export function useNewShipmentModal() {
     setCreatingShipment,
     switchToBulkImport,
     closeBulkImport,
-    onBulkComplete,
+    onBulkDismissed,
   };
 }

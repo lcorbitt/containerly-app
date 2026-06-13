@@ -53,10 +53,11 @@ export function ShipmentDataImportModal(props: ShipmentDataImportModalProps) {
     bulkCount,
     handleFiles,
     handleBulkCreate,
+    handleBulkDismiss,
   } = useShipmentDataImportModal(props);
 
   const footer = showBulkResults ? (
-    <button type="button" onClick={onClose} className={SHIPMENT_IMPORT_DONE_BUTTON_CLASS}>
+    <button type="button" onClick={handleBulkDismiss} className={SHIPMENT_IMPORT_DONE_BUTTON_CLASS}>
       Done
     </button>
   ) : (
@@ -108,7 +109,7 @@ export function ShipmentDataImportModal(props: ShipmentDataImportModalProps) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={showBulkResults ? handleBulkDismiss : onClose}
       title={isBulk ? "Bulk Import Shipments" : "Import Shipment"}
       busy={busy}
       overlay={overlay}

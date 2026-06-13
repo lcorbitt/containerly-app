@@ -80,7 +80,7 @@ export function NewShipmentBulkImportModal({
   open,
   onClose,
   selectedOrgId,
-  onBulkComplete,
+  onBulkDismissed,
 }: NewShipmentBulkImportModalProps) {
   if (selectedOrgId) {
     return (
@@ -89,7 +89,7 @@ export function NewShipmentBulkImportModal({
         onClose={onClose}
         organizationId={selectedOrgId}
         variant="bulk"
-        onBulkComplete={onBulkComplete}
+        onBulkDismissed={onBulkDismissed}
       />
     );
   }
