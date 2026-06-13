@@ -8,6 +8,9 @@ const repoRoot = path.join(frontendRoot, "..");
 const sharedRoot = path.join(repoRoot, "supabase", "functions", "_wire");
 
 const nextConfig: NextConfig = {
+  images: {
+    qualities: [75, 90],
+  },
   /** Allow `@shared` imports from `supabase/functions/_wire` (outside `frontend/`). */
   experimental: {
     externalDir: true,

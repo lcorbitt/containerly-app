@@ -13,7 +13,7 @@ import {
 import type { LoginAuthPanelProps } from "./types";
 
 export function LoginAuthPanel({ next, initialError = null }: LoginAuthPanelProps) {
-  const form = useLoginForm({ initialMode: "signin", next });
+  const form = useLoginForm({ next });
 
   return (
     <div className={LOGIN_AUTH_PANEL_CARD_CLASS}>
@@ -22,13 +22,9 @@ export function LoginAuthPanel({ next, initialError = null }: LoginAuthPanelProp
         setEmail={form.setEmail}
         password={form.password}
         setPassword={form.setPassword}
-        fullName={form.fullName}
-        setFullName={form.setFullName}
-        mode="signin"
         message={form.message}
         loading={form.loading}
         loadingTitle={form.loadingTitle}
-        loadingSubtitle={form.loadingSubtitle}
         submit={form.submit}
       />
 

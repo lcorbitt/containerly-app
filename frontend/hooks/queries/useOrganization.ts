@@ -5,11 +5,25 @@ import {
   fetchOrganizationMemberRowsBrowser,
   fetchOrganizationMetricsBrowser,
   fetchPendingAccessRequestsBrowser,
+  getOrganizationImage,
 } from "@/services/organization.service";
 
 export const adminOrgMembersQueryKey = ["admin-org-members"] as const;
 export const orgMetricsRootKey = ["org-metrics"] as const;
 export const orgMembersRootKey = ["org-members"] as const;
+export const orgImageRootKey = ["org-image"] as const;
+
+export function organizationImageQueryKey(organizationId: string) {
+  return [...orgImageRootKey, organizationId] as const;
+}
+
+export function useOrganizationImageQuery(organizationId: string | null) {
+  return useQuery({
+    queryKey: organizationImageQueryKey(organizationId ?? ""),
+    queryFn: () => getOrganizationImage(organizationId!),
+    enabled: Boolean(organizationId),
+  });
+}
 
 export function useAdminOrgMembersQuery() {
   return useQuery({

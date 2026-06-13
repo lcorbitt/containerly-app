@@ -13,8 +13,6 @@ export const LOGIN_FORM_LOADING_CARD_CLASS =
   "flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-zinc-200/80 bg-white px-5 py-5 text-center shadow-lg dark:border-white/10 dark:bg-zinc-950/90";
 
 export const LOGIN_FORM_LOADING_TITLE_SIGN_IN = "Signing in…";
-export const LOGIN_FORM_LOADING_TITLE_SIGN_UP = "Creating account…";
-export const LOGIN_FORM_LOADING_SUBTITLE_INITIAL_SIGN_UP = "Setting up your account.";
 
 export const LOGIN_FORM_SHELL_CLASS = "relative w-full";
 

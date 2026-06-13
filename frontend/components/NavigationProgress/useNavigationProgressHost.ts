@@ -1,7 +1,7 @@
 "use client";
 
 import { useSetAtom } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import {
   navigationLoadingTextAtom,
@@ -126,10 +126,21 @@ export function useNavigationProgressHost() {
     [finishNavigation],
   );
 
+  const actions = useMemo(
+    () => ({
+      startNavigation,
+      claimContentGate,
+      releaseContentGate,
+    }),
+    [claimContentGate, releaseContentGate, startNavigation],
+  );
+
+  // Register before descendants render; useEffect would run too late for useNavigationProgress consumers.
+  setActions(actions);
+
   useEffect(() => {
-    setActions({ startNavigation, claimContentGate, releaseContentGate });
     return () => setActions(null);
-  }, [claimContentGate, releaseContentGate, setActions, startNavigation]);
+  }, [setActions]);
 
   useEffect(() => {
     if (previousPathnameRef.current === pathname) return;

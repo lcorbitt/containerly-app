@@ -20,7 +20,7 @@ export function getOrgImagePublicUrlBrowser(path: string | null | undefined): st
   return getOrgImagePublicUrl(createClient(), path);
 }
 
-export async function fetchOrganizationImagePath(organizationId: string): Promise<string | null> {
+export async function getOrganizationImage(organizationId: string): Promise<string | null> {
   const params = new URLSearchParams({ organization_id: organizationId });
   const { path } = await parseEdgeJson<{ path: string | null }>(
     await edgeFunctionFetch(`${EDGE_FUNCTION_SLUGS.organizations.imageGet}?${params}`),

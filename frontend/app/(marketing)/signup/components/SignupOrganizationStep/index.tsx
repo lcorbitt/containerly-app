@@ -105,7 +105,6 @@ export function SignupOrganizationStep({
             organizationId={step.activeOrganizationId}
             organizationName={step.name}
             initialOrgImagePath={step.orgImagePath}
-            onPathUpdated={step.setOrgImagePath}
           />
         </div>
       ) : null}

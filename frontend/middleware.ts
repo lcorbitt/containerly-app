@@ -1,11 +1,14 @@
 import { type NextRequest } from "next/server";
-import { createMiddlewareSupabase } from "@/lib/supabase/middleware";
+import {
+  createMiddlewareSupabase,
+  refreshMiddlewareAuthSession,
+} from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = await createMiddlewareSupabase(request);
 
   if (supabase) {
-    await supabase.auth.getUser();
+    await refreshMiddlewareAuthSession(supabase);
   }
 
   return response;

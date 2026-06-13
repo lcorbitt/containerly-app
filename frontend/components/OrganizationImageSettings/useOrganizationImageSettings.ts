@@ -1,11 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/atoms/toast";
 import {
+  organizationImageQueryKey,
+  useOrganizationImageQuery,
+} from "@/hooks/queries/useOrganization";
+import {
   clearOrganizationImagePathAndRemoveStorage,
-  fetchOrganizationImagePath,
   getOrgImagePublicUrlBrowser,
+  getOrganizationImage,
   uploadOrganizationImageAndSetPath,
 } from "@/services/organization.service";
 import { assertOrgImageFile } from "@/utils/org-image";
@@ -22,9 +27,17 @@ export function useOrganizationImageSettings({
   onPathUpdated?: (path: string | null) => void;
 }) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const orgImageQuery = useOrganizationImageQuery(organizationId);
   const inputRef = useRef<HTMLInputElement>(null);
   const [path, setPath] = useState<string | null>(initialOrgImagePath);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (orgImageQuery.data !== undefined) {
+      setPath(orgImageQuery.data);
+    }
+  }, [orgImageQuery.data]);
 
   useEffect(() => {
     setPath(initialOrgImagePath);
@@ -34,10 +47,13 @@ export function useOrganizationImageSettings({
   const initials = (organizationName.trim().slice(0, 2) || "?").toUpperCase();
 
   const refreshPathFromDb = useCallback(async () => {
-    const next = await fetchOrganizationImagePath(organizationId);
+    const next = await queryClient.fetchQuery({
+      queryKey: organizationImageQueryKey(organizationId),
+      queryFn: () => getOrganizationImage(organizationId),
+    });
     setPath(next);
     onPathUpdated?.(next);
-  }, [organizationId, onPathUpdated]);
+  }, [organizationId, onPathUpdated, queryClient]);
 
   const onPickFile = useCallback(
     async (fileList: FileList | null) => {
@@ -61,6 +77,9 @@ export function useOrganizationImageSettings({
 
         setPath(objectPath);
         onPathUpdated?.(objectPath);
+        void queryClient.invalidateQueries({
+          queryKey: organizationImageQueryKey(organizationId),
+        });
         toast("Organization logo updated", "success");
       } catch (e) {
         toast(e instanceof Error ? e.message : "Upload failed", "error");
@@ -69,7 +88,7 @@ export function useOrganizationImageSettings({
         if (inputRef.current) inputRef.current.value = "";
       }
     },
-    [path, organizationId, onPathUpdated, toast],
+    [path, organizationId, onPathUpdated, queryClient, toast],
   );
 
   const removePhoto = useCallback(async () => {
@@ -89,13 +108,16 @@ export function useOrganizationImageSettings({
 
       setPath(null);
       onPathUpdated?.(null);
+      void queryClient.invalidateQueries({
+        queryKey: organizationImageQueryKey(organizationId),
+      });
       toast("Organization logo removed", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not remove logo", "error");
     } finally {
       setBusy(false);
     }
-  }, [path, organizationId, onPathUpdated, refreshPathFromDb, toast]);
+  }, [path, organizationId, onPathUpdated, queryClient, refreshPathFromDb, toast]);
 
   const triggerFilePicker = useCallback(() => {
     inputRef.current?.click();

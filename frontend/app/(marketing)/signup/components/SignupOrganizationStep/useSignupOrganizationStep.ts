@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/atoms/toast";
 import { useCompleteOnboardingOrganizationMutation } from "@/hooks/mutations/useOnboarding";
-import { fetchOrganizationImagePath } from "@/services/organization.service";
+import { useOrganizationImageQuery } from "@/hooks/queries/useOrganization";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
 import type { PendingTenantInviteSummary } from "@/types/platform-tenant-invite";
 import { storeSignupOrganizationId } from "../SignupWizard/utils";
@@ -28,26 +28,13 @@ export function useSignupOrganizationStep({
   const [teamSize, setTeamSize] = useState("");
   const [monthlyShipmentVolume, setMonthlyShipmentVolume] = useState("");
   const [localOrganizationId, setLocalOrganizationId] = useState<string | null>(null);
-  const [orgImagePath, setOrgImagePath] = useState<string | null>(null);
 
   const suggestedOrgName = pendingInvite?.suggestedOrgName?.trim() ?? "";
   const activeOrganizationId = organizationId ?? localOrganizationId;
   const fieldsLocked = Boolean(activeOrganizationId);
 
-  useEffect(() => {
-    if (!activeOrganizationId) {
-      setOrgImagePath(null);
-      return;
-    }
-
-    let cancelled = false;
-    void fetchOrganizationImagePath(activeOrganizationId).then((path) => {
-      if (!cancelled) setOrgImagePath(path);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [activeOrganizationId]);
+  const orgImageQuery = useOrganizationImageQuery(activeOrganizationId);
+  const orgImagePath = activeOrganizationId ? (orgImageQuery.data ?? null) : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -95,7 +82,6 @@ export function useSignupOrganizationStep({
     setMonthlyShipmentVolume,
     activeOrganizationId,
     orgImagePath,
-    setOrgImagePath,
     fieldsLocked,
     submit,
     loading: mutation.isPending,

@@ -11,7 +11,7 @@ export interface OnboardingStatusResponse {
   pendingTenantInvite: PendingTenantInviteSummary | null;
 }
 
-export async function fetchOnboardingStatus(): Promise<OnboardingStatusResponse> {
+export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
   return parseEdgeJson<OnboardingStatusResponse>(
     await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.onboarding.status),
   );
@@ -55,7 +55,7 @@ export async function createTenantInvite(input: {
   );
 }
 
-export async function fetchAdminTenantInviteRows(): Promise<AdminTenantInviteRow[]> {
+export async function listTenantInvites(): Promise<AdminTenantInviteRow[]> {
   const { rows } = await parseEdgeJson<{ rows: AdminTenantInviteRow[] }>(
     await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.tenantInvites.list),
   );

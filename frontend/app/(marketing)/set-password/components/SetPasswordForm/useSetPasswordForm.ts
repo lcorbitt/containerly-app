@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getBrowserAuthSession,
   listenForPasswordRecovery,
   notifyPasswordChanged,
+  syncServerAuthSession,
   updatePassword,
 } from "@/services/auth.service";
-import { fetchOnboardingStatus } from "@/services/onboarding.service";
+import { getOnboardingStatus } from "@/services/onboarding.service";
+import { onboardingStatusQueryKey } from "@/hooks/queries/useOnboarding";
 import { SET_PASSWORD_MIN_LENGTH } from "./constants";
 import type { SetPasswordFlow } from "./types";
 
@@ -18,6 +21,7 @@ interface UseSetPasswordFormInput {
 
 export function useSetPasswordForm({ initialFlow }: UseSetPasswordFormInput) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [flow, setFlow] = useState<SetPasswordFlow>(initialFlow);
@@ -61,8 +65,14 @@ export function useSetPasswordForm({ initialFlow }: UseSetPasswordFormInput) {
         return;
       }
 
+      const sync = await syncServerAuthSession();
+      if (sync.error) throw sync.error;
+
       try {
-        const status = await fetchOnboardingStatus();
+        const status = await queryClient.fetchQuery({
+          queryKey: onboardingStatusQueryKey,
+          queryFn: getOnboardingStatus,
+        });
         if (!status.hasOrgMembership) {
           router.push("/signup?step=2");
           router.refresh();
