@@ -1,8 +1,7 @@
 import { EDGE_FUNCTION_SLUGS } from "@/lib/supabase/edge-function-slugs";
 import { edgeFunctionFetch } from "@/lib/supabase/edge-functions";
 import type { WorkspaceStoragePreviewVariant } from "@/utils/workspace-storage-preview";
-import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
-import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
+import type { ShipmentMessage, WorkspaceAttachment } from "@/types/database";
 import type {
   ContainerWorkspaceLoadResult,
   ContainerWorkspaceSnapshot,
@@ -115,7 +114,7 @@ export async function createWorkspaceAttachmentSignedUrl(storagePath: string): P
 // Container workspace
 // ---------------------------------------------------------------------------
 
-export async function loadContainerWorkspaceData(input: {
+export async function getContainerWorkspace(input: {
   containerId: string;
   organizationId: string;
 }): Promise<ContainerWorkspaceLoadResult> {
@@ -128,12 +127,12 @@ export async function loadContainerWorkspaceData(input: {
   );
 }
 
-export async function patchReportMessage(input: {
+export async function updateShipmentMessage(input: {
   messageId: string;
   body: string;
-}): Promise<ReportMessage> {
-  const { message } = await edgeJson<{ message: ReportMessage }>(
-    EDGE_FUNCTION_SLUGS.workspace.patchReportMessage,
+}): Promise<ShipmentMessage> {
+  const { message } = await edgeJson<{ message: ShipmentMessage }>(
+    EDGE_FUNCTION_SLUGS.workspace.updateShipmentMessage,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -143,21 +142,21 @@ export async function patchReportMessage(input: {
   return message;
 }
 
-export async function deleteContainerReportMessage(input: { messageId: string }): Promise<void> {
+export async function deleteShipmentMessage(input: { messageId: string }): Promise<void> {
   const params = new URLSearchParams({ message_id: input.messageId });
   await edgeJson<{ ok: true }>(
-    `${EDGE_FUNCTION_SLUGS.workspace.deleteReportMessage}?${params}`,
+    `${EDGE_FUNCTION_SLUGS.workspace.deleteShipmentMessage}?${params}`,
     { method: "DELETE" },
   );
 }
 
-export async function postContainerWorkspaceMessage(input: {
+export async function createContainerMessage(input: {
   containerId: string;
   organizationId: string;
   body: string;
   replyParentId: string | null;
   files: File[];
-}): Promise<{ message: ReportMessage; attachmentErrors: string[] }> {
+}): Promise<{ message: ShipmentMessage; attachmentErrors: string[] }> {
   const formData = new FormData();
   formData.set("organization_id", input.organizationId);
   formData.set("container_id", input.containerId);
@@ -167,13 +166,13 @@ export async function postContainerWorkspaceMessage(input: {
   for (const f of input.files) {
     formData.append("file", f);
   }
-  return edgeFormData<{ message: ReportMessage; attachmentErrors: string[] }>(
-    EDGE_FUNCTION_SLUGS.workspace.postContainerMessage,
+  return edgeFormData<{ message: ShipmentMessage; attachmentErrors: string[] }>(
+    EDGE_FUNCTION_SLUGS.workspace.createContainerMessage,
     formData,
   );
 }
 
-export async function uploadContainerWorkspaceDocuments(input: {
+export async function createContainerWorkspaceDocuments(input: {
   containerId: string;
   organizationId: string;
   files: File[];
@@ -187,7 +186,7 @@ export async function uploadContainerWorkspaceDocuments(input: {
     formData.append("file", f);
   }
   return edgeFormData<{ inserted: WorkspaceAttachment[]; errors: string[] }>(
-    EDGE_FUNCTION_SLUGS.workspace.uploadContainerDocuments,
+    EDGE_FUNCTION_SLUGS.workspace.createContainerDocuments,
     formData,
   );
 }
@@ -196,7 +195,7 @@ export async function renameContainerWorkspaceAttachment(input: {
   attachmentId: string;
   fileName: string;
 }): Promise<void> {
-  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.patchAttachment, {
+  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.updateAttachment, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ attachment_id: input.attachmentId, file_name: input.fileName }),
@@ -219,7 +218,7 @@ export async function removeContainerWorkspaceAttachment(input: {
 // Shipment-scope workspace thread
 // ---------------------------------------------------------------------------
 
-export async function loadShipmentScopeThread(input: {
+export async function getShipmentScopeThread(input: {
   organizationId: string;
   shipmentId: string;
 }): Promise<ShipmentScopeLoadResult> {
@@ -232,7 +231,7 @@ export async function loadShipmentScopeThread(input: {
   );
 }
 
-export async function fetchOrgShipmentMessageThreads(
+export async function listOrgShipmentMessageThreads(
   organizationId: string,
 ): Promise<OrgShipmentMessageThreadsResult> {
   const params = new URLSearchParams({ organization_id: organizationId });
@@ -241,11 +240,11 @@ export async function fetchOrgShipmentMessageThreads(
   );
 }
 
-export async function markShipmentThreadRead(input: {
+export async function updateShipmentThreadRead(input: {
   organizationId: string;
   shipmentId: string;
 }): Promise<void> {
-  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.markShipmentThreadRead, {
+  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.updateShipmentThreadRead, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -255,34 +254,21 @@ export async function markShipmentThreadRead(input: {
   });
 }
 
-export async function fetchImporterShipmentMessageThreads(): Promise<OrgShipmentMessageThreadsResult> {
+export async function listImporterShipmentMessageThreads(): Promise<OrgShipmentMessageThreadsResult> {
   return edgeJson<OrgShipmentMessageThreadsResult>(
     EDGE_FUNCTION_SLUGS.workspace.listImporterShipmentMessageThreads,
   );
 }
 
-export async function markImporterShipmentThreadRead(input: { shipmentId: string }): Promise<void> {
-  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.markImporterShipmentThreadRead, {
+export async function updateImporterShipmentThreadRead(input: { shipmentId: string }): Promise<void> {
+  await edgeJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.workspace.updateImporterShipmentThreadRead, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ shipment_id: input.shipmentId }),
   });
 }
 
-export async function deleteShipmentScopeMessage(input: {
-  messageId: string;
-  messages: ReportMessage[];
-}): Promise<{ deletedIds: Set<string> }> {
-  const idsToRemove = collectMessageSubtreeIds(input.messages, input.messageId);
-  const params = new URLSearchParams({ message_id: input.messageId });
-  await edgeJson<{ ok: true }>(
-    `${EDGE_FUNCTION_SLUGS.workspace.deleteReportMessage}?${params}`,
-    { method: "DELETE" },
-  );
-  return { deletedIds: idsToRemove };
-}
-
-export async function postShipmentScopeMessageWithAttachments(input: {
+export async function createShipmentMessage(input: {
   organizationId: string;
   shipmentId: string;
   body: string;
@@ -299,12 +285,12 @@ export async function postShipmentScopeMessageWithAttachments(input: {
     formData.append("file", f);
   }
   return edgeFormData<{ messageId: string; attachmentErrors: string[] }>(
-    EDGE_FUNCTION_SLUGS.workspace.postShipmentMessage,
+    EDGE_FUNCTION_SLUGS.workspace.createShipmentMessage,
     formData,
   );
 }
 
-export async function uploadShipmentScopeStandaloneFiles(input: {
+export async function createShipmentScopeStandaloneFiles(input: {
   organizationId: string;
   shipmentId: string;
   files: File[];
@@ -320,7 +306,7 @@ export async function uploadShipmentScopeStandaloneFiles(input: {
     formData.append("file", f);
   }
   const data = await edgeFormData<{ uploaded: WorkspaceAttachment[] }>(
-    EDGE_FUNCTION_SLUGS.workspace.uploadShipmentDocuments,
+    EDGE_FUNCTION_SLUGS.workspace.createShipmentDocuments,
     formData,
   );
   return data.uploaded ?? [];
@@ -330,7 +316,7 @@ export async function renameWorkspaceAttachmentDisplayName(
   attachmentId: string,
   trimmedName: string,
 ): Promise<void> {
-  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.patchAttachment, {
+  await edgeJson(EDGE_FUNCTION_SLUGS.workspace.updateAttachment, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ attachment_id: attachmentId, file_name: trimmedName }),

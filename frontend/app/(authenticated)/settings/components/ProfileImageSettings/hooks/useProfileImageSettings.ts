@@ -8,7 +8,7 @@ import {
   getProfileImagePublicUrlBrowser,
   clearProfileImagePathAndRemoveStorage,
   fetchProfileImagePath,
-  uploadProfileImageAndSetPath,
+  createProfileImageAndSetPath,
 } from "@/services/profile.service";
 import { profileInitials } from "@/utils/display-initials";
 
@@ -50,7 +50,7 @@ export function useProfileImageSettings({
       setBusy(true);
       const previousPath = path;
       try {
-        const objectPath = await uploadProfileImageAndSetPath({
+        const objectPath = await createProfileImageAndSetPath({
           file,
           previousPath,
         });

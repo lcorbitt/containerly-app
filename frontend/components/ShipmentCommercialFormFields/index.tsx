@@ -14,7 +14,7 @@ export function ShipmentCommercialFormFields({
   fieldClass = SHIPMENT_COMMERCIAL_FIELD_CLASS,
 }: {
   values: ShipmentCommercialFormValues;
-  onChange: (patch: Partial<ShipmentCommercialFormValues>) => void;
+  onChange: (update: Partial<ShipmentCommercialFormValues>) => void;
   fieldClass?: string;
 }) {
   return (

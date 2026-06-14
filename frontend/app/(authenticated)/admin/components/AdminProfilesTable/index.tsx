@@ -109,8 +109,8 @@ export function AdminProfilesTable({
         </>
       }
     >
-      {t.patchError ? (
-        <p className="p-4 text-sm text-red-600 dark:text-red-400">{t.patchError}</p>
+      {t.updateError ? (
+        <p className="p-4 text-sm text-red-600 dark:text-red-400">{t.updateError}</p>
       ) : t.profiles.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No profiles yet.</p>
       ) : t.filtered.length === 0 ? (

@@ -22,17 +22,28 @@ import {
   notifyOperatorsCustomerDocumentUploaded,
   notifyOperatorsDraftsPublished,
 } from "@services/notification/workflow.service.ts";
-import {
-  buildMessageActivityMetadata,
-  messageActivityActorKind,
-  messageActivityEventType,
-  resolveMessageActivityBody,
-} from "@shared/message-activity-event.ts";
 import { createServiceClient } from "@services/db.ts";
-import { syncActivityEventsForEditedReportMessage } from "@services/message/activity-sync.service.ts";
+import { syncActivityEventsForEditedShipmentMessage } from "@services/message/activity-sync.service.ts";
+import { recordMessageActivityEvent } from "@services/message/activity.service.ts";
 import { notifyOperatorsBolImported } from "@services/notification/in-app-alerts.ts";
+import {
+  deleteShipmentMessage as deleteShipmentMessageRow,
+  getShipmentMessageAuthorForEdit,
+  insertWorkspaceShipmentMessage,
+  listShipmentMessagesByContainer,
+  listShipmentMessagesByContainerIdsFull,
+  listShipmentMessagesForImporterThreadIndex,
+  listShipmentMessagesForOrgThreadIndex,
+  listShipmentScopeShipmentMessages,
+  updateShipmentMessage as updateShipmentMessageRow,
+} from "@models/shipment_messages.ts";
+import {
+  listImporterShipmentMessageThreadReadsForUser,
+  listShipmentMessageThreadReadsForUser,
+  upsertShipmentMessageThreadRead,
+} from "@models/shipment_message_thread_reads.ts";
 
-type ReportMessage = Record<string, unknown> & {
+type ShipmentMessage = Record<string, unknown> & {
   id: string;
   author_user_id: string | null;
   author_kind: string;
@@ -129,11 +140,7 @@ export async function loadContainerWorkspaceDataForUser(
       : Promise.resolve({ data: [] as { id: string; container_number: string }[], error: null });
 
   const [{ data: msg }, { data: act }, { data: tev }, attRes, siblingResult, activityRes] = await Promise.all([
-    supabase
-      .from("report_messages")
-      .select("*")
-      .eq("container_id", input.containerId)
-      .order("created_at", { ascending: true }),
+    listShipmentMessagesByContainer(supabase, input.containerId),
     supabase
       .from("report_activity")
       .select("*")
@@ -164,7 +171,7 @@ export async function loadContainerWorkspaceDataForUser(
       : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ]);
 
-  const msgList = (msg as ReportMessage[]) ?? [];
+  const msgList = (msg as ShipmentMessage[]) ?? [];
   const attRows: WorkspaceAttachment[] = attRes.error
     ? []
     : ((attRes.data as WorkspaceAttachment[]) ?? []);
@@ -280,24 +287,16 @@ async function insertMessageActivityEventForUser(
     attachmentCount?: number;
   },
 ): Promise<void> {
-  const activityBody = resolveMessageActivityBody(input.body, input.attachmentCount ?? 0);
-  const { error } = await supabase.from("shipment_activity_events").insert({
-    shipment_id: input.shipmentId,
-    report_message_id: input.messageId,
-    event_type: messageActivityEventType(input.authorKind),
-    body: activityBody,
-    actor_kind: messageActivityActorKind(input.authorKind),
-    actor_user_id: input.authorUserId,
-    metadata: buildMessageActivityMetadata({
-      messageId: input.messageId,
-      authorKind: input.authorKind,
-      authorDisplayName: input.authorDisplayName,
-      body: input.body,
-      containerId: input.containerId,
-      attachmentCount: input.attachmentCount,
-    }),
+  await recordMessageActivityEvent(supabase, {
+    shipmentId: input.shipmentId,
+    messageId: input.messageId,
+    body: input.body,
+    authorKind: input.authorKind,
+    authorDisplayName: input.authorDisplayName,
+    authorUserId: input.authorUserId,
+    containerId: input.containerId,
+    attachmentCount: input.attachmentCount,
   });
-  if (error) throw new Error(error.message);
 }
 
 async function resolveContainerShipmentId(
@@ -394,22 +393,21 @@ export async function createAuthorizedWorkspaceStorageSignedUrlForUser(
   return createWorkspaceStorageSignedUrlQuery(admin, storagePath, expiresSec, options);
 }
 
-export async function updateReportMessageByIdForUser(
+export async function updateShipmentMessage(
   supabase: SupabaseClient,
   userId: string,
   messageId: string,
   body: string,
-): Promise<ReportMessage> {
+): Promise<ShipmentMessage> {
   const trimmed = body.trim();
   if (!trimmed) {
     throw new Error("Message cannot be empty.");
   }
 
-  const { data: existing, error: fetchErr } = await supabase
-    .from("report_messages")
-    .select("id, author_user_id")
-    .eq("id", messageId)
-    .maybeSingle();
+  const { data: existing, error: fetchErr } = await getShipmentMessageAuthorForEdit(
+    supabase,
+    messageId,
+  );
   if (fetchErr) throw new Error(fetchErr.message);
   if (!existing?.author_user_id || existing.author_user_id !== userId) {
     throw new Error(
@@ -417,12 +415,7 @@ export async function updateReportMessageByIdForUser(
     );
   }
 
-  const { data: updated, error } = await supabase
-    .from("report_messages")
-    .update({ body: trimmed })
-    .eq("id", messageId)
-    .select()
-    .single();
+  const { data: updated, error } = await updateShipmentMessageRow(supabase, messageId, trimmed);
   if (error) throw new Error(error.message);
   if (!updated) {
     throw new Error(
@@ -432,26 +425,22 @@ export async function updateReportMessageByIdForUser(
 
   try {
     const admin = createServiceClient();
-    await syncActivityEventsForEditedReportMessage(admin, {
-      reportMessageId: messageId,
+    await syncActivityEventsForEditedShipmentMessage(admin, {
+      shipmentMessageId: messageId,
       body: trimmed,
     });
   } catch {
     /* best-effort — activity row updates also trigger realtime */
   }
 
-  return updated as ReportMessage;
+  return updated as ShipmentMessage;
 }
 
-export async function deleteReportMessageByIdForUser(
+export async function deleteShipmentMessage(
   supabase: SupabaseClient,
   messageId: string,
 ): Promise<void> {
-  const { data: deletedRows, error } = await supabase
-    .from("report_messages")
-    .delete()
-    .eq("id", messageId)
-    .select("id");
+  const { data: deletedRows, error } = await deleteShipmentMessageRow(supabase, messageId);
   if (error) throw new Error(error.message);
   if (!deletedRows?.length) {
     throw new Error(
@@ -494,7 +483,7 @@ async function persistContainerAttachmentFileServer(
     file_size_bytes: number;
     uploaded_by: string;
     is_internal: boolean;
-    report_message_id?: string;
+    shipment_message_id?: string;
   } = {
     organization_id: organizationId,
     container_id: containerId,
@@ -506,7 +495,7 @@ async function persistContainerAttachmentFileServer(
     file_size_bytes: file.size,
     uploaded_by: userId,
   };
-  if (reportMessageId) insertRow.report_message_id = reportMessageId;
+  if (reportMessageId) insertRow.shipment_message_id = reportMessageId;
 
   const { data: inserted, error: insErr } = await supabase
     .from("workspace_attachments")
@@ -524,7 +513,7 @@ async function persistContainerAttachmentFileServer(
   return inserted as WorkspaceAttachment;
 }
 
-export async function postContainerWorkspaceMessageForUser(
+export async function createContainerMessage(
   supabase: SupabaseClient,
   userId: string,
   userEmail: string | null,
@@ -536,7 +525,7 @@ export async function postContainerWorkspaceMessageForUser(
     replyParentId: string | null;
     files: File[];
   },
-): Promise<{ message: ReportMessage; attachmentErrors: string[] }> {
+): Promise<{ message: ShipmentMessage; attachmentErrors: string[] }> {
   const { data: selfProf } = await supabase
     .from("profiles")
     .select("full_name, email")
@@ -547,23 +536,19 @@ export async function postContainerWorkspaceMessageForUser(
     email: (selfProf?.email as string | null) ?? userEmail,
   });
 
-  const { data: inserted, error } = await supabase
-    .from("report_messages")
-    .insert({
-      container_id: input.containerId,
-      shipment_id: null,
-      author_user_id: userId,
-      author_kind: "member",
-      author_display_name: displayName,
-      is_internal: input.internalOnly,
-      body: input.body,
-      parent_message_id: input.replyParentId,
-    })
-    .select()
-    .single();
+  const { data: inserted, error } = await insertWorkspaceShipmentMessage(supabase, {
+    container_id: input.containerId,
+    shipment_id: null,
+    author_user_id: userId,
+    author_kind: "member",
+    author_display_name: displayName,
+    is_internal: input.internalOnly,
+    body: input.body,
+    parent_message_id: input.replyParentId,
+  });
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
-  const message = inserted as ReportMessage;
+  const message = inserted as ShipmentMessage;
 
   const attachmentErrors: string[] = [];
   for (const file of input.files) {
@@ -600,7 +585,7 @@ export async function postContainerWorkspaceMessageForUser(
   return { message, attachmentErrors };
 }
 
-export async function uploadContainerWorkspaceDocumentsForUser(
+export async function createContainerWorkspaceDocumentsForUser(
   supabase: SupabaseClient,
   userId: string,
   input: { organizationId: string; containerId: string; files: File[]; isInternal: boolean },
@@ -652,7 +637,7 @@ export async function renameWorkspaceAttachmentFileNameForUser(
   );
 }
 
-function patchActivityMetadataFileName(
+function updateActivityMetadataFileName(
   metadata: Record<string, unknown>,
   attachmentId: string,
   fileName: string,
@@ -692,12 +677,12 @@ async function syncActivityEventAttachmentDisplayNames(
 
   for (const event of events ?? []) {
     const metadata = (event.metadata as Record<string, unknown> | null) ?? {};
-    const patched = patchActivityMetadataFileName(metadata, attachmentId, fileName);
-    if (!patched) continue;
+    const updated = updateActivityMetadataFileName(metadata, attachmentId, fileName);
+    if (!updated) continue;
 
     const { error: updateErr } = await supabase
       .from("shipment_activity_events")
-      .update({ metadata: patched })
+      .update({ metadata: updated })
       .eq("id", event.id as string);
     if (updateErr) throw new Error(updateErr.message);
   }
@@ -716,7 +701,7 @@ export async function removeWorkspaceAttachmentByIdForUser(
   if (!deletedRows?.length) throw new Error("Attachment not found");
 }
 
-export async function loadShipmentScopeThreadForUser(
+export async function getShipmentScopeThread(
   supabase: SupabaseClient,
   userId: string,
   input: { organizationId: string; shipmentId: string },
@@ -738,21 +723,12 @@ export async function loadShipmentScopeThreadForUser(
 
   const containerIds = (containerRows ?? []).map((c) => c.id as string);
 
-  const shipmentMsgQuery = supabase
-    .from("report_messages")
-    .select("*")
-    .eq("shipment_id", input.shipmentId)
-    .is("container_id", null)
-    .order("created_at", { ascending: true });
+  const shipmentMsgQuery = listShipmentScopeShipmentMessages(supabase, input.shipmentId);
 
   const containerMsgQuery =
     containerIds.length > 0
-      ? supabase
-          .from("report_messages")
-          .select("*")
-          .in("container_id", containerIds)
-          .order("created_at", { ascending: true })
-      : Promise.resolve({ data: [] as ReportMessage[], error: null });
+      ? listShipmentMessagesByContainerIdsFull(supabase, containerIds)
+      : Promise.resolve({ data: [] as ShipmentMessage[], error: null });
 
   const [shipmentMsgRes, containerMsgRes, attRes] = await Promise.all([
     shipmentMsgQuery,
@@ -768,7 +744,7 @@ export async function loadShipmentScopeThreadForUser(
   if (shipmentMsgRes.error) return { ok: false, error: shipmentMsgRes.error.message };
   if (containerMsgRes.error) return { ok: false, error: containerMsgRes.error.message };
 
-  const msgList = [...((shipmentMsgRes.data as ReportMessage[]) ?? []), ...((containerMsgRes.data as ReportMessage[]) ?? [])].sort(
+  const msgList = [...((shipmentMsgRes.data as ShipmentMessage[]) ?? []), ...((containerMsgRes.data as ShipmentMessage[]) ?? [])].sort(
     (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
   );
   const attRows: WorkspaceAttachment[] = attRes.error
@@ -893,7 +869,7 @@ async function persistShipmentAttachmentFileServer(
     uploaded_by: string;
     is_internal: boolean;
     uploaded_by_kind: "operator" | "customer";
-    report_message_id?: string;
+    shipment_message_id?: string;
     document_type?: string | null;
     document_group?: string | null;
     approval_status?: string | null;
@@ -909,7 +885,7 @@ async function persistShipmentAttachmentFileServer(
     file_size_bytes: file.size,
     uploaded_by: userId,
   };
-  if (reportMessageId) insertRow.report_message_id = reportMessageId;
+  if (reportMessageId) insertRow.shipment_message_id = reportMessageId;
   if (documentType) insertRow.document_type = documentType;
   if (documentGroup) {
     insertRow.document_group = documentGroup;
@@ -934,7 +910,7 @@ async function persistShipmentAttachmentFileServer(
   return inserted as WorkspaceAttachment;
 }
 
-export async function insertShipmentScopeReportMessageForUser(
+export async function insertShipmentScopeShipmentMessageForUser(
   supabase: SupabaseClient,
   userId: string,
   userEmail: string | null,
@@ -965,26 +941,22 @@ export async function insertShipmentScopeReportMessageForUser(
   const authorKind = uploaderKind === "customer" ? "customer" : "member";
   const isInternal = authorKind === "customer" ? false : input.internalOnly;
 
-  const { data: inserted, error } = await supabase
-    .from("report_messages")
-    .insert({
-      shipment_id: input.shipmentId,
-      container_id: null,
-      author_user_id: userId,
-      author_kind: authorKind,
-      author_display_name: displayName,
-      is_internal: isInternal,
-      body: input.body,
-      parent_message_id: input.replyParentId,
-    })
-    .select()
-    .single();
+  const { data: inserted, error } = await insertWorkspaceShipmentMessage(supabase, {
+    shipment_id: input.shipmentId,
+    container_id: null,
+    author_user_id: userId,
+    author_kind: authorKind,
+    author_display_name: displayName,
+    is_internal: isInternal,
+    body: input.body,
+    parent_message_id: input.replyParentId,
+  });
   if (error) throw new Error(error.message);
   if (!inserted) throw new Error("Message was not saved.");
-  return { messageId: (inserted as ReportMessage).id, authorKind };
+  return { messageId: (inserted as ShipmentMessage).id, authorKind };
 }
 
-export async function postShipmentScopeMessageWithAttachmentsForUser(
+export async function createShipmentMessage(
   supabase: SupabaseClient,
   userId: string,
   userEmail: string | null,
@@ -1012,7 +984,7 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
     throw new Error("Message body or at least one attachment is required.");
   }
 
-  const { messageId, authorKind } = await insertShipmentScopeReportMessageForUser(
+  const { messageId, authorKind } = await insertShipmentScopeShipmentMessageForUser(
     supabase,
     userId,
     userEmail,
@@ -1032,7 +1004,7 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
         shipmentId: input.shipmentId,
         userId,
         file,
-        reportMessageId: messageId,
+        shipmentMessageId: messageId,
       });
     } catch (e) {
       attachmentErrors.push(e instanceof Error ? e.message : "Could not upload an attachment");
@@ -1058,7 +1030,7 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
   }
 
   try {
-    await markShipmentThreadReadForUser(
+    await updateShipmentThreadRead(
       supabase,
       userId,
       input.organizationId,
@@ -1071,7 +1043,7 @@ export async function postShipmentScopeMessageWithAttachmentsForUser(
   return { messageId, attachmentErrors };
 }
 
-export async function uploadShipmentScopeStandaloneFilesForUser(
+export async function createShipmentScopeStandaloneFilesForUser(
   supabase: SupabaseClient,
   userId: string,
   input: {
@@ -1234,7 +1206,7 @@ function resolveThreadAuthorEmail(
   return email || null;
 }
 
-export async function markShipmentThreadReadForUser(
+export async function updateShipmentThreadRead(
   supabase: SupabaseClient,
   userId: string,
   organizationId: string,
@@ -1252,33 +1224,26 @@ export async function markShipmentThreadReadForUser(
   const nowIso = new Date().toISOString();
   const lastReadAt = nowIso;
 
-  const { error } = await supabase.from("shipment_message_thread_reads").upsert(
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      shipment_id: shipmentId,
-      last_read_at: lastReadAt,
-      updated_at: nowIso,
-    },
-    { onConflict: "user_id,shipment_id" },
-  );
+  const { error } = await upsertShipmentMessageThreadRead(supabase, {
+    organization_id: organizationId,
+    user_id: userId,
+    shipment_id: shipmentId,
+    last_read_at: lastReadAt,
+    updated_at: nowIso,
+  });
   if (error) throw new Error(error.message);
 }
 
-export async function loadOrgShipmentMessageThreadsForUser(
+export async function listOrgShipmentMessageThreads(
   supabase: SupabaseClient,
   userId: string,
   organizationId: string,
 ): Promise<OrgShipmentMessageThreadsResult> {
-  const { data: msgRows, error } = await supabase
-    .from("report_messages")
-    .select(
-      "shipment_id, container_id, body, author_kind, author_user_id, author_display_name, created_at",
-    )
-    .eq("organization_id", organizationId)
-    .eq("is_internal", false)
-    .order("created_at", { ascending: false })
-    .limit(ORG_SHIPMENT_MESSAGE_FETCH_LIMIT);
+  const { data: msgRows, error } = await listShipmentMessagesForOrgThreadIndex(
+    supabase,
+    organizationId,
+    ORG_SHIPMENT_MESSAGE_FETCH_LIMIT,
+  );
 
   if (error) return { ok: false, error: error.message };
 
@@ -1340,12 +1305,12 @@ export async function loadOrgShipmentMessageThreadsForUser(
     return { ok: true, threads: [] };
   }
 
-  const { data: readRows, error: readErr } = await supabase
-    .from("shipment_message_thread_reads")
-    .select("shipment_id, last_read_at")
-    .eq("organization_id", organizationId)
-    .eq("user_id", userId)
-    .in("shipment_id", shipmentIds);
+  const { data: readRows, error: readErr } = await listShipmentMessageThreadReadsForUser(
+    supabase,
+    organizationId,
+    userId,
+    shipmentIds,
+  );
   if (readErr) return { ok: false, error: readErr.message };
 
   const lastReadAtByShipmentId = new Map(
@@ -1421,7 +1386,7 @@ export async function loadOrgShipmentMessageThreadsForUser(
   return { ok: true, threads };
 }
 
-export async function markImporterShipmentThreadReadForUser(
+export async function updateImporterShipmentThreadRead(
   supabase: SupabaseClient,
   userId: string,
   shipmentId: string,
@@ -1447,20 +1412,17 @@ export async function markImporterShipmentThreadReadForUser(
   const organizationId = shipment.organization_id as string;
   const nowIso = new Date().toISOString();
 
-  const { error } = await supabase.from("shipment_message_thread_reads").upsert(
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      shipment_id: shipmentId,
-      last_read_at: nowIso,
-      updated_at: nowIso,
-    },
-    { onConflict: "user_id,shipment_id" },
-  );
+  const { error } = await upsertShipmentMessageThreadRead(supabase, {
+    organization_id: organizationId,
+    user_id: userId,
+    shipment_id: shipmentId,
+    last_read_at: nowIso,
+    updated_at: nowIso,
+  });
   if (error) throw new Error(error.message);
 }
 
-export async function loadImporterShipmentMessageThreadsForUser(
+export async function listImporterShipmentMessageThreads(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<OrgShipmentMessageThreadsResult> {
@@ -1479,14 +1441,10 @@ export async function loadImporterShipmentMessageThreadsForUser(
     return { ok: true, threads: [] };
   }
 
-  const { data: msgRows, error } = await supabase
-    .from("report_messages")
-    .select(
-      "shipment_id, container_id, body, author_kind, author_user_id, author_display_name, created_at, organization_id",
-    )
-    .eq("is_internal", false)
-    .order("created_at", { ascending: false })
-    .limit(ORG_SHIPMENT_MESSAGE_FETCH_LIMIT);
+  const { data: msgRows, error } = await listShipmentMessagesForImporterThreadIndex(
+    supabase,
+    ORG_SHIPMENT_MESSAGE_FETCH_LIMIT,
+  );
 
   if (error) return { ok: false, error: error.message };
 
@@ -1549,11 +1507,11 @@ export async function loadImporterShipmentMessageThreadsForUser(
     return { ok: true, threads: [] };
   }
 
-  const { data: readRows, error: readErr } = await supabase
-    .from("shipment_message_thread_reads")
-    .select("shipment_id, last_read_at")
-    .eq("user_id", userId)
-    .in("shipment_id", shipmentIds);
+  const { data: readRows, error: readErr } = await listImporterShipmentMessageThreadReadsForUser(
+    supabase,
+    userId,
+    shipmentIds,
+  );
   if (readErr) return { ok: false, error: readErr.message };
 
   const lastReadAtByShipmentId = new Map(

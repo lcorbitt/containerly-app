@@ -5,12 +5,13 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { fetchProfileDisplayName } from "@services/notification/in-app-alerts.ts";
 import { fetchProfileRole } from "@models/profiles.ts";
 import { fetchMembershipByOrgAndUser } from "@models/organization_members.ts";
-import { fetchReportMessageParentForReply, insertReportMessage } from "@models/report_messages.ts";
+import { getShipmentMessageParentForReply, insertShipmentMessage } from "@models/shipment_messages.ts";
+import { upsertShipmentMessageThreadRead } from "@models/shipment_message_thread_reads.ts";
 import { fetchAccessIdAndOrg } from "@models/shipment_customer_access.ts";
 import { fetchShipmentParticipantForUser } from "@models/shipment_participants.ts";
 import { fetchContainerIdAndShipmentId } from "@models/containers.ts";
 import { fetchShipmentPortalOperatorRow } from "@models/shipments.ts";
-import { postCustomerMessage } from "@services/customer/customer-access.service.ts";
+import { createCustomerShipmentMessage } from "@services/customer/customer-access.service.ts";
 import { notifyOperatorsNewCustomerMessage } from "@services/notification/workflow.service.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import { recordMessageActivityEvent } from "@services/message/activity.service.ts";
@@ -63,7 +64,7 @@ async function postOrgMemberPortalMessage(
     parentMessageId: string | null;
   },
 ): Promise<PortalMessageResult> {
-  const { data: inserted, error: insErr } = await insertReportMessage(admin, {
+  const { data: inserted, error: insErr } = await insertShipmentMessage(admin, {
     organization_id: input.organizationId,
     shipment_id: input.shipmentId,
     container_id: null,
@@ -92,16 +93,13 @@ async function postOrgMemberPortalMessage(
   const orgName = (orgRow?.name as string | undefined) ?? "Containerly";
 
   const nowIso = new Date().toISOString();
-  await admin.from("shipment_message_thread_reads").upsert(
-    {
-      organization_id: input.organizationId,
-      user_id: userId,
-      shipment_id: input.shipmentId,
-      last_read_at: nowIso,
-      updated_at: nowIso,
-    },
-    { onConflict: "user_id,shipment_id" },
-  );
+  await upsertShipmentMessageThreadRead(admin, {
+    organization_id: input.organizationId,
+    user_id: userId,
+    shipment_id: input.shipmentId,
+    last_read_at: nowIso,
+    updated_at: nowIso,
+  });
 
   return {
     ok: true,
@@ -116,7 +114,7 @@ async function postOrgMemberPortalMessage(
 }
 
 /** Post a customer-visible message on the shipment portal (customer, assignee, or participant). */
-export async function postPortalShipmentMessage(
+export async function createPortalShipmentMessage(
   userClient: SupabaseClient,
   admin: SupabaseClient,
   userId: string,
@@ -169,7 +167,7 @@ export async function postPortalShipmentMessage(
     }
 
     if (parentId) {
-      const { data: parent, error: parentErr } = await fetchReportMessageParentForReply(admin, parentId);
+      const { data: parent, error: parentErr } = await getShipmentMessageParentForReply(admin, parentId);
       if (parentErr) throw parentErr;
       if (!parent) return { ok: false, status: 400, error: "Invalid parent message" };
       if (parent.is_internal === true) {
@@ -197,7 +195,7 @@ export async function postPortalShipmentMessage(
     });
   }
 
-  const customerResult = await postCustomerMessage(userClient, admin, userId, {
+  const customerResult = await createCustomerShipmentMessage(userClient, admin, userId, {
     shipment_id: shipmentId,
     container_id: shipmentScoped ? undefined : containerId,
     body: text,

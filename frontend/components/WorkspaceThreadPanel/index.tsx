@@ -21,8 +21,8 @@ import {
   buildMessageTree,
   truncatedReplyPreview,
   type ThreadNode,
-} from "@/utils/report-message-tree";
-import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
+} from "@/utils/shipment-message-tree";
+import type { ShipmentMessage, WorkspaceAttachment } from "@/types/database";
 import {
   THREAD_MESSAGE_AUTHOR_EMAIL_CLASS,
   THREAD_MESSAGE_AUTHOR_ROW_CLASS,
@@ -84,7 +84,7 @@ function ThreadMessageItem({
   allowMessageEdit = true,
   allowReply = true,
 }: {
-  node: ThreadNode<ReportMessage>;
+  node: ThreadNode<ShipmentMessage>;
   depth: number;
   replyParentId: string | null;
   onReply: (id: string) => void;
@@ -95,7 +95,7 @@ function ThreadMessageItem({
   editingMessageId: string | null;
   editDraft: string;
   onEditDraftChange: (value: string) => void;
-  messageById: Map<string, ReportMessage>;
+  messageById: Map<string, ShipmentMessage>;
   authorNameByUserId: Record<string, string>;
   authorEmailByUserId?: Record<string, string>;
   authorAvatarUrlByUserId: Record<string, string | null>;
@@ -418,7 +418,7 @@ export function ThreadPanel({
   pinToLatest = true,
   scrollComposerIntoView = false,
 }: {
-  messages: ReportMessage[];
+  messages: ShipmentMessage[];
   authorNameByUserId: Record<string, string>;
   authorEmailByUserId?: Record<string, string>;
   authorAvatarUrlByUserId?: Record<string, string | null>;

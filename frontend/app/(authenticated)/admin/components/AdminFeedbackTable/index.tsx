@@ -127,8 +127,8 @@ export function AdminFeedbackTable() {
         <p className="p-4 text-sm text-red-600 dark:text-red-400">
           {t.query.error instanceof Error ? t.query.error.message : "Failed to load feedback"}
         </p>
-      ) : t.patchError ? (
-        <p className="p-4 text-sm text-red-600 dark:text-red-400">{t.patchError}</p>
+      ) : t.updateError ? (
+        <p className="p-4 text-sm text-red-600 dark:text-red-400">{t.updateError}</p>
       ) : t.rows.length === 0 ? (
         <p className="p-6 text-sm text-zinc-500">No feedback submissions yet.</p>
       ) : t.filtered.length === 0 ? (

@@ -1,4 +1,4 @@
-/** Discord-style inline markup stored in `report_messages.body`. */
+/** Discord-style inline markup stored in `shipment_messages.body`. */
 
 export interface MessageMarkupTextNode {
   type: "text";

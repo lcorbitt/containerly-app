@@ -27,8 +27,8 @@ export function useSignupInviteTeamStep({ onSubmit }: UseSignupInviteTeamStepInp
     setRows((prev) => [...prev, createInviteRow()]);
   }, []);
 
-  const updateRow = useCallback((id: string, patch: Partial<SignupInviteRow>) => {
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  const updateRow = useCallback((id: string, update: Partial<SignupInviteRow>) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...update } : row)));
   }, []);
 
   const finish = useCallback(

@@ -11,7 +11,7 @@ import {
   clearOrganizationImagePathAndRemoveStorage,
   getOrgImagePublicUrlBrowser,
   getOrganizationImage,
-  uploadOrganizationImageAndSetPath,
+  createOrganizationImageAndSetPath,
 } from "@/services/organization.service";
 import { assertOrgImageFile } from "@/utils/org-image";
 
@@ -69,7 +69,7 @@ export function useOrganizationImageSettings({
       setBusy(true);
       const previousPath = path;
       try {
-        const objectPath = await uploadOrganizationImageAndSetPath({
+        const objectPath = await createOrganizationImageAndSetPath({
           organizationId,
           file,
           previousPath,

@@ -9,7 +9,8 @@ import { useAcknowledgeAlertMutation } from "@/hooks/mutations/useAlerts";
 import { useOrgNotifications } from "@/hooks/queries/useAlerts";
 import { filterBellNotifications } from "@/utils/alert-inbox";
 import { useShipmentWorkspaceRowQuery } from "@/hooks/queries/useShipment";
-import { fetchShipment } from "@/services/shipment.service";
+import { getShipment } from "@/services/shipment.service";
+import { shipmentPortalQueryKey } from "@/hooks/queries/useShipment";
 import {
   activeNavSegmentFromPathname,
   fallbackSubTabLabel,
@@ -53,8 +54,8 @@ export function useAuthenticatedTopNav() {
   // Hub breadcrumbs read the order number from the get-shipment payload
   // (independent of the selected org), so it resolves reliably.
   const hubShipmentQuery = useQuery({
-    queryKey: ["top-nav-shipment-portal", hubShipmentId],
-    queryFn: () => fetchShipment(hubShipmentId),
+    queryKey: shipmentPortalQueryKey(hubShipmentId),
+    queryFn: () => getShipment(hubShipmentId),
     enabled: Boolean(hubShipmentId),
   });
 

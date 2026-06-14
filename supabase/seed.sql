@@ -1836,7 +1836,7 @@ insert into public.shipment_activity_events (
     now() - interval '20 hours'
   );
 
-insert into public.report_messages (
+insert into public.shipment_messages (
   container_id,
   author_user_id,
   author_kind,
@@ -1850,7 +1850,7 @@ insert into public.report_messages (
   'Internal: chassis pre-pull arranged for LA terminal.'
 );
 
-insert into public.report_messages (
+insert into public.shipment_messages (
   container_id,
   author_kind,
   is_internal,

@@ -2,8 +2,8 @@
  * Deployed Supabase Edge function slugs: `supabase/functions/<slug>/index.ts` →
  * `GET|POST ${SUPABASE_URL}/functions/v1/<slug>`.
  *
- * Slugs are **verb-first** (CRUD / HTTP-style): e.g. `create-tracking-request`, `get-shipment`,
- * `create-customer-invite`. Group keys (`tracking`, `shipments`, …) are **caller grouping only**
+ * Slugs are **verb-first** (CRUD / domain verbs): e.g. `create-shipment`, `get-shipment`,
+ * `accept-customer-invite`. Group keys (`tracking`, `shipments`, …) are **caller grouping only**
  * (flat slug namespace).
  */
 export const EDGE_FUNCTION_SLUGS = {
@@ -25,16 +25,16 @@ export const EDGE_FUNCTION_SLUGS = {
     update: "update-shipment",
     updateRisk: "update-shipment-risk",
     delete: "delete-shipment",
-    reviewDocument: "review-shipment-document",
+    updateDocument: "update-shipment-document",
     claimAccess: "claim-shipment-access",
-    postCustomerMessage: "post-customer-shipment-message",
+    createCustomerMessage: "create-customer-shipment-message",
     previewCustomer: "preview-customer-shipment",
     accessTab: "get-shipment-access-tab",
     updateAssignee: "update-shipment-assignee",
     updateTags: "update-shipment-tags",
     updateRootCause: "update-shipment-root-cause",
     updateNotificationSubscription: "update-shipment-notification-subscription",
-    insertParticipant: "insert-shipment-participant",
+    createParticipant: "create-shipment-participant",
     deleteParticipant: "delete-shipment-participant",
     revokeCustomerInvite: "revoke-customer-invite",
     revokeCustomerAccess: "revoke-shipment-customer-access",
@@ -52,13 +52,12 @@ export const EDGE_FUNCTION_SLUGS = {
   },
   reports: {
     getPublic: "get-public-report",
-    postMessage: "post-report-message",
   },
   performance: {
     sendStaleReminders: "send-stale-shipment-reminders",
   },
   feedback: {
-    submit: "submit-feedback",
+    create: "create-feedback",
     listAdmin: "list-admin-feedback",
     updateAdmin: "update-admin-feedback",
   },
@@ -79,19 +78,19 @@ export const EDGE_FUNCTION_SLUGS = {
     createSignedUrl: "create-workspace-signed-url",
     getContainer: "get-container-workspace",
     getQuickSearch: "get-workspace-quick-search",
-    postContainerMessage: "post-container-message",
-    uploadContainerDocuments: "upload-container-documents",
-    patchReportMessage: "patch-report-message",
-    deleteReportMessage: "delete-report-message",
-    patchAttachment: "patch-workspace-attachment",
+    createContainerMessage: "create-container-message",
+    createContainerDocuments: "create-container-documents",
+    updateShipmentMessage: "update-shipment-message",
+    deleteShipmentMessage: "delete-shipment-message",
+    updateAttachment: "update-workspace-attachment",
     deleteAttachment: "delete-workspace-attachment",
     getShipmentScopeThread: "get-shipment-scope-thread",
-    postShipmentMessage: "post-shipment-message",
-    uploadShipmentDocuments: "upload-shipment-documents",
+    createShipmentMessage: "create-shipment-message",
+    createShipmentDocuments: "create-shipment-documents",
     listOrgShipmentMessageThreads: "list-org-shipment-message-threads",
-    markShipmentThreadRead: "mark-shipment-thread-read",
+    updateShipmentThreadRead: "update-shipment-thread-read",
     listImporterShipmentMessageThreads: "list-importer-shipment-message-threads",
-    markImporterShipmentThreadRead: "mark-importer-shipment-thread-read",
+    updateImporterShipmentThreadRead: "update-importer-shipment-thread-read",
     notifyBolImport: "notify-bol-import",
   },
   auth: {
@@ -100,7 +99,7 @@ export const EDGE_FUNCTION_SLUGS = {
   profile: {
     getMy: "get-my-profile",
     updateMy: "update-my-profile",
-    uploadImage: "upload-profile-image",
+    createImage: "create-profile-image",
     deleteImage: "delete-profile-image",
     displayNames: "get-profile-display-names",
     updateRole: "update-profile-role",
@@ -123,11 +122,11 @@ export const EDGE_FUNCTION_SLUGS = {
     pendingAccessRequests: "list-pending-access-requests",
     customerDirectory: "get-customer-directory",
     imageGet: "get-org-image",
-    imageUpload: "upload-org-image",
+    createImage: "create-org-image",
     imageDelete: "delete-org-image",
     create: "create-organization",
     inviteMember: "invite-organization-member",
-    patchMember: "patch-organization-member",
+    updateMember: "update-organization-member",
     deleteMember: "delete-organization-member",
     adminMemberDirectory: "list-admin-org-member-directory",
   },

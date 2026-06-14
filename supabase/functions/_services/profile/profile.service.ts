@@ -82,7 +82,7 @@ export async function fetchProfileDisplayNameMapForUserIds(
   return map;
 }
 
-export async function uploadProfileImageAndSetPath(
+export async function createProfileImageAndSetPath(
   supabase: SupabaseClient,
   input: { userId: string; file: File; previousPath: string | null },
 ): Promise<string> {

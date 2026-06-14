@@ -9,7 +9,7 @@ function sampleAlert(overrides: Partial<Alert> = {}): Alert {
     shipment_id: "ship-1",
     container_id: null,
     tracking_request_id: null,
-    report_message_id: null,
+    shipment_message_id: null,
     inbox_kind: "notification",
     alert_type: "DOCUMENT_UPLOADED",
     severity: "info",

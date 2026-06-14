@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitFeedback, updateAdminFeedbackStatus } from "@/services/feedback.service";
+import { createFeedback, updateAdminFeedbackStatus } from "@/services/feedback.service";
 import { feedbackQueryKeyRoot } from "@/hooks/queries/useFeedback";
 import type { FeedbackStatus, SubmitFeedbackBody } from "@shared/dto/feedback.dto";
 
-export function useSubmitFeedbackMutation() {
+export function useCreateFeedbackMutation() {
   return useMutation({
-    mutationFn: (body: SubmitFeedbackBody) => submitFeedback(body),
+    mutationFn: (body: SubmitFeedbackBody) => createFeedback(body),
   });
 }
 

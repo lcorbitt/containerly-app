@@ -1,5 +1,5 @@
 import { getProfileImagePublicUrlBrowser } from "@/services/profile.service";
-import type { ReportMessage } from "@/types/database";
+import type { ShipmentMessage } from "@/types/database";
 import {
   THREAD_IMPORTER_QUOTE_BG_CLASS,
   THREAD_IMPORTER_REPLY_BG_CLASS,
@@ -32,7 +32,7 @@ export function buildAuthorAvatarUrlByUserId(
 }
 
 export function threadMessageAuthorAvatarUrl(
-  message: ReportMessage,
+  message: ShipmentMessage,
   authorAvatarUrlByUserId: Record<string, string | null>,
 ): string | null {
   if (!message.author_user_id) return null;
@@ -119,7 +119,7 @@ export function threadMessageAuthorHeadingClass({
 }
 
 export function threadMessageAuthorName(
-  m: ReportMessage,
+  m: ShipmentMessage,
   nameByUserId: Record<string, string>,
 ): string {
   if (m.author_kind === "system") return "System";
@@ -138,7 +138,7 @@ export function threadMessageAuthorName(
 }
 
 export function threadMessageAuthorEmail(
-  m: ReportMessage,
+  m: ShipmentMessage,
   emailByUserId: Record<string, string> | undefined,
 ): string | null {
   if (m.author_kind !== "customer") return null;

@@ -8,7 +8,7 @@ import {
   createShipment,
   deleteShipment,
   deleteShipmentParticipantRow,
-  insertShipmentParticipant,
+  createShipmentParticipant,
   revokeCustomerInviteRow,
   revokeShipmentCustomerAccessRow,
   updateShipment,
@@ -73,10 +73,10 @@ export function useUpdateShipmentAssigneeMutation() {
   });
 }
 
-export function useInsertShipmentParticipantMutation() {
+export function useCreateShipmentParticipantMutation() {
   return useMutation({
     mutationFn: (input: { organizationId: string; shipmentId: string; userId: string }) =>
-      insertShipmentParticipant(input),
+      createShipmentParticipant(input),
   });
 }
 

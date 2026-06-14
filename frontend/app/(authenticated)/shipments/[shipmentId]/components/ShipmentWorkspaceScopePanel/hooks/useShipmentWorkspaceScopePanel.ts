@@ -17,7 +17,7 @@ import {
   createWorkspaceAttachmentSignedUrl,
   removeWorkspaceAttachmentRow,
   renameWorkspaceAttachmentDisplayName,
-  uploadShipmentScopeStandaloneFiles,
+  createShipmentScopeStandaloneFiles,
 } from "@/services/workspace.service";
 
 export function useShipmentWorkspaceScopePanel({
@@ -86,7 +86,7 @@ export function useShipmentWorkspaceScopePanel({
       }
       setUploadingAttachments(true);
       try {
-        const uploaded = await uploadShipmentScopeStandaloneFiles({
+        const uploaded = await createShipmentScopeStandaloneFiles({
           organizationId: selectedOrgId,
           shipmentId,
           files: queue,

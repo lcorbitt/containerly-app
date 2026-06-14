@@ -1,4 +1,4 @@
-import type { Alert, ReportMessage } from "@/types/database";
+import type { Alert, ShipmentMessage } from "@/types/database";
 import { buildDaySeries } from "@/utils/dashboard-metrics";
 import { isInAppNotification, isOperationalAlert } from "@/utils/in-app-event-taxonomy";
 import { normalizeShipmentWorkflowStatus, shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
@@ -54,7 +54,7 @@ type AlertRow = Pick<
   Alert,
   "alert_type" | "severity" | "acknowledged_at" | "created_at" | "inbox_kind"
 >;
-type MessageRow = Pick<ReportMessage, "author_kind" | "created_at" | "is_internal">;
+type MessageRow = Pick<ShipmentMessage, "author_kind" | "created_at" | "is_internal">;
 
 const RISK_KEYS = ["low", "medium", "high", "unset"] as const;
 

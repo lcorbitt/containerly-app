@@ -69,7 +69,7 @@ export function validateSubmitFeedbackBody(body: SubmitFeedbackBody): string | n
   return null;
 }
 
-export async function submitUserFeedback(
+export async function createUserFeedback(
   client: SupabaseClient,
   userId: string,
   body: SubmitFeedbackBody,

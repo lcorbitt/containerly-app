@@ -743,7 +743,7 @@ export async function fetchShipmentParticipantRowQuery(
   };
 }
 
-export async function insertShipmentParticipantQuery(
+export async function createShipmentParticipantQuery(
   supabase: SupabaseClient,
   input: { shipmentId: string; userId: string },
 ): Promise<void> {
@@ -1027,13 +1027,13 @@ export async function fetchShipmentWorkspaceRow(
           .limit(200)
       : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     supabase
-      .from("report_messages")
+      .from("shipment_messages")
       .select("shipment_id, container_id, author_kind, created_at, is_internal, body")
       .eq("shipment_id", input.shipmentId)
       .is("container_id", null)
       .order("created_at", { ascending: true }),
     supabase
-      .from("report_messages")
+      .from("shipment_messages")
       .select("shipment_id, container_id, author_kind, created_at, is_internal")
       .eq("organization_id", input.organizationId)
       .is("container_id", null)

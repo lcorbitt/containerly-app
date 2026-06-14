@@ -13,7 +13,7 @@ import {
   type ContainerRow,
   type DelayCarrierLineRow,
   type OrgDashboardMetrics,
-  type ReportMessage,
+  type ShipmentMessage,
   type ShipmentCommercialSummary,
   type SpotlightShipment,
   type TrackingRequest,
@@ -50,7 +50,7 @@ export interface PersonalTriageBase {
   alerts: Alert[];
   triageContainersById: Record<string, ContainerRow>;
   triageAttachmentCounts: Record<string, number>;
-  triageMessages: ReportMessage[];
+  triageMessages: ShipmentMessage[];
   participatingShipmentIds: string[];
   shipmentOwnerByShipmentId: Record<string, string | null>;
   shipmentAssigneeByShipmentId: Record<string, string | null>;
@@ -64,7 +64,7 @@ export interface TrackingDashboardSnapshot {
   alerts: Alert[];
   triageContainersById: Record<string, ContainerRow>;
   triageAttachmentCounts: Record<string, number>;
-  triageMessages: ReportMessage[];
+  triageMessages: ShipmentMessage[];
   participatingShipmentIds: string[];
   shipmentOwnerByShipmentId: Record<string, string | null>;
   shipmentAssigneeByShipmentId: Record<string, string | null>;
@@ -166,7 +166,7 @@ export async function loadPersonalTriageBase(
     .map((r) => r.id);
 
   let triageAttachmentCounts: Record<string, number> = {};
-  let triageMessages: ReportMessage[] = [];
+  let triageMessages: ShipmentMessage[] = [];
 
   if (myScopeIds.length > 0) {
     const containerIdByRequest = new Map<string, string>();
@@ -206,25 +206,25 @@ export async function loadPersonalTriageBase(
 
     const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
       supabase
-        .from("report_messages")
+        .from("shipment_messages")
         .select(TRIAGE_MESSAGE_SELECT)
         .in("container_id", myScopeContainerIds)
         .order("created_at", { ascending: true })
         .limit(2000),
       shipmentIdsForScope.length > 0
         ? supabase
-            .from("report_messages")
+            .from("shipment_messages")
             .select(TRIAGE_MESSAGE_SELECT)
             .in("shipment_id", shipmentIdsForScope)
             .is("container_id", null)
             .order("created_at", { ascending: true })
             .limit(500)
-        : Promise.resolve({ data: [] as ReportMessage[] }),
+        : Promise.resolve({ data: [] as ShipmentMessage[] }),
     ]);
 
     triageMessages = [...(msgRows ?? []), ...(msgShipmentRows ?? [])].sort(
       (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
-    ) as ReportMessage[];
+    ) as ShipmentMessage[];
   }
 
   const personalBuckets = buildTriageBuckets({
@@ -423,7 +423,7 @@ async function buildOrgPerformanceInsights(
       .order("occurred_at", { ascending: true })
       .limit(5000),
     supabase
-      .from("report_messages")
+      .from("shipment_messages")
       .select("shipment_id, container_id, author_kind, created_at, is_internal, body")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true })
@@ -477,7 +477,7 @@ async function buildOrgPerformanceInsights(
       workflow_status: (row.workflow_status as string | null) ?? null,
       created_at: row.created_at as string,
     })),
-    messages: (msgRows ?? []) as ReportMessage[],
+    messages: (msgRows ?? []) as ShipmentMessage[],
     activityEvents: (activityRows ?? []).map((row) => ({
       shipment_id: row.shipment_id as string,
       event_type: row.event_type as string,
@@ -604,7 +604,7 @@ async function buildOrgDashboardMetrics(
   });
 
   let orgAttachmentCounts: Record<string, number> = {};
-  let orgMessages: ReportMessage[] = [];
+  let orgMessages: ShipmentMessage[] = [];
   if (orgContainerIds.length > 0) {
     const { data: attRows } = await supabase
       .from("workspace_attachments")
@@ -625,24 +625,24 @@ async function buildOrgDashboardMetrics(
 
     const [{ data: msgRows }, { data: msgShipmentRows }] = await Promise.all([
       supabase
-        .from("report_messages")
+        .from("shipment_messages")
         .select(TRIAGE_MESSAGE_SELECT)
         .in("container_id", orgContainerIds)
         .order("created_at", { ascending: true })
         .limit(2000),
       orgShipmentIds.length > 0
         ? supabase
-            .from("report_messages")
+            .from("shipment_messages")
             .select(TRIAGE_MESSAGE_SELECT)
             .in("shipment_id", orgShipmentIds)
             .is("container_id", null)
             .order("created_at", { ascending: true })
             .limit(500)
-        : Promise.resolve({ data: [] as ReportMessage[] }),
+        : Promise.resolve({ data: [] as ShipmentMessage[] }),
     ]);
     orgMessages = [...(msgRows ?? []), ...(msgShipmentRows ?? [])].sort(
       (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
-    ) as ReportMessage[];
+    ) as ShipmentMessage[];
   }
 
   const orgBuckets = buildTriageBuckets({
@@ -699,7 +699,7 @@ async function buildOrgDashboardInsights(
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
-      .from("report_messages")
+      .from("shipment_messages")
       .select("author_kind, created_at, is_internal")
       .eq("organization_id", organizationId)
       .gte("created_at", sinceIso)
@@ -716,7 +716,7 @@ async function buildOrgDashboardInsights(
       created_by: (row.created_by as string | null) ?? null,
     })),
     alerts: (alertRows ?? []) as Alert[],
-    messages: (messageRows ?? []) as ReportMessage[],
+    messages: (messageRows ?? []) as ShipmentMessage[],
   });
 }
 

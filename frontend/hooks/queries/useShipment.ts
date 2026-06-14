@@ -2,16 +2,22 @@ import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { shipmentScopeThreadOrgQueryKeyPrefix } from "@/hooks/queries/useShipmentMessageThreads";
 import {
   fetchShipmentWorkspaceRowForBrowser,
+  getShipment,
   getShipmentAccessTab,
   loadDocumentQueuePageBrowser,
   type DocumentQueueFilter,
   type OperatorShipmentScope,
 } from "@/services/shipment.service";
-import { loadShipmentScopeThread } from "@/services/workspace.service";
+import { getShipmentScopeThread } from "@/services/workspace.service";
 
 export const shipmentWorkspaceRowQueryKeyRoot = ["shipment-workspace-row"] as const;
 export const shipmentAccessTabQueryKeyRoot = ["shipment-access-tab"] as const;
 export const documentQueueQueryKeyRoot = ["document-queue"] as const;
+export const shipmentPortalQueryKeyRoot = ["shipment-portal"] as const;
+
+export function shipmentPortalQueryKey(shipmentId: string) {
+  return [...shipmentPortalQueryKeyRoot, shipmentId] as const;
+}
 
 export function shipmentAccessTabQueryKey(shipmentId: string, organizationId: string) {
   return [...shipmentAccessTabQueryKeyRoot, shipmentId, organizationId] as const;
@@ -85,7 +91,7 @@ export function useShipmentScopeThreadQuery(organizationId: string | null, shipm
       ? shipmentScopeThreadQueryKey(organizationId, shipmentId)
       : [shipmentScopeThreadOrgQueryKeyPrefix, "disabled", shipmentId],
     queryFn: () =>
-      loadShipmentScopeThread({
+      getShipmentScopeThread({
         organizationId: organizationId!,
         shipmentId,
       }),
@@ -123,5 +129,13 @@ export function useDocumentQueueQuery(input: {
       });
     },
     enabled: Boolean(input.organizationId),
+  });
+}
+
+export function useShipmentPortalQuery(shipmentId: string, enabled = true) {
+  return useQuery({
+    queryKey: shipmentPortalQueryKey(shipmentId),
+    queryFn: () => getShipment(shipmentId),
+    enabled: Boolean(shipmentId) && enabled,
   });
 }

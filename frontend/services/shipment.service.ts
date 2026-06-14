@@ -333,12 +333,12 @@ export async function updateShipmentNotificationSubscription(input: {
   return r.subscribed;
 }
 
-export async function insertShipmentParticipant(input: {
+export async function createShipmentParticipant(input: {
   organizationId: string;
   shipmentId: string;
   userId: string;
 }): Promise<void> {
-  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.insertParticipant, {
+  await parseEdgePostJson<{ ok: true }>(EDGE_FUNCTION_SLUGS.shipments.createParticipant, {
     organization_id: input.organizationId,
     shipment_id: input.shipmentId,
     user_id: input.userId,
@@ -444,7 +444,7 @@ export async function fetchShipmentWorkspaceRowForBrowser(input: {
 /* ------------------------------------------------------------------ */
 
 /** Shipment portal payload (assignee, participant, or invited customer grant). */
-export async function fetchShipment(shipmentId: string): Promise<
+export async function getShipment(shipmentId: string): Promise<
   | { ok: true; data: ShipmentPortalPayload }
   | { ok: false; status: number; error: string }
 > {
@@ -470,44 +470,6 @@ export async function fetchShipment(shipmentId: string): Promise<
       };
     }
     return { ok: true, data: body as ShipmentPortalPayload };
-  } catch (e) {
-    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
-  }
-}
-
-export async function postShipmentThreadMessage(args: {
-  shipmentId: string;
-  containerId?: string;
-  body: string;
-  authorDisplayName?: string;
-  parentMessageId?: string | null;
-}): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  try {
-    const r = await authFetch("post-customer-shipment-message", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        shipment_id: args.shipmentId,
-        ...(args.containerId ? { container_id: args.containerId } : {}),
-        body: args.body,
-        author_display_name: args.authorDisplayName?.trim() || undefined,
-        ...(args.parentMessageId ? { parent_message_id: args.parentMessageId } : {}),
-      }),
-    });
-    if ("error" in r) {
-      return { ok: false, status: r.status, error: r.error };
-    }
-    let body: unknown = r.text;
-    try {
-      body = r.text ? JSON.parse(r.text) : null;
-    } catch {
-      /* leave */
-    }
-    if (!r.res.ok) {
-      const err = body as { error?: string };
-      return { ok: false, status: r.res.status, error: err?.error ?? r.res.statusText };
-    }
-    return { ok: true };
   } catch (e) {
     return { ok: false, status: 500, error: e instanceof Error ? e.message : "Unknown error" };
   }
@@ -1070,13 +1032,13 @@ export async function deleteShipment(
   }
 }
 
-export async function reviewShipmentDocument(
+export async function updateShipmentDocument(
   body: ReviewShipmentDocumentBody,
 ): Promise<
   { ok: true; data: ReviewShipmentDocumentResponse } | { ok: false; status: number; error: string }
 > {
   try {
-    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.reviewDocument, {
+    const r = await authFetch(EDGE_FUNCTION_SLUGS.shipments.updateDocument, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

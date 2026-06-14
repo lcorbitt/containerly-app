@@ -17,7 +17,7 @@ export function useSubmitSignup({ hasSession }: UseSubmitSignupInput) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { draft, orgImageFile, resetSignupDraft, patchDraft } = useSignupDraft();
+  const { draft, orgImageFile, resetSignupDraft, updateDraft } = useSignupDraft();
   const mutation = useSubmitSignupMutation();
 
   const submitSignup = useCallback(
@@ -33,7 +33,7 @@ export function useSubmitSignup({ hasSession }: UseSubmitSignupInput) {
       }
 
       const nextDraft = { ...draft, invites };
-      patchDraft({ invites });
+      updateDraft({ invites });
 
       try {
         await mutation.mutateAsync({
@@ -54,7 +54,7 @@ export function useSubmitSignup({ hasSession }: UseSubmitSignupInput) {
       hasSession,
       orgImageFile,
       mutation,
-      patchDraft,
+      updateDraft,
       queryClient,
       resetSignupDraft,
       router,

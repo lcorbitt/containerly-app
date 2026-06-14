@@ -1,14 +1,18 @@
-import type { ReportActivity, ReportMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
+import type { ReportActivity, ShipmentMessage, TrackingRequest, WorkspaceAttachment } from "@/types/database";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
 import type { PublicTimelineEvent } from "@/types/public-report";
+import type {
+  ContainerWorkspaceSnapshot,
+  OrgShipmentMessageThreadsResult,
+  ShipmentMessageThreadSummary,
+  WorkspaceQuickSearchRow,
+} from "@shared/dto/workspace.dto";
 
-export type ContainerWorkspaceSnapshot = {
-  shipment_id: string | null;
-  status: string | null;
-  carrier: string | null;
-  location: Record<string, unknown> | null;
-  last_synced_at: string | null;
-  enrichment: Record<string, unknown> | null;
+export type {
+  ContainerWorkspaceSnapshot,
+  OrgShipmentMessageThreadsResult,
+  ShipmentMessageThreadSummary,
+  WorkspaceQuickSearchRow,
 };
 
 export type ContainerWorkspaceLoadResult =
@@ -16,7 +20,7 @@ export type ContainerWorkspaceLoadResult =
   | {
       ok: true;
       request: TrackingRequest;
-      messages: ReportMessage[];
+      messages: ShipmentMessage[];
       messageAuthorByUserId: Record<string, string>;
       messageAuthorEmailByUserId: Record<string, string>;
       profileImagePathByUserId: Record<string, string | null>;
@@ -33,41 +37,10 @@ export type ShipmentScopeLoadResult =
   | { ok: false; error: string }
   | {
       ok: true;
-      messages: ReportMessage[];
+      messages: ShipmentMessage[];
       attachments: WorkspaceAttachment[];
       messageAuthorByUserId: Record<string, string>;
       messageAuthorEmailByUserId: Record<string, string>;
       profileImagePathByUserId: Record<string, string | null>;
       currentUserId: string;
     };
-
-export type WorkspaceQuickSearchRow = {
-  kind: string;
-  id: string;
-  title: string;
-  subtitle: string | null;
-  path: string;
-};
-
-export interface ShipmentMessageThreadSummary {
-  shipment_id: string;
-  order_number: string | null;
-  last_message_at: string;
-  last_message_preview: string;
-  last_author_kind: string;
-  last_author_user_id: string | null;
-  /** Resolved display label for the latest message author. */
-  last_author_name: string;
-  /** Customer email for the latest message author, when applicable. */
-  last_author_email: string | null;
-  message_count: number;
-  /** True when the viewer has not read through the latest message in this thread. */
-  is_unread: boolean;
-  /** Populated for customer message indexes (logistics partner). */
-  organization_id?: string | null;
-  organization_name?: string | null;
-}
-
-export type OrgShipmentMessageThreadsResult =
-  | { ok: false; error: string }
-  | { ok: true; threads: ShipmentMessageThreadSummary[] };

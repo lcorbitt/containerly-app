@@ -22,7 +22,7 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
   const searchParams = useSearchParams();
   const step = parseSignupStep(searchParams.get("step") ?? String(initialStep));
 
-  const { replaceDraft, patchDraft } = useSignupDraft();
+  const { replaceDraft, updateDraft } = useSignupDraft();
   const [bootstrapReady, setBootstrapReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const [suggestedOrgName, setSuggestedOrgName] = useState("");
@@ -61,7 +61,7 @@ export function useSignupWizard(initialStep: SignupWizardStep) {
           const suggested = status.pendingTenantInvite?.suggestedOrgName?.trim() ?? "";
           setSuggestedOrgName(suggested);
           if (suggested && !currentDraft.organization?.name) {
-            patchDraft({
+            updateDraft({
               organization: {
                 name: suggested,
                 teamSize: currentDraft.organization?.teamSize ?? "",

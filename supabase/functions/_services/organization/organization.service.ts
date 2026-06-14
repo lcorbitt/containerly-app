@@ -199,7 +199,7 @@ export async function fetchOrganizationImagePathQuery(
   return ((data?.org_image_path as string | null | undefined) ?? null)?.trim() || null;
 }
 
-export async function uploadOrganizationImageAndSetPath(
+export async function createOrganizationImageAndSetPath(
   supabase: SupabaseClient,
   input: { organizationId: string; file: File; previousPath: string | null },
 ): Promise<string> {
@@ -307,7 +307,7 @@ export async function createOrganizationWithInitialAdmin(input: {
   return { ok: true, organizationId: org.id as string };
 }
 
-export async function patchOrganizationMemberRoleForUser(input: {
+export async function updateOrganizationMemberRoleForUser(input: {
   supabase: SupabaseClient;
   membershipId: string;
   role: string;
@@ -536,7 +536,7 @@ export async function fetchCustomerDirectoryForOrganization(
 
   const touch = (
     emailRaw: string,
-    patch: Partial<Acc> & { activityAt?: string | null; shipmentId?: string | null },
+    rowUpdate: Partial<Acc> & { activityAt?: string | null; shipmentId?: string | null },
   ) => {
     const email = emailRaw.trim().toLowerCase();
     if (!email) return;
@@ -548,22 +548,22 @@ export async function fetchCustomerDirectoryForOrganization(
       pending_request_count: 0,
       last_activity_at: null,
     };
-    if (patch.display_name?.trim()) {
-      existing.display_name = patch.display_name.trim();
+    if (rowUpdate.display_name?.trim()) {
+      existing.display_name = rowUpdate.display_name.trim();
     }
-    if (patch.pending_invite_count) {
-      existing.pending_invite_count += patch.pending_invite_count;
+    if (rowUpdate.pending_invite_count) {
+      existing.pending_invite_count += rowUpdate.pending_invite_count;
     }
-    if (patch.pending_request_count) {
-      existing.pending_request_count += patch.pending_request_count;
+    if (rowUpdate.pending_request_count) {
+      existing.pending_request_count += rowUpdate.pending_request_count;
     }
-    if (patch.activityAt) {
+    if (rowUpdate.activityAt) {
       const prev = existing.last_activity_at ? Date.parse(existing.last_activity_at) : 0;
-      const next = Date.parse(patch.activityAt);
-      if (next > prev) existing.last_activity_at = patch.activityAt;
+      const next = Date.parse(rowUpdate.activityAt);
+      if (next > prev) existing.last_activity_at = rowUpdate.activityAt;
     }
-    if (patch.shipmentId) {
-      existing.shipmentIds.add(patch.shipmentId);
+    if (rowUpdate.shipmentId) {
+      existing.shipmentIds.add(rowUpdate.shipmentId);
     }
     byEmail.set(email, existing);
   };

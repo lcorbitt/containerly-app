@@ -69,7 +69,7 @@ async function recomputeWorkflowStatus(
   return "awaiting_review";
 }
 
-export async function reviewShipmentDocument(
+export async function updateShipmentDocument(
   userClient: SupabaseClient,
   admin: SupabaseClient | null,
   userId: string,

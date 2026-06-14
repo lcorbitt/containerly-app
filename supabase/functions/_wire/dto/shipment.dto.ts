@@ -109,7 +109,7 @@ export type PortalAttachment = {
   shipment_id?: string | null;
   container_number?: string | null;
   scope?: "container" | "shipment";
-  report_message_id: string | null;
+  shipment_message_id: string | null;
   storage_path: string;
   document_type?: string | null;
   document_group?: string | null;

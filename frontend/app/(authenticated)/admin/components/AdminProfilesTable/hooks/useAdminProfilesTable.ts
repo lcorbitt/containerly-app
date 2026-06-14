@@ -34,7 +34,7 @@ export function useAdminProfilesTable(initialProfiles: AdminProfileRow[], curren
   const pendingId =
     roleMutation.isPending && roleMutation.variables ? roleMutation.variables.profileId : null;
 
-  const patchError =
+  const updateError =
     roleMutation.error instanceof Error ? roleMutation.error.message : null;
 
   const sorted = useMemo(() => sortAdminProfileRows(profiles), [profiles]);
@@ -80,7 +80,7 @@ export function useAdminProfilesTable(initialProfiles: AdminProfileRow[], curren
     safePage,
     totalPages,
     pendingId,
-    patchError,
+    updateError,
     updateRole,
     sortedLength: sorted.length,
   };

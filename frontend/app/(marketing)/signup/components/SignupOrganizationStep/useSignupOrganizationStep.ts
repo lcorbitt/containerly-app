@@ -12,7 +12,7 @@ export function useSignupOrganizationStep({
   suggestedOrgName,
   onContinue,
 }: UseSignupOrganizationStepInput) {
-  const { draft, patchDraft } = useSignupDraft();
+  const { draft, updateDraft } = useSignupDraft();
 
   const [name, setName] = useState(
     draft.organization?.name || suggestedOrgName,
@@ -41,7 +41,7 @@ export function useSignupOrganizationStep({
       return;
     }
 
-    patchDraft({
+    updateDraft({
       organization: {
         name: trimmedName,
         teamSize,

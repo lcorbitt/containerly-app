@@ -9,7 +9,7 @@ interface UseSignupAccountStepInput {
 }
 
 export function useSignupAccountStep({ onContinue }: UseSignupAccountStepInput) {
-  const { draft, patchDraft } = useSignupDraft();
+  const { draft, updateDraft } = useSignupDraft();
   const initialReferral = initialReferralFields(draft.account?.referralSource);
 
   const [fullName, setFullName] = useState(draft.account?.fullName ?? "");
@@ -30,7 +30,7 @@ export function useSignupAccountStep({ onContinue }: UseSignupAccountStepInput) 
     }
 
       const referralSource = resolveReferralSource(referralOption, referralOther);
-    patchDraft({
+    updateDraft({
       account: {
         fullName: fullName.trim(),
         email: email.trim(),

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const PORTAL_ATT_SELECT =
-  "id, file_name, content_type, file_size_bytes, created_at, container_id, shipment_id, report_message_id, storage_path, is_internal, document_type, document_group, approval_status, rejection_reason, reviewed_at, shipment_line_id, uploaded_by_kind";
+  "id, file_name, content_type, file_size_bytes, created_at, container_id, shipment_id, shipment_message_id, storage_path, is_internal, document_type, document_group, approval_status, rejection_reason, reviewed_at, shipment_line_id, uploaded_by_kind";
 
 /** `workspace_attachments` — documents on containers for portal. */
 export async function listWorkspaceAttachmentsForContainers(

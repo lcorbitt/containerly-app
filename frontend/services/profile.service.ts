@@ -35,7 +35,7 @@ export async function updateProfileFullName(fullName: string | null): Promise<vo
   );
 }
 
-export async function uploadProfileImageAndSetPath(input: {
+export async function createProfileImageAndSetPath(input: {
   file: File;
   previousPath: string | null;
 }): Promise<string> {
@@ -45,7 +45,7 @@ export async function uploadProfileImageAndSetPath(input: {
     formData.set("previousPath", input.previousPath.trim());
   }
   const data = await parseEdgeJson<{ path?: string }>(
-    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.profile.uploadImage, {
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.profile.createImage, {
       method: "POST",
       body: formData,
     }),
@@ -66,7 +66,7 @@ export async function clearProfileImagePathAndRemoveStorage(input: {
   );
 }
 
-export async function patchProfilePlatformRole(
+export async function updateProfilePlatformRole(
   profileId: string,
   role: Profile["role"],
 ): Promise<Pick<Profile, "id" | "email" | "full_name" | "role" | "created_at">> {

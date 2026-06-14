@@ -3,7 +3,7 @@
  * - create-customer-invite
  * - accept-customer-invite
  * - complete-customer-shipment-setup
- * - post-customer-shipment-message
+ * - create-customer-shipment-message
  */
 
 // ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ export type CompleteCustomerSetupResponse = {
 };
 
 // ---------------------------------------------------------------------------
-// post-customer-shipment-message
+// create-customer-shipment-message
 // ---------------------------------------------------------------------------
 
 export type PostCustomerMessageBody = {

@@ -16,10 +16,10 @@ export function useSignupDraft() {
   const [draft, setDraft] = useAtom(signupDraftAtom);
   const [orgImageFile, setOrgImageFile] = useAtom(signupOrgImageFileAtom);
 
-  const patchDraft = useCallback(
-    (patch: Partial<SignupDraft>) => {
+  const updateDraft = useCallback(
+    (update: Partial<SignupDraft>) => {
       setDraft((prev) => {
-        const next = { ...prev, ...patch };
+        const next = { ...prev, ...update };
         writeStoredSignupDraft(next);
         return next;
       });
@@ -43,7 +43,7 @@ export function useSignupDraft() {
 
   return {
     draft,
-    patchDraft,
+    updateDraft,
     replaceDraft,
     resetSignupDraft,
     orgImageFile,

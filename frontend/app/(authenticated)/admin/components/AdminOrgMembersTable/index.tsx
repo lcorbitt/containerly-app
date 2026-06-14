@@ -16,9 +16,9 @@ import { orgMemberInviteStatusLabel } from "@/utils/org-member-invite-status";
 
 export function AdminOrgMembersTable() {
   const t = useAdminOrgMembersTable();
-  const patchErr =
-    t.patchMutationError instanceof Error ? t.patchMutationError.message : null;
-  const displayError = t.error ?? patchErr;
+  const updateErr =
+    t.updateMutationError instanceof Error ? t.updateMutationError.message : null;
+  const displayError = t.error ?? updateErr;
 
   const toolbar = (
     <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">

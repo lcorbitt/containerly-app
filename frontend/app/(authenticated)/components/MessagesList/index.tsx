@@ -1,11 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useMarkImporterShipmentThreadReadMutation,
-  useMarkShipmentThreadReadMutation,
-} from "@/hooks/mutations/useShipmentMessageThreads";
-import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 import {
   CUSTOMER_MESSAGES_LIST_EMPTY_HINT,
@@ -43,6 +38,7 @@ import {
   threadRowLinkClass,
   truncateMessagePreview,
 } from "./utils";
+import { useMessagesList } from "./useMessagesList";
 
 function resolveListBehavior(viewer: MessagesListViewer) {
   if (viewer === "customer") {
@@ -146,25 +142,8 @@ export function MessagesList({
   onItemNavigate,
   viewer = "operator",
 }: MessagesListProps) {
-  const workspace = useOrganizationWorkspaceOptional();
-  const selectedOrgId = workspace?.selectedOrgId ?? null;
-  const operatorMarkReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
-  const customerMarkReadMut = useMarkImporterShipmentThreadReadMutation();
+  const { handleThreadNavigate } = useMessagesList(viewer);
   const behavior = resolveListBehavior(viewer);
-
-  function handleThreadNavigate(thread: ShipmentMessageThreadSummary) {
-    onItemNavigate?.();
-    if (!thread.is_unread) return;
-
-    if (viewer === "customer") {
-      customerMarkReadMut.mutate({ shipmentId: thread.shipment_id });
-      return;
-    }
-
-    if (selectedOrgId) {
-      operatorMarkReadMut.mutate({ shipmentId: thread.shipment_id });
-    }
-  }
 
   if (threads.length === 0) {
     return (
@@ -185,7 +164,10 @@ export function MessagesList({
           <li key={thread.shipment_id}>
             <Link
               href={behavior.href(thread.shipment_id)}
-              onClick={() => handleThreadNavigate(thread)}
+              onClick={() => {
+                onItemNavigate?.();
+                handleThreadNavigate(thread);
+              }}
               className={`${MESSAGES_LIST_ROW_LINK_CLASS} ${threadRowLinkClass(thread.is_unread, needsReply)}`}
             >
               <ThreadRowBody thread={thread} viewer={viewer} />

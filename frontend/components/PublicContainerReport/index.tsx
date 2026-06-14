@@ -45,7 +45,7 @@ import {
   PORTAL_PROFILE_SETUP_SAVING_LABEL,
   PORTAL_STATUS_STRIP_CLASS,
 } from "./constants";
-import { usePublicContainerReport } from "./hooks/usePublicContainerReport";
+import { usePublicContainerReport } from "./usePublicContainerReport";
 import { WORKSPACE_TABS_SECTION_CLASS } from "@/components/WorkspaceTabShell/constants";
 import { SITE_URL } from "@/lib/site-metadata";
 import { isShipmentDocumentsApproved } from "@/utils/shipment-workflow-status";

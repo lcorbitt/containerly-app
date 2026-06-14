@@ -2,7 +2,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export type ShipmentActivityInsert = {
   shipment_id: string;
-  report_message_id?: string | null;
+  shipment_message_id?: string | null;
   event_type: string;
   body: string;
   actor_kind?: string;
@@ -25,7 +25,7 @@ export async function insertShipmentActivityEvent(
 ) {
   return client.from("shipment_activity_events").insert({
     shipment_id: row.shipment_id,
-    report_message_id: row.report_message_id ?? null,
+    shipment_message_id: row.shipment_message_id ?? null,
     event_type: row.event_type,
     body: row.body,
     actor_kind: row.actor_kind ?? "system",
@@ -33,4 +33,31 @@ export async function insertShipmentActivityEvent(
     metadata: row.metadata ?? {},
     occurred_at: row.occurred_at ?? new Date().toISOString(),
   }).select("id").single();
+}
+
+const MESSAGE_EVENT_TYPES = ["customer_message", "operator_message"] as const;
+
+/** `shipment_activity_events` — timeline rows linked to a thread message. */
+export async function listMessageActivityEventsForShipmentMessage(
+  client: SupabaseClient,
+  shipmentMessageId: string,
+) {
+  return client
+    .from("shipment_activity_events")
+    .select("id, metadata")
+    .eq("shipment_message_id", shipmentMessageId)
+    .in("event_type", [...MESSAGE_EVENT_TYPES]);
+}
+
+/** `shipment_activity_events` — sync body/preview after message edit. */
+export async function updateShipmentActivityEventBody(
+  client: SupabaseClient,
+  eventId: string,
+  body: string,
+  metadata: Record<string, unknown>,
+) {
+  return client
+    .from("shipment_activity_events")
+    .update({ body, metadata })
+    .eq("id", eventId);
 }

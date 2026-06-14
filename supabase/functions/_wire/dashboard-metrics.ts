@@ -37,7 +37,7 @@ export type TrackingRequest = {
   created_at: string;
 };
 
-export type ReportMessage = {
+export type ShipmentMessage = {
   id: string;
   container_id: string | null;
   shipment_id: string | null;
@@ -266,7 +266,7 @@ export type BuildTriageBucketsInput = {
   shipmentOwnerByShipmentId: Record<string, string | null>;
   shipmentAssigneeByShipmentId: Record<string, string | null>;
   attachmentCountByRequestId: Record<string, number>;
-  messages: ReportMessage[];
+  messages: ShipmentMessage[];
   participatingShipmentIds: ReadonlySet<string>;
   /** When true, include all org requests instead of user scope. */
   orgWide?: boolean;
@@ -427,7 +427,7 @@ export function buildTriageBuckets(input: BuildTriageBucketsInput): TriageBucket
     }
   }
 
-  const msgsByRequest = new Map<string, ReportMessage[]>();
+  const msgsByRequest = new Map<string, ShipmentMessage[]>();
   for (const m of messages) {
     const r = m.container_id
       ? requestForContainer(m.container_id)

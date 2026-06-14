@@ -1,4 +1,4 @@
-import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
+import type { Alert, Container, ShipmentMessage, TrackingRequest } from "@/types/database";
 import type { DashboardInsightsMetrics } from "@/utils/dashboard-insights";
 import type {
   OrgDashboardMetrics,
@@ -24,7 +24,7 @@ export type TrackingDashboardSnapshot = {
   alerts: Alert[];
   triageContainersById: Record<string, Pick<Container, "id" | "status" | "location" | "shipment_id">>;
   triageAttachmentCounts: Record<string, number>;
-  triageMessages: ReportMessage[];
+  triageMessages: ShipmentMessage[];
   participatingShipmentIds: string[];
   shipmentOwnerByShipmentId: Record<string, string | null>;
   shipmentAssigneeByShipmentId: Record<string, string | null>;

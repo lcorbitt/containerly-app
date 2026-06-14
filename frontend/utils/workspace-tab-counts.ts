@@ -1,6 +1,6 @@
 import { buildShipmentTimelineEvents } from "@/components/ShipmentTimeline/utils";
 import type { PortalAttachment, ShipmentActivityEvent } from "@shared/dto/shipment.dto";
-import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
+import type { ShipmentMessage, WorkspaceAttachment } from "@/types/database";
 import type { PublicTimelineEvent } from "@/types/public-report";
 
 export function countShipmentScopeTimelineEvents(input: {
@@ -19,7 +19,7 @@ export function countShipmentScopeDocuments(
   return attachments.length;
 }
 
-export function countShipmentScopeMessages(messages: ReportMessage[]): number {
+export function countShipmentScopeMessages(messages: ShipmentMessage[]): number {
   return messages.filter((m) => !m.is_internal).length;
 }
 

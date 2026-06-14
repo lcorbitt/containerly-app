@@ -16,9 +16,10 @@ import { insertReportActivity } from "@models/report_activity.ts";
 import { resolveAccessRequestAlerts } from "@models/alerts.ts";
 import { recordMessageActivityEvent } from "@services/message/activity.service.ts";
 import {
-  fetchReportMessageParentForReply,
-  insertReportMessage,
-} from "@models/report_messages.ts";
+  getShipmentMessageParentForReply,
+  insertShipmentMessage,
+} from "@models/shipment_messages.ts";
+import { upsertShipmentMessageThreadRead } from "@models/shipment_message_thread_reads.ts";
 import {
   fetchAccessIdAndOrg,
   fetchAccessIdForUser,
@@ -544,10 +545,10 @@ export async function completeCustomerSetup(
 }
 
 // ---------------------------------------------------------------------------
-// post-customer-shipment-message
+// create-customer-shipment-message
 // ---------------------------------------------------------------------------
 
-export async function postCustomerMessage(
+export async function createCustomerShipmentMessage(
   userClient: SupabaseClient,
   admin: SupabaseClient,
   userId: string,
@@ -591,7 +592,7 @@ export async function postCustomerMessage(
   }
 
   if (parentId) {
-    const { data: parent, error: parentErr } = await fetchReportMessageParentForReply(admin, parentId);
+    const { data: parent, error: parentErr } = await getShipmentMessageParentForReply(admin, parentId);
     if (parentErr) throw parentErr;
     if (!parent) return { ok: false, status: 400, error: "Invalid parent message" };
     if (shipmentScoped) {
@@ -633,9 +634,9 @@ export async function postCustomerMessage(
         parent_message_id: parentId,
       };
 
-  const { data: inserted, error: insErr } = await insertReportMessage(admin, insertRow);
+  const { data: inserted, error: insErr } = await insertShipmentMessage(admin, insertRow);
   if (insErr) throw insErr;
-  if (!inserted) throw new Error("insertReportMessage returned no row");
+  if (!inserted) throw new Error("insertShipmentMessage returned no row");
 
   await insertReportActivity(admin, {
     shipment_id: shipmentId,
@@ -669,16 +670,13 @@ export async function postCustomerMessage(
   });
 
   const nowIso = new Date().toISOString();
-  await admin.from("shipment_message_thread_reads").upsert(
-    {
-      organization_id: orgId,
-      user_id: userId,
-      shipment_id: shipmentId,
-      last_read_at: nowIso,
-      updated_at: nowIso,
-    },
-    { onConflict: "user_id,shipment_id" },
-  );
+  await upsertShipmentMessageThreadRead(admin, {
+    organization_id: orgId,
+    user_id: userId,
+    shipment_id: shipmentId,
+    last_read_at: nowIso,
+    updated_at: nowIso,
+  });
 
   return {
     ok: true,

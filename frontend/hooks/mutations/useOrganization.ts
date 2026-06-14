@@ -3,7 +3,7 @@ import {
   createOrganization,
   deleteOrganizationMember,
   inviteOrganizationMember,
-  patchOrganizationMember,
+  updateOrganizationMember,
   updateOrgSettings,
 } from "@/services/organization.service";
 import type { OrganizationMemberRole } from "@/types/database";
@@ -38,11 +38,11 @@ export function useInviteOrganizationMemberMutation() {
   });
 }
 
-export function usePatchOrganizationMemberMutation() {
+export function useUpdateOrganizationMemberMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { membershipId: string; role: OrganizationMemberRole }) =>
-      patchOrganizationMember(input.membershipId, input.role),
+      updateOrganizationMember(input.membershipId, input.role),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminOrgMembersQueryKey });
       void qc.invalidateQueries({ queryKey: orgMembersRootKey });

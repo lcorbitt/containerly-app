@@ -17,10 +17,10 @@ Logistics customer portal for operators and importers: **documentation-first shi
 | Area | Slugs |
 |------|--------|
 | Tracking (optional, premium) | `create-tracking-request`, `sync-container`, `search-containers`, `lookup-bol-containers`, … |
-| Shipments | `create-shipment`, `update-shipment`, `get-shipment`, `review-shipment-document`, `claim-shipment-access`, … |
+| Shipments | `create-shipment`, `update-shipment`, `get-shipment`, `update-shipment-document`, `claim-shipment-access`, … |
 | Customers | `create-customer-invite`, `accept-customer-invite`, `complete-customer-shipment-setup` |
 | Auth | `notify-password-changed` |
-| Reports | `get-public-report`, `post-report-message`, `post-customer-shipment-message` |
+| Reports | `get-public-report`, `create-customer-shipment-message` |
 
 ## Quick start
 

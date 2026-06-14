@@ -97,13 +97,10 @@ verify_jwt = false
 [functions.get-public-report]
 verify_jwt = false
 
-[functions.post-report-message]
-verify_jwt = false
-
 [functions.get-shipment]
 verify_jwt = false
 
-[functions.post-customer-shipment-message]
+[functions.create-customer-shipment-message]
 verify_jwt = false
 
 [functions.create-customer-invite]
@@ -130,7 +127,7 @@ verify_jwt = false
 [functions.delete-shipment]
 verify_jwt = false
 
-[functions.review-shipment-document]
+[functions.update-shipment-document]
 verify_jwt = false
 
 [functions.claim-shipment-access]
@@ -167,7 +164,7 @@ verify_jwt = false
 [functions.update-my-profile]
 verify_jwt = false
 
-[functions.upload-profile-image]
+[functions.create-profile-image]
 verify_jwt = false
 
 [functions.delete-profile-image]
@@ -183,6 +180,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.complete-onboarding-organization]
+verify_jwt = false
+
+[functions.create-feedback]
 verify_jwt = false
 
 [functions.list-admin-feedback]
@@ -224,7 +224,7 @@ verify_jwt = false
 [functions.get-org-image]
 verify_jwt = false
 
-[functions.upload-org-image]
+[functions.create-org-image]
 verify_jwt = false
 
 [functions.delete-org-image]
@@ -236,7 +236,7 @@ verify_jwt = false
 [functions.invite-organization-member]
 verify_jwt = false
 
-[functions.patch-organization-member]
+[functions.update-organization-member]
 verify_jwt = false
 
 [functions.delete-organization-member]
@@ -267,7 +267,7 @@ verify_jwt = false
 
 [functions.update-shipment-notification-subscription]
 
-[functions.insert-shipment-participant]
+[functions.create-shipment-participant]
 
 [functions.delete-shipment-participant]
 
@@ -290,19 +290,19 @@ verify_jwt = false
 [functions.get-workspace-quick-search]
 verify_jwt = false
 
-[functions.post-container-message]
+[functions.create-container-message]
 verify_jwt = false
 
-[functions.upload-container-documents]
+[functions.create-container-documents]
 verify_jwt = false
 
-[functions.patch-report-message]
+[functions.update-shipment-message]
 verify_jwt = false
 
-[functions.delete-report-message]
+[functions.delete-shipment-message]
 verify_jwt = false
 
-[functions.patch-workspace-attachment]
+[functions.update-workspace-attachment]
 verify_jwt = false
 
 [functions.delete-workspace-attachment]
@@ -311,22 +311,22 @@ verify_jwt = false
 [functions.get-shipment-scope-thread]
 verify_jwt = false
 
-[functions.post-shipment-message]
+[functions.create-shipment-message]
 verify_jwt = false
 
-[functions.upload-shipment-documents]
+[functions.create-shipment-documents]
 verify_jwt = false
 
 [functions.list-org-shipment-message-threads]
 verify_jwt = false
 
-[functions.mark-shipment-thread-read]
+[functions.update-shipment-thread-read]
 verify_jwt = false
 
 [functions.list-importer-shipment-message-threads]
 verify_jwt = false
 
-[functions.mark-importer-shipment-thread-read]
+[functions.update-importer-shipment-thread-read]
 verify_jwt = false
 
 [functions.notify-bol-import]

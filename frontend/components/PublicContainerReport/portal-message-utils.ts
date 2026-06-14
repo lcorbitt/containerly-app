@@ -1,9 +1,9 @@
 import { profileDisplayName } from "@/utils/author-display-name";
-import type { ReportMessage, WorkspaceAttachment } from "@/types/database";
+import type { ShipmentMessage, WorkspaceAttachment } from "@/types/database";
 import type { PortalAttachment, ThreadMessage } from "@shared/dto/shipment.dto";
 import { publicThreadAuthorName } from "./utils";
 
-export function portalThreadMessageToReportMessage(m: ThreadMessage): ReportMessage {
+export function portalThreadMessageToShipmentMessage(m: ThreadMessage): ShipmentMessage {
   return {
     id: m.id,
     organization_id: "",
@@ -32,7 +32,7 @@ export function portalAttachmentToWorkspaceAttachment(a: PortalAttachment): Work
     file_size_bytes: a.file_size_bytes ?? 0,
     uploaded_by: "",
     is_internal: false,
-    report_message_id: a.report_message_id,
+    shipment_message_id: a.shipment_message_id,
     document_type: a.document_type ?? null,
     document_group: a.document_group ?? null,
     approval_status: a.approval_status ?? null,
@@ -81,7 +81,7 @@ export function buildPortalAttachmentsByMessageId(
 ): Map<string, WorkspaceAttachment[]> {
   const byMessage = new Map<string, WorkspaceAttachment[]>();
   for (const row of attachments) {
-    const messageId = row.report_message_id;
+    const messageId = row.shipment_message_id;
     if (!messageId) continue;
     const list = byMessage.get(messageId) ?? [];
     list.push(portalAttachmentToWorkspaceAttachment(row));

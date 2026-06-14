@@ -73,6 +73,11 @@
 
 **API naming (1:1 adapters):** slug kebab-case → camelCase at every boundary — `create-shipment` → `createShipment` → `useCreateShipmentMutation`; source of truth: slug folder + `frontend/lib/supabase/edge-function-slugs.ts`; bulk client loops → `bulkVerbNoun`; DTOs keep payload names; no extra qualifiers (`Commercial`, `Platform`, `*Browser`, `*Query`) on new code
 
+- **CRUD verbs for slugs and adapters:** `create`, `get`, `list`, `update`, `delete` — e.g. `create-shipment-message` → `createShipmentMessage` → `useCreateShipmentMessageMutation`
+- **Do not use** `post-*`, `insert-*`, or `upload-*` slug prefixes for creates; use `create-*`
+- **Domain verbs** when CRUD misleads: `accept`, `revoke`, `acknowledge`, `claim`, `resolve`, `preview`, `complete`, `check`, `lookup`, `sync`, `notify`, `invite` (document each new exception inline)
+- HTTP method on handler may still be `POST`/`PATCH`; **slug and TypeScript names** use CRUD/domain verbs, not HTTP verbs
+
 ---
 
 ## 7. SSR loaders & DTOs
@@ -126,6 +131,15 @@ newShipmentBulkImportOpenAtom → useShipmentDataImportModal (colocated)
 ```
 
 Reference: `frontend/atoms/new-shipment-modal.ts`, `components/NewShipmentForm/useNewShipmentForm.ts`, `components/NewShipmentForm/ShipmentDataImportModal/useShipmentDataImportModal.ts`, `components/NewShipmentModal/useNewShipmentModal.ts`, `hooks/mutations/useShipments.ts`, `services/shipment.service.ts`, `services/shipment-import.service.ts`, `supabase/functions/create-shipment/handler.ts`, `_services/shipment/shipment.service.ts`, `_models/shipments.ts`. Full file-by-file trace in docs §11.
+
+---
+
+## Messaging naming
+
+- Message content: Postgres `shipment_messages`, model `@models/shipment_messages.ts`, row type `ShipmentMessage`
+- Read cursors (unread badges): `shipment_message_thread_reads` — per-user `last_read_at`, not message bodies
+- Legacy `report_*` tables (`report_activity`, `shared_reports`) = shared-report audit only, not shipment messaging
+- Edge slugs: `create-shipment-message`, `update-shipment-message`, `delete-shipment-message` (1:1 with `createShipmentMessage`, `useCreateShipmentMessageMutation`, etc.)
 
 ---
 

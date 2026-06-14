@@ -53,17 +53,17 @@ export async function approvePendingAccessRequestsForEmail(
     resolved_by_user_id?: string | null;
   },
 ) {
-  const patch: Record<string, unknown> = {
+  const updates: Record<string, unknown> = {
     status: "approved",
     resolved_at: new Date().toISOString(),
     resolved_by_user_id: fields.resolved_by_user_id ?? null,
   };
-  if (fields.invite_id !== undefined) patch.invite_id = fields.invite_id;
-  if (fields.access_id !== undefined) patch.access_id = fields.access_id;
+  if (fields.invite_id !== undefined) updates.invite_id = fields.invite_id;
+  if (fields.access_id !== undefined) updates.access_id = fields.access_id;
 
   return client
     .from("shipment_customer_access_requests")
-    .update(patch)
+    .update(updates)
     .eq("shipment_id", shipmentId)
     .eq("requester_email", email.trim().toLowerCase())
     .eq("status", "pending");

@@ -4,9 +4,9 @@ import { listContainersForShipment } from "@models/containers.ts";
 import { fetchOrganizationForPortal } from "@models/organizations.ts";
 import { fetchProfileEmailsByUserIds, fetchProfileImagePathsByUserIds } from "@models/profiles.ts";
 import {
-  queryReportMessagesForContainers,
-  queryReportMessagesForShipment,
-} from "@models/report_messages.ts";
+  listShipmentMessagesByContainerIds,
+  listShipmentMessagesByShipment,
+} from "@models/shipment_messages.ts";
 import { fetchSharedReportById } from "@models/shared_reports.ts";
 import { listShipmentActivityEvents } from "@models/shipment_activity_events.ts";
 import { listShipmentLinesForShipment } from "@models/shipment_lines.ts";
@@ -195,9 +195,9 @@ export async function buildShipmentPortalPayload(
   const includeInternal = Boolean(portalOptions?.includeInternalMessages);
   const [{ data: msgContainer }, { data: msgShipment }] = await Promise.all([
     containerIds.length > 0
-      ? queryReportMessagesForContainers(admin, containerIds, includeInternal)
+      ? listShipmentMessagesByContainerIds(admin, containerIds, includeInternal)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
-    queryReportMessagesForShipment(admin, shipmentId, includeInternal),
+    listShipmentMessagesByShipment(admin, shipmentId, includeInternal),
   ]);
   const messages = [...(msgContainer ?? []), ...(msgShipment ?? [])].sort(
     (a, b) => Date.parse(String(a.created_at)) - Date.parse(String(b.created_at)),

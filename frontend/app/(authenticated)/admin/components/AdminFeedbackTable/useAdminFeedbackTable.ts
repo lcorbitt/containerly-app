@@ -60,7 +60,7 @@ export function useAdminFeedbackTable() {
   const pendingId =
     statusMutation.isPending && statusMutation.variables ? statusMutation.variables.id : null;
 
-  const patchError =
+  const updateError =
     statusMutation.error instanceof Error ? statusMutation.error.message : null;
 
   async function updateStatus(id: string, status: FeedbackStatus) {
@@ -94,7 +94,7 @@ export function useAdminFeedbackTable() {
     safePage,
     totalPages,
     pendingId,
-    patchError,
+    updateError,
     updateStatus,
   };
 }

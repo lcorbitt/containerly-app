@@ -12,7 +12,7 @@ import {
   useOrganizationMembersQuery,
 } from "@/hooks/queries/useOrganization";
 import {
-  usePatchOrganizationMemberMutation,
+  useUpdateOrganizationMemberMutation,
   useInviteOrganizationMemberMutation,
   useUpdateOrgSettingsMutation,
   useDeleteOrganizationMemberMutation,
@@ -42,7 +42,7 @@ export function useOrganizationSettingsPanel(embedded = false) {
 
   const metricsQuery = useOrganizationMetricsQuery(selectedOrgId);
   const membersQuery = useOrganizationMembersQuery(selectedOrgId);
-  const patchRoleMutation = usePatchOrganizationMemberMutation();
+  const updateRoleMutation = useUpdateOrganizationMemberMutation();
   const inviteMutation = useInviteOrganizationMemberMutation();
   const updateOrgMutation = useUpdateOrgSettingsMutation();
   const deleteMemberMutation = useDeleteOrganizationMemberMutation();
@@ -60,8 +60,8 @@ export function useOrganizationSettingsPanel(embedded = false) {
   }, [org?.id, org?.name, org?.slug, org?.org_image_path]);
 
   const pendingId =
-    patchRoleMutation.isPending && patchRoleMutation.variables
-      ? patchRoleMutation.variables.membershipId
+    updateRoleMutation.isPending && updateRoleMutation.variables
+      ? updateRoleMutation.variables.membershipId
       : deleteMemberMutation.isPending && deleteMemberMutation.variables
         ? deleteMemberMutation.variables
         : null;
@@ -87,12 +87,12 @@ export function useOrganizationSettingsPanel(embedded = false) {
     async (membershipId: string, role: OrganizationMemberRole) => {
       setMembersActionError(null);
       try {
-        await patchRoleMutation.mutateAsync({ membershipId, role });
+        await updateRoleMutation.mutateAsync({ membershipId, role });
       } catch (e) {
         setMembersActionError(e instanceof Error ? e.message : "Update failed");
       }
     },
-    [patchRoleMutation],
+    [updateRoleMutation],
   );
 
   const removeMember = useCallback(

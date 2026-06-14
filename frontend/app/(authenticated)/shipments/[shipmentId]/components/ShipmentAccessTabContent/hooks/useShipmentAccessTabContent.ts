@@ -10,7 +10,7 @@ import { useResolveCustomerAccessRequestMutation } from "@/hooks/mutations/useAl
 import {
   useCreateCustomerInviteMutation,
   useDeleteShipmentParticipantMutation,
-  useInsertShipmentParticipantMutation,
+  useCreateShipmentParticipantMutation,
   useRevokeCustomerInviteMutation,
   useRevokeShipmentCustomerAccessMutation,
   useUpdateShipmentAssigneeMutation,
@@ -48,7 +48,7 @@ export function useShipmentAccessTabContent({
   const snap = accessTabQuery.data;
 
   const assigneeMutation = useUpdateShipmentAssigneeMutation();
-  const insertParticipantMutation = useInsertShipmentParticipantMutation();
+  const insertParticipantMutation = useCreateShipmentParticipantMutation();
   const deleteParticipantMutation = useDeleteShipmentParticipantMutation();
   const createInviteMutation = useCreateCustomerInviteMutation();
   const revokeInviteMutation = useRevokeCustomerInviteMutation();

@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePostgresRealtimeInvalidation } from "@/hooks/usePostgresRealtimeInvalidation";
 import { orgAlertsQueryKeyRoot } from "@/hooks/queries/useAlerts";
 import {
-  fetchImporterShipmentMessageThreads,
-  fetchOrgShipmentMessageThreads,
+  listImporterShipmentMessageThreads,
+  listOrgShipmentMessageThreads,
 } from "@/services/workspace.service";
 import type { ShipmentMessageThreadSummary } from "@/types/workspace-load";
 
@@ -20,11 +20,11 @@ function orgMessageThreadsQueryKey(organizationId: string) {
   return [...orgMessageThreadsQueryKeyRoot, organizationId] as const;
 }
 
-export function orgReportMessagesRealtimeDedupeKey(organizationId: string): string {
-  return `report_messages:org:${organizationId}`;
+export function orgShipmentMessagesRealtimeDedupeKey(organizationId: string): string {
+  return `shipment_messages:org:${organizationId}`;
 }
 
-export function invalidateOrgReportMessageQueries(
+export function invalidateOrgShipmentMessageQueries(
   queryClient: ReturnType<typeof useQueryClient>,
   organizationId: string,
 ): void {
@@ -39,19 +39,19 @@ export function invalidateOrgReportMessageQueries(
   });
 }
 
-/** One Realtime channel per org for `report_messages`; refetches side nav + shipment threads. */
-export function useOrgReportMessagesRealtimeInvalidation(organizationId: string | null): void {
+/** One Realtime channel per org for `shipment_messages`; refetches side nav + shipment threads. */
+export function useOrgShipmentMessagesRealtimeInvalidation(organizationId: string | null): void {
   const qc = useQueryClient();
 
   const onEvent = useCallback(() => {
     if (!organizationId) return;
-    invalidateOrgReportMessageQueries(qc, organizationId);
+    invalidateOrgShipmentMessageQueries(qc, organizationId);
   }, [organizationId, qc]);
 
   usePostgresRealtimeInvalidation({
     enabled: Boolean(organizationId),
-    dedupeKey: organizationId ? orgReportMessagesRealtimeDedupeKey(organizationId) : "",
-    table: "report_messages",
+    dedupeKey: organizationId ? orgShipmentMessagesRealtimeDedupeKey(organizationId) : "",
+    table: "shipment_messages",
     filter: organizationId ? `organization_id=eq.${organizationId}` : undefined,
     onEvent,
   });
@@ -64,7 +64,7 @@ export function useOrgMessageThreadsQuery(organizationId: string | null) {
       : [...orgMessageThreadsQueryKeyRoot, "disabled", null],
     queryFn: async () => {
       if (!organizationId) throw new Error("organizationId required");
-      const result = await fetchOrgShipmentMessageThreads(organizationId);
+      const result = await listOrgShipmentMessageThreads(organizationId);
       if (!result.ok) throw new Error(result.error);
       return result.threads;
     },
@@ -81,7 +81,7 @@ export function useImporterMessageThreadsQuery() {
   return useQuery({
     queryKey: importerMessageThreadsQueryKeyRoot,
     queryFn: async () => {
-      const result = await fetchImporterShipmentMessageThreads();
+      const result = await listImporterShipmentMessageThreads();
       if (!result.ok) throw new Error(result.error);
       return result.threads;
     },

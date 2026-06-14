@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
-import { fetchShipment } from "@/services/shipment.service";
+import { getShipment } from "@/services/shipment.service";
+import { shipmentPortalQueryKey } from "@/hooks/queries/useShipment";
 import { hubShipmentOrderBreadcrumbLabel, parseSubTabRoute } from "../TopNavBreadcrumb/utils";
 import { CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH } from "./constants";
 import { customerActiveNavSegment } from "./utils";
@@ -44,8 +45,8 @@ export function useCustomerTopNav() {
 
   // Resolve the shipment order number for the hub breadcrumb (independent of any org workspace).
   const hubShipmentQuery = useQuery({
-    queryKey: ["top-nav-shipment-portal", hubShipmentId],
-    queryFn: () => fetchShipment(hubShipmentId),
+    queryKey: shipmentPortalQueryKey(hubShipmentId),
+    queryFn: () => getShipment(hubShipmentId),
     enabled: Boolean(hubShipmentId),
   });
 

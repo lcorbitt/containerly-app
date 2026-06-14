@@ -155,7 +155,7 @@ export type Alert = {
   tracking_request_id: string | null;
   container_id: string | null;
   shipment_id: string | null;
-  report_message_id: string | null;
+  shipment_message_id: string | null;
   inbox_kind?: "notification" | "operational_alert";
   alert_type: string;
   severity: string;
@@ -226,7 +226,7 @@ export type ShipmentCustomerAccess = {
   updated_at: string;
 };
 
-export type ReportMessage = {
+export type ShipmentMessage = {
   id: string;
   organization_id: string;
   /** Set when the thread is scoped to one physical container. */
@@ -270,7 +270,7 @@ export type WorkspaceAttachment = {
   file_size_bytes: number;
   uploaded_by: string;
   /** When set, file was posted with this thread message (still listed in Documents). */
-  report_message_id: string | null;
+  shipment_message_id: string | null;
   document_type?: string | null;
   document_group?: string | null;
   approval_status?: string | null;

@@ -1,4 +1,4 @@
-import type { Alert, ReportMessage } from "@shared/dashboard-metrics.ts";
+import type { Alert, ShipmentMessage } from "@shared/dashboard-metrics.ts";
 import { buildDaySeries } from "@shared/dashboard-metrics.ts";
 import { isInAppNotification, isOperationalAlert } from "@shared/in-app-event-taxonomy.ts";
 import { normalizeShipmentWorkflowStatus, shipmentWorkflowDisplayLabel } from "@shared/shipment-workflow-status.ts";
@@ -54,7 +54,7 @@ type AlertRow = Pick<
   Alert,
   "alert_type" | "severity" | "acknowledged_at" | "created_at" | "inbox_kind"
 >;
-type MessageRow = Pick<ReportMessage, "author_kind" | "created_at" | "is_internal">;
+type MessageRow = Pick<ShipmentMessage, "author_kind" | "created_at" | "is_internal">;
 
 const RISK_KEYS = ["low", "medium", "high", "unset"] as const;
 

@@ -1,4 +1,5 @@
 import { createServiceClient } from "@services/db.ts";
+import { countStaleShipmentSlaReminders } from "@services/notification/stale-shipment-reminders.service.ts";
 import { jsonResponse } from "@services/utils.ts";
 
 type OrgSettings = {
@@ -42,61 +43,12 @@ export async function handle(req: Request): Promise<Response> {
       const settings = parseSettings(org.performance_settings);
       const slaCutoff = new Date(now - settings.sla_response_hours * 3_600_000).toISOString();
 
-      const { data: msgRows, error: msgErr } = await admin
-        .from("report_messages")
-        .select("id, shipment_id, author_kind, created_at")
-        .eq("organization_id", orgId)
-        .not("shipment_id", "is", null)
-        .is("container_id", null)
-        .eq("is_internal", false)
-        .eq("author_kind", "customer")
-        .lte("created_at", slaCutoff)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (msgErr) throw msgErr;
-
-      const seenShipments = new Set<string>();
-      for (const msg of msgRows ?? []) {
-        const shipmentId = msg.shipment_id as string | null;
-        if (!shipmentId || seenShipments.has(shipmentId)) continue;
-
-        const { data: newerOperator } = await admin
-          .from("report_messages")
-          .select("id")
-          .eq("shipment_id", shipmentId)
-          .is("container_id", null)
-          .in("author_kind", ["operator", "team"])
-          .gt("created_at", msg.created_at as string)
-          .limit(1);
-        if ((newerOperator ?? []).length > 0) continue;
-
-        seenShipments.add(shipmentId);
-
-        const { data: shipmentRow } = await admin
-          .from("shipments")
-          .select("assignee_user_id, created_by")
-          .eq("id", shipmentId)
-          .maybeSingle();
-        const recipient =
-          (shipmentRow?.assignee_user_id as string | null) ??
-          (shipmentRow?.created_by as string | null);
-        if (!recipient) continue;
-
-        const { error: alertErr } = await admin.from("alerts").insert({
-          organization_id: orgId,
-          shipment_id: shipmentId,
-          alert_type: "SLA_RESPONSE_DUE",
-          inbox_kind: "operational_alert",
-          severity: "warning",
-          message: "Customer waiting beyond SLA — reply when you can",
-          recipient_user_id: recipient,
-          details: {
-            sla_response_hours: settings.sla_response_hours,
-            customer_message_at: msg.created_at,
-          },
-        });
-        if (!alertErr) remindersCreated += 1;
-      }
+      remindersCreated += await countStaleShipmentSlaReminders(
+        admin,
+        orgId,
+        slaCutoff,
+        settings.sla_response_hours,
+      );
     }
 
     return jsonResponse({ ok: true, reminders_created: remindersCreated });

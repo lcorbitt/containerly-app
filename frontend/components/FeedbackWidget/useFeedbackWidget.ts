@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { feedbackWidgetCategoryAtom, feedbackWidgetOpenAtom } from "@/atoms/feedback-widget";
 import { useToast } from "@/atoms/toast";
 import { useOrganizationWorkspaceOptional } from "@/atoms/organization-workspace";
-import { useSubmitFeedbackMutation } from "@/hooks/mutations/useFeedback";
+import { useCreateFeedbackMutation } from "@/hooks/mutations/useFeedback";
 import { getBrowserAuthSession, subscribeToAuthState } from "@/services/auth.service";
 import {
   FEEDBACK_MIN_MESSAGE_LENGTH,
@@ -18,7 +18,7 @@ import { buildFeedbackContext } from "./utils";
 export function useFeedbackWidget() {
   const pathname = usePathname();
   const { toast } = useToast();
-  const submitMutation = useSubmitFeedbackMutation();
+  const createFeedbackMutation = useCreateFeedbackMutation();
   const orgCtx = useOrganizationWorkspaceOptional();
   const selectedOrgId = orgCtx?.selectedOrgId ?? null;
 
@@ -74,7 +74,7 @@ export function useFeedbackWidget() {
     if (trimmed.length < FEEDBACK_MIN_MESSAGE_LENGTH) return;
 
     try {
-      await submitMutation.mutateAsync({
+      await createFeedbackMutation.mutateAsync({
         category: form.category,
         message: trimmed,
         page_url: context.pageUrl,
@@ -92,10 +92,10 @@ export function useFeedbackWidget() {
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not send feedback", "error");
     }
-  }, [form, context, submitMutation, toast, close]);
+  }, [form, context, createFeedbackMutation, toast, close]);
 
   const trimmedLength = form.message.trim().length;
-  const canSubmit = trimmedLength >= FEEDBACK_MIN_MESSAGE_LENGTH && !submitMutation.isPending;
+  const canSubmit = trimmedLength >= FEEDBACK_MIN_MESSAGE_LENGTH && !createFeedbackMutation.isPending;
 
   return {
     signedIn,
@@ -107,7 +107,7 @@ export function useFeedbackWidget() {
     setMessage,
     submit,
     canSubmit,
-    isSubmitting: submitMutation.isPending,
+    isSubmitting: createFeedbackMutation.isPending,
     context,
     messageTooShort: trimmedLength > 0 && trimmedLength < FEEDBACK_MIN_MESSAGE_LENGTH,
   };

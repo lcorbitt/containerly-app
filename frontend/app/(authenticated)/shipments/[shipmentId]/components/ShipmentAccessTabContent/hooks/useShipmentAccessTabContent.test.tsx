@@ -25,7 +25,7 @@ vi.mock("@/services/shipment.service", () => ({
   createCustomerInvite: mockCreateCustomerInvite,
   resolveCustomerAccessRequest: mockResolveAccessRequest,
   deleteShipmentParticipantRow: vi.fn(),
-  insertShipmentParticipant: vi.fn(),
+  createShipmentParticipant: vi.fn(),
   revokeCustomerInviteRow: vi.fn(),
   revokeShipmentCustomerAccessRow: vi.fn(),
   updateShipmentAssignee: vi.fn(),

@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import type { Alert, Container, ReportMessage, TrackingRequest } from "@/types/database";
+import type { Alert, Container, ShipmentMessage, TrackingRequest } from "@/types/database";
 import {
   buildTriageBuckets,
   type TriageBucket,
@@ -21,7 +21,7 @@ export type DashboardTriageProps = {
   /** `shipments.assignee_user_id` keyed by shipment id. */
   shipmentAssigneeByShipmentId: Record<string, string | null>;
   attachmentCountByRequestId: Record<string, number>;
-  messages: ReportMessage[];
+  messages: ShipmentMessage[];
   /** Shipment IDs where the current user is a `shipment_participants` row. */
   participatingShipmentIds: ReadonlySet<string>;
 };

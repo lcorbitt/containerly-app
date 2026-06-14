@@ -10,9 +10,9 @@ import type {
 
 export type { FeedbackCategory, FeedbackStatus, UserFeedbackRow };
 
-export async function submitFeedback(body: SubmitFeedbackBody): Promise<SubmitFeedbackResponse> {
+export async function createFeedback(body: SubmitFeedbackBody): Promise<SubmitFeedbackResponse> {
   return parseEdgeJson<SubmitFeedbackResponse>(
-    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.feedback.submit, {
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.feedback.create, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

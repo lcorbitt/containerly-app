@@ -1,32 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMarkShipmentThreadReadMutation } from "@/hooks/mutations/useShipmentMessageThreads";
+import {
+  useDeleteShipmentMessageMutation,
+  useUpdateShipmentThreadReadMutation,
+  useUpdateShipmentMessageMutation,
+  useCreateShipmentMessageMutation,
+} from "@/hooks/mutations/useShipmentMessageThreads";
 import { buildAuthorAvatarUrlByUserId } from "@/components/WorkspaceThreadPanel/utils";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   MAX_ATTACHMENT_FILE_BYTES,
   MAX_ATTACHMENT_SIZE_LABEL,
   MAX_ATTACHMENTS_PER_MESSAGE,
 } from "@/utils/workspace-files";
-import { collectMessageSubtreeIds } from "@/utils/report-message-tree";
+import { collectMessageSubtreeIds } from "@/utils/shipment-message-tree";
 import { useConfirm } from "@/atoms/confirm-dialog";
 import { useOrganizationWorkspace } from "@/atoms/organization-workspace";
 import { useToast } from "@/atoms/toast";
 import type { WorkspaceAttachment } from "@/types/database";
 import {
-  shipmentScopeThreadQueryKey,
-  shipmentWorkspaceRowQueryKeyRoot,
   useShipmentScopeThreadQuery,
   useShipmentWorkspaceRowQuery,
 } from "@/hooks/queries/useShipment";
-import { invalidateOrgReportMessageQueries } from "@/hooks/queries/useShipmentMessageThreads";
-import {
-  createWorkspaceAttachmentSignedUrl,
-  deleteShipmentScopeMessage,
-  patchReportMessage,
-  postShipmentScopeMessageWithAttachments,
-} from "@/services/workspace.service";
+import { createWorkspaceAttachmentSignedUrl } from "@/services/workspace.service";
 
 export function useShipmentMessagesPanel({
   shipmentId,
@@ -40,9 +36,11 @@ export function useShipmentMessagesPanel({
 }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
-  const qc = useQueryClient();
   const { selectedOrgId } = useOrganizationWorkspace();
-  const markThreadReadMut = useMarkShipmentThreadReadMutation(selectedOrgId);
+  const updateThreadReadMut = useUpdateShipmentThreadReadMutation(selectedOrgId);
+  const createMessageMut = useCreateShipmentMessageMutation(selectedOrgId);
+  const updateMessageMut = useUpdateShipmentMessageMutation(selectedOrgId);
+  const deleteMessageMut = useDeleteShipmentMessageMutation(selectedOrgId);
   const threadQuery = useShipmentScopeThreadQuery(selectedOrgId, shipmentId);
   const shipmentRowQuery = useShipmentWorkspaceRowQuery({
     shipmentId,
@@ -51,24 +49,10 @@ export function useShipmentMessagesPanel({
 
   const [body, setBody] = useState(initialDraft ?? "");
   const [replyParentId, setReplyParentId] = useState<string | null>(null);
-  const [posting, setPosting] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
-  const [savingEditMessageId, setSavingEditMessageId] = useState<string | null>(null);
   const [composerPendingFiles, setComposerPendingFiles] = useState<File[]>([]);
-
-  const invalidateThread = useCallback(() => {
-    if (selectedOrgId) {
-      invalidateOrgReportMessageQueries(qc, selectedOrgId);
-      void qc.invalidateQueries({
-        queryKey: shipmentScopeThreadQueryKey(selectedOrgId, shipmentId),
-      });
-      void qc.invalidateQueries({
-        queryKey: [...shipmentWorkspaceRowQueryKeyRoot, shipmentId],
-      });
-    }
-  }, [qc, selectedOrgId, shipmentId]);
 
   const messages = threadQuery.data?.ok ? threadQuery.data.messages : [];
   const attachments = threadQuery.data?.ok ? threadQuery.data.attachments : [];
@@ -94,7 +78,7 @@ export function useShipmentMessagesPanel({
 
   useEffect(() => {
     if (!shouldMarkRead || !selectedOrgId || loading || loadError) return;
-    markThreadReadMut.mutate({ shipmentId });
+    updateThreadReadMut.mutate({ shipmentId });
   }, [shouldMarkRead, selectedOrgId, loading, loadError, shipmentId]);
 
   const shipmentLabel =
@@ -108,7 +92,7 @@ export function useShipmentMessagesPanel({
   const attachmentsByMessageId = useMemo(() => {
     const m = new Map<string, WorkspaceAttachment[]>();
     for (const a of attachments) {
-      const mid = a.report_message_id;
+      const mid = a.shipment_message_id;
       if (!mid) continue;
       const cur = m.get(mid) ?? [];
       cur.push(a);
@@ -179,20 +163,20 @@ export function useShipmentMessagesPanel({
         toast("Message cannot be empty.", "error");
         return;
       }
-      setSavingEditMessageId(messageId);
       try {
-        await patchReportMessage({ messageId, body: trimmed });
+        await updateMessageMut.mutateAsync({
+          messageId,
+          body: trimmed,
+          shipmentId,
+        });
         setEditingMessageId(null);
         setEditDraft("");
-        invalidateThread();
         toast("Message updated", "success");
       } catch (e) {
         toast(e instanceof Error ? e.message : "Could not update message", "error");
-      } finally {
-        setSavingEditMessageId(null);
       }
     },
-    [editDraft, invalidateThread, toast],
+    [editDraft, updateMessageMut, shipmentId, toast],
   );
 
   const deleteMessage = useCallback(
@@ -208,12 +192,11 @@ export function useShipmentMessagesPanel({
       if (!ok) return;
       setDeletingMessageId(messageId);
       try {
-        await deleteShipmentScopeMessage({ messageId, messages });
+        await deleteMessageMut.mutateAsync({ messageId, shipmentId });
         setReplyParentId((prev) => {
           const ids = collectMessageSubtreeIds(messages, messageId);
           return prev && ids.has(prev) ? null : prev;
         });
-        invalidateThread();
         toast("Message deleted", "success");
       } catch (e) {
         toast(e instanceof Error ? e.message : "Could not delete message", "error");
@@ -221,7 +204,7 @@ export function useShipmentMessagesPanel({
         setDeletingMessageId(null);
       }
     },
-    [confirm, invalidateThread, messages, toast],
+    [confirm, deleteMessageMut, messages, shipmentId, toast],
   );
 
   const postMessage = useCallback(async () => {
@@ -239,10 +222,8 @@ export function useShipmentMessagesPanel({
         return;
       }
     }
-    setPosting(true);
     try {
-      const { attachmentErrors } = await postShipmentScopeMessageWithAttachments({
-        organizationId: selectedOrgId,
+      const { attachmentErrors } = await createMessageMut.mutateAsync({
         shipmentId,
         body: t,
         replyParentId,
@@ -254,22 +235,11 @@ export function useShipmentMessagesPanel({
       setBody("");
       setComposerPendingFiles([]);
       setReplyParentId(null);
-      invalidateThread();
       toast("Message posted", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not post message", "error");
-    } finally {
-      setPosting(false);
     }
-  }, [
-    body,
-    composerPendingFiles,
-    invalidateThread,
-    replyParentId,
-    selectedOrgId,
-    shipmentId,
-    toast,
-  ]);
+  }, [body, composerPendingFiles, createMessageMut, replyParentId, selectedOrgId, shipmentId, toast]);
 
   return {
     selectedOrgId,
@@ -288,7 +258,7 @@ export function useShipmentMessagesPanel({
     onRemoveComposerPendingFile,
     body,
     setBody,
-    posting,
+    posting: createMessageMut.isPending,
     postMessage,
     replyParentId,
     setReplyParentId,
@@ -300,6 +270,6 @@ export function useShipmentMessagesPanel({
     startEditMessage,
     cancelEditMessage,
     saveEditMessage,
-    savingEditMessageId,
+    savingEditMessageId: updateMessageMut.isPending ? editingMessageId : null,
   };
 }

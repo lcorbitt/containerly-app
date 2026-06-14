@@ -1,4 +1,4 @@
-/** submit-feedback Edge function contract. */
+/** create-feedback Edge function contract. */
 
 export type FeedbackCategory = "bug" | "feature" | "general";
 

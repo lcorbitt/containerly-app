@@ -18,7 +18,7 @@ import {
 import { CarrierReportedStatusPill, TrackingWorkflowStatusPill } from "@/components/StatusPills";
 import { riskInsightBadgeClass } from "@/utils/report-insights";
 import { WORKSPACE_TAB_PANEL_HEIGHT_CSS, workspaceTabButtonClass } from "@/utils/workspace-tab-panel";
-import { useContainerWorkspace } from "./hooks/useContainerWorkspace";
+import { useContainerWorkspace } from "./useContainerWorkspace";
 
 function trackingSubviewToggleClass(active: boolean) {
   return `inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${

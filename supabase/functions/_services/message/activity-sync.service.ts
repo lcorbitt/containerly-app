@@ -1,9 +1,12 @@
 /**
  * Keep shipment timeline message activity rows in sync when thread messages are edited.
  */
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  listMessageActivityEventsForShipmentMessage,
+  updateShipmentActivityEventBody,
+} from "@models/shipment_activity_events.ts";
 
-const MESSAGE_EVENT_TYPES = ["customer_message", "operator_message"] as const;
 const MESSAGE_PREVIEW_MAX_LEN = 120;
 
 function truncatePreview(body: string): string {
@@ -12,43 +15,32 @@ function truncatePreview(body: string): string {
   return `${trimmed.slice(0, MESSAGE_PREVIEW_MAX_LEN - 1)}…`;
 }
 
-async function listActivityEventsLinkedToReportMessage(
-  client: SupabaseClient,
-  reportMessageId: string,
-): Promise<{ id: string; metadata: Record<string, unknown> }[]> {
-  const { data, error } = await client
-    .from("shipment_activity_events")
-    .select("id, metadata")
-    .eq("report_message_id", reportMessageId)
-    .in("event_type", [...MESSAGE_EVENT_TYPES]);
-  if (error) throw error;
-
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    metadata: (row.metadata as Record<string, unknown>) ?? {},
-  }));
-}
-
 /** Rewrite body + preview on timeline rows linked to an edited thread message. */
-export async function syncActivityEventsForEditedReportMessage(
+export async function syncActivityEventsForEditedShipmentMessage(
   client: SupabaseClient,
-  args: { reportMessageId: string; body: string },
+  args: { shipmentMessageId: string; body: string },
 ): Promise<void> {
   const body = args.body.trim();
   if (!body) return;
 
   const preview = truncatePreview(body);
-  const events = await listActivityEventsLinkedToReportMessage(client, args.reportMessageId);
+  const { data, error } = await listMessageActivityEventsForShipmentMessage(
+    client,
+    args.shipmentMessageId,
+  );
+  if (error) throw error;
 
-  for (const event of events) {
+  for (const row of data ?? []) {
     const metadata = {
-      ...event.metadata,
+      ...((row.metadata as Record<string, unknown>) ?? {}),
       message_preview: preview,
     };
-    const { error } = await client
-      .from("shipment_activity_events")
-      .update({ body, metadata })
-      .eq("id", event.id);
-    if (error) throw error;
+    const { error: updateErr } = await updateShipmentActivityEventBody(
+      client,
+      row.id as string,
+      body,
+      metadata,
+    );
+    if (updateErr) throw updateErr;
   }
 }

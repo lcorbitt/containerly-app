@@ -4,7 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { PublicContainerReport } from "@/components/PublicContainerReport";
 import { PageLoading } from "@/components/PageLoading";
-import { fetchShipment } from "@/services/shipment.service";
+import { getShipment } from "@/services/shipment.service";
 import { getBrowserAuthSession } from "@/services/auth.service";
 import type { PublicReportPayload } from "@/types/public-report";
 import { CUSTOMER_MY_SHIPMENTS_LABEL, CUSTOMER_TOP_NAV_MY_SHIPMENTS_PATH } from "@/components/TopNav/CustomerTopNav/constants";
@@ -45,7 +45,7 @@ export default function SharedShipmentTrackingPage({
         return;
       }
 
-      const r = await fetchShipment(shipmentId);
+      const r = await getShipment(shipmentId);
       if (cancelled) return;
 
       if (r.ok) {

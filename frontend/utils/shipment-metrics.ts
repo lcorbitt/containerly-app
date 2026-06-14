@@ -10,14 +10,14 @@ import type {
   WorkflowStepDwell,
 } from "@shared/dto/performance.dto";
 import type { ShipmentActivityEvent } from "@shared/dto/shipment.dto";
-import type { ReportMessage } from "@/types/database";
+import type { ShipmentMessage } from "@/types/database";
 import {
   type DelayCarrierLineRow,
   type TriageBucketKey,
 } from "@/utils/dashboard-metrics";
 import { shipmentWorkflowDisplayLabel } from "@/utils/shipment-workflow-status";
 
-type MessageRow = Pick<ReportMessage, "shipment_id" | "container_id" | "author_kind" | "created_at" | "is_internal" | "body">;
+type MessageRow = Pick<ShipmentMessage, "shipment_id" | "container_id" | "author_kind" | "created_at" | "is_internal" | "body">;
 
 type WorkflowShipmentRow = {
   id: string;

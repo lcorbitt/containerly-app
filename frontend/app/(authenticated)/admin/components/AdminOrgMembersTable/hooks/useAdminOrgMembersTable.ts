@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAdminOrgMembersQuery } from "@/hooks/queries/useOrganization";
-import { usePatchOrganizationMemberMutation } from "@/hooks/mutations/useOrganization";
+import { useUpdateOrganizationMemberMutation } from "@/hooks/mutations/useOrganization";
 import type { OrganizationMemberRole } from "@/types/database";
 import {
   buildOrgOptionsFromRows,
@@ -13,7 +13,7 @@ import { PAGE_SIZE_OPTIONS } from "../constants";
 
 export function useAdminOrgMembersTable() {
   const { data: rows = [], isLoading: loading, error: queryError, refetch } = useAdminOrgMembersQuery();
-  const patchMutation = usePatchOrganizationMemberMutation();
+  const updateMutation = useUpdateOrganizationMemberMutation();
 
   const [search, setSearchRaw] = useState("");
   const [orgFilter, setOrgFilterRaw] = useState<string>("all");
@@ -36,8 +36,8 @@ export function useAdminOrgMembersTable() {
   const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
   const pendingId =
-    patchMutation.isPending && patchMutation.variables
-      ? patchMutation.variables.membershipId
+    updateMutation.isPending && updateMutation.variables
+      ? updateMutation.variables.membershipId
       : null;
 
   const sorted = useMemo(() => sortAdminOrgMemberRows(rows), [rows]);
@@ -70,12 +70,12 @@ export function useAdminOrgMembersTable() {
       : `${(pageStart + 1).toLocaleString()}–${Math.min(pageStart + pageSize, filtered.length).toLocaleString()}`;
 
   function updateRole(membershipId: string, role: OrganizationMemberRole) {
-    patchMutation.mutate({ membershipId, role });
+    updateMutation.mutate({ membershipId, role });
   }
 
   return {
     rowsLength: rows.length,
-    patchMutationError: patchMutation.error,
+    updateMutationError: updateMutation.error,
     loading,
     error,
     refetch,

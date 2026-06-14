@@ -64,7 +64,7 @@ export function NewShipmentForm({
 
         <ShipmentCommercialFormFields
           values={values}
-          onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
+          onChange={(update) => setValues((prev) => ({ ...prev, ...update }))}
         />
 
         {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}

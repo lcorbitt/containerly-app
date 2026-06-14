@@ -6,7 +6,7 @@ import {
 import { completeOnboardingOrganization } from "@/services/onboarding.service";
 import {
   inviteOrganizationMember,
-  uploadOrganizationImageAndSetPath,
+  createOrganizationImageAndSetPath,
 } from "@/services/organization.service";
 import type { SignupDraft } from "@/app/(marketing)/signup/components/SignupWizard/types";
 import { slugFromOrganizationName } from "@/utils/organization-slug";
@@ -53,7 +53,7 @@ export async function submitSignup(input: {
   });
 
   if (orgImageFile) {
-    await uploadOrganizationImageAndSetPath({
+    await createOrganizationImageAndSetPath({
       organizationId: org.id,
       file: orgImageFile,
       previousPath: null,

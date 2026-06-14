@@ -28,7 +28,7 @@ export async function getOrganizationImage(organizationId: string): Promise<stri
   return path?.trim() || null;
 }
 
-export async function uploadOrganizationImageAndSetPath(input: {
+export async function createOrganizationImageAndSetPath(input: {
   organizationId: string;
   file: File;
   previousPath: string | null;
@@ -40,7 +40,7 @@ export async function uploadOrganizationImageAndSetPath(input: {
     formData.set("previousPath", input.previousPath.trim());
   }
   const data = await parseEdgeJson<{ path?: string }>(
-    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.imageUpload, {
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.createImage, {
       method: "POST",
       body: formData,
     }),
@@ -127,12 +127,12 @@ export async function deleteOrganizationMember(membershipId: string): Promise<vo
 // Organization members (Edge)
 // ---------------------------------------------------------------------------
 
-export async function patchOrganizationMember(
+export async function updateOrganizationMember(
   membershipId: string,
   role: OrganizationMemberRole,
 ): Promise<OrganizationMemberRecord> {
   const data = await parseEdgeJson<{ membership?: OrganizationMemberRecord }>(
-    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.patchMember, {
+    await edgeFunctionFetch(EDGE_FUNCTION_SLUGS.organizations.updateMember, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ membership_id: membershipId, role }),

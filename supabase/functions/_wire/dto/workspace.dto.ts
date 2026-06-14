@@ -77,12 +77,12 @@ export interface CreateWorkspaceSignedUrlResponse {
   url: string;
 }
 
-export interface PatchReportMessageBody {
+export interface UpdateShipmentMessageBody {
   message_id?: string;
   body?: string;
 }
 
-export interface PatchWorkspaceAttachmentBody {
+export interface UpdateWorkspaceAttachmentBody {
   attachment_id?: string;
   file_name?: string;
 }
